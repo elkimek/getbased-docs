@@ -5,21 +5,21 @@ description: "Track vitamin D, circadian rhythm, cardiovascular, and four other 
 
 Sun isn't just vitamin D. Different wavelengths do different things — set your body clock, support circulation, charge your mitochondria, regulate mood hormones. The **Light & Sun** section in getbased tracks your sun exposure across six biological channels and lets you correlate them with your labs and wearable data over time.
 
-## What sun sessions track
+## What sun sessions tracks
 
 Each session is scored across six channels based on how your accumulated dose compares to a literature-derived daily target. Scores run from **none → low → moderate → good → strong**.
 
 | Channel | What it does | Spectrum |
-|---|---|---|
+| --- | --- | --- |
 | **Vitamin D** | UVB on bare skin triggers vitamin D synthesis. Synthesis plateaus before your skin reddens — more time does not mean more vitamin D. | UVB 290–315 nm |
-| **Mood & hormones** | Sunlight on skin triggers α-MSH (the tan signal), β-endorphin (mood lift), and ACTH (stress response). | UVB + UVA |
+| **Mood & hormones** | Sunlight on skin triggers α-MSH (the tan signal), β-endorphin (mood lift), and ACTH (stress response). | UVB \+ UVA |
 | **Cardiovascular** | UVA releases nitric oxide from skin — supporting blood-vessel function, lowering blood pressure, and dampening inflammation. | UVA 315–400 nm |
 | **Outdoor eye light** | Violet light at 360–400 nm reaches sensors in both the eye and skin. Linked to eye health and dopamine. This is what distinguishes real outdoor light from window light, even when both feel equally bright. | Violet 360–400 nm |
 | **Body clock** | Bright light at the eye anchors your circadian rhythm — earlier bedtimes, faster wake-up, deeper sleep. Strongest in the first two hours after sunrise. | Blue ~490 nm (melanopic peak) |
-| **Cellular repair** | Solar 600–1400 nm penetrates deep into tissue and supports mitochondria, local melatonin production, and recovery. This is the half of sunlight that windows block entirely. | Red + IR-A 600–1400 nm |
+| **Cellular repair** | Solar 600–1400 nm penetrates deep into tissue and supports mitochondria, local melatonin production, and recovery. This is the half of sunlight that windows block entirely. | Red \+ IR-A 600–1400 nm |
 
 <Note>
-The app deliberately doesn't surface raw dose numbers. The AI sees them, but your dashboard shows qualitative scores — which is all you need to make decisions.
+  The app deliberately doesn't surface raw dose numbers. The AI sees them, but your dashboard shows qualitative scores — which is all you need to make decisions.
 </Note>
 
 ## How to log a session
@@ -54,7 +54,7 @@ An optional 10-question light-burden audit captures how indoor- or artificial-li
 While a session is running, a **Live** card pins to the top of the Light & Sun page with running dose totals per channel. You can interact mid-session:
 
 | Control | What it does |
-|---|---|
+| --- | --- |
 | **Pause** | Freezes dose accrual during a shade break. The timer keeps ticking. Tap again to resume. |
 | **Flip** | Tap when you turn from front to back (or vice versa). The region picker covers one side at a time; flipping tells the app fresh skin is now exposed, which doubles the vitamin D yield to reflect that newly-exposed skin keeps synthesizing after the first side approaches saturation. |
 | **Sunscreen** | Log a mid-session reapplication. The app commits the dose accrued under the previous SPF, then continues under the new value. |
@@ -74,7 +74,7 @@ The Light Today strip shows your **burn risk** in plain English throughout the d
 These thresholds are computed from each session's CIE-erythemal-weighted dose compared to your Fitzpatrick skin type's minimal erythemal dose (MED). The burn model uses a 1.5× conservative cap and warns you explicitly before you reach it.
 
 <Warning>
-If you've checked the photosensitizing medication box in your setup, your effective burn threshold is reduced by approximately 2.5×. Alerts will fire sooner.
+  If you've checked the photosensitizing medication box in your setup, your effective burn threshold is reduced by approximately 2.5×. Alerts will fire sooner.
 </Warning>
 
 ## Atmosphere data
@@ -99,7 +99,7 @@ getbased uses real atmospheric data to reconstruct the solar spectrum at your lo
 **Source confidence** is computed per request — snapshot age, cloud cover, sun elevation, UV index band, and a stale flag all discount the displayed percentage. A reading at low sun under heavy cloud honestly drops to around 40%, even from CAMS. No false precision.
 
 <Info>
-Latitude and longitude default to your country from your profile. No automatic geolocation prompt fires at session start. The optional precise-location upgrade is stored on this device only and never synced.
+  Latitude and longitude default to your country from your profile. No automatic geolocation prompt fires at session start. The optional precise-location upgrade is stored on this device only and never synced.
 </Info>
 
 ## Photobiology device library
@@ -128,7 +128,7 @@ Every AI chat includes a Light & Sun summary in the always-on context tier, cove
 Once you have four or more weeks of overlapping sessions and lab results, channel-by-biomarker correlations join the standard context — so the AI can reason about things like the relationship between your weekly UVB dose and your 25-OH vitamin D trend.
 
 <Tip>
-Sun and wearable data sit side-by-side on the dashboard. The AI sees both simultaneously, which lets it reason about things like "low HRV on days after high-UV sessions" without you having to connect the dots yourself.
+  Sun and wearable data sit side-by-side on the dashboard. The AI sees both simultaneously, which lets it reason about things like "low HRV on days after high-UV sessions" without you having to connect the dots yourself.
 </Tip>
 
 If your DNA includes variants in VDR, MC1R, CYP2R1, GC, NPAS2, CRY2, or PER3, the AI prompts already factor those in when those genes are relevant to the question at hand.
