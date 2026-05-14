@@ -1,0 +1,134 @@
+---
+title: "getbased docs: free local-first health dashboard"
+description: Free, local-first health dashboard unifying blood work, DNA, wearables, and light exposure with AI-powered analysis. No account required.
+mode: frame
+---
+
+<div data-product-guide-index className="flex w-full flex-col gap-8 max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-10 lg:gap-14 lg:py-16">
+  <div className="flex max-w-[540px] flex-col gap-2 self-center text-center">
+    <h1 className="text-[30px] font-medium leading-9 tracking-tight text-gray-900 dark:text-gray-50">
+      getbased docs
+    </h1>
+    <p className="text-balance text-base leading-relaxed tracking-tight text-gray-600 dark:text-gray-400">
+      Your health data, your device, your terms. Free, open-source, and private by default — no account required.
+    </p>
+  </div>
+
+  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <Card
+      title={<span className="product-guide-feature-card-title">Get started</span>}
+      icon="rocket"
+      href="/quickstart"
+      className="product-guide-feature-card"
+      size={64}
+    >
+      <span className="product-guide-feature-card-description">Open the app, import your first lab PDF, and get AI-powered insights in minutes.</span>
+    </Card>
+
+    <a
+      href="/guides/pdf-import"
+      className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+    >
+      <Icon icon="file-text" color="rgb(var(--primary))" size={18} className="shrink-0" />
+      <div className="flex flex-col gap-1">
+        <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">PDF import</span>
+        <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          Drop any lab report — any format, language, or country. AI extracts 287+ biomarkers automatically.
+        </span>
+      </div>
+    </a>
+    <a
+      href="/guides/dna-import"
+      className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+    >
+      <Icon icon="dna" color="rgb(var(--primary))" size={18} className="shrink-0" />
+      <div className="flex flex-col gap-1">
+        <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">DNA analysis</span>
+        <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          Upload raw data from 23andMe, AncestryDNA, and more to unlock genetic context for your labs.
+        </span>
+      </div>
+    </a>
+  </div>
+
+  <hr className="border-0 border-t border-border" />
+
+  <div className="flex flex-col gap-4">
+    <h2 className="font-serif text-xl font-medium leading-normal text-gray-900 dark:text-gray-50">Common tasks</h2>
+
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <a
+        href="/ai-providers"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="cpu" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Choose an AI provider</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Connect OpenRouter, Venice, Routstr, PPQ, or run a fully local model for free.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/guides/wearables"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="watch" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Connect a wearable</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Sync Oura, Fitbit, Withings, Polar, or Apple Health alongside your blood work.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/guides/cross-device-sync"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="refresh-cw" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Sync across devices</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Use an end-to-end encrypted mnemonic to keep your data in sync on multiple devices.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/guides/agent-access"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="bot" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Connect an AI agent</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Give Claude Code, Cursor, or Hermes Agent read-only access to your lab context via MCP.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/guides/privacy"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="shield" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Understand privacy</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            All data stays in your browser. See how encryption, PII stripping, and local-first storage work.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/guides/self-hosting"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="server" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Self-host getbased</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Run your own instance from source or deploy a fork — no build tools required.
+          </span>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>

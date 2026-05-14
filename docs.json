@@ -1,0 +1,137 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "almond",
+  "name": "getbased",
+  "description": "Personal health intelligence that's actually yours — free, local-first, no account required.",
+  "colors": {
+    "primary": "#4a87f3",
+    "light": "#34548c",
+    "dark": "#1c1c24"
+  },
+  "favicon": "https://media.brand.dev/f3866873-8ef5-4327-86de-315bc482d257.svg",
+  "icons": {
+    "library": "lucide"
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
+  },
+  "contextual": {
+    "options": ["copy", "view", "assistant", "mcp", "add-mcp"]
+  },
+  "logo": {
+    "light": "https://media.brand.dev/df183b52-f1df-40e4-8c7b-979f7d14b4e3.svg",
+    "dark": "https://media.brand.dev/df183b52-f1df-40e4-8c7b-979f7d14b4e3.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Discord",
+        "href": "https://discord.gg/zJdVB9zgQB"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Open App",
+      "href": "https://app.getbased.health"
+    }
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Home",
+          "icon": "house",
+          "href": "/"
+        },
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "href": "https://github.com/elkimek/get-based"
+        },
+        {
+          "anchor": "Discord",
+          "icon": "discord",
+          "href": "https://discord.gg/zJdVB9zgQB"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "ai-providers"
+            ]
+          },
+          {
+            "group": "Labs",
+            "pages": [
+              "guides/pdf-import",
+              "guides/manual-entry",
+              "guides/specialty-labs",
+              "guides/biomarker-charts",
+              "guides/trend-alerts"
+            ]
+          },
+          {
+            "group": "Genome",
+            "pages": [
+              "guides/dna-import"
+            ]
+          },
+          {
+            "group": "Body & Wearables",
+            "pages": [
+              "guides/wearables",
+              "guides/menstrual-cycle"
+            ]
+          },
+          {
+            "group": "Light & Sun",
+            "pages": [
+              "guides/sun-sessions",
+              "guides/light-environment",
+              "guides/light-tools"
+            ]
+          },
+          {
+            "group": "Insight & AI",
+            "pages": [
+              "guides/ai-chat",
+              "guides/interpretive-lens",
+              "guides/knowledge-base",
+              "guides/context-cards"
+            ]
+          },
+          {
+            "group": "Data & Privacy",
+            "pages": [
+              "guides/privacy",
+              "guides/cross-device-sync",
+              "guides/encryption",
+              "guides/backup",
+              "guides/export-import"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guides/agent-access",
+              "guides/self-hosting",
+              "guides/custom-markers"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/elkimek/get-based"
+    }
+  }
+}

@@ -1,0 +1,64 @@
+---
+title: "getbased: Health intelligence that's actually yours"
+description: "getbased is a free, open-source personal health platform that integrates labs, DNA, wearables, light, and AI — all stored locally in your browser."
+---
+
+getbased is a personal health intelligence platform organized around five lenses on your biology — Labs, Genome, Body, Light, and Insight. Every lens informs every other: your DNA shapes how labs are interpreted, your wearable physiology shapes which biomarkers matter most, your light environment shapes your sleep and hormones, and the AI synthesizes across all of them with full context. Your data lives in your browser, encrypted, with no account required.
+
+## Five lenses
+
+| Lens | What it covers |
+|---|---|
+| **Labs** | 287+ biomarkers, reference ranges, trend charts, biological age (PhenoAge + Bortz), specialty labs (OAT, fatty acids, Metabolomix+) |
+| **Genome** | 47 curated SNPs, APOE haplotype, 39 mtDNA haplogroups, DNA-aware insights across lipids, methylation, vitamin D, and more |
+| **Body** | Oura, Fitbit, Withings, Polar, Apple Health; manual biometrics; menstrual cycle tracking with phase-aware ranges |
+| **Light** | Sun exposure with atmospheric UV data, photobiology devices, indoor light environment, 8 measurement tools |
+| **Insight** | AI chat with full health context, custom knowledge base, correlations, lifestyle context cards, recommendations |
+
+## What makes getbased different
+
+getbased is built around a few principles that set it apart from most health apps:
+
+**Local-first.** All your data is stored in your browser using localStorage and IndexedDB, encrypted at rest with AES-256-GCM. Nothing goes to a server unless you explicitly opt in to sync.
+
+**No account required.** Open the app and start using it. There is no sign-up, no email, no tracking.
+
+**Free and open-source.** getbased is licensed under AGPL-3.0. You can inspect every line, self-host it, or contribute.
+
+**Six AI providers, including fully local.** You choose how AI works — pay-per-query with crypto, one-click OAuth, a privacy-first cloud provider, or a model running entirely on your own machine.
+
+**Any lab PDF, any format.** The AI import pipeline reads lab reports from any country, language, or lab. There is no approved lab list.
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Open the app, set up your profile, and import your first lab report in minutes.
+  </Card>
+  <Card title="Import a lab PDF" icon="file-arrow-up" href="/guides/pdf-import">
+    Drop any lab report and let the AI extract and map your results automatically.
+  </Card>
+  <Card title="Import DNA data" icon="dna" href="/guides/dna-import">
+    Upload raw data from AncestryDNA, 23andMe, MyHeritage, FTDNA, or Living DNA.
+  </Card>
+  <Card title="Connect a wearable" icon="watch" href="/guides/wearables">
+    Sync Oura, Fitbit, Withings, Polar, or import an Apple Health export.
+  </Card>
+</CardGroup>
+
+## How getbased compares
+
+| | getbased | Typical health apps |
+|---|---|---|
+| Scope | Five integrated lenses (Labs, Genome, Body, Light, Insight) | One data class only |
+| Open source | AGPL-3.0 | Closed source |
+| Cost | Free | Free tier + paid upsell |
+| Data storage | Local browser, encrypted | Cloud (their servers) |
+| AI providers | 6 choices, including fully local and bring-your-own | Locked to one |
+| Lab import | Any PDF, any format, any language | Specific labs or formats only |
+| Biomarkers | 287+ standard + unlimited custom | Limited set |
+| Specialty labs | OAT, fatty acids + custom marker pipeline for any test | Blood only |
+| DNA raw data | 47 curated SNPs, APOE, 39 mtDNA haplogroups, 6 providers | No |
+| Lifestyle context | 9 cards inform all AI analysis | None or basic |
+| Custom knowledge base | Bring your own document collection | No |
+| Account required | No | Yes |

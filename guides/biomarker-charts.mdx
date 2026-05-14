@@ -1,0 +1,114 @@
+---
+title: "Read biomarker trend charts in getbased"
+description: "Understand how getbased charts 300+ biomarkers across 17 categories — reference bands, optimal ranges, chart overlays, date comparison, and correlations."
+---
+
+Every biomarker you import gets its own trend chart, organized by category on the dashboard. Charts plot values over time with reference range bands, optional overlays for context, and tools for comparing dates and exploring correlations between markers.
+
+## The 17 biomarker categories
+
+getbased tracks 300+ biomarkers organized into 17 categories:
+
+- **Biochemistry** — glucose, liver enzymes (ALT, AST, ALP, GGT), kidney markers, electrolytes
+- **Hormones** — testosterone, estradiol, cortisol, DHEA, insulin, progesterone
+- **Lipids** — cholesterol, triglycerides, LDL, HDL, ratios (e.g., TG/HDL)
+- **Hematology** — complete blood count, red and white cell indices
+- **Thyroid** — TSH, free T3, free T4, reverse T3, thyroid antibodies
+- **Vitamins & Minerals** — D, B12, folate, ferritin, iron, magnesium, zinc
+- **Inflammation** — hs-CRP, ESR, homocysteine, fibrinogen
+- **Body Composition** — body fat %, lean mass, visceral fat (from DEXA)
+- **Bone Density** — BMD, T-scores, Z-scores (from DEXA)
+- **Urinalysis** — pH, specific gravity
+- **Metabolomics**, **Fatty Acids**, **Neurotransmitters**, **Amino Acids**, and more (from specialty panels)
+
+Category headers show how many markers have data versus how many are available ("4 of 12 biomarkers with data"). Markers with no data are hidden — only charts with at least one value are shown.
+
+## How charts work
+
+<Tabs>
+  <Tab title="Reference bands">
+    Each chart displays a gray shaded region marking the standard reference range. Values inside the band are normal; values outside are colored — red for high, blue for low, green for normal.
+
+    For open-ended ranges (only a lower or upper bound, such as eGFR >59), a solid threshold line replaces the band.
+
+    When a PDF's reference ranges differ from the stored defaults and you accepted the update during import, the chart reflects your lab's own ranges.
+  </Tab>
+  <Tab title="Optimal ranges">
+    A green dashed outline shows a tighter optimal range when one is defined. Optimal ranges represent values associated with better long-term health outcomes — not just "not abnormal." They support open-ended bounds the same way reference ranges do.
+
+    A marker can be within the reference range but outside the optimal range. Both bands appear on the same chart so you can see the distinction.
+  </Tab>
+  <Tab title="Time scale">
+    The horizontal axis uses a proportional time scale — gaps between dates reflect actual elapsed time. A six-month gap looks wider than a one-month gap.
+
+    If a marker has no result on a particular date, the line continues across the gap. You won't see a break in the trend just because one lab date is missing a value.
+  </Tab>
+  <Tab title="Single-point categories">
+    Some categories — Fatty Acids is the main example — contain measurements that are typically taken once rather than tracked over time. These display as a grid of value cards rather than a trend line. Each card shows the value alongside its reference range. Click any card to open the detail modal.
+  </Tab>
+</Tabs>
+
+## Chart overlays
+
+The **Layers** dropdown in the chart area header lets you overlay additional context on top of every chart. Each layer is toggled independently and your choice is saved per profile.
+
+- **Note dots** — yellow dots appear at dates where you have written a standalone note. Hover over a dot to read the note text.
+- **Supplement bars** — colored bars along the bottom of the chart show when supplements or medications were active.
+- **Cycle phase bands** — vertical shading marks menstrual cycle phases: red (menstrual), blue (follicular), purple (ovulatory), yellow (luteal). A single letter at the top identifies the phase. This layer is available for female profiles with cycle data entered.
+
+The Layers dropdown is hidden if you have no notes, supplements, or cycle data.
+
+## Detail modal
+
+Click any chart card to open the detail modal for that marker. The modal shows:
+
+- A full history table with values, reference ranges, and status for each date
+- The trend direction and any active alerts
+- AI interpretation (if an AI provider is configured)
+- Notes associated with that marker's dates
+- The source filename for each value (from PDF import) or a "manual" label for hand-entered values
+
+## Compare dates
+
+The **Compare** view lets you select any two lab dates and see how every marker changed between them. This is useful for measuring the effect of a diet change, a new supplement protocol, a medication, or any other intervention.
+
+Open the Compare view from the sidebar and use the two date pickers to choose your dates. Every marker with a value on either date appears in the comparison table, showing:
+
+- The value on the first (earlier) date
+- The value on the second (later) date
+- The direction and magnitude of the change
+- Whether each value is within the reference range
+
+Status colors follow the same convention as the rest of the app: green for normal, red for high, blue for low.
+
+<Tip>
+  For the most useful comparisons, pick a date just before starting an intervention and a date several months later. Year-over-year comparisons help account for seasonal variation in markers like vitamin D.
+</Tip>
+
+## Correlations
+
+The **Correlations** view plots two biomarkers against each other as a scatter chart. Each point represents a single lab date, positioned by the values of both markers on that date. This reveals whether two markers tend to rise and fall together — or move in opposite directions.
+
+Select **Correlations** in the sidebar, then choose a marker for the horizontal (X) axis and one for the vertical (Y) axis. The chart updates immediately.
+
+Values on both axes are shown as a **percentage of the reference range** — 0% is the lower limit, 100% is the upper limit. This normalizes markers with different units so they land on the same grid. Values outside the reference range appear below 0% or above 100%.
+
+getbased also includes curated **preset pairs** for commonly studied relationships — LDL and triglycerides, glucose and insulin, and others. Select a preset from the dropdown to jump directly to that pair.
+
+<Note>
+  You need at least three lab entries to see a meaningful scatter pattern in the correlations view. More dates produce a more informative plot.
+</Note>
+
+The active date range filter applies to correlations — only lab dates within the selected range appear as points. Narrow the range to examine whether a relationship between two markers changed during a specific period.
+
+<Warning>
+  Correlation in your personal data does not prove causation, and a small number of data points can produce misleading patterns. Use correlations as a starting point for conversations with your healthcare provider, not as a definitive finding.
+</Warning>
+
+## PhenoAge
+
+The PhenoAge marker (under the Biochemistry or Aging category) includes a gray dashed line showing your chronological age for comparison. PhenoAge is a biological age estimate calculated from nine standard biomarkers — it requires your date of birth to be set in **Settings**.
+
+## Date range filter
+
+Use the date range filter in the header to zoom into a specific period. All charts, trend detection, and the correlations view update immediately when you change the range.

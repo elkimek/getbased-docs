@@ -1,0 +1,262 @@
+---
+title: "Connect an AI provider to getbased"
+sidebarTitle: "AI providers"
+description: "getbased supports six AI backends — from one-click OAuth to fully local models. Compare providers and learn how to set each one up."
+---
+
+getbased supports six AI providers for PDF import, chat, and dashboard AI features. You can switch between them at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
+
+## Which features need AI?
+
+| Feature | Requires AI? |
+|---|---|
+| PDF import | Yes |
+| AI chat panel | Yes |
+| Focus card (dashboard insight) | Yes |
+| Health status dots on context cards | Yes |
+| AI-generated card tips | Yes |
+| Web search in chat | Yes (OpenRouter, PPQ, Venice) |
+| Charts, tables, trend alerts | No |
+| Manual entry | No |
+| JSON export / import | No |
+| Correlations, compare dates | No |
+
+All non-AI features work fully without any provider configured. You can load a demo profile, enter results manually, and explore charts and trends before setting up AI.
+
+## Set up a provider
+
+<Tabs>
+  <Tab title="OpenRouter">
+    OpenRouter is the easiest way to get started. It gives you access to 200+ models — Claude, GPT, Gemini, DeepSeek, Grok, Qwen, and more — with a single account. Pay with a card or USDC. Supports web search in chat.
+
+    **Connect with OAuth (easiest):**
+
+    <Steps>
+      <Step title="Select OpenRouter in Settings">
+        Open **Settings** (gear icon in the header) and go to the **AI** tab. Select **OpenRouter**.
+      </Step>
+      <Step title="Click Connect with OpenRouter">
+        Click the **Connect with OpenRouter** button. You'll be redirected to OpenRouter to authorize getbased. No API key needed — the app handles the token exchange automatically.
+      </Step>
+      <Step title="Choose a model">
+        Back in Settings, pick a model from the curated dropdown. Recommended models are sorted first and marked with a star.
+      </Step>
+    </Steps>
+
+    **Connect with an API key:**
+
+    <Steps>
+      <Step title="Get an API key">
+        Create an account and generate an API key at [openrouter.ai](https://openrouter.ai).
+      </Step>
+      <Step title="Paste your key in Settings">
+        Open **Settings → AI**, select **OpenRouter**, and paste your API key.
+      </Step>
+      <Step title="Choose a model">
+        Pick a model from the dropdown, or type any OpenRouter model ID into the custom input field.
+      </Step>
+    </Steps>
+
+    <Tip>
+      The OAuth connect button also appears in the chat panel when no provider is configured — you can set up OpenRouter without going to Settings.
+    </Tip>
+  </Tab>
+
+  <Tab title="PPQ">
+    PPQ is a pay-per-query AI aggregator with 300+ models. No subscription, no KYC, no identity verification. Top up directly in the app with Bitcoin, Lightning, Monero, Litecoin, or Bitrefill gift cards. Supports web search in chat.
+
+    <Steps>
+      <Step title="Select PPQ in Settings">
+        Open **Settings → AI** and select **PPQ**.
+      </Step>
+      <Step title="Create an account">
+        Click **Create Account**. This is instant and requires no signup form — PPQ accounts are fully anonymous.
+      </Step>
+      <Step title="Save your API key">
+        Copy your API key and store it somewhere safe. PPQ accounts are anonymous with no recovery mechanism — if you lose the key, you lose access to your balance.
+      </Step>
+      <Step title="Top up your balance">
+        Click **Top Up** and follow the payment flow. The app shows a QR code and polls for payment confirmation. Supported: Lightning, Bitcoin, Monero, Litecoin, Aqua, and Bitrefill gift cards.
+      </Step>
+      <Step title="Choose a model">
+        Pick a model from the curated dropdown. Your balance is displayed with color coding so you always know what you have available.
+      </Step>
+    </Steps>
+
+    You can also paste an existing API key from [ppq.ai](https://ppq.ai) if you already have an account.
+  </Tab>
+
+  <Tab title="Routstr">
+    Routstr is a decentralized AI network powered by Bitcoin micropayments. getbased has a built-in Cashu eCash wallet — fund it with Lightning, then connect to any Routstr node discovered via Nostr relays. Your prompts go directly from your browser to the node you choose. No account, no subscription.
+
+    <Steps>
+      <Step title="Select Routstr in Settings">
+        Open **Settings → AI** and select **Routstr**.
+      </Step>
+      <Step title="Fund your wallet">
+        Click **Deposit** and pay the Lightning QR code (or paste a Cashu token from an external wallet). Your wallet balance is shown in the settings panel.
+      </Step>
+      <Step title="Pick a node">
+        The app discovers online Routstr nodes via Nostr relays. Click **Connect** on any node in the list.
+      </Step>
+      <Step title="Deposit sats to the node">
+        Choose how many sats to deposit to the node for your session. You receive a session key that authenticates your requests.
+      </Step>
+      <Step title="Start chatting">
+        Your wallet balance and your node session balance are shown separately. You can move sats between them freely at any time.
+      </Step>
+    </Steps>
+
+    **Wallet features:**
+
+    - **Seed phrase** — a 12-word BIP-39 mnemonic is generated on your first deposit. Write it down — it is the only way to recover your wallet on another device.
+    - **Lightning withdraw** — send sats to a Lightning address or pay a BOLT11 invoice.
+    - **Cashu token send/receive** — withdraw as a shareable Cashu token, or deposit one from an external wallet.
+    - **Node withdraw** — pull remaining sats back from a node into your local wallet.
+
+    <Warning>
+      Your seed phrase is shown once when you first deposit. You can view it again from the wallet menu under Seed & Restore. Without it, your wallet cannot be recovered.
+    </Warning>
+  </Tab>
+
+  <Tab title="Venice AI">
+    Venice is a privacy-focused cloud provider with a no-log policy — your conversations and data are not stored on their servers. Venice also proxies access to GPT, Grok, and DeepSeek models. Supports web search in chat with any model.
+
+    <Steps>
+      <Step title="Get an API key">
+        Create an account and generate an API key at [venice.ai](https://venice.ai).
+      </Step>
+      <Step title="Select Venice in Settings">
+        Open **Settings → AI** and select **Venice**.
+      </Step>
+      <Step title="Paste your API key">
+        Enter your API key in the field provided.
+      </Step>
+      <Step title="Choose a model">
+        Pick a model from the dropdown. Venice's own models run on their privacy-preserving infrastructure; proxied models (GPT, Grok, DeepSeek) run on their respective providers.
+      </Step>
+    </Steps>
+
+    <Tip>
+      **End-to-end encryption:** Venice offers E2EE models where your prompts are encrypted in your browser using ECDH + AES-256-GCM and only decrypted inside a verified Intel TDX Trusted Execution Environment. Not even Venice can read them in transit. Enable the **End-to-End Encryption** toggle in Venice settings to switch to E2EE models. A green lock icon in the chat header confirms TEE attestation passed. Note: web search and image attachments are disabled in E2EE mode.
+    </Tip>
+  </Tab>
+
+  <Tab title="Custom API">
+    Connect any OpenAI-compatible API endpoint with your own base URL and API key. Works with OpenAI, Mistral, Groq, Together, xAI, Fireworks, Deepinfra, vLLM, LiteLLM, and any service that implements the `/v1/chat/completions` standard.
+
+    <Steps>
+      <Step title="Select Custom in Settings">
+        Open **Settings → AI** and select **Custom**.
+      </Step>
+      <Step title="Enter your base URL">
+        Type the base URL of your endpoint — for example, `https://api.openai.com/v1`.
+      </Step>
+      <Step title="Enter your API key">
+        Paste your API key for the service.
+      </Step>
+      <Step title="Validate and pick a model">
+        Click **Save & Validate**. The app checks your key and fetches the model list from your endpoint. Pick a model from the dropdown, or type a model ID manually if your endpoint doesn't expose a `/v1/models` listing.
+      </Step>
+    </Steps>
+
+    <Tip>
+      Use Custom when you have a direct API key for a service that is not one of the built-in providers. If the service is available through OpenRouter or PPQ, those are easier — they handle model discovery and show pricing automatically.
+    </Tip>
+  </Tab>
+
+  <Tab title="Local AI">
+    Run a language model entirely on your own machine. Nothing is sent over the network — not even for PDF import. Local AI connects via the standard OpenAI-compatible API, supported by all major local server applications.
+
+    <Steps>
+      <Step title="Install a local AI server">
+        Choose one of the supported applications and install it on your machine:
+
+        - [Ollama](https://ollama.com) — command-line, easiest setup
+        - [LM Studio](https://lmstudio.ai) — GUI with drag-and-drop model loading
+        - [Jan](https://jan.ai) — open-source desktop app
+        - llama.cpp, LocalAI, or any OpenAI-compatible server
+      </Step>
+      <Step title="Load a model">
+        Download a model to run locally. In Ollama, for example:
+
+        ```bash
+        ollama pull qwen2.5:14b
+        ```
+
+        For reliable lab PDF parsing, use a model with at least 14B parameters. The built-in Model Advisor in Settings shows which of your installed models are suitable for lab analysis.
+      </Step>
+      <Step title="Select Local in Settings">
+        Open **Settings → AI** and select **Local**.
+      </Step>
+      <Step title="Enter your server URL">
+        The default is `http://localhost:11434` for Ollama. Change it if your server runs on a different port.
+      </Step>
+      <Step title="Test the connection">
+        Click **Test**. The app auto-discovers available models from your server. Add an API key only if your server requires one — most don't.
+      </Step>
+    </Steps>
+
+    **CORS setup**
+
+    Local AI servers block requests from web pages by default. getbased detects this and shows setup instructions, but here is the quick reference:
+
+    | Server | How to enable CORS |
+    |---|---|
+    | Ollama (Linux) | `OLLAMA_ORIGINS=* ollama serve` |
+    | Ollama (macOS) | `launchctl setenv OLLAMA_ORIGINS "*"` then restart Ollama |
+    | Ollama (Windows) | Add `OLLAMA_ORIGINS` = `*` as a system environment variable, then restart Ollama |
+    | LM Studio | Settings → Enable CORS |
+    | Jan | Settings → Advanced → Enable CORS |
+
+    <Warning>
+      The hosted app at `app.getbased.health` runs over HTTPS. Browsers block HTTPS pages from making requests to plain HTTP servers on your local network (mixed content). This means Local AI must run on the same machine — only `localhost` and `127.0.0.1` will work. If you need to reach a model on another device, self-host the app using `node dev-server.js`, which runs over HTTP.
+    </Warning>
+
+    <Warning>
+      Ollama supports `:cloud` models that run on Ollama's servers, not your machine. If privacy is your reason for choosing Local AI, stick with locally-running models. The Model Advisor marks cloud models with a cloud badge so you can tell them apart.
+    </Warning>
+
+    <Tip>
+      When connected to Ollama, the Model Advisor panel appears below the model dropdown. Each installed model gets a fitness rating for lab analysis (Recommended, Capable, Underpowered, or Inadequate) and a VRAM fit check. If none of your models are recommended, the Advisor suggests the best one to pull for your hardware.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Recommended models
+
+All providers show a tiered model dropdown with two groups:
+
+- **Recommended** — the latest, most capable models for lab interpretation, sorted first
+- **Other** — all remaining available models
+
+Recommended models are chosen for accuracy with medical and scientific data. You can use any model, but recommended ones produce the most reliable results.
+
+<Warning>
+  **Use the same model for all your imports.** When you import a lab PDF, the AI generates marker keys (like `biochemistry.glucose`) to map results. Different models may generate slightly different keys for the same marker, which can cause the same biomarker to appear as two separate entries in your charts. Pick a model and stick with it. If you do switch, getbased runs a pre-flight check before each import and warns you if your model has changed since the last import.
+</Warning>
+
+## How much does it cost?
+
+AI providers charge based on how much text is sent and received. getbased displays the exact cost of every interaction in the chat panel. Here is what real usage costs with the recommended models:
+
+| Model | Provider | Import a lab PDF | Chat message | First month\* | Ongoing month\*\* |
+|---|---|---|---|---|---|
+| Claude Sonnet 4.6 | OpenRouter / Routstr / PPQ | ~$0.04 | ~$0.02 | ~$1.00 | ~$0.50 |
+| GPT 5.4 | OpenRouter / Venice / Routstr / PPQ | ~$0.03 | ~$0.02 | ~$0.80 | ~$0.45 |
+| Gemini 3.1 Pro | OpenRouter / Venice / Routstr / PPQ | ~$0.03 | ~$0.01 | ~$0.60 | ~$0.35 |
+| Grok 4 | OpenRouter / Venice / Routstr / PPQ | ~$0.01 | ~$0.005 | ~$0.25 | ~$0.15 |
+| Any model | Custom API (direct key) | Varies | Varies | Varies | Varies |
+| Any local model | Local AI (Ollama, LM Studio, Jan) | Free | Free | Free | Free |
+
+\* _First month: importing your first labs and setting up your profile through chat — typically 3–5 imports and 30+ chat messages._
+
+\*\* _Ongoing month: 2–3 lab imports, 20–30 chat messages, dashboard AI features. Heavy users who chat daily may spend 2–3× more._
+
+<Tip>
+  Most users spend well under $1 per month. Every AI response in getbased shows its cost below the message, so you always know exactly what you are spending. If your credits run out, the app shows a clear message with a link to add more.
+</Tip>
+
+<Tip>
+  Run a local model with [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), or [Jan](https://jan.ai) and pay nothing. You will need 8GB or more of VRAM — or a Mac with 16GB or more of unified memory — for capable models. The Model Advisor in Settings shows exactly what fits your hardware.
+</Tip>

@@ -1,0 +1,169 @@
+---
+title: "Connect wearables and track biometrics"
+description: "Sync Oura, Fitbit, Withings, Polar, Apple Health, and more alongside your blood work — or log readings manually without any device."
+---
+
+The Body & Wearables lens pulls data from your connected devices into a unified dashboard strip, placing HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more on the same timeline as your lab results. If you don't own a wearable, you can log weight, blood pressure, and resting heart rate manually using inline forms directly on the dashboard.
+
+## Dashboard strip
+
+Each metric appears as a card on the dashboard strip. Tap any card to open a 90-day chart with statistics and a full reading history. Cards for metrics your device doesn't measure are hidden automatically.
+
+Metrics surfaced on the strip include:
+
+- HRV (RMSSD), resting heart rate, sleep score, readiness
+- Activity and steps
+- Weight, blood pressure, SpO₂, body-temperature delta
+- Body composition (body fat %, fat mass, muscle mass, bone mass, lean mass, water, visceral fat)
+- Vascular health (pulse wave velocity, vascular age, cardio fitness)
+- Sleep architecture (deep, light, REM, awake durations; average HR; breathing rate; snoring; apnea-class disturbance)
+
+## Supported vendors
+
+| Vendor | Auth | Notes |
+|---|---|---|
+| **Oura** | OAuth 2.0 | Requires an Oura account and ring. |
+| **Fitbit** | OAuth 2.0 (PKCE) | Sleep score is approximated from efficiency — Fitbit's API does not expose the in-app Sleep Score. |
+| **Withings** | OAuth 2.0 | Surfaces every metric your Withings hardware produces. Cards for unsupported metrics are hidden automatically. |
+| **Polar** | OAuth 2.0 | Sync your device to Polar Flow before connecting — Polar's API returns no data until the device has uploaded. HRV is workout-only (chest strap), not overnight. |
+| **Apple Health** | File import | Export from the iPhone Health app and drop the `.zip` file. No OAuth, no server contact. |
+| **WHOOP** | Beta | Code is ready; the connect row is hidden until WHOOP partner credentials are validated. |
+| **Ultrahuman** | Beta | Code is ready; the connect row is hidden until Ultrahuman partner credentials are validated. |
+| **Manual** | None | Built-in. Log weight, blood pressure, and resting HR directly on the dashboard without a device. |
+
+## How to connect a wearable
+
+<Steps>
+  <Step title="Open Settings">
+    Click the gear icon to open **Settings**, then select **Wearables**.
+  </Step>
+  <Step title="Click Connect">
+    Find the vendor row you want and click **Connect**.
+  </Step>
+  <Step title="Authorize on the vendor's site">
+    For OAuth-based vendors, you are redirected to the vendor's authorization page. Approve access and you are redirected back automatically.
+  </Step>
+  <Step title="Wait for the initial sync">
+    getbased fetches the last 90 days of data. Raw daily rows are stored in your browser's local database; a compact summary populates the dashboard strip.
+  </Step>
+</Steps>
+
+## Apple Health setup
+
+Apple Health uses a file export instead of OAuth.
+
+<Steps>
+  <Step title="Export from your iPhone">
+    Open the **Health** app → tap your profile photo (top right) → **Export All Health Data**.
+  </Step>
+  <Step title="Transfer the file">
+    AirDrop or email the `export.zip` to your computer.
+  </Step>
+  <Step title="Import into getbased">
+    In **Settings → Wearables**, drop the `.zip` file onto the Apple Health row.
+  </Step>
+</Steps>
+
+<Note>
+Parsing runs entirely in your browser. The file is never sent to a server. Large exports (multi-year history) can take 30–60 seconds to parse.
+</Note>
+
+## Manual entry
+
+You can log weight, blood pressure, and resting heart rate without any wearable. The dashboard shows an empty card for each of these metrics when no device provides them.
+
+**To log a reading:**
+
+<Steps>
+  <Step title="Tap the empty card">
+    Tap the card (for example, the `Weight –` card with a `+ Log` affordance at the bottom).
+  </Step>
+  <Step title="Enter the value">
+    Type the number into the inline input — weight in kg, blood pressure as systolic/diastolic with optional pulse, resting HR in bpm.
+  </Step>
+  <Step title="Add context (optional)">
+    Tap a context chip — **resting**, **morning-fasted**, **post-workout**, or **stress** — to help the AI interpret the reading correctly.
+  </Step>
+  <Step title="Save">
+    Press **Enter** or tap **Save**. The card updates immediately with a *via Manual* badge.
+  </Step>
+</Steps>
+
+**To edit or delete past readings:** tap any card to open its detail modal, then scroll past the chart to the **Manual entries** list. Each row has a **×** button to delete it. To correct a value, delete the old reading and log the correct one with the **+ Add reading** button (which accepts backfilled dates).
+
+**To delete all manual entries:** go to **Settings → Wearables**, expand the **Manual** row, and click **Delete all manual entries**. Wearable data from Oura, Withings, and other connected vendors is not affected.
+
+## Multi-vendor metric ownership
+
+When two vendors report the same metric — for example, Oura HRV and Fitbit HRV — getbased displays the most recent non-null value by default and shows a *via {vendor}* badge on the card.
+
+To switch sources:
+
+1. Tap the *via {vendor}* badge on a card.
+2. Select the source you want from the picker.
+
+Your choice is saved per metric, per profile, and syncs across your devices. Vendors that are the sole provider of a metric (for example, only Withings measures weight) do not show a badge.
+
+## Sync controls
+
+Each connected vendor row in **Settings → Wearables** has two sync actions:
+
+- **Sync now** — refetches the last 7 days. Use this when you've just synced your device and want the dashboard to update immediately.
+- **Backfill 90 days** — refetches the full 90-day window. Use this after returning from a trip, switching devices, or noticing a gap in the chart. This is slower — some vendors apply rate limits that add 30 seconds or more to the request.
+
+Background sync runs automatically every 6 hours while the tab is open, so the dashboard typically stays current on its own.
+
+<Tip>
+An "as of {date}" hint on a card means that metric's most recent reading is older than other data from the same vendor. This is usually the vendor's processing pipeline finishing late — Oura's HRV often lags its sleep score by several hours. Hover the hint for an explanation.
+</Tip>
+
+## Reordering the dashboard strip
+
+Tap the **⇄** button in the wearable strip header to enter reorder mode. Each card shows **◀ ▶** arrows — click once to move a card one slot in that direction. Your order is saved per profile.
+
+## Privacy
+
+- **Raw daily rows never leave your device.** They are stored in your browser's IndexedDB, encrypted at rest.
+- **Compact summary data** syncs to your other devices via Evolu CRDT, which is end-to-end encrypted using your mnemonic identity.
+- **OAuth refresh tokens stay local.** They are not included in the sync payload — you reconnect each vendor on each device.
+- **AI chat context** includes a ~200-token wearable summary by default. You can disable this in **Settings → AI → AI Context**.
+- **Personal Agent (MCP)** receives the same compact summary. You can optionally push a 30-day daily time series in **Settings → Data → Agent Access** for richer time-series reasoning.
+
+## Self-hosting OAuth
+
+If you self-host getbased, the OAuth `client_id` values bundled with the app are registered for `*.getbased.health` redirect URIs only. To use any OAuth-based wearable on your own instance, register your own OAuth app with each provider and set the corresponding environment variable:
+
+| Variable | Provider | Notes |
+|---|---|---|
+| `OURA_CLIENT_ID` | Oura | Also requires `OURA_CLIENT_SECRET` in `.env.local`. |
+| `WITHINGS_CLIENT_ID` | Withings | Also requires `WITHINGS_CLIENT_SECRET`. |
+| `POLAR_CLIENT_ID` | Polar | Also requires `POLAR_CLIENT_SECRET`. |
+| `ULTRAHUMAN_CLIENT_ID` | Ultrahuman | Also requires `ULTRAHUMAN_CLIENT_SECRET`. |
+| `FITBIT_CLIENT_ID` | Fitbit | PKCE — no secret needed. |
+| `WHOOP_CLIENT_ID` | WHOOP | PKCE — no secret needed. |
+
+Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. Apple Health is file-import only and requires no credentials on any install.
+
+<Note>
+When these variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. When unset, the bundled maintainer values are used and hosted users see no change.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="'Polar connected — waiting on first device sync'">
+    The OAuth handshake succeeded, but Polar's API uses a transactions model that returns no data until your device has uploaded a sync to Polar Flow. Open the Polar app on your phone, sync your watch, then click **Sync now** in getbased.
+  </Accordion>
+  <Accordion title="'Needs reconnection' badge on a vendor row">
+    The OAuth refresh token expired or was revoked. Click **Reconnect** on that vendor row to re-authorize.
+  </Accordion>
+  <Accordion title="A vendor doesn't appear when picking a metric source">
+    The vendor doesn't expose that metric through their API. For example, WHOOP does not provide weight data, and Withings does not provide HRV (RMSSD). Only vendors that actually report a given metric appear in the source picker for that metric.
+  </Accordion>
+  <Accordion title="Apple Health import is slow">
+    Large Apple Health exports can be 100 MB or more for multi-year history. Parsing runs entirely in your browser — no server is involved — so expect 30–60 seconds for large files.
+  </Accordion>
+  <Accordion title="WHOOP or Ultrahuman is not in the connect list">
+    Both integrations are fully implemented but hidden until production OAuth credentials are validated with each partner. Follow the getbased changelog for updates.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,186 @@
+---
+title: "Connect a custom knowledge base to getbased"
+description: "Ground AI answers in your own documents — research papers, clinical guides, or notes — using a private in-browser engine or a self-hosted RAG server."
+---
+
+A knowledge base (also called a Custom Knowledge Source) gives the AI access to documents you have curated — research papers, clinical guides, textbook chapters, personal notes, or any collection of text. Instead of answering from general training knowledge alone, the AI retrieves the most relevant passages from your library before responding and cites them inline.
+
+getbased supports two backends: an **in-browser engine** that runs entirely on your device with no install required, and an **external server** you self-host for larger corpora or hardware-accelerated retrieval.
+
+## Open the knowledge base panel
+
+Click the **"Connect a knowledge base"** CTA pill on the dashboard, or — once configured — click the **📚 row** to manage your libraries. The knowledge base lives in its own modal, not in Settings → AI.
+
+## In-browser vs external server
+
+<Tabs>
+  <Tab title="In-browser (on this device)">
+    The in-browser backend runs entirely in your browser using transformers.js and the browser's private file storage (OPFS). Documents are indexed locally — nothing leaves your device for the knowledge base step.
+
+    **Best for:** a few dozen to a few hundred documents. No install, no server, no external dependencies. Works offline after the initial model download.
+
+    ### Create a library
+
+    <Steps>
+      <Step title="Open the knowledge base panel">
+        Click **"Connect a knowledge base"** on the dashboard.
+      </Step>
+      <Step title="Choose In-browser">
+        Select **On this device** and click **Create new library**.
+      </Step>
+      <Step title="Pick an embedding model">
+        A dialog shows four models side by side. getbased benchmarks your device on first load and pre-selects the strongest model that runs smoothly on your hardware.
+
+        | Model | Size | Notes |
+        |---|---|---|
+        | MiniLM | 22 MB | Fast, good general retrieval |
+        | BGE-small-en | 33 MB | Better English retrieval |
+        | Multilingual-E5 | 40 MB | 100+ languages |
+        | BGE-base-en | 110 MB | Highest English quality |
+
+        The model is **locked at library creation** — switching later would require re-indexing all documents, so the choice is made upfront. Libraries created before v1.21.4 continue to use MiniLM with no forced migration.
+      </Step>
+      <Step title="Add documents">
+        Drop your files into the panel. Supported formats: **PDF**, **DOCX** (Word), **Markdown**, **plain text**, and **ZIP archives** containing any of the above.
+      </Step>
+      <Step title="Wait for indexing">
+        A progress pill appears in the bottom-right corner. You can close the panel and keep using the app — indexing runs in the background. Click **Cancel** on the pill to stop at the next excerpt; anything already indexed stays in the library.
+      </Step>
+    </Steps>
+
+    <Note>
+    Large batches (several hundred files) can take 10+ minutes on the in-browser engine. If that is your workflow, consider the external server backend below.
+    </Note>
+
+    ### Switch between libraries
+
+    Open the knowledge base panel and click any library name in the list to activate it. Only one library is active at a time. The active library name appears as a badge in the chat header whenever it is being used.
+
+    ### Query rewriting (recall booster)
+
+    When an AI provider is configured, the knowledge base can rephrase each question into three variants before searching, then merge the results. This closes the vocabulary gap between how you write your notes and how you ask questions later — a search for *"Black Seed Oil"* will also find notes titled *"Nigella Sativa"*.
+
+    Toggle **"Improve recall with query rewriting"** in the knowledge base panel (default: on). Each rewrite uses roughly 100 tokens from your configured provider. Repeat questions in the same session use cached rewrites.
+  </Tab>
+  <Tab title="External server (self-hosted)">
+    The external server backend connects to a knowledge server you run — useful for larger corpora, shared libraries, or hardware-accelerated GPU retrieval that a browser cannot match.
+
+    ### Install the agent stack
+
+    The [getbased-agent-stack](https://github.com/elkimek/getbased-agents) bundles the RAG server, a browser management dashboard, and the MCP adapter. One command installs and starts everything on Linux:
+
+    ```bash
+    curl -sSL https://getbased.health/install.sh | bash
+    ```
+
+    The script auto-detects `uv` or `pipx`, pulls `getbased-agent-stack[full]`, and starts the RAG server on port **8322** and the management dashboard on port **8323** as systemd user services.
+
+    <Warning>
+    Auto-start requires systemd. On macOS, Windows, and WSL1, the install succeeds but services must be started manually — see the manual install tab below.
+    </Warning>
+
+    #### Review before running
+
+    ```bash
+    # Read the script before piping to bash
+    curl -sSL https://getbased.health/install.sh | less
+
+    # Or download and verify the hash
+    curl -sSL https://getbased.health/install.sh        -o install.sh
+    curl -sSL https://getbased.health/install.sh.sha256 | sha256sum -c
+    bash install.sh
+    ```
+
+    #### Manual install (macOS, Windows, WSL1)
+
+    ```bash
+    # With pipx
+    pipx install --include-deps "getbased-agent-stack[full]"
+
+    # Or with uv
+    uv tool install \
+      --with-executables-from getbased-rag \
+      --with-executables-from getbased-dashboard \
+      --with-executables-from getbased-mcp \
+      "getbased-agent-stack[full]"
+
+    # One-shot configuration
+    getbased-stack init --yes
+
+    # Start services manually in two terminals
+    lens serve                # RAG engine  → http://127.0.0.1:8322
+    getbased-dashboard serve  # Management  → http://127.0.0.1:8323
+    ```
+
+    ### Set up a library
+
+    <Steps>
+      <Step title="Open the management dashboard">
+        The installer prints a one-click login URL at the end. Click it to authenticate automatically. If you need it again, run `getbased-dashboard login-url`.
+      </Step>
+      <Step title="Create a library">
+        In the dashboard, go to the **Knowledge** tab, create a library, and drop your files in. Wait for indexing to complete.
+      </Step>
+      <Step title="Copy the API key">
+        Go to **MCP → Environment** and copy the `LENS_API_KEY`.
+      </Step>
+      <Step title="Connect in getbased">
+        In the app, open the knowledge base panel and select **External server**. Toggle **Enable Knowledge Source**, enter a display name, paste the API key, and leave the endpoint URL as `http://127.0.0.1:8322/query` for a local install.
+      </Step>
+      <Step title="Save and test">
+        Click **Save + connect**. getbased runs a test query to confirm the connection. If it succeeds, a badge appears in the chat header.
+      </Step>
+    </Steps>
+
+    ### Endpoint contract
+
+    Any server that implements the following `POST` route works as an external knowledge source — you are not required to use the getbased-agent-stack.
+
+    **Request:**
+
+    ```http
+    POST /your-endpoint
+    Authorization: Bearer your-api-key
+    Content-Type: application/json
+
+    { "version": 1, "query": "what could drive a rising ferritin?", "top_k": 5 }
+    ```
+
+    **Response (200):**
+
+    ```json
+    {
+      "chunks": [
+        { "text": "Elevated ferritin in the absence of anemia often...", "source": "Clinical Guide p.142" },
+        { "text": "Inflammatory ferritin elevation is typically...", "source": "Case study #47" }
+      ]
+    }
+    ```
+
+    **Constraints:**
+    - HTTPS is required for public hosts. Plain `http://` is accepted for loopback (`127.0.0.1`, `localhost`), RFC1918 LAN ranges, and `.local` mDNS hosts
+    - Maximum response size: 32 KB
+    - Maximum passages: 10 (client truncates)
+    - Your server must respond with `Access-Control-Allow-Origin: *`
+    - Timeout: 30 seconds — slower responses fall back to unenriched AI
+    - Redirects (3xx) are rejected
+  </Tab>
+</Tabs>
+
+## Where knowledge base results appear
+
+When a library is active, knowledge base retrieval runs automatically on every chat message and Focus Card refresh. getbased fetches the top-K passages (default 5, configurable 1–10 in the knowledge base panel) and folds them into the AI's context before the response streams. The AI cites them inline when relevant.
+
+A **badge in the chat header** shows the active library name whenever retrieval is running.
+
+## What leaves your browser
+
+Only the question itself is sent to the knowledge source — no lab values, profile details, or other private data. Choose a server you control or trust.
+
+## Disable without losing your config
+
+Toggle **Enable Knowledge Source** off to pause retrieval without deleting your configuration. The chat header badge disappears and subsequent AI calls use only your interpretive lens text.
+
+## Caching
+
+getbased caches each query result for 5 minutes (up to 20 entries, scoped per profile). Switching profiles, changing the config, or clicking **Clear cache** in the panel flushes the cache.

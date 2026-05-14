@@ -1,0 +1,174 @@
+---
+title: "AI chat for lab result interpretation"
+description: "Ask anything about your labs. The AI holds your full health history — biomarkers, lifestyle context, supplements, and wearables — no pasting required."
+---
+
+The AI chat panel is a streaming conversation window built into every page of getbased. Every message you send automatically includes a full snapshot of your data — you ask the question, the AI already has the context.
+
+## Open the chat
+
+Click the **chat bubble** floating in the bottom-right corner of the screen. The panel slides open alongside the dashboard, which shifts left to stay fully visible. Every chart, card, and section remains scrollable and interactive while the chat is open.
+
+To expand the chat to full screen, click the **⛶** button in the chat header. Click it again to return to side-by-side mode. Your preference is saved between sessions.
+
+Press **Escape** to close the panel.
+
+<Note>
+If no AI provider is configured, the chat panel shows a setup guide instead of the conversation view. Click **Connect with OpenRouter** for one-click OAuth setup — no API key needed.
+</Note>
+
+## What the AI knows
+
+Every message includes your complete health context. You never need to paste results into the chat.
+
+| Context sent | Details |
+|---|---|
+| Lab results | All biomarker values across every draw date, with reference ranges and trend direction |
+| Context cards | All nine lifestyle cards (diet, sleep, exercise, environment, and more) |
+| Interpretive lens | Your chosen scientific paradigm or expert frameworks |
+| Health goals | What you are working toward |
+| Supplements | Full supplement list with date ranges |
+| Change timeline | Timestamped log of card updates — the AI can correlate a diet change on March 1 with an LDL shift two weeks later |
+| Wearables | Connected wearable metrics (heart rate variability, sleep scores, etc.) |
+| DNA context | Relevant SNP data when you have a genome file loaded |
+| Notes | Your freeform marker and profile notes |
+| Cycle data | Menstrual phase context for female profiles |
+
+## Focus card
+
+At the top of the chat, a **Focus Card** shows a one-to-three sentence AI-generated insight drawn from your recent lab trends, health goals, and wearable signals. It gives you an orientation before you start typing and updates automatically when your data changes.
+
+<Tip>
+Use the Focus Card as a starting point. Click **Ask AI** next to any finding it surfaces to open a pre-populated chat question about that specific marker.
+</Tip>
+
+## AI personalities
+
+The AI adapts its communication style based on the personality you choose. Switch personalities using the selector in the chat header.
+
+<AccordionGroup>
+  <Accordion title="Default">
+    A clear, evidence-informed tone. Explains markers plainly, notes trends, and flags concerns without drama.
+  </Accordion>
+  <Accordion title="House">
+    A sharp, skeptical clinician who asks uncomfortable questions. Pushes back on assumptions and digs for root causes.
+  </Accordion>
+  <Accordion title="Custom">
+    Type a name in the custom personality field and click **Generate**. getbased creates a full personality profile — communication style, analytical approach, and philosophical lens. You can edit the generated text before saving.
+
+    Custom personalities are saved per profile and persist across sessions. You can create a persona based on a specific medical philosophy, a fictional doctor character, or any style that makes conversations more useful for you.
+  </Accordion>
+</AccordionGroup>
+
+The **Enforce evidence-based accuracy** toggle (off by default) adds a strict instruction to the AI to keep responses grounded in published research rather than speculation.
+
+## Conversation threads
+
+The chat panel has a **thread rail** on the left side listing all your past conversations. Each thread is named automatically from your first message, and you can rename any thread by clicking its name.
+
+- Start a new conversation at any time with **New Chat**
+- Switch between threads without losing history
+- Up to **50 threads** per profile — oldest are pruned automatically
+
+On mobile, tap the hamburger icon in the chat header to open the thread list.
+
+<Tip>
+Starting a new thread is the single biggest way to reduce token costs. History grows with every exchange — a fresh thread resets the context to just your lab data.
+</Tip>
+
+## Image attachments
+
+Attach images to any chat message — photos of lab reports, supplement labels, food logs, or anything else you want the AI to see.
+
+**Three ways to attach:**
+
+<Steps>
+  <Step title="Click the paperclip">
+    Click the **paperclip** button in the chat input area and select a file.
+  </Step>
+  <Step title="Paste from clipboard">
+    Press **Ctrl+V** (or **Cmd+V** on Mac) to paste an image directly.
+  </Step>
+  <Step title="Drag and drop">
+    Drag an image file onto the chat input area.
+  </Step>
+</Steps>
+
+Up to **5 images per message**. Supported formats: JPEG, PNG, GIF, WebP.
+
+The **HD** button next to the paperclip toggles between standard (1024 px) and high-resolution (2048 px) quality. Standard mode is sufficient for most lab reports; use HD for fine print or dense tables.
+
+Before sending, getbased analyzes each image and warns you if it detects blur, low light, overexposure, or low resolution — catching bad photos before they consume tokens.
+
+<Note>
+All EXIF metadata (GPS location, camera model, timestamps, device serial numbers) is stripped from images before they leave your browser. Only pixel data reaches your AI provider.
+</Note>
+
+<Warning>
+The paperclip and HD buttons only appear when your active model supports vision (image input). If you don't see them, switch to a vision-capable model in **Settings → AI**.
+</Warning>
+
+## Web search
+
+Toggle **Web** in the chat header to let the AI search the internet before responding. This is useful for questions about recent studies, drug interactions, or supplement research where up-to-date information matters.
+
+<Warning>
+Web search injects search results into the AI's context, significantly increasing input tokens. Expect messages to cost **2–4× more** than normal. The cost footnote shows a 🌐 indicator when search was active.
+</Warning>
+
+<Note>
+Web search is available with **OpenRouter**, **PPQ**, and **Venice**. The toggle is hidden when you are using other providers.
+</Note>
+
+## Stop and continue responses
+
+While the AI is generating a response, a **Stop** button appears in the chat input area. Click it to halt generation mid-stream — useful when the AI is heading in the wrong direction and you want to rephrase your question.
+
+After stopping, a **Continue** button appears below the partial response. Click it to resume generation from where the AI left off.
+
+## Health context and AI features
+
+Not everything you see in getbased is AI-generated. Understanding the distinction helps you trust the numbers.
+
+### What the AI generates
+
+- Chat responses and interpretations
+- Focus Card insights
+- Per-card health dots and tips
+- PDF lab import parsing
+- Custom personality profiles
+
+### What is deterministic (not AI)
+
+| Feature | How it works |
+|---|---|
+| Reference ranges on charts | Directly from your lab report PDF or your own overrides — never generated by an LLM |
+| Trend alerts ("dropped 25%") | Linear regression and slope thresholds in deterministic code |
+| PhenoAge biological age | Levine 2018 closed-form formula over 9 biomarkers |
+| Calculated markers (HOMA-IR, BUN/Creatinine, Free Water Deficit) | Published mathematical formulas |
+| Channel doses in Light & Sun | Bird-Riordan spectrum reconstruction — reproducible photobiology math |
+
+## Knowledge base grounding
+
+If you have connected a knowledge base, the chat automatically retrieves the most relevant passages from your documents before each response. A badge in the chat header shows the active library name when this is running.
+
+See [Connect a custom knowledge base](/guides/knowledge-base) for setup instructions.
+
+## Token costs
+
+Every message sends your full lab context plus conversation history. The chat header shows the name of your active model, and each AI response includes a footnote with the estimated token cost for that exchange.
+
+| Component | Typical size |
+|---|---|
+| System prompt | ~1,300 tokens |
+| Lab context | 2,000–15,000 tokens (grows with draw dates and filled cards) |
+| Conversation history | 0–10,000+ tokens (last 30 messages) |
+| Image (current message only) | 1,000–5,000 tokens per image |
+
+<Tip>
+**Cost-saving tips:**
+- Start new threads often — resetting history is the biggest lever
+- Use standard image mode unless you need fine detail
+- Run a local model via Ollama or LM Studio for unlimited free chat
+- Venice offers free-tier models with no per-token charges
+</Tip>

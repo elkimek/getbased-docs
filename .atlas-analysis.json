@@ -1,0 +1,118 @@
+{
+  "projectType": "saas",
+  "projectName": "getbased",
+  "projectDescription": "A free, local-first personal health intelligence platform that unifies blood work, DNA, wearables, and light exposure into a single dashboard with AI-powered analysis — no account required.",
+  "theme": "almond",
+  "primaryColor": "#4a87f3",
+  "lightColor": "#34548c",
+  "darkColor": "#1c1c24",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "ai-providers"
+            ]
+          },
+          {
+            "group": "Labs",
+            "pages": [
+              "guides/pdf-import",
+              "guides/manual-entry",
+              "guides/specialty-labs",
+              "guides/biomarker-charts",
+              "guides/trend-alerts"
+            ]
+          },
+          {
+            "group": "Genome",
+            "pages": [
+              "guides/dna-import"
+            ]
+          },
+          {
+            "group": "Body & Wearables",
+            "pages": [
+              "guides/wearables",
+              "guides/menstrual-cycle"
+            ]
+          },
+          {
+            "group": "Light & Sun",
+            "pages": [
+              "guides/sun-sessions",
+              "guides/light-environment",
+              "guides/light-tools"
+            ]
+          },
+          {
+            "group": "Insight & AI",
+            "pages": [
+              "guides/ai-chat",
+              "guides/interpretive-lens",
+              "guides/knowledge-base",
+              "guides/context-cards"
+            ]
+          },
+          {
+            "group": "Data & Privacy",
+            "pages": [
+              "guides/privacy",
+              "guides/cross-device-sync",
+              "guides/encryption",
+              "guides/backup",
+              "guides/export-import"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "guides/agent-access",
+              "guides/self-hosting",
+              "guides/custom-markers"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "AI-powered PDF lab import — any format, language, or country",
+    "287+ biomarkers across 17 categories with interactive trend charts",
+    "DNA raw data analysis — 47 curated SNPs, APOE haplotype, 39 mtDNA haplogroups",
+    "Wearable integrations — Oura, Fitbit, Withings, Polar, Apple Health",
+    "AI chat with 6 provider options including fully local and privacy-first choices",
+    "Custom Knowledge Base (RAG) to ground AI analysis in your own documents",
+    "9 lifestyle context cards feeding all AI interpretations",
+    "Biological age calculation (PhenoAge + Bortz)",
+    "Light & Sun photobiology tracking with atmospheric UV data",
+    "Local-first, encrypted, no account required",
+    "Agent Access — MCP-compatible API for AI coding agents and bots",
+    "Cross-device sync via end-to-end encrypted CRDT relay",
+    "Menstrual cycle tracking with phase-aware reference ranges",
+    "Specialty lab support — OAT, fatty acids, HTMA, and more",
+    "Multi-profile support for tracking family members or clients"
+  ],
+  "publicApiSurface": [
+    "Agent Access token (Settings → Data → Agent Access)",
+    "getbased-mcp: getbased_lab_context tool",
+    "getbased-mcp: getbased_section tool",
+    "getbased-mcp: getbased_wearables_series tool",
+    "getbased-mcp: getbased_list_profiles tool",
+    "getbased-mcp: knowledge_search tool",
+    "getbased-mcp: knowledge_list_libraries tool",
+    "getbased-mcp: knowledge_activate_library tool",
+    "getbased-mcp: knowledge_stats tool",
+    "getbased-mcp: getbased_lens_config tool",
+    "External server Knowledge Base: POST /query (Bearer auth, OpenAI-compatible embedding protocol)",
+    "Custom AI provider: any OpenAI-compatible /v1/chat/completions endpoint",
+    "Self-hosted sync relay: wss:// Evolu relay WebSocket",
+    "PWA installable on desktop and mobile",
+    "JSON export/import for full data portability"
+  ]
+}

@@ -1,0 +1,106 @@
+---
+title: "Get started with getbased in under ten minutes"
+sidebarTitle: "Quickstart"
+description: "Open the app, set up your profile, connect an AI provider, and import your first lab report — no installation, no account, no build tools required."
+---
+
+getbased runs entirely in your browser with no installation and no account. The steps below take you from a blank slate to a fully populated health dashboard. Most features work immediately — you only need an AI provider for PDF import and chat.
+
+<Note>
+  Charts, trend alerts, manual entry, correlations, and data export all work without any AI provider configured. You can explore the app and load a demo profile before setting up AI.
+</Note>
+
+## Steps
+
+<Steps>
+  <Step title="Open the app">
+    Go to [app.getbased.health](https://app.getbased.health) in any modern browser. No sign-up or download required.
+
+    **Install as a PWA (optional)**
+
+    You can install getbased as a Progressive Web App for a native-like experience on desktop or mobile. The full app shell works offline once installed — AI features still need a network connection to reach your provider.
+
+    | Browser | How to install |
+    |---|---|
+    | Chrome / Edge | Click the install icon in the address bar, or open the browser menu and select "Install getbased" |
+    | Safari (iOS) | Tap Share, then "Add to Home Screen" |
+    | Firefox | Open the browser menu and select "Install" |
+
+    **Self-hosting**
+
+    If you prefer to run getbased yourself, clone the repository and start a local server:
+
+    ```bash
+    git clone https://github.com/elkimek/get-based
+    cd get-based
+    node dev-server.js
+    ```
+
+    Then open `http://localhost:8000`. A local server is required — opening `index.html` directly as a file will not work because the app uses ES modules.
+  </Step>
+
+  <Step title="Complete chat onboarding">
+    When you open the app for the first time, the chat panel guides you through setup:
+
+    1. **Profile** — enter your name, sex, date of birth, height, weight, and location. Your biological sex and date of birth affect reference ranges, biological age calculation, and cycle tracking availability.
+    2. **AI provider** — connect a provider for PDF import and chat. You can skip this step and set it up later.
+    3. **Extras** — add supplements and medications, lifestyle context cards, and cycle tracking if applicable.
+
+    Every step is optional and skippable. You can update any of this information later from the client list or settings.
+  </Step>
+
+  <Step title="Configure an AI provider">
+    An AI provider is required for PDF import, the chat panel, and dashboard AI features like focus cards and health status dots.
+
+    Open **Settings** (gear icon in the header) and go to the **AI** tab. getbased supports six providers:
+
+    - **OpenRouter** — easiest to start. Click "Connect with OpenRouter" for one-click OAuth, or paste an API key. 200+ models, pay by card or USDC.
+    - **PPQ** — anonymous, no KYC. Top up with Bitcoin, Lightning, Monero, or Litecoin directly in the app.
+    - **Routstr** — decentralized Bitcoin AI with a built-in Cashu wallet.
+    - **Venice AI** — privacy-focused with a no-log policy. Optional end-to-end encryption.
+    - **Local AI** — run a model entirely on your own machine with Ollama, LM Studio, or Jan. Free forever.
+    - **Custom API** — bring any OpenAI-compatible endpoint.
+
+    See [Connect an AI provider](/ai-providers) for a full comparison and setup instructions.
+  </Step>
+
+  <Step title="Import your first lab report or try a demo profile">
+    **Import a PDF**
+
+    Click the import button (document icon, bottom-right of the screen) or drag and drop any lab PDF onto the page. The AI reads the report, maps results to 287+ known biomarkers, and shows you a preview before saving anything. It works with any format, language, or country.
+
+    <Warning>
+      You need an AI provider configured before dropping a PDF. If you see a prompt to set up a provider, visit Settings first.
+    </Warning>
+
+    **Try a demo profile**
+
+    If you don't have a lab report on hand, load one of the two built-in demo profiles from the welcome screen:
+
+    - **Sarah** — an iron and hormones story with multiple blood draws, a fatty acid panel, supplements, and lifestyle context
+    - **Alex** — a metabolic health journey with trend charts, an OAT panel, and EMF assessment data
+
+    You can also load demo profiles at any time from the client list (click your profile name in the header) using the **+ Demo Sarah** or **+ Demo Alex** buttons.
+
+    <Tip>
+      Demo profiles are fully populated with four blood draws, specialty lab data, context cards, supplement timelines, and notes — a great way to explore the dashboard before adding your own data.
+    </Tip>
+
+    **Enter results manually**
+
+    If you prefer not to use AI, choose **Manual Entry** from the import menu to type values directly.
+  </Step>
+
+  <Step title="Explore the dashboard">
+    Once data is imported, the dashboard populates automatically across all 17 biomarker categories. Here's what to explore:
+
+    - **Trend charts** — interactive line charts with reference bands, optimal ranges, and trend detection. Click any category in the sidebar to drill in.
+    - **Biological age** — PhenoAge and Bortz Age appear as a combined marker when you have the required biomarkers (hs-CRP plus eight others).
+    - **Context cards** — nine lifestyle cards (diet, sleep, exercise, stress, light, and more). Fill them in to enrich all AI analysis with your full context.
+    - **AI chat** — click the chat icon (bottom-right) to ask questions about your results. The AI has your full health profile, lab history, DNA data, and lifestyle context.
+    - **Correlations** — compare any two biomarkers over time using the correlation viewer in the sidebar.
+    - **Compare dates** — pick two lab dates for a side-by-side comparison of every marker.
+
+    A 7-step spotlight tour runs automatically after your first import. You can replay it at any time from **Settings → Display → Take a Tour**.
+  </Step>
+</Steps>

@@ -1,0 +1,133 @@
+---
+title: "Export and import your data in getbased"
+description: "Download your health data as JSON or PDF, import it on any device, and migrate between profiles — no AI provider needed for any import."
+---
+
+getbased gives you full control over your data. You can export everything as JSON at any time, import it on a new device or browser, and share structured exports with a healthcare provider as a PDF report. No account or AI provider is needed to import data.
+
+## Export your data as JSON
+
+A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, supplements, biometrics, genetics, cycle data, custom markers, and chat history.
+
+### Single-profile export
+
+<Steps>
+  <Step title="Go to the dashboard">
+    Scroll to the **Data & Notes** section at the bottom of the dashboard.
+  </Step>
+  <Step title="Export">
+    Click **Export JSON**. A `.json` file downloads to your device immediately.
+  </Step>
+</Steps>
+
+You can also export from **Settings → Data → Export**.
+
+### What the export includes
+
+- All lab entries — every date, every marker, every value
+- All 9 lifestyle context cards (diet, sleep, exercise, environment, and more)
+- Notes, health goals, and context card change history
+- Supplements
+- Biometrics — height, weight history, blood pressure history, pulse history
+- Menstrual cycle data (if entered)
+- Genetics data — SNP results from DNA raw data import (if imported)
+- Custom marker definitions
+- Chat history and conversation threads
+- Interpretive lens settings
+
+### Export a single client profile
+
+From the **Client List** modal, click the three-dot menu (⋮) next to any profile and select **Export**. This exports that specific profile as a standalone file — useful when managing multiple profiles and needing to back up or share one at a time.
+
+### Export all profiles (database bundle)
+
+To back up everything across all profiles at once:
+
+<Steps>
+  <Step title="Open Client List">
+    Open the **Client List** modal from the sidebar.
+  </Step>
+  <Step title="Export all">
+    Click **Export All** in the header. Or go to **Settings → Data → Export All Clients**.
+  </Step>
+</Steps>
+
+A database bundle downloads containing every profile's data, chat history, threads, custom personalities, and settings. Use this for a complete backup or when migrating your entire getbased setup to a new browser or device.
+
+<Tip>
+Export a JSON backup before doing a large batch import or clearing data — it's your safety net if something doesn't go as expected.
+</Tip>
+
+## Import a JSON file
+
+You import a JSON file the same way you import a lab PDF: by dropping it onto the drop zone at the top of the dashboard. No AI provider is needed.
+
+<Steps>
+  <Step title="Open getbased on the target device or browser">
+    Navigate to `app.getbased.health` (or your self-hosted URL) and open the profile where you want to import.
+  </Step>
+  <Step title="Drop the file">
+    Drag and drop your `.json` export file onto the drop zone at the top of the dashboard. getbased detects JSON files automatically.
+  </Step>
+  <Step title="Review the merge">
+    getbased merges the imported data into your current profile:
+
+    - **Lab entries** are merged by date — values for the same date are combined, not overwritten.
+    - **Notes** are deduplicated — the same note will not appear twice.
+    - **Context cards** are overwritten by the imported values.
+    - **Health goals** are merged and deduplicated by text content.
+  </Step>
+</Steps>
+
+<Warning>
+If you import a JSON file from a different profile or device, the lifestyle context cards in your current profile will be overwritten by the imported values. Your lab entry data is safe — it merges rather than overwrites.
+</Warning>
+
+### Import a database bundle
+
+Drop a database bundle (exported with **Export All**) onto the drop zone. getbased detects it automatically and handles multi-profile merging:
+
+- New profiles are created
+- Existing profiles are merged (lab entries by date, notes deduplicated)
+- Chat threads and custom personalities are carried over
+
+## Export a PDF health report
+
+<Steps>
+  <Step title="Go to the dashboard">
+    Open the profile you want to export as a report.
+  </Step>
+  <Step title="Export PDF">
+    Scroll to the **Data & Notes** section and click **Export PDF**. A full health report is generated and downloaded.
+  </Step>
+</Steps>
+
+The PDF report includes your biomarker results, trends, context card summaries, and any notes — formatted for sharing with a healthcare provider.
+
+## Common use cases
+
+| Use case | Recommended approach |
+|---|---|
+| Regular backup | [Folder backup](/guides/backup) (automatic) or JSON export (manual) |
+| Move to a new device | Export database bundle → import on new device, or use [cross-device sync](/guides/cross-device-sync) |
+| Share with a healthcare provider | PDF report export |
+| Migrate to a new browser | Export database bundle → drop onto drop zone in new browser |
+| Restore after an accidental change | [Restore from an automatic snapshot](/guides/backup#restore-from-a-snapshot) |
+
+## Transfer to a new device or browser
+
+<Steps>
+  <Step title="Export on the old device">
+    Export a JSON database bundle from **Client List → Export All** or **Settings → Data → Export All Clients**.
+  </Step>
+  <Step title="Open getbased on the new device">
+    Navigate to `app.getbased.health` in any browser on the new device.
+  </Step>
+  <Step title="Import">
+    Drop the bundle file onto the drop zone. All your historical lab data, charts, context cards, and settings appear immediately.
+  </Step>
+</Steps>
+
+<Note>
+Cross-device sync via your 24-word mnemonic is an alternative to manual export and import. Sync keeps devices in continuous sync without requiring you to export and transfer files. See [Sync across devices](/guides/cross-device-sync).
+</Note>

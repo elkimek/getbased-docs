@@ -1,0 +1,75 @@
+---
+title: "How getbased protects your health data"
+description: "getbased keeps all your health data in your browser — no accounts, no servers, no tracking. Here's exactly what that means in practice."
+---
+
+getbased is built on one principle: your health data belongs to you and no one else. Nothing is sent to a server when you use the app. Your lab results, DNA data, wearable history, and AI conversations all stay in your browser's local storage and IndexedDB. There is no account, no sign-up, and no analytics tied to your usage.
+
+## Where your data lives
+
+Every piece of data getbased touches — lab entries, context cards, notes, supplements, genetics, wearable summaries, chat threads — is stored in two browser-native storage areas:
+
+- **localStorage** for profile data, settings, and app state
+- **IndexedDB** for wearable time-series rows, knowledge base vectors, and backup snapshots
+
+Clearing your browser data will erase your getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control.
+
+## Encryption at rest
+
+By default, data sits in plaintext localStorage (only your browser can read it). For an extra layer of protection, you can enable **AES-256-GCM encryption at rest** from **Settings → Data → Security**. When active, your data is encrypted with a key derived from your passphrase via PBKDF2 before being written to storage. Without your passphrase, the ciphertext is unreadable — even if someone had direct access to your machine.
+
+See [Encrypt your data](/guides/encryption) for setup instructions and passphrase requirements.
+
+## PII stripped before AI sees your labs
+
+When you import a lab PDF, getbased runs a two-stage obfuscation pass before the text reaches any AI provider:
+
+1. **Regex scan (always on)** — detects and replaces known PII patterns: name, address, date of birth, SSN/patient ID, email, phone, and common US lab identifiers (Specimen ID, Accession No, MRN).
+2. **Local AI obfuscation (opt-in)** — a language model running on your own machine reads the full PDF text and replaces personal information contextually, catching edge cases the regex misses. Enable it in **Settings → Privacy → Configure Local AI**. Nothing leaves your device during this step.
+
+**What the AI provider receives:** only the anonymized lab text — marker names, values, units, and collection dates. Never your name, address, or any identifier.
+
+<Note>
+Even with PII obfuscation active, the anonymized text is sent to your configured AI provider (OpenRouter, Venice, Routstr, or PPQ) over HTTPS. If you want zero network transmission at any step, use a local AI server as both your PII model and your main AI provider.
+</Note>
+
+## AI provider options and what they see
+
+getbased supports six AI backends. The privacy implications differ by provider:
+
+| Provider | What they receive | Network? |
+|---|---|---|
+| PPQ / Routstr / OpenRouter | Obfuscated lab text over HTTPS | Yes |
+| Venice AI (standard) | Obfuscated lab text over HTTPS, no-log policy | Yes |
+| Venice AI (E2EE) | Ciphertext — decrypted only inside a TEE | Yes, encrypted |
+| Local AI (Ollama, LM Studio, Jan) | Nothing leaves your device | No |
+
+### Venice end-to-end encryption
+
+When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is decrypted only inside a verified Intel TDX enclave — not even Venice can read it. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
+
+A **🔒✓** indicator in the chat header confirms attestation passed.
+
+### Fully local AI
+
+Connect any OpenAI-compatible server (Ollama, LM Studio, Jan, llama.cpp) in **Settings → AI → Local AI**. When a local server is your active provider, nothing leaves your device at any point during a chat or PDF import.
+
+## Cross-device sync
+
+Cross-device sync is entirely opt-in. When you enable it, an Evolu CRDT engine encrypts your data with a key derived from a 24-word mnemonic before it reaches the relay server. The relay only ever stores encrypted blobs. See [Sync across devices](/guides/cross-device-sync) for setup details.
+
+## No account, no tracking
+
+getbased has no user accounts, no login, no cookies for tracking, and no analytics tied to your identity. The app is open source — you can verify every claim on [GitHub](https://github.com/elkimek/get-based).
+
+## Data portability
+
+You own your data and can take it with you at any time:
+
+- **JSON export** — download a full plaintext copy from **Settings → Data → Export** or from the dashboard's Data & Notes section. See [Export and import](/guides/export-import).
+- **Folder backup** — auto-save daily snapshots to any local folder, Proton Drive, or Dropbox. See [Backup](/guides/backup).
+- **Cross-device sync** — move data to a new device without exporting a file. See [Sync across devices](/guides/cross-device-sync).
+
+## Tor access
+
+getbased is accessible over Tor at its `.onion` address. When you access the app via Tor, the sync relay automatically switches to its `.onion` WebSocket address so all traffic stays within the Tor network.

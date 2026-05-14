@@ -1,0 +1,97 @@
+---
+title: "Create custom biomarkers in getbased"
+description: "Track any lab result not in the built-in schema — create, edit, and group custom biomarkers manually or let PDF import do it automatically."
+---
+
+getbased ships with a built-in schema of 300+ biomarkers across 17 categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
+
+## How custom markers are created during PDF import
+
+When you import a PDF, the AI identifies any results that don't match a known biomarker. For each unrecognized result it suggests:
+
+- A **category** to place it in (e.g. biochemistry, hormones)
+- A **name** for the marker in plain English
+- The **unit** it is measured in
+- A **reference range** (minimum and maximum) drawn from the lab report or general medical knowledge
+
+These suggestions appear in the import preview with a blue **New** badge. You can review each one before confirming — accept, adjust, or exclude any suggested marker before it is saved.
+
+## Creating custom markers manually
+
+You can create a new biomarker without importing a PDF:
+
+<Steps>
+  <Step title="Open the marker creation form">
+    In the sidebar, click the **+** button next to "Categories".
+  </Step>
+
+  <Step title="Choose or create a category">
+    Pick an existing category from the list, or type a new category name to create one. You can set a custom emoji icon for new categories using the picker — or leave it blank to get an auto-inferred icon.
+  </Step>
+
+  <Step title="Enter the marker details">
+    Fill in the **marker name**, **unit**, and optionally a **reference range** and **optimal range**. All fields except the name can be left blank and filled in later.
+  </Step>
+
+  <Step title="Click Create">
+    The app immediately opens the Add Value form so you can log your first data point. The marker appears in the sidebar, on the dashboard, and in AI chat context right away.
+  </Step>
+</Steps>
+
+<Tip>
+  Custom markers you create manually are included in the AI's marker reference list. If you later import a PDF that contains the same marker, the AI maps it to your existing definition automatically instead of creating a duplicate.
+</Tip>
+
+## Editing custom markers
+
+Custom marker definitions are set when first created and are not overwritten by future imports of the same marker. You can edit them at any time:
+
+- **Reference and optimal ranges** — click the range values in the marker's detail modal to edit them inline. If no ranges are set, a clickable "Reference: – – –" placeholder appears.
+- **Open-ended ranges** — clear one side of a range using the × button to create a bound like ">59" with no upper limit.
+- **Name and unit** — editable in the marker's detail modal.
+
+## Grouping custom markers
+
+Custom markers follow the same category system as built-in markers:
+
+- **Sidebar category** — assigned when you create the marker (manually or during import). Markers in the same category appear together in the sidebar and on charts.
+- **Renaming categories** — click the category name in the category view header to rename it. The display label changes; the underlying key and all your data are unaffected.
+- **Category icons** — click the icon next to any category name to open the emoji picker. The picker includes categorized tabs (Science, Health, Nature, Food, Objects), a search field, and a Reset button to revert to the default.
+
+If a custom marker belongs to a category that does not yet exist, a new category is created automatically with an auto-inferred icon.
+
+## Where custom markers appear
+
+Once created, custom markers are treated identically to built-in markers throughout the app:
+
+- **Charts** with reference range bands and trend detection
+- **Data tables** alongside every other biomarker
+- **AI chat context** — the assistant knows about your custom markers when you ask questions
+- **JSON backup** — included in exports and restored on import
+- **Future PDF imports** — the AI uses your existing custom markers to avoid creating duplicates
+
+## Specialty lab pipeline
+
+For non-blood tests (OAT, DUTCH, HTMA, fatty acids, and similar panels), the import AI assigns markers to test-type-prefixed categories (e.g. `oatNutritional`, `dutchHormones`) and adds a **group** field that determines sidebar placement. These groups appear as collapsible sidebar headers — for example, an OAT import creates categories like "Nutritional Markers" and "Microbial Overgrowth" organized under an **OAT** header.
+
+When the app ships a built-in specialty adapter for a test type you have previously imported as custom markers, those markers are **auto-migrated** to the structured adapter — your historical data is preserved and gains the adapter's richer reference ranges and display names automatically.
+
+## Custom markers vs. specialty lab adapters
+
+| | Custom markers | Specialty lab adapters |
+|---|---|---|
+| Created by | You (manually or via PDF import AI) | Built into getbased for specific test types |
+| Coverage | Any marker you define | OAT (165 markers), fatty acids (Spadia, ZinZino, OmegaQuant), Metabolomix+, and more |
+| Reference ranges | From the lab report or what you enter | Curated per-marker from the test's reference methodology |
+| Sidebar grouping | Category you choose | Auto-organized by test type under collapsible headers |
+| Future-proof | Yes — auto-migrated when an adapter ships for your test | N/A |
+
+Use custom markers for anything not yet covered by a built-in adapter — omega-3 index, deuterium levels, functional medicine panels, home monitoring devices, or any specialist test. If getbased later ships an adapter for that test type, your data migrates automatically.
+
+## Deleting custom markers
+
+To delete a custom marker and all its recorded values, open the marker's detail modal and click **Delete this marker** at the bottom. If it was the only marker in its category, the category is removed as well.
+
+<Warning>
+  Deleting a custom marker is permanent and cannot be undone. Export a JSON backup first if you want to preserve the data.
+</Warning>

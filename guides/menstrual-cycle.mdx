@@ -1,0 +1,110 @@
+---
+title: "Track your menstrual cycle in getbased"
+description: "Log periods, get phase-aware reference ranges for hormones and iron, and overlay cycle phase bands directly on your biomarker charts."
+---
+
+Hormones, iron, and inflammatory markers all shift across the menstrual cycle — sometimes dramatically. Knowing which phase you were in when blood was drawn makes your results far more meaningful. getbased tracks your cycle and automatically applies phase-specific reference ranges, overlays cycle bands on charts, and alerts you when iron levels look low during a heavy-flow period.
+
+<Warning>
+Cycle tracking is only available when your profile sex is set to **Female**. You can change this in **Settings → Profile**.
+</Warning>
+
+## How to enable cycle tracking
+
+You can set up cycle tracking during the chat-driven onboarding wizard when you first open the app, or at any time from the **Menstrual Cycle** section on the dashboard.
+
+The setup editor includes:
+
+- **Cycle status** — Active (regular), Perimenopause / irregular, Postmenopause, Pregnant, Breastfeeding, or Absent (other reason).
+- **Contraceptive** — a grouped dropdown covering hormonal methods (OCP, Mirena, implant, patch, ring, Depo) and non-hormonal methods (copper IUD, barrier, FAM).
+- **Conditions** — for example, PCOS, endometriosis, or fibroids.
+- **Auto-calculated stats** — cycle length, period length, regularity, and typical flow are derived from your period log and shown as read-only values. They update automatically as you add more entries.
+
+When your cycle status is set to a non-cycling state (Postmenopause, Pregnant, Breastfeeding, or Absent), the stats fields and period log are hidden because they don't apply.
+
+## Logging periods
+
+In the cycle editor, use the period log to record individual periods. For each period you can enter:
+
+- Start and end date
+- Flow level for that period
+- **Symptoms** — choose from 17 options including Cramps, Mood swings, Fatigue, Bloating, Headache, Acne, Breast tenderness, Insomnia, Back pain, Nausea, Hot flashes, Night sweats, Anxiety, Food cravings, Spotting, Clots, and Dizziness
+- Free-text notes
+
+The more periods you log, the more accurate your auto-calculated stats become.
+
+| Stat | Requires |
+|------|----------|
+| Cycle length | 2 or more periods |
+| Period length | 1 or more periods with end dates |
+| Regularity | 3 or more periods |
+| Typical flow | 1 or more periods with flow set |
+
+Regularity is classified as **regular** (low variation), **irregular** (moderate), or **very irregular** (high). Typical flow reflects the most common flow level from your last six entries.
+
+## Cycle phases and phase-aware reference ranges
+
+getbased maps each blood draw date to one of four cycle phases based on your period log:
+
+| Phase | Approximate timing |
+|---|---|
+| **Menstrual** | Days 1–5 |
+| **Follicular** | After menstruation, up to ovulation |
+| **Ovulatory** | Around day 14 (± 1 day) |
+| **Luteal** | From ovulation to the next period |
+
+For **estradiol**, **progesterone**, **LH**, and **FSH**, getbased replaces the single flat reference range with ranges specific to the phase at the time of that draw. The status color of each data point — normal, high, or low — reflects the phase-appropriate range throughout the app: charts, the detail modal, the data table, trend alerts, and AI chat.
+
+<Note>
+Phase-aware ranges are automatically disabled if you are on hormonal contraception or have a non-cycling status set.
+</Note>
+
+## Chart overlay: cycle phase bands
+
+Open the **Layers** dropdown in the chart area and enable **Cycle Phases** to overlay color-coded bands on any biomarker chart:
+
+| Phase | Band color |
+|---|---|
+| Menstrual | Red |
+| Follicular | Blue |
+| Ovulatory | Purple |
+| Luteal | Yellow |
+
+Each band displays a single-letter label at the top of the band. This makes it easy to visually correlate hormone and iron readings with where you were in your cycle.
+
+## Next best blood draw date
+
+The dashboard shows a recommendation for your next optimal blood draw window — the early follicular phase (days 3–5), when hormone baselines are most consistent and most comparable between cycles. This removes the guesswork from scheduling lab appointments.
+
+## Perimenopause detection
+
+If you are 35 or older and have logged four or more periods, getbased watches for patterns that may suggest perimenopause:
+
+- Cycles gradually lengthening over time
+- Increasing cycle-to-cycle variability
+- Cycles frequently exceeding 38 days
+- Predominantly heavy flow
+- Vasomotor symptoms (hot flashes, night sweats)
+- Possible skipped cycles (gaps greater than 1.5× your average cycle length)
+
+Two or more of these indicators triggers a perimenopause pattern alert on the dashboard.
+
+<Note>
+This alert is informational — it is not a diagnosis. Discuss any concerns with your doctor.
+</Note>
+
+## Iron alerts during heavy periods
+
+If you have logged recent heavy flow, getbased cross-references your ferritin, hemoglobin, and iron levels and surfaces an alert in one of three states:
+
+- **Critical** — one or more values are below the reference range.
+- **Warning** — values are in the bottom 25% of the reference range.
+- **Informational** — you have heavy flow logged but no iron panel has been run yet.
+
+## AI context
+
+The AI chat and per-marker explanations always consider your cycle phase. When you ask about a hormone result, the AI knows which phase that draw was in, applies the appropriate reference range, and flags if the draw timing was suboptimal for interpretation. Perimenopause pattern alerts and iron or flow alerts are also included in the AI's context automatically.
+
+## Guided tour
+
+After you save your cycle profile for the first time, a guided tour walks you through the cycle features on the dashboard. You can replay the tour at any time by clicking the **?** button in the Menstrual Cycle section header.

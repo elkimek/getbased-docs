@@ -1,0 +1,83 @@
+---
+title: "Encrypt your getbased data at rest"
+description: "Add a passphrase to protect your health data with AES-256-GCM encryption at rest — stored only in your browser, completely independent of sync."
+---
+
+By default, getbased stores your data in plaintext in your browser's localStorage and IndexedDB — only your browser can access it, and nothing leaves your device unless you explicitly enable sync or send data to an AI provider. For an additional layer of protection, you can lock your data behind a passphrase using AES-256-GCM encryption at rest.
+
+## What local encryption does
+
+When you set a passphrase, getbased derives a cryptographic key from it using PBKDF2 and then encrypts your data before writing it to localStorage. Every time you open getbased, you are prompted for your passphrase to decrypt and load your data.
+
+The encryption covers:
+
+- All imported lab data — entries, notes, supplements, cycle data, context cards
+- Chat conversation history and custom personalities
+- Wearable IndexedDB rows — per-profile daily values including HRV, sleep score, resting heart rate, and manual entries
+
+Settings that contain no health data (AI provider choice, theme, display preferences) remain in plaintext so the app can load correctly before decryption.
+
+<Warning>
+There is no passphrase recovery. If you forget your passphrase, your encrypted data cannot be decrypted. Export a plaintext JSON backup before enabling encryption, and store your passphrase somewhere safe.
+</Warning>
+
+## Enable encryption
+
+<Steps>
+  <Step title="Open security settings">
+    Go to **Settings → Data → Security**, or click the **Protect your data** pill on the dashboard and select **Encrypt data**.
+  </Step>
+  <Step title="Set a passphrase">
+    Enter a passphrase that meets all four requirements:
+
+    - At least 8 characters
+    - At least one lowercase letter
+    - At least one uppercase letter
+    - At least one special character (`!@#$%^&*` and similar)
+
+    A strength meter with a color-coded bar and checklist shows your progress as you type. The **Encrypt** button stays disabled until all four rules pass.
+  </Step>
+  <Step title="Confirm">
+    Click **Encrypt**. getbased encrypts your existing data and saves it. From this point on, you'll be prompted for your passphrase each time you open the app.
+  </Step>
+</Steps>
+
+<Note>
+After your first PDF import, getbased shows a one-time prompt suggesting you enable encryption. You can dismiss it and enable encryption later from Settings — it is a reminder, not a requirement.
+</Note>
+
+## Passphrase requirements
+
+| Rule | Requirement |
+|---|---|
+| Length | Minimum 8 characters |
+| Lowercase | At least 1 lowercase letter |
+| Uppercase | At least 1 uppercase letter |
+| Special character | At least 1 of `!@#$%^&*` or similar |
+
+## No recovery path
+
+There is intentionally no reset or recovery mechanism. The passphrase is never stored — only the key derived from it is used at runtime. If you lose your passphrase:
+
+- Your encrypted localStorage data cannot be decrypted.
+- Your other devices (if using sync) still hold their own copies, encrypted with the same key.
+- You can start fresh by clearing your browser data, but this permanently deletes all encrypted data.
+
+Store your passphrase in a password manager or write it down and keep it somewhere secure.
+
+## Cross-tab decryption
+
+getbased uses the browser's `BroadcastChannel` API to share the decrypted key across tabs in the same browser session. When you unlock getbased in one tab, other tabs in the same window automatically unlock without prompting you again. When you close all tabs, the in-memory key is cleared.
+
+## Relationship to sync encryption
+
+Local encryption and [cross-device sync](/guides/cross-device-sync) are independent systems that protect your data in different contexts:
+
+- **Local encryption** (your passphrase → PBKDF2 → AES-256-GCM) protects data at rest on each device.
+- **Sync encryption** (your mnemonic → Evolu key derivation → XChaCha20-Poly1305) protects data in transit and on the relay.
+
+You can enable one, both, or neither. Enabling local encryption has no effect on sync, and disabling sync has no effect on local encryption.
+
+<Tip>
+For maximum protection: enable local encryption, enable sync (so your data is replicated and encrypted on the relay), and export regular JSON backups as a third copy you control offline.
+</Tip>

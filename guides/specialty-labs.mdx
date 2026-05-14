@@ -1,0 +1,135 @@
+---
+title: "Import specialty lab panels into getbased"
+description: "getbased supports OAT, DUTCH, HTMA, fatty acid panels, DEXA scans, and more — with auto-detection and a custom marker pipeline for any other lab."
+---
+
+Beyond standard blood work, getbased handles specialty lab tests. Drop the PDF on the dashboard the same way you would any other report — the AI identifies the test type automatically and routes markers to the correct categories with your lab's stated reference ranges.
+
+## Supported test types
+
+Four test types have dedicated built-in marker definitions. Every other specialty lab report goes through the generic custom marker pipeline, where the AI extracts marker names, units, and reference ranges directly from the PDF.
+
+| Test type | Examples | Built-in markers |
+|---|---|---|
+| **DEXA scan** | Hologic, GE Lunar Prodigy | 17 markers across 2 categories |
+| **Metabolomix+** | Genova Metabolomix+ combo profiles | 165 markers across 10 categories |
+| **Fatty acids** | Spadia, ZinZino BalanceTest, OmegaQuant | 29 reference markers |
+| **BioStarks** | Dried blood spot panels (AMR Labs SA) | 23 markers across 5 categories |
+
+**Generic support (custom marker pipeline)**
+
+Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mineral Analysis (HTMA), GI-MAP, standalone OAT, and any other structured lab report. The AI extracts everything directly from your PDF. No built-in definitions are needed.
+
+## How auto-detection works
+
+<Steps>
+  <Step title="Drop your PDF">
+    Drag the file onto the dashboard or use the import button. No special configuration is needed for specialty labs.
+  </Step>
+  <Step title="AI identifies the test type">
+    The AI reads the report and detects whether it is blood work, a DEXA scan, an OAT panel, a DUTCH report, or another type.
+  </Step>
+  <Step title="Markers are mapped to specialty categories">
+    Specialty results are placed in test-type-specific categories to keep them separate from standard blood markers. These categories appear as collapsible sidebar sections labeled by test type.
+  </Step>
+  <Step title="Reference ranges come from your PDF">
+    Unlike standard blood markers that use built-in reference ranges, specialty markers use the ranges printed on your specific report.
+  </Step>
+  <Step title="Review and confirm">
+    The import preview shows all extracted markers. Confirm to save.
+  </Step>
+</Steps>
+
+## DEXA scans
+
+DEXA results appear under a collapsible **DEXA** sidebar group with two categories.
+
+**Body Composition** (8 markers)
+
+| Marker | Unit | Notes |
+|---|---|---|
+| Body Fat | % | Sex-specific reference and optimal ranges |
+| Lean Mass | kg | Trend tracking only (no universal reference) |
+| Fat Mass | kg | Trend tracking only |
+| BMI (DEXA) | kg/m² | WHO classification (18.5–24.9) |
+| Android Fat | % | Abdominal region |
+| Gynoid Fat | % | Hip/thigh region |
+| A/G Fat Ratio | ratio | Above 1.0 = higher cardiometabolic risk |
+| Visceral Fat Area | cm² | Below 100 cm² = normal |
+
+**Bone Density** (9 markers)
+
+| Marker | Unit | Notes |
+|---|---|---|
+| BMD Spine L1–L4 | g/cm² | Trend tracking only |
+| BMD Femur Total | g/cm² | Trend tracking only |
+| BMD Femur Neck | g/cm² | WHO diagnostic site |
+| T-score Spine | score | Above −1 normal; −1 to −2.5 osteopenia; below −2.5 osteoporosis |
+| T-score Femur Total | score | Same WHO criteria |
+| T-score Femur Neck | score | WHO-preferred hip site |
+| Z-score Spine | score | Age-matched; below −2.0 = low for age |
+| Z-score Femur Total | score | Same criteria |
+| Z-score Femur Neck | score | Same criteria |
+
+<Tip>
+  DEXA scans are typically repeated annually. Each import adds a new data point so you can track body composition and bone density changes over time — the same way blood work trends are tracked.
+</Tip>
+
+## Fatty acid labs
+
+Fatty acid tests appear under a **Fatty Acids** sidebar group, with each lab in its own subcategory. Results from different labs are never mixed together.
+
+| Lab / product | Detection |
+|---|---|
+| **Spadia** | PDF content or filename |
+| **ZinZino** BalanceTest | PDF content or filename |
+| **OmegaQuant** (Basic / Plus / Complete, Ayumetrix) | PDF content or filename |
+
+Other fatty acid labs are also supported — the AI identifies the lab name from the report and creates a product-specific category automatically.
+
+<Note>
+  Even though results from different fatty acid labs appear in separate subcategories, the AI chat can compare and interpret results across all your fatty acid tests in a single conversation.
+</Note>
+
+## Metabolomix+
+
+Genova Metabolomix+ imports create multiple subcategories under an **OAT** sidebar group:
+
+| Category | Markers | Examples |
+|---|---|---|
+| Microbial Overgrowth | 14 | Citramalic acid, HPHPA, arabinose |
+| Metabolic | 22 | Lactic, pyruvic, succinic, citric acid |
+| Neurotransmitters | 14 | HVA, VMA, quinolinic acid |
+| Nutritional & Detox | 24 | Methylmalonic, glutathione markers |
+| Amino Acids & Lipids | 18 | Urine amino acids, fatty acid metabolites |
+| Urine Amino Acids | 21 | Arginine, taurine, glycine |
+| Urine Amino Metabolites | 18 | Methylhistidine, sarcosine |
+| Toxic Elements | 18 | Lead, mercury, arsenic, cadmium |
+| Nutrient Elements | 14 | Selenium, zinc, calcium, magnesium |
+| Oxidative Stress | 2 | Lipid peroxides, 8-OHdG |
+
+## BioStarks
+
+BioStarks dried blood spot panels are hybrid tests — they include both specialty markers and standard blood markers. getbased handles this automatically: specialty markers go to BioStarks-specific categories, while standard markers (glucose, lipids, testosterone, etc.) map to your existing blood work categories for combined trend tracking.
+
+<Tip>
+  Standard blood markers from a BioStarks report automatically appear on the same charts as your other blood work, so you can track trends across BioStarks and standard lab reports together.
+</Tip>
+
+## Custom marker pipeline for unsupported labs
+
+If your specialty lab is not in the table above, the AI still extracts all results from the PDF. For each unrecognized marker it creates:
+
+    - A **category** organized under a test-type sidebar section
+    - A **display name** in plain English
+- The **unit** of measurement
+- **Reference ranges** from your lab report
+- A **group tag** (e.g., "DUTCH", "HTMA") for sidebar organization
+
+These are created during import — no manual setup required. Specialty categories appear under collapsible group headers in the sidebar, and the collapse state is remembered across sessions.
+
+If you import the same test type again later, markers are matched to the existing definitions for trend tracking across results.
+
+<Warning>
+  Use the same AI model for all imports of a given specialty test type. Different models may generate different internal marker keys for the same test, which breaks trend tracking across dates. See the AI Providers guide for details on model consistency.
+</Warning>

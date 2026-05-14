@@ -1,0 +1,168 @@
+---
+title: "Self-host getbased on your own server"
+description: "Run getbased on your own hardware in minutes — no build tools required. Covers Vercel deploys, wearable OAuth, sync relay, and local AI."
+---
+
+getbased is a pure ES-module web app with no build step and no bundler. The production runtime is a folder of static files — HTML, CSS, and JavaScript — that any HTTP server can serve. You can be running your own instance in under two minutes.
+
+## Quick start
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/elkimek/get-based
+    cd get-based
+    ```
+  </Step>
+
+  <Step title="Start a local server">
+    ```bash
+    python3 -m http.server 8000
+    # or: node dev-server.js  (recommended for development — mirrors production routing)
+    ```
+
+    Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
+
+    <Note>
+      `node dev-server.js` also serves the docs at `/docs` and is recommended for local development — it mirrors the production routing. For production hosting, any static file server works.
+    </Note>
+  </Step>
+</Steps>
+
+No build tools, no `npm install`, no compilation. The app is installable as a **PWA** and works fully offline for non-AI features — labs, charts, custom markers, wearable data, and all local encryption are available without a network connection after the first load.
+
+## Wearable OAuth apps
+
+The OAuth `client_id` values baked into the app belong to the maintainer's registered apps, which are authorized for `*.getbased.health` redirect URIs only. If you self-host under a different domain, the provider returns `invalid_client` when the bundled credentials are paired with your redirect URI.
+
+To run wearable OAuth on your own host, register your own OAuth app with each provider you want to support and supply the credentials via environment variables.
+
+### Register your OAuth apps
+
+| Provider | Developer portal |
+|---|---|
+| Oura | [cloud.ouraring.com/oauth/applications](https://cloud.ouraring.com/oauth/applications) |
+| Withings | [developer.withings.com/dashboard](https://developer.withings.com/dashboard/) |
+| Polar | [admin.polaraccesslink.com](https://admin.polaraccesslink.com/) |
+| Fitbit | [dev.fitbit.com/apps/new](https://dev.fitbit.com/apps/new) |
+| WHOOP | WHOOP partner credentials (gated — hidden until validated) |
+| Ultrahuman | Ultrahuman partner credentials (gated — hidden until validated) |
+
+When registering, add both your local dev redirect URI (`http://localhost:8000/app`) and your production hostname (e.g. `https://your-host.example/app`) to the allowed redirect URI list in each provider's portal — the URIs must match character-for-character.
+
+### Environment variables
+
+Create a `.env.local` file in the repo root (copy `.env.local.example` as a starting point):
+
+```bash
+# Confidential clients — client_id + secret required
+OURA_CLIENT_ID=
+OURA_CLIENT_SECRET=
+
+WITHINGS_CLIENT_ID=
+WITHINGS_CLIENT_SECRET=
+
+ULTRAHUMAN_CLIENT_ID=
+ULTRAHUMAN_CLIENT_SECRET=
+
+POLAR_CLIENT_ID=
+POLAR_CLIENT_SECRET=
+
+# PKCE clients — client_id only, no secret needed
+FITBIT_CLIENT_ID=
+WHOOP_CLIENT_ID=
+```
+
+<Info>
+  Apple Health is file-import only — no OAuth, no credentials, no portal registration. It works identically on every self-hosted install.
+</Info>
+
+At startup, the browser fetches the active `client_id` values from `/api/proxy`. When the env vars are set, your own IDs are used for both the authorize URL and the token exchange. When unset, the hardcoded maintainer defaults are used and hosted users see no change.
+
+## Deploying to Vercel
+
+A `vercel.json` is already present in the repo root — no extra configuration is needed.
+
+<Steps>
+  <Step title="Import the repository on Vercel">
+    In the Vercel dashboard, click **Add New → Project** and import your fork of `get-based`. Vercel detects `vercel.json` automatically.
+  </Step>
+
+  <Step title="Set environment variables">
+    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. The `*_CLIENT_ID` values for PKCE clients (Fitbit, WHOOP) do not need a secret.
+  </Step>
+
+  <Step title="Deploy">
+    Vercel builds and deploys on every push to your default branch. The app runs at your Vercel project URL immediately after the first deploy.
+  </Step>
+</Steps>
+
+<Tip>
+  For a basic self-hosted install, no additional build configuration is needed — the app runs out of the box with the example supplement catalog included in the repo.
+</Tip>
+
+## Running your own sync relay
+
+Cross-device sync uses a **relay** — a blind store-and-forward server that holds encrypted blobs. The relay never sees your plaintext data. By default, getbased connects to `wss://sync.getbased.health`. You can run your own.
+
+<Steps>
+  <Step title="Start the relay container">
+    The relay runs as a single Docker container with an embedded SQLite database — no external dependencies:
+
+    ```bash
+    docker run -d \
+      --name evolu-relay \
+      --network host \
+      --restart unless-stopped \
+      evoluhq/relay:latest
+    ```
+
+    This starts the relay on port 4000 (WebSocket only).
+  </Step>
+
+  <Step title="Add TLS with Caddy">
+    Install [Caddy](https://caddyserver.com/) and create `/etc/caddy/Caddyfile`:
+
+    ```
+    sync.yourdomain.com {
+        reverse_proxy 127.0.0.1:4000 {
+            transport http {
+                versions h1
+            }
+        }
+    }
+    ```
+
+    The `versions h1` directive is required — WebSocket upgrades need HTTP/1.1. Restart Caddy:
+
+    ```bash
+    systemctl restart caddy
+    ```
+
+    Caddy provisions a TLS certificate via Let's Encrypt automatically.
+  </Step>
+
+  <Step title="Point DNS">
+    Add an A record for `sync.yourdomain.com` pointing to your server's IP address.
+  </Step>
+
+  <Step title="Point getbased at your relay">
+    In getbased, go to **Settings → Data → Advanced** and enter `wss://sync.yourdomain.com`. The status dot turns green when connected.
+  </Step>
+</Steps>
+
+<Info>
+  Minimum server spec: any Linux VPS with 1 CPU, 1 GB RAM (~$5/month), Docker, and a domain with TLS.
+</Info>
+
+## Local AI with a self-hosted instance
+
+getbased supports any OpenAI-compatible local AI server — Ollama, LM Studio, Jan, llama.cpp, and others — via the **Local AI** provider in **Settings → AI**. Enter your server's base URL and the app routes all AI calls there. Nothing leaves your machine.
+
+<Warning>
+  Local AI servers (Ollama, LM Studio, etc.) typically serve on `http://localhost` without TLS. Because getbased enforces HTTPS on its hosted domain, this works out of the box only when you access your self-hosted instance over `http://localhost` or `http://127.0.0.1`. If you access your instance over HTTPS (e.g. a Vercel or Caddy deployment), the browser will block mixed-content requests to a plain HTTP local AI server. Run your local AI server behind a local TLS proxy (e.g. Caddy on `localhost:11434`) to resolve this.
+</Warning>
+
+## Tor access
+
+A `.onion` address is available for getbased. When you access the app via Tor Browser, the sync relay automatically switches to the `.onion` address (`ws://` — no TLS needed over Tor's end-to-end encryption). No additional configuration is required.

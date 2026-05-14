@@ -1,0 +1,56 @@
+---
+title: "Use interpretive lenses to frame AI analysis"
+description: "Tell getbased which medical experts, research traditions, or scientific frameworks to draw on — and every AI insight shifts to reflect that perspective."
+---
+
+An interpretive lens is a free-form text field where you describe the scientific paradigm or expert frameworks you want the AI to keep in mind. Instead of a one-size-fits-all conventional-medicine reading, every AI interaction in getbased — the Focus Card, the chat panel, and per-marker explanations — is filtered through the perspective you set.
+
+## Where to find it
+
+The Interpretive Lens appears as a **full-width card with a purple left border** near the top of the dashboard, just above the Focus Card. You can also open it from **Settings → AI**.
+
+Click the card to open the editor, type or paste your lens text, then click **Save**. The card updates on the dashboard immediately.
+
+## What to write
+
+The lens is free-form — write the names of experts, schools of thought, or scientific paradigms you follow. Some examples:
+
+- Researchers or clinicians focused on functional medicine, mitochondrial biology, hormesis, or longevity
+- Scientific frameworks such as circadian biology, evolutionary medicine, or ancestral health
+- Dietary or lifestyle philosophies you practice
+- Any combination of the above
+
+<Tip>
+You do not need to explain who these people are. If the AI knows their published work, it applies their perspective to your data automatically.
+</Tip>
+
+## How the lens changes AI analysis
+
+Every AI interaction includes your lens text as part of the context. The AI will:
+
+- Frame its analysis through the paradigms you listed
+- Draw on the research traditions those experts represent
+- Flag where your results align or conflict with those frameworks
+- Prioritize the markers and factors those frameworks consider important
+
+For example, if your lens includes *"circadian biology, UV and mitochondrial health, ancestral diet"*, the AI will consider light exposure, vitamin D, and metabolic markers through those frameworks rather than giving you a standard clinical reading.
+
+## Relationship to the knowledge base
+
+The interpretive lens tells the AI **which perspective** to use. A connected knowledge base takes this further by giving the AI **actual passages** to reason from — excerpts from research papers, clinical guides, or any documents you have collected.
+
+When a knowledge base is active, every chat question and Focus Card refresh triggers a search of your documents. getbased retrieves the most relevant passages, folds them into the AI's context alongside your lab data, and the AI cites them in its response.
+
+This approach is called **RAG** (Retrieval-Augmented Generation): the AI first searches your curated document set for relevant content, then uses those results to inform its answer.
+
+<Tip>
+Think of it like a research assistant: you ask a question, they pull the most relevant pages from your library, and the AI reads those pages before answering.
+</Tip>
+
+The lens and knowledge base work best together — the lens sets the interpretive direction, the knowledge base supplies the source material.
+
+See [Connect a custom knowledge base](/guides/knowledge-base) for setup instructions.
+
+## Export and import
+
+Your interpretive lens text is included in your [JSON export](/guides/export-import) and restored automatically on import.

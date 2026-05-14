@@ -1,0 +1,106 @@
+---
+title: "Back up and restore your getbased data"
+description: "getbased protects your health data with three independent backup layers — automatic snapshots, daily folder backups, and manual JSON exports."
+---
+
+Because getbased stores all data locally in your browser, there is no cloud service automatically safeguarding your health records. getbased gives you three independent backup layers to keep your data safe: automatic in-browser snapshots, automatic folder backups to any location you choose, and on-demand JSON exports.
+
+## Automatic in-browser snapshots
+
+getbased automatically creates snapshots of your data in the background as you make changes:
+
+- A snapshot is triggered **60 seconds after any data change** (debounced — rapid changes create only one snapshot, not many).
+- Up to **5 snapshots** are stored. When a new one is added, the oldest is pruned.
+- Each snapshot includes all your lab entries, context cards, notes, supplements, cycle data, and per-profile preferences.
+
+Snapshots are stored in IndexedDB and never leave your browser. They are not affected by clearing localStorage.
+
+### Restore from a snapshot
+
+<Steps>
+  <Step title="Open backup settings">
+    Go to **Settings → Data → Backup & Restore**.
+  </Step>
+  <Step title="Choose a snapshot">
+    Each entry shows the date and time it was created. Find the snapshot you want to restore.
+  </Step>
+  <Step title="Restore">
+    Click **Restore** next to that snapshot. getbased rolls your data back to that point immediately.
+  </Step>
+</Steps>
+
+<Tip>
+You can restore a snapshot even without a passphrase configured — snapshots follow the same encryption state as your data at the time they were created.
+</Tip>
+
+## Automatic folder backup
+
+Folder backup automatically saves your data to a folder on your computer — your local drive, Proton Drive, Dropbox, a NAS, or anywhere you choose. This uses the browser's File System Access API.
+
+<Note>
+Folder backup requires Chrome, Chromium 86+, Edge 86+, or Opera 72+. Firefox and Safari do not support the File System Access API. Use [JSON export](/guides/export-import) on those browsers.
+</Note>
+
+### Set up folder backup
+
+The fastest path is the dashboard's **Protect your data** pill, which opens a picker that includes Auto-backup. Or:
+
+<Steps>
+  <Step title="Open backup settings">
+    Go to **Settings → Data → Folder Backup**.
+  </Step>
+  <Step title="Pick a destination folder">
+    Click **Pick Folder** and select where you want backups saved. This can be a local folder, a Proton Drive sync folder, a Dropbox folder, or any path your OS can write to.
+  </Step>
+  <Step title="Done">
+    Backups run automatically from now on. The folder handle is remembered across browser sessions — you only need to pick the folder once.
+  </Step>
+</Steps>
+
+### What gets saved
+
+Each folder backup is a full snapshot of your getbased database:
+
+- All profiles and their lab entries
+- Context cards, notes, supplements, cycle data
+- Chat history and conversation threads
+- Custom personalities and marker definitions
+- API keys and app settings
+- Full wearable IndexedDB — all per-device daily rows including HRV, sleep, RHR, and manual entries
+
+Two files are written to your chosen folder on each backup:
+
+- `getbased-backup-latest.json` — always-current snapshot, overwritten on each run
+- `getbased-backup-YYYY-MM-DD.json` — daily dated snapshot, retained for up to 30 days
+
+### When backups run
+
+A folder backup is triggered automatically 5 minutes after data changes. You can also trigger a manual backup from the Settings panel at any time.
+
+### Restore from a folder backup
+
+Folder backup files are standard getbased JSON exports. Restore one the same way you import any JSON file:
+
+<Steps>
+  <Step title="Locate your backup file">
+    Find the `getbased-backup-latest.json` or any dated backup file in your backup folder.
+  </Step>
+  <Step title="Open getbased">
+    Open getbased in any Chromium-based browser (or Firefox/Safari if restoring a single-profile export).
+  </Step>
+  <Step title="Import the file">
+    Drop the `.json` file onto the import drop zone on the dashboard. getbased detects it automatically and merges it into your current data.
+  </Step>
+</Steps>
+
+For full database bundles that contain multiple profiles, getbased handles profile merging automatically — new profiles are created and existing ones are merged.
+
+## Backup reminder
+
+If you have not configured folder backup and have not manually exported in over 30 days, getbased shows a gentle reminder. You can snooze it for 30 days or set up folder backup to dismiss it permanently.
+
+## Manual JSON export as a backup strategy
+
+In addition to automatic backups, you can download a plaintext JSON copy of your data at any time from **Settings → Data → Export** or from the **Data & Notes** section at the bottom of the dashboard. This is your most portable backup — it is a plain file you can store anywhere: a password manager, an encrypted USB drive, or an offline backup.
+
+See [Export and import your data](/guides/export-import) for the full export and import workflow.

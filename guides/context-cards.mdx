@@ -1,0 +1,101 @@
+---
+title: "Fill in lifestyle context cards in getbased"
+description: "Nine lifestyle panels capture diet, sleep, environment, and history — giving the AI context that shapes your labs and a typical GP visit never explores."
+---
+
+Context cards are nine lifestyle panels grouped under the heading **"What your GP won't ask you"** on your dashboard. They capture the health context that shapes your lab results — information a typical appointment rarely has time to explore. The more cards you fill in, the more precise the AI's interpretations become.
+
+The dashboard shows how many cards you have filled (for example, **5/9 filled**) and lets you open any card with a single click.
+
+## The nine cards
+
+| # | Card | What it captures |
+|---|---|---|
+| 1 | **Health Goals** | What you are working toward — weight, energy, longevity, athletic performance, or a custom goal |
+| 2 | **Medical History** | Your diagnoses and ongoing conditions, plus family history through grandparents |
+| 3 | **Diet & Digestion** | Eating patterns, meal timing, dietary restrictions, and 10 digestion fields |
+| 4 | **Exercise** | Frequency, types, intensity, and daily movement habits |
+| 5 | **Sleep & Rest** | Duration, quality, sleep environment, and practices such as mouth taping or magnesium |
+| 6 | **Light & Circadian** | Morning sunlight, UV exposure, evening screen habits, and grounding practices |
+| 7 | **Stress** | Stress level, sources, and management strategies |
+| 8 | **Love Life & Relationships** | Relationship quality and sexual health |
+| 9 | **Environment** | Water quality, EMF exposure, air quality, home lighting, and toxin sources |
+
+## AI health dots and tips
+
+Each card shows a small colored dot and a brief AI-generated tip (up to 12 words) tailored to your data.
+
+| Dot | Meaning |
+|---|---|
+| 🟢 Green | This area looks supportive of your health |
+| 🟡 Yellow | Something here may be worth paying attention to |
+| 🔴 Red | This area may be contributing to out-of-range results |
+| ⚪ Gray | Not enough information to assess |
+
+The dots and tips are cached and only refresh when your data or card content changes, so they do not burn API calls on every page load.
+
+<Tip>
+Fill in as many cards as you can. The AI uses all nine cards when interpreting your lab results in chat and in the Focus Card. Each filled card adds meaningful context that the AI cannot infer from numbers alone.
+</Tip>
+
+## How to fill in a card
+
+Click any card on the dashboard to open its editor. Each editor uses pill-button selectors and tag chips for multi-select options — no dropdowns to dig through. Click **Save** to apply your changes.
+
+## Medical history card
+
+The Medical History card has two subsections that the AI weights differently:
+
+**Your conditions** captures diagnoses you live with. Each entry includes a condition name, optional severity (major, mild, or minor), and an optional "since" year. The AI uses this to understand why certain biomarkers may be expected to deviate from population reference ranges.
+
+**Family history** captures what runs in your family. Each entry has a relative, a condition, an optional age of onset, and an optional note (for example, *"survived, on statin since 2010"*). The relative list covers first-degree relatives plus all four grandparents — signal-to-noise drops fast beyond that. A father's heart attack at 52 makes a borderline LDL result more actionable; the AI uses this context to calibrate risk interpretation.
+
+The condition picker is shared between both subsections — type any name and accept an autocomplete suggestion, or enter free text if your condition is not listed.
+
+## EMF assessment (Environment card)
+
+The Environment card includes a dedicated **Baubiologie EMF Assessment** sub-module for tracking electromagnetic field measurements room by room. Open the Environment card and click **Open EMF Assessment** to access it.
+
+<AccordionGroup>
+  <Accordion title="Room-by-room measurements">
+    Add a bedroom, office, living room, or a custom room. Mark each room as a sleeping or daytime area — this changes the severity thresholds applied to your readings.
+  </Accordion>
+  <Accordion title="SBM-2015 severity grading">
+    Measurements are rated against Building Biology (Baubiologie) standards across five types: AC electric fields (V/m), AC magnetic fields (nT), RF/microwave radiation (µW/m²), dirty electricity (GS), and DC magnetic deviation (µT). Severity runs from No Concern (green) to Extreme Concern (red).
+  </Accordion>
+  <Accordion title="Sources, mitigations, and photos">
+    Tag common EMF sources (WiFi router, smart meter, cell tower) and mitigation steps (demand switch, shielding paint, WiFi off at night) per room. Attach up to six photos per room to document meter readings or setup.
+  </Accordion>
+  <Accordion title="AI interpretation and comparison">
+    Click **Interpret** inside the EMF editor to generate a streaming AI analysis of your room-by-room measurements, including severity, source attribution, and mitigation recommendations. You can also compare two saved assessments (before vs after remediation) with color-coded delta arrows.
+  </Accordion>
+  <Accordion title="PDF import">
+    Import professional consultant EMF reports via AI-powered PDF extraction — the same pipeline used for lab reports.
+  </Accordion>
+</AccordionGroup>
+
+EMF data is included in the AI chat context and in your JSON export.
+
+## Supplement and medication timeline
+
+Supplements are managed from the **Supplements** section on the dashboard (not inside a context card). Each supplement entry has a start date and optional end date, forming a timeline that the AI can use to correlate supplementation periods with biomarker trends. The same timeline approach applies to medications you log.
+
+When you chat with the AI, it can reason about whether a supplement you started three months ago might explain a shift in a marker from your most recent draw.
+
+## How context reaches the AI
+
+When you send a chat message or the Focus Card refreshes, all nine cards plus the **Additional Notes** textarea below the card grid are included in the context. The Additional Notes field is free-form — use it for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. It auto-saves as you type.
+
+The AI uses this context to give you interpretations that go beyond numbers — flagging when your sleep schedule, diet, or environment might explain a result, or surfacing a pattern that connects something you mentioned in a card to a trend in your labs.
+
+## Change history
+
+getbased automatically timestamps every change you make to a context card. When you switch from Mediterranean to carnivore diet, or change your stress level from high to moderate, the previous value and the date of the change are recorded.
+
+This timeline is included in the AI context so the AI can reason about temporal correlations — for example, connecting a dietary change on March 1 to a shift in your LDL two weeks later. You do not need to do anything to enable this; it records automatically whenever you save a card.
+
+Change history is included in your [JSON export and import](/guides/export-import).
+
+<Warning>
+Context cards never leave your device except as part of AI API calls sent to your chosen provider. See [AI providers](/ai-providers) and [Encryption](/guides/encryption) for details on how your data is handled.
+</Warning>

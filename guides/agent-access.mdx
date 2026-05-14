@@ -1,0 +1,193 @@
+---
+title: "Give AI agents access to your lab data"
+description: "Connect any MCP-compatible AI agent to your getbased lab context using a read-only token. Raw data stays in your browser — only a text summary is shared."
+---
+
+Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. Only a pre-built text summary reaches the agent; your raw data and sync mnemonic never leave your browser.
+
+## How it works
+
+When you enable Agent Access, getbased pushes a text summary of your labs, context cards, supplements, goals, and notes to a lightweight **context gateway**. Your agent authenticates to that gateway with your read-only token and reads the summary. The flow looks like this:
+
+```
+getbased (browser) ──pushes context──▶ Context Gateway ◀──queries with token── AI agent
+```
+
+1. You turn on Agent Access in Settings and receive a read-only token.
+2. getbased pushes your assembled context to the gateway — the same text the in-app AI chat sees, not raw entries.
+3. Your agent uses the token to query the gateway and answer your questions.
+
+The gateway is content-blind: it stores ciphertext and forwards it. It contains no raw lab entries, no sync mnemonic, and no database access. The summary is refreshed automatically whenever you save changes in getbased.
+
+## Setup
+
+<Steps>
+  <Step title="Enable Agent Access">
+    1. Open **Settings → Data → Agent Access**
+    2. Toggle it **on**
+    3. A read-only token appears — click **Copy** to put it on your clipboard (the clipboard is cleared after 60 seconds)
+
+    <Note>
+      The token is masked by default. Click **Show** to reveal it. Treat the token like a password — do not commit it to a public repository or share it publicly.
+    </Note>
+  </Step>
+
+  <Step title="Install getbased-agent-stack">
+    The universal adapter is **getbased-agent-stack** — one install covers the MCP adapter, a local RAG knowledge server, and a browser setup dashboard.
+
+    <CodeGroup>
+      ```bash Linux (one command)
+      curl -sSL https://getbased.health/install.sh | bash
+      ```
+
+      ```bash macOS / Windows / manual
+      pipx install --include-deps "getbased-agent-stack[full]"
+      # --include-deps is required — without it the MCP, RAG, and dashboard
+      # binaries from bundled dependencies aren't exposed on your PATH
+      getbased-stack init --yes   # scaffolds config and starts services where supported
+      ```
+    </CodeGroup>
+
+    <Tip>
+      If you only want the MCP adapter without the RAG server, `pipx install getbased-mcp` is a smaller (~10 MB) alternative.
+    </Tip>
+
+    After `install.sh` runs on Linux, it starts the RAG server and a browser dashboard as systemd user services. Open the dashboard at `http://127.0.0.1:8323` to get paste-ready config blocks for every supported client — no manual YAML or JSON authoring required.
+  </Step>
+
+  <Step title="Add your token to your agent's config">
+    Paste your token into your agent's MCP configuration. See the [Hermes Agent example](#hermes-agent-config-example) below, or open the dashboard at `http://127.0.0.1:8323` for auto-generated config for Claude Code, Claude Desktop, Cursor, Cline, Windsurf, and more.
+  </Step>
+
+  <Step title="Query your labs">
+    Ask your agent anything about your labs. It reads your latest context from the gateway and responds. For example: "How is my iron trending?" or "What changed since my last blood draw?"
+  </Step>
+</Steps>
+
+## MCP tools reference
+
+`getbased-mcp` exposes the following tools to any connected agent:
+
+| Tool | Description |
+|---|---|
+| `getbased_lab_context` | Full lab summary — values, reference ranges, trends, context cards, supplements, and goals. Accepts an optional profile ID; omit it to return the active profile. |
+| `getbased_section` | Query a specific named section (e.g. `hormones`, `wearables`, `sun`) or list all available sections. |
+| `getbased_wearables_series` | Daily wearable time-series (HRV, resting HR, sleep score, readiness, steps, weight, and more) over the 7-, 30-, or 90-day window you opt into. |
+| `getbased_list_profiles` | List all profiles by name and ID. |
+| `knowledge_search` | Semantic search over your knowledge base. Requires a local RAG server (default `http://127.0.0.1:8322`, configurable via `LENS_URL`). Degrades gracefully — lab-context tools keep working even when no RAG server is reachable. |
+| `knowledge_list_libraries` | List all libraries on the RAG server with their IDs and which one is currently active. |
+| `knowledge_activate_library` | Switch the active library. Subsequent searches target the new one. |
+| `knowledge_stats` | Per-source chunk counts for the active library — useful for diagnosing missing search results. |
+| `getbased_lens_config` | Show the Custom Knowledge Source endpoint and key from getbased so the agent stays in sync with what the app is configured to query. |
+
+## Hermes Agent config example
+
+[Hermes Agent](https://github.com/hermes-agent/hermes-agent) is a self-hosted AI assistant with built-in support for Matrix, Telegram, Signal, Discord, and other messengers. Add the following to `~/.hermes/config.yaml`, then restart the gateway with `hermes gateway restart`:
+
+```yaml
+mcp_servers:
+  getbased:
+    command: getbased-mcp
+    args: []
+    env:
+      GETBASED_GATEWAY: https://sync.getbased.health
+      GETBASED_TOKEN: your-token-here
+```
+
+Replace `your-token-here` with the token from **Settings → Data → Agent Access**.
+
+## Multi-profile support
+
+If you track labs for more than one person, each profile's context is stored separately on the gateway. Your agent can query any profile by ID:
+
+- `getbased_list_profiles` returns all available profiles with names and IDs.
+- `getbased_lab_context` accepts an optional profile ID parameter — omit it to get the currently active profile.
+
+To update a profile's gateway context, switch to that profile in getbased, make any edit and save (or toggle Agent Access off and back on). The gateway receives that profile's latest context immediately.
+
+## Wearable data in agent context
+
+If you have wearables connected (Oura, Polar, WHOOP, Fitbit, Withings, Ultrahuman, Apple Health, or manual entries) and **Settings → AI → AI Context → Include wearable data** is on, the agent automatically receives a `[section:wearables]` block when it calls `getbased_lab_context`. The block is approximately 200 tokens and includes current value, baseline, weekly trend, and recent anomaly events for each metric.
+
+To pull just the wearables section directly:
+
+```
+getbased_section('wearables', profile='Main')
+```
+
+### 30-day daily series (opt-in)
+
+For time-series reasoning — "did my HRV drop the week before I got sick?" — the always-on summary is not enough. Open **Settings → Data → Agent Access** and turn on **"Push 30-day wearable series"**. getbased then writes a pivoted daily matrix into a separate section (~400 tokens):
+
+```
+getbased_section('wearables-series-30d', profile='Main')
+```
+
+The output looks like this:
+
+```
+[section:wearables-series-30d]
+## Wearables — 30-day daily series (oldest→newest, "—" = no reading)
+HRV (🌙) ms (oura): —→—→…→37→36→27→33→26→32→30→26→32→33→29→33→37→39→38→43→30
+Resting HR bpm (oura): 64→62→61→…→59
+Sleep (score) (oura): 68→72→75→…→72
+Readiness (score) (oura): 58→61→63→…→69
+Steps (oura): 7800→8200→…→4250
+[/section:wearables-series-30d]
+```
+
+One line per metric, `→` separates daily values oldest-first, `—` means no reading that day. Raw daily samples never sync via the CRDT relay — they live in your browser's IndexedDB only. The browser renders the section string and posts it to the gateway.
+
+## Sun & Light sessions (body regions opt-in)
+
+If you log Sun & Light sessions, the agent can pull them via `getbased_section('sun')`. The default field set includes session date, duration, channel doses, atmosphere, eye-exposure mode, and a body summary.
+
+The specific anatomical regions array (e.g. `['breast-chest', 'legs-front']`) is opt-in and off by default. Turn on **Settings → AI → AI Context → "Share body regions in Sun & Light context"** to include it. With the toggle off, the agent sees that you exposed roughly 45% of your body to the sun for 30 minutes, but not which 45%.
+
+## Security
+
+Agent Access is designed to share the minimum needed for an agent to be useful:
+
+- **Read-only token** — grants access to a pre-built text summary only. No writes, no database queries, no mutations.
+- **No raw data exposed** — the gateway stores the same assembled context the in-app AI chat uses, not your underlying lab entries or personal records.
+- **Mnemonic never leaves your browser** — Agent Access does not use or transmit your sync mnemonic.
+- **Revocable at any time** — toggle Agent Access off in Settings to immediately invalidate the token. Click **Regenerate** to issue a new token and invalidate the old one.
+- **Self-hostable** — the context gateway runs on the same server as the sync relay. Self-host both for full control over where your summary is stored.
+
+<Warning>
+  Your token grants read access to your lab summary. Do not share it publicly or commit it to a public repository.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Agent sees the wrong profile">
+    The gateway serves whichever profiles have been pushed from your browser. If the agent returns data for the wrong person:
+
+    1. Open getbased and switch to the correct profile.
+    2. Make any edit and save (or toggle Agent Access off and back on) to force a fresh push.
+    3. Ask the agent again — use the profile ID parameter if you have multiple profiles.
+  </Accordion>
+
+  <Accordion title="Agent returns stale data">
+    The gateway is updated whenever you save changes in getbased. If answers seem outdated:
+
+    1. Confirm **Agent Access** is still toggled on in **Settings → Data**.
+    2. Open getbased in your browser — the push happens from the browser, so it needs to be open at least once after your latest changes.
+    3. Check your network connection — the push requires internet access to reach the gateway.
+  </Accordion>
+
+  <Accordion title="Token not working">
+    - Make sure you copied the full token with no trailing spaces.
+    - Check that Agent Access is still enabled — disabling it invalidates the token immediately.
+    - If you clicked **Regenerate**, update your agent config with the new token — the old one no longer works.
+  </Accordion>
+
+  <Accordion title="Agent cannot reach the gateway">
+    If you self-host the gateway, verify that:
+
+    - The gateway server is running and reachable from the agent's network.
+    - Your agent config points to the correct gateway URL (e.g. `https://sync.yourdomain.com`).
+    - TLS is configured correctly — the agent needs HTTPS access.
+  </Accordion>
+</AccordionGroup>
