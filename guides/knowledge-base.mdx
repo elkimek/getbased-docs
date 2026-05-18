@@ -9,7 +9,7 @@ getbased supports two backends: an **in-browser engine** that runs entirely on y
 
 ## Open the knowledge base panel
 
-Click the **"Connect a knowledge base"** CTA pill on the dashboard, or — once configured — click the **📚 row** to manage your libraries. The knowledge base lives in its own modal, not in Settings → AI.
+Open **Knowledge Base** from the Manage section of the sidebar, or use the knowledge base indicator in chat when a library is active. The knowledge base lives in its own modal, not in Settings.
 
 ## In-browser vs external server
 
@@ -23,7 +23,7 @@ Click the **"Connect a knowledge base"** CTA pill on the dashboard, or — once 
 
     <Steps>
       <Step title="Open the knowledge base panel">
-        Click **"Connect a knowledge base"** on the dashboard.
+        Open **Knowledge Base** from the Manage section of the sidebar.
       </Step>
       <Step title="Choose In-browser">
         Select **On this device** and click **Create new library**.
@@ -169,7 +169,7 @@ Click the **"Connect a knowledge base"** CTA pill on the dashboard, or — once 
 
 ## Where knowledge base results appear
 
-When a library is active, knowledge base retrieval runs automatically on every chat message and Focus Card refresh. getbased fetches the top-K passages (default 5, configurable 1–10 in the knowledge base panel) and folds them into the AI's context before the response streams. The AI cites them inline when relevant.
+When a library is active, knowledge base retrieval runs automatically on every chat message and Current Focus refresh. getbased fetches the top-K passages (default 5, configurable 1–10 in the knowledge base panel) and folds them into the AI's context before the response streams. The AI cites them inline when relevant.
 
 A **badge in the chat header** shows the active library name whenever retrieval is running.
 

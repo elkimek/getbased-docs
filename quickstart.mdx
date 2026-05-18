@@ -1,13 +1,13 @@
 ---
 title: "Get started with getbased in under ten minutes"
 sidebarTitle: "Quickstart"
-description: "Open the app, set up your profile, connect an AI provider, and import your first lab report — no installation, no account, no build tools required."
+description: "Open the app, take the first-visit tour, start guided chat, and add labs, DNA, wearables, or demo data."
 ---
 
-getbased runs entirely in your browser with no installation and no account. The steps below take you from a blank slate to a fully populated health dashboard. Most features work immediately — you only need an AI provider for PDF import and chat.
+getbased runs entirely in your browser with no installation and no account. A fresh profile starts with a short guided tour, then sends you to guided chat so you can decide what to add first.
 
 <Note>
-  Charts, trend alerts, manual entry, correlations, and data export all work without any AI provider configured. You can explore the app and load a demo profile before setting up AI.
+Charts, manual entry, correlations, comparisons, JSON import, and data export work without an AI provider. PDF/image import, chat, Current Focus generation, and AI interpretation need a provider.
 </Note>
 
 ## Steps
@@ -18,7 +18,7 @@ getbased runs entirely in your browser with no installation and no account. The 
 
     **Install as a PWA (optional)**
 
-    You can install getbased as a Progressive Web App for a native-like experience on desktop or mobile. The full app shell works offline once installed — AI features still need a network connection to reach your provider.
+    You can install getbased as a Progressive Web App for a native-like experience on desktop or mobile. The app shell works offline once installed. AI features still need a network connection to reach your provider.
 
     | Browser | How to install |
     |---|---|
@@ -36,71 +36,68 @@ getbased runs entirely in your browser with no installation and no account. The 
     node dev-server.js
     ```
 
-    Then open `http://localhost:8000`. A local server is required — opening `index.html` directly as a file will not work because the app uses ES modules.
+    Then open `http://localhost:8000`. A local server is required because the app uses native ES modules.
   </Step>
 
-  <Step title="Complete chat onboarding">
-    When you open the app for the first time, the chat panel guides you through setup:
+  <Step title="Take the first-visit tour">
+    The first time you open a fresh profile, getbased starts a five-step empty-profile tour. It points out the guided chat, demo profiles, profile switcher, and Settings.
 
-    1. **Profile** — enter your name, sex, date of birth, height, weight, and location. Your biological sex and date of birth affect reference ranges, biological age calculation, and cycle tracking availability.
-    2. **AI provider** — connect a provider for PDF import and chat. You can skip this step and set it up later.
-    3. **Extras** — add supplements and medications, lifestyle context cards, and cycle tracking if applicable.
+    When the tour finishes, guided chat opens. Chat is the main first-run path: it asks for context only when useful, then routes you to labs, DNA, wearables, light setup, or first-test planning.
 
-    Every step is optional and skippable. You can update any of this information later from the client list or settings.
+    You can replay the populated app tour later from **Settings → Display → Guided Tour**.
   </Step>
 
-  <Step title="Configure an AI provider">
-    An AI provider is required for PDF import, the chat panel, and dashboard AI features like focus cards and health status dots.
+  <Step title="Connect AI only when you need it">
+    An AI provider is required for PDF/image import, AI chat, Current Focus generation, and AI-powered interpretations. You can explore demo data or enter values manually before setting one up.
 
-    Open **Settings** (gear icon in the header) and go to the **AI** tab. getbased supports six providers:
+    Open **Settings** (gear icon) and select **AI**. getbased supports six providers:
 
-    - **OpenRouter** — easiest to start. Click "Connect with OpenRouter" for one-click OAuth, or paste an API key. 200+ models, pay by card or USDC.
-    - **PPQ** — anonymous, no KYC. Top up with Bitcoin, Lightning, Monero, or Litecoin directly in the app.
+    - **OpenRouter** — easiest to start. Use one-click OAuth or paste an API key.
+    - **PPQ** — pay-per-query with crypto top-ups and no KYC.
     - **Routstr** — decentralized Bitcoin AI with a built-in Cashu wallet.
-    - **Venice AI** — privacy-focused with a no-log policy. Optional end-to-end encryption.
-    - **Local AI** — run a model entirely on your own machine with Ollama, LM Studio, or Jan. Free forever.
-    - **Custom API** — bring any OpenAI-compatible endpoint.
+    - **Venice AI** — privacy-focused cloud AI with optional end-to-end encryption.
+    - **Local AI** — Ollama, LM Studio, Jan, or another local OpenAI-compatible server.
+    - **Custom API** — any OpenAI-compatible endpoint.
 
     See [Connect an AI provider](/ai-providers) for a full comparison and setup instructions.
   </Step>
 
-  <Step title="Import your first lab report or try a demo profile">
-    **Import a PDF**
+  <Step title="Add data or load a demo">
+    **Start with guided chat**
 
-    Click the import button (document icon, bottom-right of the screen) or drag and drop any lab PDF onto the page. The AI reads the report, maps results to 287+ known biomarkers, and shows you a preview before saving anything. It works with any format, language, or country.
+    On a new profile, click **Start guided chat**. Chat can help you decide whether to import labs, add DNA, connect wearables, set up light context, or fill profile context later.
 
-    <Warning>
-      You need an AI provider configured before dropping a PDF. If you see a prompt to set up a provider, visit Settings first.
-    </Warning>
+    **Import directly**
+
+    Use the header import button or drag files onto the page. getbased recognizes lab PDFs, lab photos/screenshots, raw DNA files, getbased JSON exports, and database bundles. When an AI provider is connected, the empty state also shows **Import directly**.
 
     **Try a demo profile**
 
-    If you don't have a lab report on hand, load one of the two built-in demo profiles from the welcome screen:
+    If you do not have data on hand, load one of the built-in demo profiles:
 
-    - **Sarah** — an iron and hormones story with multiple blood draws, a fatty acid panel, supplements, and lifestyle context
-    - **Alex** — a metabolic health journey with trend charts, an OAT panel, and EMF assessment data
+    - **Sarah** — iron, hormones, Oura, cycle context, supplements, and lifestyle context
+    - **Alex** — metabolic health, Withings body composition, OAT data, and EMF assessment data
 
-    You can also load demo profiles at any time from the client list (click your profile name in the header) using the **+ Demo Sarah** or **+ Demo Alex** buttons.
+    You can also load demo profiles from the profile switcher in the header.
 
-    <Tip>
-      Demo profiles are fully populated with four blood draws, specialty lab data, context cards, supplement timelines, and notes — a great way to explore the dashboard before adding your own data.
-    </Tip>
+    **Enter values manually**
 
-    **Enter results manually**
-
-    If you prefer not to use AI, choose **Manual Entry** from the import menu to type values directly.
+    For lab values, open a marker detail view and click **+ Add Value Manually**, fill an empty cell in **Compare dates**, or create a marker from **Custom markers**. For body metrics, use **Body** or the **Biometrics Overview** widget to log weight, blood pressure, or resting heart rate.
   </Step>
 
-  <Step title="Explore the dashboard">
-    Once data is imported, the dashboard populates automatically across all 17 biomarker categories. Here's what to explore:
+  <Step title="Explore the redesigned dashboard">
+    The dashboard is now a customizable overview, not the only place where work happens. The default widgets surface current focus, biological age, recommended next steps, priority markers, quick markers, biometrics, light context, and key trends.
 
-    - **Trend charts** — interactive line charts with reference bands, optimal ranges, and trend detection. Click any category in the sidebar to drill in.
-    - **Biological age** — PhenoAge and Bortz Age appear as a combined marker when you have the required biomarkers (hs-CRP plus eight others).
-    - **Context cards** — nine lifestyle cards (diet, sleep, exercise, stress, light, and more). Fill them in to enrich all AI analysis with your full context.
-    - **AI chat** — click the chat icon (bottom-right) to ask questions about your results. The AI has your full health profile, lab history, DNA data, and lifestyle context.
-    - **Correlations** — compare any two biomarkers over time using the correlation viewer in the sidebar.
-    - **Compare dates** — pick two lab dates for a side-by-side comparison of every marker.
+    Use the sidebar on desktop, or the bottom tabs and menu on mobile, to move through:
 
-    A 7-step spotlight tour runs automatically after your first import. You can replay it at any time from **Settings → Display → Take a Tour**.
+    - **Labs** — biomarker charts, tables, heatmaps, and marker detail views
+    - **Genome** — raw DNA, APOE, mtDNA, and SNP context
+    - **Body** — wearables, manual body metrics, supplements, and cycle tracking
+    - **Light** — sun sessions, therapy devices, indoor light, and measurement tools
+    - **Insight** — Current Focus, AI insights, profile context, and synthesis
+    - **Recommendations** — data-linked next steps across all lenses
+    - **Compare dates** and **Correlations** — analysis tools for lab changes and marker pairs
+
+    See [Use the redesigned dashboard](/guides/dashboard) for the widget and layout controls.
   </Step>
 </Steps>

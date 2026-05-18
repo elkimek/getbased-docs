@@ -23,7 +23,7 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
 
 <Steps>
   <Step title="Enable Agent Access">
-    1. Open **Settings → Data → Agent Access**
+    1. Open **Settings → Agent Access**
     2. Toggle it **on**
     3. A read-only token appears — click **Copy** to put it on your clipboard (the clipboard is cleared after 60 seconds)
 
@@ -94,7 +94,7 @@ mcp_servers:
       GETBASED_TOKEN: your-token-here
 ```
 
-Replace `your-token-here` with the token from **Settings → Data → Agent Access**.
+Replace `your-token-here` with the token from **Settings → Agent Access**.
 
 ## Multi-profile support
 
@@ -117,7 +117,7 @@ getbased_section('wearables', profile='Main')
 
 ### 30-day daily series (opt-in)
 
-For time-series reasoning — "did my HRV drop the week before I got sick?" — the always-on summary is not enough. Open **Settings → Data → Agent Access** and turn on **"Push 30-day wearable series"**. getbased then writes a pivoted daily matrix into a separate section (~400 tokens):
+For time-series reasoning — "did my HRV drop the week before I got sick?" — the always-on summary is not enough. Open **Settings → Agent Access** and turn on **Push wearable daily series**. getbased then writes a pivoted daily matrix into a separate section:
 
 ```
 getbased_section('wearables-series-30d', profile='Main')
@@ -172,7 +172,7 @@ Agent Access is designed to share the minimum needed for an agent to be useful:
   <Accordion title="Agent returns stale data">
     The gateway is updated whenever you save changes in getbased. If answers seem outdated:
 
-    1. Confirm **Agent Access** is still toggled on in **Settings → Data**.
+    1. Confirm **Agent Access** is still toggled on in **Settings → Agent Access**.
     2. Open getbased in your browser — the push happens from the browser, so it needs to be open at least once after your latest changes.
     3. Check your network connection — the push requires internet access to reach the gateway.
   </Accordion>

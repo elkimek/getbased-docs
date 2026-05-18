@@ -1,36 +1,36 @@
 ---
 title: "Import lab PDFs into getbased"
-description: "Drop any lab report PDF onto the dashboard and getbased extracts your results automatically — any lab, any format, any language."
+description: "Import lab reports as PDFs, photos, or screenshots and let getbased extract results automatically — any lab, format, or language."
 ---
 
-getbased can read lab reports from virtually any provider worldwide. Drop a PDF on the dashboard and the AI extracts every result, maps it to a known biomarker, and shows you a preview before saving anything. Your personal information is stripped before the file reaches your AI provider.
+getbased can read lab reports from virtually any provider worldwide. Use the header import button or drop a file onto the app. The AI extracts results, maps them to known biomarkers, and shows you a preview before saving anything. Personal information is stripped before the file reaches your AI provider.
 
 ## Before you start
 
-You need an AI provider configured in **Settings → AI Provider**. Manual entry does not require AI, but PDF import does.
+You need an AI provider configured in **Settings → AI**. Manual lab entry, JSON import, DNA import, charts, comparisons, and correlations do not require AI, but PDF and image lab import do.
 
-## Import a PDF
+## Import a report
 
 <Steps>
-  <Step title="Open the dashboard">
-    Navigate to the getbased dashboard. You can import from here at any time — you do not need to be in a specific view.
+  <Step title="Open getbased">
+    You can import from the dashboard or any lens. On a fresh profile, guided chat is the recommended first path; direct import is also available once AI is configured.
   </Step>
   <Step title="Drop or select your file">
-    Either drag your PDF anywhere onto the dashboard, or click the **import button** (document icon, bottom-right corner) to open a file picker.
+    Click the header import button or drag files onto the page. Supported report formats include PDF, JPG, PNG, and WebP.
   </Step>
   <Step title="Wait for AI analysis">
-    getbased processes the file locally, strips personal information, then sends the anonymized text to your AI provider. This typically takes 5–20 seconds.
+    getbased processes the file locally, strips personal information, then sends anonymized text or images to your AI provider. This typically takes 5-20 seconds for a normal report.
   </Step>
   <Step title="Review the import preview">
-    Before anything is saved, you see exactly what the AI found. Review each row and exclude anything you don't want by clicking the **×** button. The button toggles to **+** so you can re-include rows.
+    Before anything is saved, you see exactly what the AI found. Review each row and exclude anything you do not want by clicking the **×** button. The button toggles to **+** so you can re-include rows.
   </Step>
   <Step title="Confirm">
-    Click **Confirm** to save the results. Your data appears in charts immediately.
+    Click **Confirm** to save the results. Your values appear in Labs, dashboard widgets, marker details, comparisons, correlations, and AI context immediately.
   </Step>
 </Steps>
 
 <Tip>
-  getbased handles reports in English, French, German, Spanish, Dutch, and many other languages. The AI maps marker names to the correct biomarkers regardless of the language on the report.
+getbased handles reports in English, French, German, Spanish, Dutch, and many other languages. The AI maps marker names to the correct biomarkers regardless of the language on the report.
 </Tip>
 
 ## Pre-flight checks
@@ -38,73 +38,75 @@ You need an AI provider configured in **Settings → AI Provider**. Manual entry
 Before analysis begins, getbased runs two automatic checks:
 
 - **Model mismatch** — if you have changed your AI model since your last import, a warning explains that different models may assign different internal keys to the same marker. You can continue or switch back to your previous model.
-- **PII scan** — a notification confirms that personal information (name, address, date of birth, ID numbers) will be stripped before the file is sent to your AI provider.
+- **PII scan** — a notification confirms that personal information such as name, address, date of birth, ID numbers, email, and phone will be stripped before the file is sent to your AI provider.
 
 ## Understanding the import preview
 
 The preview table shows each result the AI found, the value, the lab's reference range, and how it was mapped. Each row has one of three status colors:
 
-- **Green — Matched**: the marker was recognized and mapped to a known biomarker (e.g., glucose, TSH, ferritin).
-- **Blue — New**: the marker is not in the built-in list. getbased creates it automatically as a custom marker with an AI-suggested name, unit, and reference range.
+- **Green — Matched**: the marker was recognized and mapped to a known biomarker, such as glucose, TSH, or ferritin.
+- **Blue — New**: the marker is not in the built-in list. getbased creates it as a custom marker with an AI-suggested name, unit, and reference range.
 - **Yellow — Unmatched**: the AI found a result but could not confidently map it. Review these rows manually before confirming.
 
 If something looks wrong, dismiss the import and try again. Nothing is saved until you click **Confirm**.
 
 ### Reference range adoption
 
-When the reference ranges on your PDF differ from getbased's stored ranges, a toggle appears below the preview table: **"Update reference ranges from this report (N markers)"**. This is checked by default. Accepting it saves the lab's own ranges — including open-ended ranges like eGFR >59 — as per-marker overrides that apply going forward.
+When the reference ranges on your report differ from getbased's stored ranges, a toggle appears below the preview table: **"Update reference ranges from this report (N markers)"**. This is checked by default. Accepting it saves the lab's own ranges as per-marker overrides.
 
 ### Unit normalization
 
-Enzymes reported as IU/L (ALT, AST, ALP) are automatically mapped to U/L. No manual correction is needed.
+Common unit differences are normalized automatically. For example, enzymes reported as IU/L are mapped to U/L. The marker detail modal can also show alternate units when **Alternate Units** is enabled in **Settings → Display**.
 
 ## Batch import
 
-To import multiple PDFs at once — for example, several years of annual blood work — select or drag multiple files at the same time. getbased processes them one at a time, showing you the preview for each file in sequence. A counter tells you which file you are on (e.g., "File 2 of 5").
+To import multiple reports at once, select or drag multiple files. getbased processes them one at a time and shows the preview for each file in sequence. A counter tells you which file you are on.
 
-For each file you can **Confirm** to save or **Skip** to discard and move on. If a file fails due to a network error, getbased retries it once automatically before offering the option to skip. The dashboard refreshes once at the end of the batch rather than after every file.
+For each file you can **Confirm** to save or **Skip** to discard and move on. If a file fails due to a network error, getbased retries it once automatically before offering the option to skip.
 
 <Note>
-  Back up your data before a large batch import using **Settings → Backup & Restore** or by exporting a JSON snapshot first.
+Before a large batch import, export a JSON backup from Settings or use [Backup](/guides/backup). Restoring from a backup is easier than deleting many values manually.
 </Note>
 
-## Scanned PDFs and image imports
+## Scanned PDFs and images
 
-Most lab PDFs contain selectable text. If your PDF is a scanned image, getbased detects this automatically and switches to **image mode**, rendering each page as a screenshot for the AI to read visually.
+Most lab PDFs contain selectable text. If your PDF is a scanned image, getbased detects this and switches to image mode, rendering pages for the AI to read visually.
 
-You can also import lab reports saved as photos or screenshots directly — JPG, PNG, and WebP files go through the same image pipeline as scanned PDFs.
+You can also import lab reports saved as photos or screenshots directly. JPG, PNG, and WebP files go through the same image pipeline as scanned PDFs.
 
 <Tip>
-  If results are missing after an image-mode import, try exporting the report as a PDF directly from your lab's patient portal. Text-based PDFs produce more reliable results than scans.
+If results are missing after an image-mode import, try exporting the report as a PDF directly from your lab's portal. Text-based PDFs usually produce more reliable results than scans.
 </Tip>
 
 ## Specialty lab detection
 
-getbased automatically detects non-blood tests in your PDF — OAT, DUTCH, HTMA, fatty acid panels, and more. The AI identifies the test type and routes markers through the specialty pipeline, using the reference ranges from your lab report rather than built-in defaults. See [Import specialty lab panels](/guides/specialty-labs) for details.
+getbased automatically detects non-blood tests in your PDF, including OAT, DEXA, fatty acid panels, Metabolomix+, and more. The AI identifies the test type and routes markers through the specialty pipeline, using the reference ranges from your report rather than built-in defaults.
+
+See [Import specialty lab panels](/guides/specialty-labs) for details.
 
 ## Privacy during import
 
-Your PDF is processed locally first. Personal information is stripped before anything is sent to your AI provider. See the Privacy guide for full details on how PII obfuscation works.
+Your file is processed locally first. Personal information is stripped before anything is sent to your AI provider. See [Privacy](/guides/privacy) for full details on PII obfuscation.
 
 ## What gets extracted
 
-getbased tracks 300+ biomarkers across 17 categories, including:
+getbased tracks 287+ built-in biomarkers across standard categories, plus unlimited custom markers. Common areas include:
 
 - **Biochemistry** — glucose, liver enzymes, kidney markers, electrolytes
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, insulin
 - **Lipids** — cholesterol, triglycerides, LDL, HDL, ratios
 - **Hematology** — CBC, red and white cell indices
 - **Thyroid** — TSH, T3, T4, antibodies
-- **Body Composition** — body fat %, lean mass, visceral fat (from DEXA scans)
-- **Bone Density** — BMD, T-scores, Z-scores (from DEXA scans)
+- **Body Composition** — body fat percentage, lean mass, visceral fat from DEXA scans
+- **Bone Density** — BMD, T-scores, Z-scores from DEXA scans
 
-Markers not in the built-in schema are created automatically as custom markers and tracked alongside the built-in ones.
+Markers not in the built-in schema are created automatically as custom markers and tracked alongside built-in markers.
 
 ## Common questions
 
 **Can I import the same PDF twice?**
 
-If you import a report for a date that already has data, the new values are merged with the existing ones. Existing values are not overwritten. In **Settings → Data**, hover over a date that shows "2 files" to see which filenames contributed.
+If you import a report for a date that already has data, the new values are merged with the existing ones. Existing values are not overwritten.
 
 **What about below-detection-limit values like `<0.5`?**
 
@@ -112,8 +114,8 @@ These are imported at the detection limit value itself (`<0.5` becomes `0.5`). T
 
 **Can I undo an import?**
 
-Not directly after confirming, but you can use **Settings → Backup & Restore** to roll back to an automatic snapshot taken before the import.
+Not directly after confirming. Restore from an automatic snapshot or JSON backup if an import created bad data.
 
 <Warning>
-  If you see unexpected results after a batch import, restore from a pre-import snapshot rather than deleting values individually.
+If you see unexpected results after a batch import, restore from a pre-import snapshot rather than deleting values individually.
 </Warning>

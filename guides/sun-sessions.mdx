@@ -3,7 +3,7 @@ title: "Log sun exposure sessions in getbased"
 description: "Track vitamin D, circadian rhythm, cardiovascular, and four other biological channels from every sun session — with live dose totals and burn alerts."
 ---
 
-Sun isn't just vitamin D. Different wavelengths do different things — set your body clock, support circulation, charge your mitochondria, regulate mood hormones. The **Light & Sun** section in getbased tracks your sun exposure across six biological channels and lets you correlate them with your labs and wearable data over time.
+Sun isn't just vitamin D. Different wavelengths do different things — set your body clock, support circulation, charge your mitochondria, regulate mood hormones. The **Light** lens tracks your sun exposure across six biological channels and lets you correlate them with your labs and wearable data over time.
 
 ## What sun sessions tracks
 
@@ -28,18 +28,18 @@ The primary flow is a one-tap quick log.
 
 <Steps>
   <Step title="Start a session">
-    Tap **Log a sun session** — found on the Light Today strip or the Light & Sun page. The app pulls the current UV index and ozone for your location, reconstructs the spectrum at your sun angle, and starts accruing dose.
+    Tap **Log a sun session** in the Light lens or the **Light Today** dashboard widget. The app pulls the current UV index and ozone for your location, reconstructs the spectrum at your sun angle, and starts accruing dose.
   </Step>
   <Step title="Stop when you're done">
     When you come back inside, tap the same button — now labelled **Stop session — N min**. That's the whole flow.
   </Step>
 </Steps>
 
-Quick-log defaults carry over from your last session. If you want to adjust body regions, eyewear, or SPF before you start, open the full session picker from the Light & Sun page.
+Quick-log defaults carry over from your last session. If you want to adjust body regions, eyewear, or SPF before you start, open the full session picker from the Light lens.
 
 ### First-time setup
 
-The first time you open Light & Sun, a short setup card asks a few questions to calibrate your personal scores:
+The first time you open the Light lens, a short setup card asks a few questions to calibrate your personal scores:
 
 - **Skin type** (Fitzpatrick I–VI) — used to scale your personal sunburn threshold
 - **Home lighting** — LED cool, LED warm, fluorescent, incandescent, or mixed
@@ -51,7 +51,7 @@ An optional 10-question light-burden audit captures how indoor- or artificial-li
 
 ## Live session controls
 
-While a session is running, a **Live** card pins to the top of the Light & Sun page with running dose totals per channel. You can interact mid-session:
+While a session is running, a **Live** card pins to the top of the Light lens with running dose totals per channel. You can interact mid-session:
 
 | Control | What it does |
 | --- | --- |
@@ -64,7 +64,7 @@ For targeted protocols (face only, abdomen only, back only), the detailed sessio
 
 ## MED calculation and burn alerts
 
-The Light Today strip shows your **burn risk** in plain English throughout the day:
+The Light lens and **Light Today** dashboard widget show your **burn risk** in plain English throughout the day:
 
 - **Safe** — under 30% of your personal daily sunburn threshold
 - **Moderate** — 30–70%
@@ -79,7 +79,7 @@ These thresholds are computed from each session's CIE-erythemal-weighted dose co
 
 ## Atmosphere data
 
-getbased uses real atmospheric data to reconstruct the solar spectrum at your location and elevation. You can choose your **Sun data source** directly on the Light & Sun page:
+getbased uses real atmospheric data to reconstruct the solar spectrum at your location and elevation. You can choose your **Sun data source** directly in the Light lens:
 
 <Tabs>
   <Tab title="Default (CAMS + Open-Meteo)">
@@ -104,7 +104,7 @@ getbased uses real atmospheric data to reconstruct the solar spectrum at your lo
 
 ## Photobiology device library
 
-Got a red-light therapy panel, a SAD lamp, a UVB lamp, or a full-spectrum bulb? Add it from the **My light devices** section on the Light & Sun page.
+Got a red-light therapy panel, a SAD lamp, a UVB lamp, or a full-spectrum bulb? Add it from the **Light Devices** section in the Light lens.
 
 getbased ships a **19-preset library** covering devices from Chroma, EMR-Tek, and Mitochondriak. For other brands — Joovv, Mito Red, Sperti, Verilux, Lumie, and others — paste the spec sheet into the custom-device dialog and the AI extractor maps wavelength and irradiance into the same schema.
 
@@ -118,7 +118,7 @@ Verdicts fire automatically when you stop a session. You can also request a fres
 
 ## Where sun data appears in AI context
 
-Every AI chat includes a Light & Sun summary in the always-on context tier, covering:
+Every AI chat includes a Light summary in the always-on context tier, covering:
 
 - Your active channel deficits and surpluses
 - Your configured devices and recent device sessions
@@ -128,7 +128,7 @@ Every AI chat includes a Light & Sun summary in the always-on context tier, cove
 Once you have four or more weeks of overlapping sessions and lab results, channel-by-biomarker correlations join the standard context — so the AI can reason about things like the relationship between your weekly UVB dose and your 25-OH vitamin D trend.
 
 <Tip>
-  Sun and wearable data sit side-by-side on the dashboard. The AI sees both simultaneously, which lets it reason about things like "low HRV on days after high-UV sessions" without you having to connect the dots yourself.
+  Sun and wearable data sit side-by-side in dashboard widgets and AI context. The AI sees both simultaneously, which lets it reason about things like "low HRV on days after high-UV sessions" without you having to connect the dots yourself.
 </Tip>
 
 If your DNA includes variants in VDR, MC1R, CYP2R1, GC, NPAS2, CRY2, or PER3, the AI prompts already factor those in when those genes are relevant to the question at hand.

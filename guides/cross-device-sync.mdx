@@ -113,7 +113,7 @@ If you lose your mnemonic, there is no recovery. You can still access your local
 
 When you delete a profile, getbased marks it as deleted on the relay (a tombstone). On the next pull, every other paired device sees the tombstone and wipes its local copy automatically — single-profile deletes propagate without prompting.
 
-For batched deletes (two or more profiles deleted at once), the receiving device quarantines the wipe and shows a confirmation UI in **Settings → Sync**. Each pending delete has **Apply delete** and **Restore** buttons. This protects against a leaked mnemonic: an attacker publishing tombstones for all your profiles would otherwise silently wipe every paired device on the next pull.
+For batched deletes (two or more profiles deleted at once), the receiving device quarantines the wipe and shows a confirmation UI in **Settings → Data**. Each pending delete has **Apply delete** and **Restore** buttons. This protects against a leaked mnemonic: an attacker publishing tombstones for all your profiles would otherwise silently wipe every paired device on the next pull.
 
 To reject a quarantined delete, click **Restore** — getbased re-publishes the local profile data, which beats the tombstone on the next sync. To accept, click **Apply delete** — the local wipe runs and the entry clears.
 

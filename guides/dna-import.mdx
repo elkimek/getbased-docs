@@ -3,7 +3,7 @@ title: "Import and analyze your raw DNA data with getbased"
 description: "Drop a raw DNA file from any major provider and getbased overlays 47 curated SNPs on your lab results — parsed entirely in your browser."
 ---
 
-getbased can overlay genetic context on your blood work. Drop a raw DNA file from AncestryDNA, 23andMe, or another major provider and getbased scans it for 47 health-relevant SNPs, then surfaces that context alongside the biomarkers you're already tracking — so the AI can factor in your genetics when interpreting lab results. No account, no upload, no cloud processing.
+getbased can overlay genetic context on your blood work. Drop a raw DNA file from AncestryDNA, 23andMe, MyHeritage, FTDNA, Living DNA, Illumina GenomeStudio, DNAEra, or another compatible provider and getbased scans it for 47 health-relevant SNPs. Those findings surface in the Genome lens, the Genetic Modifiers dashboard widget, marker details, and AI context. No account, no upload, no cloud processing.
 
 ## Supported providers
 
@@ -16,7 +16,7 @@ You need a **raw DNA data file** from your testing service — not a PDF report 
 | **MyHeritage** | CSV | DNA → Manage DNA kits → Download Raw Data |
 | **FTDNA** (Family Tree DNA) | CSV | myFTDNA → Download Raw Data |
 | **Living DNA** | Tab-separated text | Dashboard → Download Raw DNA |
-| **Illumina GenomeStudio** | CSV with `[Header]`/`[Data]` blocks | Provided by your clinical lab |
+| **Illumina GenomeStudio / DNAEra** | CSV with `[Header]`/`[Data]` blocks | Provided by your clinical lab |
 
 <Note>
 getbased identifies files by their content headers, not the filename. If your file isn't recognized, make sure you downloaded the raw data export and not a formatted health report.
@@ -24,15 +24,16 @@ getbased identifies files by their content headers, not the filename. If your fi
 
 ## How to import
 
-Three entry points open the same file picker:
+Common entry points open the same file picker:
 
-- **Dashboard card** — when no DNA is loaded, the Genetics section shows an **Add your DNA data** card. Click it to open a file picker.
-- **Drag and drop** — drag your file anywhere onto the dashboard.
-- **Chat onboarding** — first-time users see a DNA prompt during the chat-driven setup wizard.
+- **Genome lens** — open **Genome** and choose **Add your DNA data** when no DNA is loaded.
+- **Genetic Modifiers widget** — add the widget to your dashboard and use its empty state.
+- **Header import** — use the import button in the header.
+- **Drag and drop** — drag your raw DNA file onto the app.
 
 <Steps>
   <Step title="Open the file picker">
-    Click **Add your DNA data** on the dashboard, or drag your raw DNA file onto the page.
+    Click **Add your DNA data** in the Genome lens or Genetic Modifiers widget, use the header import button, or drag your raw DNA file onto the page.
   </Step>
   <Step title="Review the import preview">
     getbased groups your findings by impact level before saving anything. Significant results appear first.
@@ -68,7 +69,7 @@ getbased doesn't store your genome. It scans your file for **47 curated SNPs** a
 
 ### APOE haplotype
 
-The two APOE SNPs (rs429358 + rs7412) are automatically resolved into standard haplotype notation — ε2, ε3, or ε4 — rather than shown as raw genotypes. Your APOE status appears prominently at the top of the Genetics dashboard section.
+The two APOE SNPs (rs429358 + rs7412) are automatically resolved into standard haplotype notation — ε2, ε3, or ε4 — rather than shown as raw genotypes. Your APOE status appears prominently in the Genome lens and in dashboard genetics summaries.
 
 ## Effect tiers
 
@@ -86,9 +87,11 @@ Wild-type genotypes with no meaningful effect get no dot. The import preview gro
 
 ## Where genetics appears
 
-After import, your genetic context surfaces in four places across the app.
+After import, your genetic context surfaces across the app.
 
-**Dashboard** — a collapsible **Genetics** section shows your APOE haplotype and top findings grouped by category, sorted by severity. Initially shows up to 8 findings with a **Show all** button. Each finding links to its primary study on PubMed and a further-reading page on SNPedia.
+**Genome lens** — the dedicated genetics workspace shows your APOE haplotype, mtDNA data, import details, and top SNP findings grouped by category and severity.
+
+**Dashboard** — the **Genetic Modifiers** widget summarizes actionable SNP context alongside labs and goals. Add or remove it like any other dashboard widget.
 
 **Biomarker detail modal** — when you open any biomarker's detail view, relevant SNPs appear inline with the gene, your genotype, and what it means for that specific marker. SNPs are sorted by severity.
 
@@ -123,8 +126,7 @@ Drop this file onto the app and getbased will:
 
 If you already know your maternal haplogroup from 23andMe, FTDNA, or another service but don't have a mutation file, you can enter it directly without uploading anything:
 
-- **Edit Client form** — select your haplogroup from the dropdown under "mtDNA Haplogroup (maternal lineage)"
-- **Chat onboarding** — use the **Enter haplogroup** dropdown in the DNA step next to the upload button
+- **Profile editor** — select your haplogroup from the **mtDNA Haplogroup (maternal lineage)** dropdown
 
 Both paths auto-resolve the coupling classification and environment mismatch detection.
 
@@ -150,11 +152,11 @@ Your raw DNA file never leaves your device.
 - Only the 47 matched SNP genotypes are stored, not your full genome
 - Stored data includes the rsID, genotype, gene name, variant name, and effect classification
 - DNA data is included in your JSON exports and covered by encryption if you have it enabled
-- You can delete your genetic data at any time from the Genetics dashboard section
+- You can delete your genetic data at any time from the Genome lens
 
 ## Re-importing
 
-Importing a new file replaces all existing genetic data for the current profile. Use the **Re-import** link at the bottom of the Genetics dashboard section, or drop a new file onto the page. This is useful if you switch providers or download a newer export from your testing service.
+Importing a new file replaces all existing genetic data for the current profile. Use the Genome lens controls or drop a new file onto the page. This is useful if you switch providers or download a newer export from your testing service.
 
 ## FAQ
 

@@ -3,11 +3,11 @@ title: "Connect wearables and track biometrics"
 description: "Sync Oura, Fitbit, Withings, Polar, Apple Health, and more alongside your blood work — or log readings manually without any device."
 ---
 
-The Body & Wearables lens pulls data from your connected devices into a unified dashboard strip, placing HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more on the same timeline as your lab results. If you don't own a wearable, you can log weight, blood pressure, and resting heart rate manually using inline forms directly on the dashboard.
+The Body lens pulls data from your connected devices into a unified biometrics workspace. HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more can appear in the Body lens and in the **Biometrics Overview** dashboard widget. If you do not own a wearable, you can log weight, blood pressure, and resting heart rate manually.
 
-## Dashboard strip
+## Body lens and Biometrics Overview
 
-Each metric appears as a card on the dashboard strip. Tap any card to open a 90-day chart with statistics and a full reading history. Cards for metrics your device doesn't measure are hidden automatically.
+Each selected metric appears as a card in **Body** and in the dashboard's **Biometrics Overview** widget. Tap any card to open a 90-day chart with statistics and a full reading history. Cards for metrics your device does not measure are hidden automatically.
 
 Metrics surfaced on the strip include:
 
@@ -44,7 +44,7 @@ Metrics surfaced on the strip include:
     For OAuth-based vendors, you are redirected to the vendor's authorization page. Approve access and you are redirected back automatically.
   </Step>
   <Step title="Wait for the initial sync">
-    getbased fetches the last 90 days of data. Raw daily rows are stored in your browser's local database; a compact summary populates the dashboard strip.
+    getbased fetches the last 90 days of data. Raw daily rows are stored in your browser's local database; a compact summary populates the Body lens and Biometrics Overview widget.
   </Step>
 </Steps>
 
@@ -70,7 +70,7 @@ Parsing runs entirely in your browser. The file is never sent to a server. Large
 
 ## Manual entry
 
-You can log weight, blood pressure, and resting heart rate without any wearable. The dashboard shows an empty card for each of these metrics when no device provides them.
+You can log weight, blood pressure, and resting heart rate without any wearable. The Body lens and Biometrics Overview widget show empty cards for these metrics when no device provides them.
 
 **To log a reading:**
 
@@ -117,9 +117,9 @@ Background sync runs automatically every 6 hours while the tab is open, so the d
 An "as of {date}" hint on a card means that metric's most recent reading is older than other data from the same vendor. This is usually the vendor's processing pipeline finishing late — Oura's HRV often lags its sleep score by several hours. Hover the hint for an explanation.
 </Tip>
 
-## Reordering the dashboard strip
+## Choosing dashboard metrics
 
-Tap the **⇄** button in the wearable strip header to enter reorder mode. Each card shows **◀ ▶** arrows — click once to move a card one slot in that direction. Your order is saved per profile.
+Use **Add metrics** in the Biometrics Overview widget to choose which wearable and manual metrics appear on the dashboard. The full Body lens remains the dedicated workspace for sources, sync state, and metric history.
 
 ## Privacy
 
@@ -127,7 +127,7 @@ Tap the **⇄** button in the wearable strip header to enter reorder mode. Each 
 - **Compact summary data** syncs to your other devices via Evolu CRDT, which is end-to-end encrypted using your mnemonic identity.
 - **OAuth refresh tokens stay local.** They are not included in the sync payload — you reconnect each vendor on each device.
 - **AI chat context** includes a ~200-token wearable summary by default. You can disable this in **Settings → AI → AI Context**.
-- **Personal Agent (MCP)** receives the same compact summary. You can optionally push a 30-day daily time series in **Settings → Data → Agent Access** for richer time-series reasoning.
+- **Personal Agent (MCP)** receives the same compact summary. You can optionally push a daily time series in **Settings → Agent Access** for richer time-series reasoning.
 
 ## Self-hosting OAuth
 
