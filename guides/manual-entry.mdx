@@ -1,78 +1,70 @@
 ---
-title: "Add lab results manually in getbased"
-description: "Enter individual biomarker values by hand — no PDF or AI provider required. Useful for paper results, home test kits, or filling gaps after a PDF import."
+title: "Add values manually in getbased"
+description: "Enter individual lab values and body metrics by hand — no PDF or AI provider required."
 ---
 
-If you have lab results but no PDF — values written on a printout, emailed as plain text, or measured by a home device — you can enter them directly using the manual entry form. Manual entry does not require an AI provider.
+Manual entry is for values you have outside an importable PDF: paper lab reports, one-off corrections, home measurements, or historical results from a spreadsheet. It does not require an AI provider.
 
 ## When to use manual entry
 
 - You received a paper printout with no digital version
 - A single value was missing or incorrect after a PDF import
-- You're tracking results from a home device (glucose meter, blood pressure cuff, cholesterol monitor)
-- You have historical values from a spreadsheet you want to bring in
-- You want to add context to a specific reading that explains an unusual result
+- You are tracking results from a home device
+- You have historical values from a spreadsheet
+- You want to attach context to a specific reading
 
-## Add values from the manual entry form
+## Add a lab value from the marker detail modal
 
-<Steps>
-  <Step title="Open manual entry">
-    Click **Manual Entry** in the sidebar. On mobile, find it in the navigation menu.
-  </Step>
-  <Step title="Select the date">
-    Pick the date the blood was drawn or the measurement was taken.
-  </Step>
-  <Step title="Find the markers you need">
-    The marker list is organized by the same 17 categories used throughout the app — Biochemistry, Hormones, Lipids, and so on. Scroll through a category or use the search box to find a marker by name.
-  </Step>
-  <Step title="Enter your values">
-    Type the value for each marker you have results for. Leave everything else blank — getbased draws chart lines across gaps automatically.
-  </Step>
-  <Step title="Save">
-    Click **Save**. Your results appear in charts immediately alongside any PDF-imported data.
-  </Step>
-</Steps>
+Open any marker from Labs, a dashboard marker widget, a chart card, a table row, or a heatmap cell. Then click **+ Add Value Manually**.
 
-<Tip>
-  Enter values in whatever unit system you're currently using — US or SI. getbased converts to its internal format automatically when saving.
-</Tip>
+The form includes:
 
-## Add a value from the marker detail modal
-
-Open any marker by clicking its chart card, table row, or heatmap cell. Under the values grid you'll see a **+ Add Value Manually** button. This opens an inline form with three fields:
-
-- **Date** — defaults to today on first use, then remembers the date from your last save for the rest of the browser session, so you don't have to re-pick it for every marker on the same lab report.
-- **Value** — the placeholder shows the midpoint of the marker's reference range as a hint.
-- **Note (optional)** — attach context to this specific reading, such as "fasted 14h" or "different lab than usual".
+- **Date** — defaults to today on first use, then remembers the date from your last save for the rest of the browser session.
+- **Value** — accepts the current display unit, with an alternate unit picker when the marker has a known conversion.
+- **Note** — optional context for that specific reading, such as "fasted 14h" or "different lab than usual".
 
 Press **Enter** to save or **Esc** to cancel.
 
-Below the Save button you'll also see **Save & Add Another**. It saves the current value, keeps the date pre-filled, and clears the value field — useful for working through a paper lab report top-to-bottom without re-picking the date each time.
+Use **Save & Add Another** when entering a paper report. It saves the current value, keeps the date pre-filled, and clears the value field so you can work through another marker without re-picking the draw date.
 
-### Sanity check for out-of-range values
+## Add a value from Compare dates
 
-If you enter a value more than 10× above the upper reference bound or less than 1/10 of the lower bound, getbased asks you to confirm before saving. This catches common decimal or unit slips — for example, entering `100` for glucose in mg/dL when the app expects SI units (~5 mmol/L).
+Open **Compare dates** and click any empty cell in the comparison table. getbased opens the manual entry form with that column's date already filled in.
+
+This is the fastest path when you are filling gaps across many markers for one lab date.
+
+## Create a custom biomarker
+
+If the marker does not exist, open **Custom markers** from the Manage section of the sidebar. Define the marker name, unit, category, and optional reference and optimal ranges.
+
+After creation, getbased opens the manual value form so you can log the first result. The marker is available in Labs, dashboard marker widgets, AI context, and future PDF imports.
+
+See [Create custom biomarkers](/guides/custom-markers) for the full workflow.
+
+## Log body metrics manually
+
+Body metrics use the Body lens and **Biometrics Overview** dashboard widget, not the lab marker modal.
+
+You can log:
+
+- Weight
+- Blood pressure
+- Resting heart rate
+
+Tap an empty metric card with **+ Log**, enter the value, add optional context chips such as **resting**, **morning-fasted**, **post-workout**, or **stress**, then save.
+
+## Safety checks
+
+### Out-of-range sanity check
+
+If you enter a lab value more than 10x above the upper reference bound or less than 1/10 of the lower bound, getbased asks you to confirm before saving. This catches decimal or unit slips.
 
 ### Duplicate date confirmation
 
-If a value for this marker already exists on the date you chose, getbased shows you the existing value and asks before overwriting. Both the existing value and its unit are shown in your current display units.
-
-## Add a value from the Compare Dates table
-
-In the Compare Dates table view, clicking any **empty cell** opens the manual entry form with that column's date already filled in. This is a fast way to fill gaps across multiple markers for the same lab date.
-
-## Add a custom biomarker
-
-If the marker you're looking for doesn't appear in the list, you can create it. Click the **+** button next to "Categories" in the sidebar, then define the name, unit, category, and reference range. Once created, the marker is available immediately for manual entry and for future PDF imports.
+If a value for this marker already exists on the date you chose, getbased shows the existing value and asks before overwriting. Both the existing value and its unit are shown in your current display units.
 
 ## Edit or delete existing values
 
-Click any value in the **detail modal** to edit it inline. The value shows an **"edited ×"** badge — click the **×** to revert to the original imported value. Values you added manually (with no original to revert to) show a **"manual"** badge. You can also delete any value using the delete button next to it.
+Click any value in the marker detail modal to edit it inline. Edited imported values show an **edited ×** badge; click the **×** to revert to the original imported value. Values you added manually show a **manual** badge.
 
-If you enter the same number that's already stored, getbased treats it as no change — the value won't be re-stamped as "manual" just because you focused the field and tabbed away.
-
-## Per-value notes
-
-Each value card in the detail modal has a **"+ note"** affordance on hover. Click it to attach a note tied to that specific reading — fasting status, time of day, which arm for a blood pressure measurement, or why a result looks unusual.
-
-Notes show as an italic line beneath the value. The AI sees these notes when you ask about your labs, which often changes how a reading should be interpreted.
+Each value card also supports per-value notes. Notes are included in AI context, which can change how a reading should be interpreted.

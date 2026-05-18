@@ -3,9 +3,9 @@ title: "Fill in lifestyle context cards in getbased"
 description: "Nine lifestyle panels capture diet, sleep, environment, and history — giving the AI context that shapes your labs and a typical GP visit never explores."
 ---
 
-Context cards are nine lifestyle panels grouped under the heading **"What your GP won't ask you"** on your dashboard. They capture the health context that shapes your lab results — information a typical appointment rarely has time to explore. The more cards you fill in, the more precise the AI's interpretations become.
+Context cards are nine lifestyle panels that capture the health context behind your lab results — information a typical appointment rarely has time to explore. They live in the **Profile Context** widget and in the **Insight** lens. Add the widget to your dashboard if you want those cards in your overview.
 
-The dashboard shows how many cards you have filled (for example, **5/9 filled**) and lets you open any card with a single click.
+New users do not need to fill every card before using getbased. Guided chat can route you to the relevant context only when it helps.
 
 ## The nine cards
 
@@ -35,12 +35,12 @@ Each card shows a small colored dot and a brief AI-generated tip (up to 12 words
 The dots and tips are cached and only refresh when your data or card content changes, so they do not burn API calls on every page load.
 
 <Tip>
-Fill in as many cards as you can. The AI uses all nine cards when interpreting your lab results in chat and in the Focus Card. Each filled card adds meaningful context that the AI cannot infer from numbers alone.
+Fill in the cards that are relevant now. The AI uses all nine cards when interpreting your lab results in chat and in Current Focus. Each filled card adds meaningful context that the AI cannot infer from numbers alone.
 </Tip>
 
 ## How to fill in a card
 
-Click any card on the dashboard to open its editor. Each editor uses pill-button selectors and tag chips for multi-select options — no dropdowns to dig through. Click **Save** to apply your changes.
+Open **Insight** or the **Profile Context** dashboard widget, then click any card to edit it. Each editor uses pill-button selectors and tag chips for multi-select options. Click **Save** to apply your changes.
 
 ## Medical history card
 
@@ -78,13 +78,13 @@ EMF data is included in the AI chat context and in your JSON export.
 
 ## Supplement and medication timeline
 
-Supplements are managed from the **Supplements** section on the dashboard (not inside a context card). Each supplement entry has a start date and optional end date, forming a timeline that the AI can use to correlate supplementation periods with biomarker trends. The same timeline approach applies to medications you log.
+Supplements are managed from the **Supplements & Meds** widget and the Body lens, not inside a context card. Each supplement entry has a start date and optional end date, forming a timeline that the AI can use to correlate supplementation periods with biomarker trends. The same timeline approach applies to medications you log.
 
 When you chat with the AI, it can reason about whether a supplement you started three months ago might explain a shift in a marker from your most recent draw.
 
 ## How context reaches the AI
 
-When you send a chat message or the Focus Card refreshes, all nine cards plus the **Additional Notes** textarea below the card grid are included in the context. The Additional Notes field is free-form — use it for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. It auto-saves as you type.
+When you send a chat message or Current Focus refreshes, all nine cards plus the freeform notes attached to profile context are included in the context. Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant.
 
 The AI uses this context to give you interpretations that go beyond numbers — flagging when your sleep schedule, diet, or environment might explain a result, or surfacing a pattern that connects something you mentioned in a card to a trend in your labs.
 

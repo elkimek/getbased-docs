@@ -3,7 +3,7 @@ title: "Create custom biomarkers in getbased"
 description: "Track any lab result not in the built-in schema — create, edit, and group custom biomarkers manually or let PDF import do it automatically."
 ---
 
-getbased ships with a built-in schema of 300+ biomarkers across 17 categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
+getbased ships with a built-in schema of 287+ biomarkers across standard categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
 
 ## How custom markers are created during PDF import
 
@@ -22,7 +22,7 @@ You can create a new biomarker without importing a PDF:
 
 <Steps>
   <Step title="Open the marker creation form">
-    In the sidebar, click the **+** button next to "Categories".
+    Open **Custom markers** from the Manage section of the sidebar. On mobile, open the menu and choose **Custom markers**.
   </Step>
 
   <Step title="Choose or create a category">
@@ -34,7 +34,7 @@ You can create a new biomarker without importing a PDF:
   </Step>
 
   <Step title="Click Create">
-    The app immediately opens the Add Value form so you can log your first data point. The marker appears in the sidebar, on the dashboard, and in AI chat context right away.
+    The app immediately opens the Add Value form so you can log your first data point. The marker appears in Labs, marker search, dashboard marker widgets, and AI chat context right away.
   </Step>
 </Steps>
 
@@ -54,7 +54,7 @@ Custom marker definitions are set when first created and are not overwritten by 
 
 Custom markers follow the same category system as built-in markers:
 
-- **Sidebar category** — assigned when you create the marker (manually or during import). Markers in the same category appear together in the sidebar and on charts.
+- **Category** — assigned when you create the marker manually or during import. Markers in the same category appear together in Labs and chart views.
 - **Renaming categories** — click the category name in the category view header to rename it. The display label changes; the underlying key and all your data are unaffected.
 - **Category icons** — click the icon next to any category name to open the emoji picker. The picker includes categorized tabs (Science, Health, Nature, Food, Objects), a search field, and a Reset button to revert to the default.
 
@@ -64,7 +64,7 @@ If a custom marker belongs to a category that does not yet exist, a new category
 
 Once created, custom markers are treated identically to built-in markers throughout the app:
 
-- **Charts** with reference range bands and trend detection
+- **Labs charts** with reference range bands and trend detection
 - **Data tables** alongside every other biomarker
 - **AI chat context** — the assistant knows about your custom markers when you ask questions
 - **JSON backup** — included in exports and restored on import
@@ -72,7 +72,7 @@ Once created, custom markers are treated identically to built-in markers through
 
 ## Specialty lab pipeline
 
-For non-blood tests (OAT, DUTCH, HTMA, fatty acids, and similar panels), the import AI assigns markers to test-type-prefixed categories (e.g. `oatNutritional`, `dutchHormones`) and adds a **group** field that determines sidebar placement. These groups appear as collapsible sidebar headers — for example, an OAT import creates categories like "Nutritional Markers" and "Microbial Overgrowth" organized under an **OAT** header.
+For non-blood tests (OAT, DUTCH, HTMA, fatty acids, and similar panels), the import AI assigns markers to test-type-prefixed categories (e.g. `oatNutritional`, `dutchHormones`) and adds a **group** field that determines Labs navigation placement. These groups appear as collapsible headers — for example, an OAT import creates categories like "Nutritional Markers" and "Microbial Overgrowth" organized under an **OAT** header.
 
 When the app ships a built-in specialty adapter for a test type you have previously imported as custom markers, those markers are **auto-migrated** to the structured adapter — your historical data is preserved and gains the adapter's richer reference ranges and display names automatically.
 
@@ -83,7 +83,7 @@ When the app ships a built-in specialty adapter for a test type you have previou
 | Created by | You (manually or via PDF import AI) | Built into getbased for specific test types |
 | Coverage | Any marker you define | OAT (165 markers), fatty acids (Spadia, ZinZino, OmegaQuant), Metabolomix+, and more |
 | Reference ranges | From the lab report or what you enter | Curated per-marker from the test's reference methodology |
-| Sidebar grouping | Category you choose | Auto-organized by test type under collapsible headers |
+| Grouping | Category you choose | Auto-organized by test type under collapsible headers |
 | Future-proof | Yes — auto-migrated when an adapter ships for your test | N/A |
 
 Use custom markers for anything not yet covered by a built-in adapter — omega-3 index, deuterium levels, functional medicine panels, home monitoring devices, or any specialist test. If getbased later ships an adapter for that test type, your data migrates automatically.

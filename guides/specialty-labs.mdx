@@ -3,7 +3,7 @@ title: "Import specialty lab panels into getbased"
 description: "getbased supports OAT, DUTCH, HTMA, fatty acid panels, DEXA scans, and more — with auto-detection and a custom marker pipeline for any other lab."
 ---
 
-Beyond standard blood work, getbased handles specialty lab tests. Drop the PDF on the dashboard the same way you would any other report — the AI identifies the test type automatically and routes markers to the correct categories with your lab's stated reference ranges.
+Beyond standard blood work, getbased handles specialty lab tests. Import the PDF the same way you would any other report — use the header import button or drop it onto the app. The AI identifies the test type automatically and routes markers to the correct categories with your lab's stated reference ranges.
 
 ## Supported test types
 
@@ -24,13 +24,13 @@ Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mi
 
 <Steps>
   <Step title="Drop your PDF">
-    Drag the file onto the dashboard or use the import button. No special configuration is needed for specialty labs.
+    Drag the file onto the app or use the header import button. No special configuration is needed for specialty labs.
   </Step>
   <Step title="AI identifies the test type">
     The AI reads the report and detects whether it is blood work, a DEXA scan, an OAT panel, a DUTCH report, or another type.
   </Step>
   <Step title="Markers are mapped to specialty categories">
-    Specialty results are placed in test-type-specific categories to keep them separate from standard blood markers. These categories appear as collapsible sidebar sections labeled by test type.
+    Specialty results are placed in test-type-specific categories to keep them separate from standard blood markers. These categories appear as collapsible groups in Labs navigation.
   </Step>
   <Step title="Reference ranges come from your PDF">
     Unlike standard blood markers that use built-in reference ranges, specialty markers use the ranges printed on your specific report.
@@ -42,7 +42,7 @@ Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mi
 
 ## DEXA scans
 
-DEXA results appear under a collapsible **DEXA** sidebar group with two categories.
+DEXA results appear under a collapsible **DEXA** group with two categories.
 
 **Body Composition** (8 markers)
 
@@ -77,7 +77,7 @@ DEXA results appear under a collapsible **DEXA** sidebar group with two categori
 
 ## Fatty acid labs
 
-Fatty acid tests appear under a **Fatty Acids** sidebar group, with each lab in its own subcategory. Results from different labs are never mixed together.
+Fatty acid tests appear under a **Fatty Acids** group, with each lab in its own subcategory. Results from different labs are never mixed together.
 
 | Lab / product | Detection |
 |---|---|
@@ -93,7 +93,7 @@ Other fatty acid labs are also supported — the AI identifies the lab name from
 
 ## Metabolomix+
 
-Genova Metabolomix+ imports create multiple subcategories under an **OAT** sidebar group:
+Genova Metabolomix+ imports create multiple subcategories under an **OAT** group:
 
 | Category | Markers | Examples |
 |---|---|---|
@@ -120,13 +120,13 @@ BioStarks dried blood spot panels are hybrid tests — they include both special
 
 If your specialty lab is not in the table above, the AI still extracts all results from the PDF. For each unrecognized marker it creates:
 
-    - A **category** organized under a test-type sidebar section
-    - A **display name** in plain English
+- A **category** organized under a test-type group
+- A **display name** in plain English
 - The **unit** of measurement
 - **Reference ranges** from your lab report
-- A **group tag** (e.g., "DUTCH", "HTMA") for sidebar organization
+- A **group tag** (e.g., "DUTCH", "HTMA") for Labs organization
 
-These are created during import — no manual setup required. Specialty categories appear under collapsible group headers in the sidebar, and the collapse state is remembered across sessions.
+These are created during import — no manual setup required. Specialty categories appear under collapsible group headers, and the collapse state is remembered across sessions.
 
 If you import the same test type again later, markers are matched to the existing definitions for trend tracking across results.
 

@@ -1,13 +1,13 @@
 ---
 title: "Read biomarker trend charts in getbased"
-description: "Understand how getbased charts 300+ biomarkers across 17 categories — reference bands, optimal ranges, chart overlays, date comparison, and correlations."
+description: "Understand how getbased charts 287+ biomarkers across 17 categories — reference bands, optimal ranges, chart overlays, date comparison, and correlations."
 ---
 
-Every biomarker you import gets its own trend chart, organized by category on the dashboard. Charts plot values over time with reference range bands, optional overlays for context, and tools for comparing dates and exploring correlations between markers.
+Every biomarker you import gets its own trend chart in the Labs lens and marker detail views. Charts plot values over time with reference range bands, optional overlays for context, and tools for comparing dates and exploring correlations between markers.
 
 ## The 17 biomarker categories
 
-getbased tracks 300+ biomarkers organized into 17 categories:
+getbased tracks 287+ built-in biomarkers organized into standard categories:
 
 - **Biochemistry** — glucose, liver enzymes (ALT, AST, ALP, GGT), kidney markers, electrolytes
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, insulin, progesterone
@@ -21,7 +21,7 @@ getbased tracks 300+ biomarkers organized into 17 categories:
 - **Urinalysis** — pH, specific gravity
 - **Metabolomics**, **Fatty Acids**, **Neurotransmitters**, **Amino Acids**, and more (from specialty panels)
 
-Category headers show how many markers have data versus how many are available ("4 of 12 biomarkers with data"). Markers with no data are hidden — only charts with at least one value are shown.
+Category headers show how many markers have data versus how many are available. Markers with no data are hidden from the chart list until you import or enter a value.
 
 ## How charts work
 
@@ -72,7 +72,7 @@ Click any chart card to open the detail modal for that marker. The modal shows:
 
 The **Compare** view lets you select any two lab dates and see how every marker changed between them. This is useful for measuring the effect of a diet change, a new supplement protocol, a medication, or any other intervention.
 
-Open the Compare view from the sidebar and use the two date pickers to choose your dates. Every marker with a value on either date appears in the comparison table, showing:
+Open **Compare dates** from Analysis tools and use the two date pickers to choose your dates. Every marker with a value on either date appears in the comparison table, showing:
 
 - The value on the first (earlier) date
 - The value on the second (later) date
@@ -89,7 +89,7 @@ Status colors follow the same convention as the rest of the app: green for norma
 
 The **Correlations** view plots two biomarkers against each other as a scatter chart. Each point represents a single lab date, positioned by the values of both markers on that date. This reveals whether two markers tend to rise and fall together — or move in opposite directions.
 
-Select **Correlations** in the sidebar, then choose a marker for the horizontal (X) axis and one for the vertical (Y) axis. The chart updates immediately.
+Select **Correlations** from Analysis tools, then choose a marker for the horizontal (X) axis and one for the vertical (Y) axis. The chart updates immediately.
 
 Values on both axes are shown as a **percentage of the reference range** — 0% is the lower limit, 100% is the upper limit. This normalizes markers with different units so they land on the same grid. Values outside the reference range appear below 0% or above 100%.
 

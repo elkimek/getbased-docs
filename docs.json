@@ -69,6 +69,7 @@
             "pages": [
               "introduction",
               "quickstart",
+              "guides/dashboard",
               "ai-providers"
             ]
           },
@@ -96,7 +97,7 @@
             ]
           },
           {
-            "group": "Light & Sun",
+            "group": "Light",
             "pages": [
               "guides/sun-sessions",
               "guides/light-environment",
@@ -107,6 +108,7 @@
             "group": "Insight & AI",
             "pages": [
               "guides/ai-chat",
+              "guides/recommendations",
               "guides/interpretive-lens",
               "guides/knowledge-base",
               "guides/context-cards"
