@@ -1,0 +1,78 @@
+---
+title: "Share a profile with a password-protected link"
+description: "Create a temporary locked link for one getbased profile, send the password separately, and stop sharing when you are done."
+---
+
+Profile sharing lets you send one getbased profile to another person without exporting a file manually. It is designed for temporary handoff: you create a link, send the password separately, and the recipient loads the profile into their own browser.
+
+<Warning>
+Only create a share link when you are comfortable uploading a locked copy of that profile. Anyone who has both the link and the password can open it.
+</Warning>
+
+## What gets shared
+
+A profile share contains the selected profile's health record:
+
+- Lab entries and custom markers
+- Context cards, health goals, notes, and supplements
+- Biometrics, menstrual cycle data, genetics, and Light/Sun data when present
+- Profile details such as name, sex, date of birth, location, height, and tags
+
+It does not share your whole getbased database, other profiles, or live wearable connection credentials. Recipients import the shared profile as a separate copy in their own browser.
+
+## Create a share link
+
+<Steps>
+  <Step title="Open Share Profile">
+    On desktop, click the share button in the top bar. On mobile, open the profile menu and choose **Share Profile**. You can also open **Settings -> Data -> Share Profile**.
+  </Step>
+  <Step title="Choose the password and expiry">
+    Use the generated password or enter your own password. Choose how long the link should stay available: 7, 14, or 30 days.
+  </Step>
+  <Step title="Confirm upload">
+    Read the confirmation text and check the consent box. getbased creates a locked copy of the selected profile.
+  </Step>
+  <Step title="Send the link and password separately">
+    Copy the link and password from the result screen. Send them through different channels, for example email for the link and a secure message for the password.
+  </Step>
+</Steps>
+
+<Note>
+The password is the only way to unlock the shared profile. It is not added to the link and is not stored by getbased.
+</Note>
+
+## Open a shared profile
+
+<Steps>
+  <Step title="Open the link">
+    The link opens getbased and shows **Load Shared Profile**.
+  </Step>
+  <Step title="Enter the password">
+    Paste the password that the sender gave you.
+  </Step>
+  <Step title="Load the profile">
+    Click **Load Profile**. getbased unlocks the profile in your browser and imports it as a new profile.
+  </Step>
+</Steps>
+
+If the password is wrong, the profile cannot be unlocked. If the link has expired or the sender stopped sharing it, it can no longer be loaded.
+
+## Stop sharing a link
+
+Open **Share Profile** again. Links created on the current browser are listed under active links. Click **Stop sharing** to remove the locked copy so the link can no longer load the profile.
+
+Active links are tracked locally on the browser that created them. If you created a link on another device or cleared your browser data, it may not appear in this list.
+
+<Warning>
+Stopping a link prevents future loads from that link. It does not remove copies that someone already imported into their own browser.
+</Warning>
+
+## Privacy model
+
+- The selected profile is locked in your browser before upload.
+- The password is never sent with the link and is never stored by getbased.
+- The link only finds the locked copy; the password unlocks it.
+- If the password is lost, getbased cannot recover the shared copy.
+- If someone has both the link and password, they can import the shared profile until it expires or you stop sharing it.
+
+For your regular backup and migration options, see [Export and import](/guides/export-import), [Backup](/guides/backup), and [Sync across devices](/guides/cross-device-sync).
