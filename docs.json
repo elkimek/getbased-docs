@@ -118,6 +118,7 @@
             "group": "Data & Privacy",
             "pages": [
               "guides/privacy",
+              "guides/profile-sharing",
               "guides/cross-device-sync",
               "guides/encryption",
               "guides/backup",

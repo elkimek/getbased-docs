@@ -1,18 +1,20 @@
 ---
 title: "How getbased protects your health data"
-description: "getbased keeps all your health data in your browser — no accounts, no servers, no tracking. Here's exactly what that means in practice."
+description: "getbased keeps your health data local by default, with opt-in encrypted sync and password-protected sharing when you choose to use them."
 ---
 
-getbased is built on one principle: your health data belongs to you and no one else. Nothing is sent to a server when you use the app. Your lab results, DNA data, wearable history, and AI conversations all stay in your browser's local storage and IndexedDB. There is no account, no sign-up, and no analytics tied to your usage.
+getbased is built on one principle: your health data belongs to you and no one else. By default, your lab results, DNA data, wearable history, and AI conversations stay in your browser's local storage and IndexedDB. There is no account, no sign-up, and no analytics tied to your usage.
+
+Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, or creating a password-protected profile share link.
 
 ## Where your data lives
 
-Every piece of data getbased touches — lab entries, context cards, notes, supplements, genetics, wearable summaries, chat threads — is stored in two browser-native storage areas:
+During normal local use, profile data such as lab entries, context cards, notes, supplements, genetics, wearable summaries, and chat threads is stored in two browser-native storage areas:
 
 - **localStorage** for profile data, settings, and app state
 - **IndexedDB** for wearable time-series rows, knowledge base vectors, and backup snapshots
 
-Clearing your browser data will erase your getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control.
+Clearing your browser data will erase your local getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control. Opt-in network features such as AI providers, sync, and profile sharing are covered below.
 
 ## Encryption at rest
 
@@ -58,6 +60,12 @@ Connect any OpenAI-compatible server (Ollama, LM Studio, Jan, llama.cpp) in **Se
 
 Cross-device sync is entirely opt-in. When you enable it, an Evolu CRDT engine encrypts your data with a key derived from a 24-word mnemonic before it reaches the relay server. The relay only ever stores encrypted blobs. See [Sync across devices](/guides/cross-device-sync) for setup details.
 
+## Profile sharing
+
+Profile sharing is opt-in. When you create a share link, getbased locks a copy of the selected profile in your browser with the password you choose or generate, then uploads only that locked copy. The password is not added to the link and is not stored by getbased.
+
+Anyone who has both the link and the password can import the shared profile until the link expires or you stop sharing it. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
+
 ## No account, no tracking
 
 getbased has no user accounts, no login, no cookies for tracking, and no analytics tied to your identity. The app is open source — you can verify every claim on [GitHub](https://github.com/elkimek/get-based).
@@ -67,6 +75,7 @@ getbased has no user accounts, no login, no cookies for tracking, and no analyti
 You own your data and can take it with you at any time:
 
 - **JSON export** — download a full plaintext copy from **Settings → Data → Export**. See [Export and import](/guides/export-import).
+- **Profile sharing** — create a temporary password-protected link for one profile. See [Profile sharing](/guides/profile-sharing).
 - **Folder backup** — auto-save daily snapshots to any local folder, Proton Drive, or Dropbox. See [Backup](/guides/backup).
 - **Cross-device sync** — move data to a new device without exporting a file. See [Sync across devices](/guides/cross-device-sync).
 
