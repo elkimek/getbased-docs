@@ -90,6 +90,50 @@ A low score is not the same thing as missing data. Missing data lowers coverage 
 
 Also: a high-looking score with thin coverage is not the same as an all-clear. It means the available markers look good, but the app does not yet have enough evidence to be very confident.
 
+## How scores are calculated
+
+Biology Scores are deterministic. AI can explain a score, but the number comes from the scoring engine.
+
+The basic flow is:
+
+1. getbased finds the latest usable value for each input marker in the selected timeframe.
+2. Each marker is scored from **0–100** against its reference, optimal, or context-specific range. A marker inside range usually scores 100. A marker outside range loses points as it moves farther away from the range.
+3. Each marker score is multiplied by its **weight**. Higher-weight markers affect the score more than lower-weight context markers.
+4. The score is the weighted average of the available marker scores.
+5. **Coverage** is calculated separately from the score: available marker weight divided by total planned marker weight.
+6. **Confidence** is based on coverage, missing core markers, context-only markers, and whether the data is fresh enough to combine.
+
+A simplified version:
+
+```text
+score = sum(marker score × marker weight) / sum(available marker weights)
+coverage = sum(available marker weights) / sum(all planned marker weights)
+```
+
+<Note>
+A high score with thin coverage is not an all-clear. It means the markers you have look good, but the score may still have low or medium confidence because important markers are missing.
+</Note>
+
+### What weights mean
+
+Weights are relative. A marker with weight `2.0` has about twice as much influence as a marker with weight `1.0` when both are available. A marker with weight `0.3` is usually context only: useful, but not meant to drive the score.
+
+Markers marked **core** are important for confidence. If a core marker is missing, the score can still show available evidence, but getbased warns that the result is provisional.
+
+### Freshness and timing
+
+Scores are not trusted when the inputs are too stale or drawn too far apart. Current rules:
+
+- a marker older than about **180 days** can block the score until retested;
+- inputs spanning more than about **90 days** can trigger a **retest together** warning;
+- timing-sensitive markers, such as cortisol or cycle-dependent hormones, may need sample-time, cycle, menopause, therapy, or training context before they are scored normally.
+
+### Biological Coherence calculation
+
+Biological Coherence is built from the minimum-panel Biology Score domains. It does not directly average every biomarker. It first computes each live domain, then combines the domain scores with domain-level weights and coverage adjustment.
+
+Extended-only scores such as Lipid Membrane, Cellular Energy, Stress Resilience, Gut–Immune Signal, and Nerve–Muscle Signal add depth when available, but they do not make baseline Biological Coherence worse just because you did not order specialty tests.
+
 ## Marker rows and missing markers
 
 Open a score to see the marker evidence behind it:
@@ -105,6 +149,154 @@ getbased uses lab-orderable marker names in the UI. For example, it should say *
 <Note>
 **CRP and hs-CRP are not the same marker.** hs-CRP is used for low-grade inflammatory and cardiovascular-risk context. Standard CRP is broader inflammation context. getbased keeps them separate instead of treating them as interchangeable rows.
 </Note>
+
+## Score reference: what each score measures
+
+This reference shows the user-facing meaning of each score and the main weighted inputs behind it. The exact score still depends on marker ranges, selected timeframe, range mode, profile context, recency, and missing data.
+
+### Metabolic Flexibility
+
+Measures glucose-insulin strain and fuel-flexibility context from fasting labs.
+
+**Core / high-weight inputs:** HOMA-IR `1.7`, fasting insulin `1.45`, TG/HDL ratio `1.15`, fasting glucose `0.95`.
+
+**Context inputs:** HbA1c `0.85`, triglycerides `0.75`, HDL `0.55`, C-peptide `0.35`, fructosamine `0.3`. Fructosamine is optional and low-weight; it is mainly useful when HbA1c is unreliable, when recent glycation changed, or when high insulin is compensating for otherwise normal glucose markers.
+
+### Thyroid Coherence
+
+Measures thyroid signal quality, Free T3 activity, and T4-to-T3 conversion coherence.
+
+**Core / high-weight inputs:** FT3/FT4 conversion `1.35`, Free T3 `1.3`, TSH `1.0`.
+
+**Context inputs:** Reverse T3 `0.45`, TPO antibodies `0.35`, thyroglobulin antibodies `0.25`.
+
+### Cardiovascular Risk
+
+Measures atherogenic lipoprotein and vascular-risk context.
+
+**Core / high-weight inputs:** ApoB `2.0`, ApoB/ApoA-I ratio `1.5`.
+
+**Context inputs:** ApoA-I `1.0`, Lp(a) `1.0`, LDL cholesterol `0.8`, total cholesterol/HDL ratio `0.6`, homocysteine `0.5`, hs-CRP `0.4`, triglycerides `0.4`.
+
+### Inflammatory Load
+
+Measures low-grade inflammation and liver-metabolic burden context.
+
+**Core / high-weight inputs:** hs-CRP `1.55`, GGT `1.25`.
+
+**Context inputs:** uric acid `0.6`, CRP `0.55`, homocysteine `0.55`, ferritin `0.45`, vitamin D `0.3`, bilirubin `0.25`, selenium `0.25`. CRP and hs-CRP are not interchangeable.
+
+### Lipid Membrane
+
+Extended score for fatty-acid architecture and membrane-quality context.
+
+**High-weight inputs:** omega-3 index `2.0`, DHA `1.15`, EPA `0.9`.
+
+**Context inputs:** AA/EPA ratio `0.55`, omega-6/3 ratio `0.45`, DPA `0.25`, linoleic acid `0.25`, arachidonic acid `0.25`.
+
+### Blood Flow Context
+
+Measures blood concentration, plasma-viscosity, and clotting-context signals. It is not a direct blood-viscosity measurement.
+
+**Core / high-weight inputs:** hematocrit `1.15`, hemoglobin `0.75`, platelets `0.55`.
+
+**Context inputs:** fibrinogen `0.95`, D-dimer `0.8`, albumin `0.35`, BUN/creatinine ratio `0.35`, CRP `0.35`, sodium `0.25`. Elevated D-dimer is a clinical-context signal, not a wellness score.
+
+### Iron Handling
+
+Measures iron storage, transport, overload/deficiency context, inflammation, and red-cell utilization.
+
+**Core / high-weight inputs:** transferrin saturation `1.25`, ferritin `1.15`, hemoglobin `0.8`.
+
+**Context inputs:** MCH `0.65`, CRP `0.65`, serum iron `0.55`, soluble transferrin receptor `0.55`, MCV `0.5`, transferrin `0.45`, TIBC `0.35`, copper `0.35`, ceruloplasmin `0.3`.
+
+### Methylation
+
+Measures one-carbon / methylation coherence using homocysteine, B12, folate, and red-cell context.
+
+**Core / high-weight inputs:** homocysteine `1.8`, active B12 / holotranscobalamin `1.15`, folate `1.1`, total B12 `0.85`. Active B12 and total B12 can satisfy the same B12-status requirement.
+
+**Context inputs:** methylmalonic acid `0.7`, MCV `0.45`, MCH `0.25`, RDW `0.25`, creatinine `0.25`.
+
+### Kidney and fluid-balance context
+
+Currently labeled **Kidney & Hydration** in some places. Measures filtration, electrolyte, and fluid-balance context. It is not a direct hydration measurement.
+
+**Core / high-weight inputs:** eGFR `1.45`, creatinine `1.0`, sodium `0.85`, potassium `0.85`.
+
+**Context inputs:** urea/BUN `0.75`, cystatin C `0.75`, BUN/creatinine ratio `0.65`, cystatin-C eGFR `0.65`, chloride `0.45`, albumin `0.35`. Direct hydration precision improves with urine osmolality, urine specific gravity, urine sodium, urine output, and intake context when available.
+
+### Liver & Bile Flow
+
+Measures liver enzyme, bile-flow, protein synthesis, and metabolic-burden patterns.
+
+**Core / high-weight inputs:** GGT `1.2`, ALT `1.15`, AST `0.9`, ALP `0.9`.
+
+**Context inputs:** total bilirubin `0.75`, albumin `0.55`, AST/ALT ratio `0.4`, platelets `0.35`, ferritin `0.35`, triglycerides `0.3`.
+
+### Bone & Mineral Balance
+
+Measures vitamin D, calcium-phosphate balance, kidney-mineral context, and bone-turnover signals.
+
+**Core / high-weight inputs:** 25-OH vitamin D `1.45`, total calcium `1.0`, phosphorus `0.85`.
+
+**Context inputs:** ALP `0.75`, serum magnesium `0.55`, RBC magnesium `0.45`, calcitriol `0.45`, creatinine `0.35`, eGFR `0.35`.
+
+### Immune Cell Balance
+
+Measures CBC and differential patterns for immune activation, suppression, allergy/eosinophil, and stress-skew context.
+
+**Core / high-weight inputs:** white blood cells `1.25`, neutrophils `1.1`, lymphocytes `1.1`.
+
+**Context inputs:** neutrophil/lymphocyte ratio `0.75`, monocytes `0.55`, eosinophils `0.45`, hs-CRP `0.45`, platelets `0.35`, vitamin D `0.25`, basophils `0.25`.
+
+### Recovery Capacity
+
+Measures anabolic/catabolic and recovery context from hormones, proteins, inflammation, thyroid, and tissue-stress markers.
+
+**Core / high-weight inputs:** free testosterone `1.25`, total testosterone `1.05`, albumin `0.85`, total protein `0.65`. Testosterone weights are reduced for female profiles.
+
+**Context inputs:** IGF-1 `0.8`, DHEA-S `0.75`, free androgen index `0.65`, SHBG `0.55`, hs-CRP `0.55`, hemoglobin `0.45`, estradiol `0.4`, vitamin D `0.35`, creatine kinase `0.35`, Free T3 `0.3`, TSH `0.25`, LH `0.25`, FSH `0.25`, urea `0.25`, creatinine `0.25`.
+
+### Cellular Energy
+
+Extended score for mitochondrial-energy and organic-acid context.
+
+**High-weight inputs:** lactate `1.25`, pyruvate `1.1`, succinate `0.85`, fumarate `0.75`, malate `0.75`, ethylmalonic acid `0.75`.
+
+**Context inputs:** 2-oxoglutarate `0.65`, 3-methylglutaconic acid `0.65`, HMG `0.6`, aconitate `0.55`, methylsuccinic acid `0.55`, carnitine `0.55`, adipic/suberic/sebacic acids `0.45` each, creatine kinase `0.35`, Free T3 `0.3`.
+
+### Stress Resilience
+
+Extended score for HPA-axis and recovery-pressure context.
+
+**High-weight inputs:** cortisol `1.35`, DHEA-S `0.95`, testosterone/cortisol ratio `0.8`. Cortisol requires sample-time context.
+
+**Context inputs:** hs-CRP `0.55`, fasting glucose `0.45`, insulin `0.45`, WBC `0.35`, neutrophils `0.35`, lymphocytes `0.35`, Free T3 `0.35`, TSH `0.25`.
+
+### Hormone Axis
+
+Measures sex-hormone and pituitary-axis coherence with sex, age, cycle, menopause, contraception, and hormone-therapy context.
+
+**Core / high-weight inputs:** free testosterone `1.1`, total testosterone `1.0`, estradiol `0.9`, progesterone `0.75`, SHBG `0.65`, LH `0.65`, FSH `0.65`, prolactin `0.6`. Male profiles use total/free testosterone as androgen-status core; female profiles use estradiol and/or progesterone as sex-hormone-status core.
+
+**Context inputs:** DHEA-S `0.55`, DHT `0.45`, cortisol `0.35`, androstenedione `0.35`.
+
+### Gut–Immune Signal
+
+Extended score for gut-barrier, microbiome-adjacent, inflammation, eosinophil, and nutrient/protein context.
+
+**High-weight inputs:** calprotectin `1.2`, zonulin `0.75`, secretory IgA `0.7`, arabinose `0.7`, HPHPA `0.65`.
+
+**Context inputs:** 4-cresol `0.55`, D-arabinitol `0.55`, hs-CRP `0.55`, eosinophils `0.45`, albumin `0.35`, vitamin B12 `0.3`.
+
+### Nerve–Muscle Signal
+
+Extended score for neuromuscular stress and support context.
+
+**High-weight inputs:** neurofilament light `1.25`, creatine kinase `0.95`, active B12 `0.75`, homocysteine `0.75`.
+
+**Context inputs:** creatinine `0.55`, total B12 `0.55`, HbA1c `0.55`, vitamin D `0.45`, magnesium `0.45`, hs-CRP `0.4`, glucose `0.35`, lactate `0.35`.
 
 ## Calculated ratios
 
