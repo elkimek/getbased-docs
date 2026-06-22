@@ -4,6 +4,9 @@ description: Free, local-first health dashboard unifying blood work, DNA, wearab
 mode: frame
 ---
 
+{/* Synced during developer-docs migration. */}
+
+
 <div data-product-guide-index className="flex w-full flex-col gap-8 max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-10 lg:gap-14 lg:py-16">
   <div className="flex max-w-[540px] flex-col gap-2 self-center text-center">
     <h1 className="text-[30px] font-medium leading-9 tracking-tight text-gray-900 dark:text-gray-50">
@@ -33,7 +36,7 @@ mode: frame
       <div className="flex flex-col gap-1">
         <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Dashboard</span>
         <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-          Learn the redesigned overview, first-visit tour, widgets, lenses, and mobile navigation.
+          Learn the current overview, first-visit tour, widgets, lenses, and mobile navigation.
         </span>
       </div>
     </a>
@@ -162,6 +165,18 @@ mode: frame
           <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Self-host getbased</span>
           <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
             Run your own instance from source or deploy a fork — no build tools required.
+          </span>
+        </div>
+      </a>
+      <a
+        href="/developers"
+        className="rounded-2xl flex flex-col gap-4 border bg-gray-50 p-4 outline-none shadow-sm shadow-gray-950/5 transition hover:border-primary hover:shadow-md dark:bg-gray-950 dark:shadow-black/20 dark:hover:border-primary"
+      >
+        <Icon icon="code" color="rgb(var(--primary))" size={18} className="shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-serif text-base font-medium text-gray-900 dark:text-gray-50">Developer docs</span>
+          <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+            Read the architecture, module map, data pipeline, testing, deployment, and Biology Scores internals.
           </span>
         </div>
       </a>

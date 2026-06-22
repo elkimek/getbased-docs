@@ -16,7 +16,13 @@
     "eyebrows": "breadcrumbs"
   },
   "contextual": {
-    "options": ["copy", "view", "assistant", "mcp", "add-mcp"]
+    "options": [
+      "copy",
+      "view",
+      "assistant",
+      "mcp",
+      "add-mcp"
+    ]
   },
   "logo": {
     "light": "https://media.brand.dev/df183b52-f1df-40e4-8c7b-979f7d14b4e3.svg",
@@ -49,9 +55,9 @@
           "href": "https://github.com/elkimek/get-based"
         },
         {
-          "anchor": "Contributors",
+          "anchor": "Developers",
           "icon": "code",
-          "href": "https://github.com/elkimek/get-based/tree/main/dev-docs"
+          "href": "/developers"
         },
         {
           "anchor": "Discord",
@@ -70,7 +76,6 @@
               "introduction",
               "quickstart",
               "guides/dashboard",
-              "guides/biology-scores",
               "ai-providers"
             ]
           },
@@ -108,6 +113,7 @@
           {
             "group": "Insight & AI",
             "pages": [
+              "guides/biology-scores",
               "guides/ai-chat",
               "guides/recommendations",
               "guides/interpretive-lens",
@@ -132,6 +138,45 @@
               "guides/agent-access",
               "guides/self-hosting",
               "guides/custom-markers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "Core project",
+            "pages": [
+              "developers",
+              "developers/architecture",
+              "developers/module-reference",
+              "developers/cross-module-patterns"
+            ]
+          },
+          {
+            "group": "Data and AI",
+            "pages": [
+              "developers/data-pipeline",
+              "developers/context-assembly",
+              "developers/storage-schema",
+              "developers/ai-surfaces-map",
+              "developers/lens-endpoint-contract"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "developers/biology-scores",
+              "developers/sun-spectrum-model"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "developers/testing",
+              "developers/deployment",
+              "developers/codex-pr-coverage-workflow"
             ]
           }
         ]
