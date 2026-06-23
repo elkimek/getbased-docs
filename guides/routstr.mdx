@@ -1,0 +1,121 @@
+---
+title: "Routstr AI provider"
+sidebarTitle: "Routstr"
+description: "Use decentralized Bitcoin AI in getbased with a local Cashu wallet, Lightning funding, Routstr node deposits, refunds, token export, and seed restore."
+---
+
+# Routstr AI provider
+
+Routstr lets you use AI models through decentralized Bitcoin payments instead of a normal platform account. In getbased, Routstr has a built-in Cashu wallet: you fund the wallet with Lightning or a Cashu token, deposit a small amount into a Routstr node, and use that node as your AI provider.
+
+Your wallet lives in your browser profile. getbased does not run a wallet server for you.
+
+## What you can do
+
+In **Settings → AI → Routstr**, you can:
+
+- select Routstr as the active AI provider;
+- discover and choose a Routstr node;
+- use the built-in Cashu wallet;
+- choose a mint accepted by the selected node;
+- fund the wallet with a Lightning invoice and QR code;
+- receive Cashu tokens into the wallet;
+- deposit wallet sats into a Routstr node session;
+- top up an existing Routstr node session;
+- use Routstr models for chat and AI features;
+- refund remaining node balance back to the wallet;
+- withdraw wallet funds by Lightning invoice or Lightning address;
+- send wallet funds as a Cashu token;
+- export a wallet backup token;
+- save and restore the 12-word wallet seed.
+
+## Mental model
+
+There are two balances:
+
+| Balance | What it means |
+|---|---|
+| Wallet balance | Cashu sats held by your local browser wallet. |
+| Node balance | Sats deposited into the selected Routstr node session for AI requests. |
+
+You normally move a small amount from the wallet to the node, use the node, then refund unused node balance back to the wallet.
+
+## Set up Routstr
+
+<Steps>
+  <Step title="Select Routstr">
+    Open **Settings → AI** and choose **Routstr**.
+  </Step>
+  <Step title="Save your wallet seed">
+    The wallet uses a 12-word seed phrase. Write it down before holding meaningful balance. The seed is the recovery path if local browser data is lost.
+  </Step>
+  <Step title="Choose a node">
+    Pick a Routstr node from the discovered node list. The app checks the node's supported mints and can switch your wallet mint if needed.
+  </Step>
+  <Step title="Fund the wallet">
+    Click **Deposit** to create a Lightning invoice and QR code, or paste a Cashu token from another wallet.
+  </Step>
+  <Step title="Deposit sats to the node">
+    Choose a small amount to move from your wallet balance into the node session. The first deposit creates a session key. Later deposits top up the same session.
+  </Step>
+  <Step title="Use AI">
+    Pick a model and use getbased chat, import, or AI features as usual. Your prompts go from your browser to the selected node.
+  </Step>
+  <Step title="Refund unused node balance">
+    When you are done, refund the node balance back into your wallet.
+  </Step>
+</Steps>
+
+## What is stored locally
+
+Routstr wallet state is stored in your browser profile:
+
+- selected mint URL;
+- wallet seed mnemonic;
+- Cashu proofs in IndexedDB;
+- pending Lightning funding quotes;
+- pending node-deposit recovery token;
+- pending withdrawal/refund recovery token;
+- selected Routstr node URL;
+- Routstr node session key.
+
+<Warning>
+  Seed phrases, Cashu tokens, and Routstr session keys are bearer-sensitive. Do not paste them into support chats, AI prompts, screenshots, or public bug reports.
+</Warning>
+
+## Recovery behavior
+
+getbased keeps recovery state for the common failure cases:
+
+- if a Lightning invoice was paid but the browser missed the response, **pending funding recovery** can check the quote again;
+- if a node deposit fails, the app keeps a recoverable pending deposit token;
+- if a node refund returns a Cashu token, the app saves it before trying to receive it into the wallet;
+- if local proof state is lost, seed restore can recover unspent proofs from the mint.
+
+## Practical caveats
+
+- Mints and nodes are external services. They can be temporarily down or unreachable from your network.
+- The selected mint must be accepted by the selected Routstr node.
+- Cashu tokens are bearer money. Whoever has the token can spend it.
+- Very small amounts can be lost to mint fees, Lightning fees, or model calls.
+- Use small deposits for testing. Refund node balance when you are done.
+
+## Current tested baseline
+
+The current getbased Routstr flow has been tested with a tiny real-funds canary:
+
+- Lightning invoice funded the wallet.
+- Pending funding recovery restored the paid invoice.
+- First node deposit created a node session.
+- Second deposit topped up the existing session.
+- A tiny Routstr model call succeeded.
+- Node refund returned funds to the wallet.
+- Cashu token export/import round-tripped through a second isolated browser profile.
+- Seed restore recovered wallet balance in a third throwaway browser profile.
+- Final state had no pending deposit, no pending withdrawal, and no remaining node key.
+
+The canary used 1000 sats and recovered 993 sats. The 7 sat difference was expected tiny test cost and fees.
+
+## Related developer docs
+
+If you are changing this code, read [Routstr/Cashu safety](/developers/routstr-cashu-safety) before touching wallet, token, seed restore, node deposit, refund, or Cashu library migration logic.
