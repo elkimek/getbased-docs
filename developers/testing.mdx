@@ -13,6 +13,8 @@ getbased uses two test layers:
 - **Vitest** wraps the node-side helper fixtures and fast logic checks.
 - **Playwright** runs the browser suite against the live app in headless Chrome.
 
+Routstr/Cashu wallet work has an extra release gate because it touches bearer money. Before changing wallet funding, token export/import, seed restore, node deposit/top-up, refunds, or Cashu TS migration code, read [Routstr/Cashu safety](/developers/routstr-cashu-safety).
+
 Some browser fixtures are still self-executing IIFEs with local `assert()` helpers; Playwright executes those through `tests/playwright/browser-script-runner.js` so they run in the same browser suite as native Playwright specs.
 
 ## The assert pattern

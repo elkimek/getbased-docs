@@ -1,0 +1,229 @@
+---
+title: "Routstr/Cashu safety"
+sidebarTitle: "Routstr/Cashu safety"
+description: "Developer invariants and required test layers for getbased Routstr/Cashu wallet, node deposit, refund, token export, seed restore, and Cashu TS migration work."
+---
+
+# Routstr/Cashu safety
+
+Routstr/Cashu code is money-path code. Treat changes here differently from ordinary UI work: a small bug can strand a user's node balance, overwrite a recovery token, or make a browser wallet look empty after an upgrade.
+
+Use this page before changing any of:
+
+- `js/cashu-wallet.js`
+- `js/provider-wallet-runtime.js`
+- `js/provider-wallet-panels.js`
+- `js/provider-wallet-funding-recovery.js`
+- `js/nostr-discovery.js`
+- Routstr provider key, model, or balance handling in `js/api.js`
+- wallet IndexedDB schema or proof storage
+- `cashu-ts` upgrades or migration code
+- Cashu token receive, send, export, or restore
+- Lightning funding or withdrawal
+- Routstr node deposit or refund logic
+
+## Safety invariants
+
+### Do not leak bearer material
+
+Never print, persist to test logs, or include in screenshots:
+
+- wallet seed phrases;
+- Cashu tokens;
+- Routstr `sk-...` session keys.
+
+The only value a real-funds canary may print is the Lightning invoice that an operator needs to pay.
+
+### Preserve pending recovery state
+
+- `pendingDeposit` must be saved before sending a node deposit token.
+- `pendingDeposit` must survive node rejection or network failure until the token is recovered or explicitly cleared.
+- `pendingWithdraw` must be saved before importing a node refund token.
+- `pendingWithdraw` must be cleared only after successful receive.
+- A new pending withdraw token must not overwrite an existing pending withdraw token.
+
+### Do not replace existing Routstr sessions
+
+Deposit routing must be:
+
+| State | Endpoint |
+|---|---|
+| no existing `sk-...` key | `/v1/balance/create` |
+| existing `sk-...` key | `POST /v1/balance/topup` |
+
+Do not fall back from top-up failure to create. That can create a new key and strand the old node balance.
+
+### Keep the wallet facade stable
+
+`js/cashu-wallet.js` is the app's compatibility facade. Library upgrades should happen behind this facade without forcing a wallet reset.
+
+Upgrades must preserve:
+
+- existing wallet seed;
+- existing mint URL;
+- existing proof rows;
+- pending funding quotes;
+- pending deposit token;
+- pending withdraw token;
+- Routstr node key and selected node;
+- JSON-safe proof rows, even if the Cashu library uses richer Amount objects internally.
+
+## Required test layers
+
+Run tests in this order. Do not run real-funds tests until the no-money layers pass.
+
+### 1. Runtime wallet tests
+
+```bash
+npx vitest run tests/cashu-wallet-runtime.test.js --reporter=dot
+```
+
+This covers the core wallet and recovery invariants without browser UI or real money.
+
+Current expected result:
+
+```text
+11 passed
+```
+
+The exact count may grow, but failures in this file block real-funds testing.
+
+### 2. Browser Routstr wallet test
+
+Run against the active dev server. If getbased is running on port 8180:
+
+```bash
+PORT=8180 npm run test:routstr-wallet -- --reporter=line
+```
+
+This covers the Settings → AI → Routstr UI contract without real money:
+
+- seed gate and restore UI;
+- mint switching for node requirements;
+- Lightning invoice funding UI;
+- pending Lightning funding recovery UI;
+- node deposit failure recovery UI;
+- node refund recovery path;
+- backup/export token action;
+- send-as-token action;
+- Lightning invoice withdrawal quote and execute;
+- Lightning address withdrawal with amount.
+
+If Playwright tries the wrong port, set `PORT` to the actual getbased dev-server port. Verify the app identity if another service owns the default port.
+
+### 3. Guarded tiny-sats canary
+
+Only run this after the first two layers pass and after the developer intentionally chooses a tiny real amount.
+
+The app repo script is:
+
+```bash
+scripts/routstr-real-funds-canary.mjs
+```
+
+It refuses to run without this guard:
+
+```bash
+ROUTSTR_CANARY_ALLOW_REAL_FUNDS=1
+```
+
+Setup phase:
+
+```bash
+GETBASED_URL=http://127.0.0.1:8180/app \
+ROUTSTR_CANARY_ALLOW_REAL_FUNDS=1 \
+CANARY_SATS=1000 \
+npm run canary:routstr-real -- setup
+```
+
+Pay the printed `PAY_THIS_LIGHTNING_INVOICE=...` invoice, then run:
+
+```bash
+GETBASED_URL=http://127.0.0.1:8180/app \
+ROUTSTR_CANARY_ALLOW_REAL_FUNDS=1 \
+CANARY_SATS=1000 \
+npm run canary:routstr-real -- resume
+```
+
+The canary uses isolated browser profiles under `/tmp`. Do not use a user's normal browser profile for test funds.
+
+Expected canary checks:
+
+1. paid Lightning invoice recovers into the app wallet;
+2. first node deposit uses `/v1/balance/create`;
+3. second deposit with existing key uses `/v1/balance/topup`;
+4. a tiny model call works;
+5. node refund returns a Cashu token;
+6. refund token is saved before receive;
+7. refund token receives into the wallet;
+8. pending withdraw clears only after receive;
+9. Routstr key is cleared after refund;
+10. Cashu token export/import works in a second profile;
+11. token send-back recovers funds to the main profile;
+12. seed restore works in a third throwaway profile;
+13. final state has no pending deposit, no pending withdraw, and no Routstr key.
+
+Expected final report shape:
+
+```text
+Funded: 1000 sats
+Wallet recovered: <n> sats
+First node deposit: /v1/balance/create
+Second node deposit: /v1/balance/topup
+Model call: 200 OK
+Refund received: <n> sats
+Token roundtrip: <n> sats recovered
+Seed restore: restored <n> sats
+Pending deposit: false
+Pending withdraw: false
+Routstr key present: false
+Net cost/loss: tiny and explained
+```
+
+## Mint selection
+
+Do not assume the default mint is reachable or accepted by the node.
+
+Before a real-funds canary, use a mint that is both:
+
+1. reachable from the test environment, and
+2. listed by the selected Routstr node's `/v1/info` as accepted.
+
+A prior baseline found `mint.cubabitcoin.org` reachable and accepted by `api.routstr.com`, while `mint.minibits.cash` was unreachable or refused from the VM path. Re-check live state before relying on either.
+
+## What blocks shipping
+
+A Routstr/Cashu change should not ship if any of these are true:
+
+- existing wallet balance disappears after reload or upgrade;
+- pending funding quotes are lost;
+- pending deposit token is lost after a failed node deposit;
+- pending withdraw token can be overwritten;
+- existing Routstr key causes `/create` instead of `/topup`;
+- refund token is imported before being saved as pending;
+- seed restore no longer finds issued proofs;
+- real-funds canary leaves a node key with unrecovered balance;
+- real-funds canary leaves unexplained pending state;
+- test logs contain seed phrases, Cashu tokens, or `sk-...` keys.
+
+## Current baseline before Cashu TS upgrade
+
+The current baseline was tested with a 1000 sat canary before the Cashu TS migration work:
+
+- wallet funding recovered: 1000 sats;
+- first node deposit: `/v1/balance/create`;
+- second node deposit: `/v1/balance/topup`;
+- model call: 200 OK;
+- node refund: received back into wallet;
+- token export/import: passed;
+- seed restore: passed;
+- final wallet: 993 sats;
+- pending deposit: false;
+- pending withdraw: false;
+- Routstr key present: false.
+
+Use this as the regression baseline for the Cashu TS migration. The post-migration canary should show the same shape, with only tiny explained fee differences.
+
+## User docs
+
+The user-facing Routstr guide is [Routstr AI provider](/guides/routstr).
