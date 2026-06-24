@@ -191,9 +191,20 @@ Agent Access is designed to share the minimum needed for an agent to be useful:
   </Accordion>
 
   <Accordion title="Token not working">
+    `GETBASED_TOKEN` only authorizes the relay fetch. If the agent cannot fetch context at all:
+
     - Make sure you copied the full token with no trailing spaces.
     - Check that Agent Access is still enabled — disabling it invalidates the token immediately.
     - If you clicked **Regenerate**, update your agent config with the new token — the old one no longer works.
+  </Accordion>
+
+  <Accordion title="Agent can fetch context but cannot decrypt it">
+    `GETBASED_AGENT_CONTEXT_KEY` is separate from the token. A valid token with a missing, stale, or wrong context key must fail closed, so the MCP client will not show lab context until the key is fixed.
+
+    - Confirm your MCP config includes `GETBASED_AGENT_CONTEXT_KEY`, not just `GETBASED_TOKEN`.
+    - Copy the full **Context encryption key** from **Settings → Agent Access** with no trailing spaces.
+    - If you regenerated the context key, update your agent config and restart the MCP client or agent process.
+    - If the problem persists, regenerate both Agent Access values and replace both env vars together.
   </Accordion>
 
   <Accordion title="Agent cannot reach the gateway">
