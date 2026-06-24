@@ -161,6 +161,7 @@
               "developers/data-pipeline",
               "developers/context-assembly",
               "developers/storage-schema",
+              "developers/agent-access-relay",
               "developers/ai-surfaces-map",
               "developers/lens-endpoint-contract"
             ]

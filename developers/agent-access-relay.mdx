@@ -1,0 +1,133 @@
+---
+title: "Agent Access relay"
+description: "Developer contract for owner-bound Agent Access writes, encrypted context envelopes, token mapping, and MCP decryption."
+---
+
+# Agent Access relay
+
+Agent Access is not the Evolu CRDT sync path. It is a separate `/api/context` relay path that must prove its own privacy boundary.
+
+The safe contract is:
+
+```text
+Browser
+  ├─ resolves the current Sync owner
+  ├─ renders the same context text used by in-app AI
+  ├─ encrypts that text with a dedicated Agent Context key
+  ├─ signs the write with the Sync owner write key
+  └─ POSTs the encrypted envelope to /api/context
+
+Context gateway
+  ├─ verifies the owner signature against the Evolu relay DB
+  ├─ maps sha256(GETBASED_TOKEN) → ownerId
+  ├─ stores ciphertext under ownerId/profileId quota
+  └─ never receives the Agent Context key
+
+Local MCP
+  ├─ fetches ciphertext with GETBASED_TOKEN
+  └─ decrypts locally with GETBASED_AGENT_CONTEXT_KEY
+```
+
+## Capabilities
+
+| Value | Purpose | Must not be used for |
+|---|---|---|
+| Sync owner write key | HMAC proof that the browser controls the Sync owner | Encrypting Agent Access context or leaving the browser |
+| `GETBASED_TOKEN` | Bearer authorization for reading from the relay | AES key material or storage namespace |
+| `GETBASED_AGENT_CONTEXT_KEY` | Local AES-GCM decryption key for MCP clients | Relay authorization or server-side storage lookup |
+
+## Browser write shape
+
+The context gateway keeps the legacy top-level `context` string field for compatibility. The string must contain encrypted-envelope JSON, not plaintext context.
+
+```json
+{
+  "ownerId": "owner-id-from-sync",
+  "profileId": "profile-id",
+  "timestamp": 1782290000000,
+  "signature": "hex-hmac",
+  "context": "{\"encryptedContext\":{\"version\":2,\"alg\":\"AES-256-GCM\",\"keyDerivation\":\"raw-256-bit-key\",\"keyId\":\"...\",\"iv\":\"...\",\"ciphertext\":\"...\"}}"
+}
+```
+
+The write signature is:
+
+```text
+HMAC-SHA256(
+  owner.writeKey,
+  "agent-context:{ownerId}:{timestamp}:{sha256(GETBASED_TOKEN)}:{profileId}:{sha256(context)}"
+)
+```
+
+The relay rejects unsigned writes, stale timestamps, token-owner mismatches, profile-limit excess, token-limit excess, and owner quota excess.
+
+## Envelope shape
+
+Version 2 envelopes use a random raw 256-bit Agent Context key. There is no v2 salt because no token/password KDF is involved.
+
+```json
+{
+  "encryptedContext": {
+    "version": 2,
+    "alg": "AES-256-GCM",
+    "keyDerivation": "raw-256-bit-key",
+    "keyId": "sha256-prefix-base64url",
+    "iv": "base64",
+    "ciphertext": "base64"
+  }
+}
+```
+
+AES-GCM additional authenticated data is:
+
+```text
+getbased-agent-context-v2:{profileId}
+```
+
+## MCP read/decrypt behavior
+
+`getbased-mcp` fetches the relay with:
+
+```http
+GET /api/context?profile={profileId}
+Authorization: Bearer {GETBASED_TOKEN}
+```
+
+Then it parses `data.context`, detects `encryptedContext.version === 2`, and decrypts locally with `GETBASED_AGENT_CONTEXT_KEY`. Wrong or missing keys must fail closed. The MCP may retain legacy plaintext/v1 decrypt compatibility only for rollout, not as the expected path.
+
+## Clean-slate deployment note
+
+If an old context gateway ever stored plaintext summaries, do not migrate those files into the owner-bound layout. Delete the legacy context store and require fresh browser pushes from updated clients. The fixed relay is intentionally fail-closed for old clients that do not send owner proof.
+
+## Verification gates
+
+Before marking Agent Access ready:
+
+1. Run relay unit tests for signature validation, stale timestamp rejection, owner quota, profile limits, and token limits.
+2. Run browser/app tests proving the POST body contains `context: JSON.stringify({ encryptedContext })`, not plaintext.
+3. Run MCP tests proving v2 decrypt works with `GETBASED_AGENT_CONTEXT_KEY` and wrong-key/token-alone decrypt fails.
+4. Run a live relay E2E against the deployed gateway:
+   - insert or create a disposable owner;
+   - POST an encrypted sentinel;
+   - fetch the relay payload directly;
+   - prove the sentinel is absent from the serialized relay response;
+   - prove the envelope has `version: 2`, `keyDerivation: raw-256-bit-key`, `iv`, `ciphertext`, `keyId`, and no salt;
+   - prove `getbased-mcp` decrypts locally with the right key;
+   - prove wrong key fails closed;
+   - delete/revoke the test token mapping.
+
+Good production E2E summary shape:
+
+```json
+{
+  "postStatus": 200,
+  "fetchStatus": 200,
+  "relayPlaintextAbsent": true,
+  "relayHasEncryptedEnvelope": true,
+  "envelopeVersion": 2,
+  "keyDerivation": "raw-256-bit-key",
+  "hasSalt": false,
+  "mcpDecryptContainsSentinel": true,
+  "mcpWrongKeyFailsClosed": true
+}
+```

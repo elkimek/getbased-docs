@@ -1,34 +1,44 @@
 ---
 title: "Give AI agents access to your lab data"
-description: "Connect any MCP-compatible AI agent to your getbased lab context using a read-only token. Raw data stays in your browser — only a text summary is shared."
+description: "Connect any MCP-compatible AI agent to your getbased lab context using a relay token plus a separate local decryption key. Raw data and sync secrets stay in your browser."
 ---
 
-Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. Only a pre-built text summary reaches the agent; your raw data and sync mnemonic never leave your browser.
+Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. getbased shares only an encrypted, pre-built context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
 
 ## How it works
 
-When you enable Agent Access, getbased pushes a text summary of your labs, context cards, supplements, goals, and notes to a lightweight **context gateway**. Your agent authenticates to that gateway with your read-only token and reads the summary. The flow looks like this:
+When you enable Agent Access, getbased encrypts a text summary of your labs, context cards, supplements, goals, and notes in your browser, then pushes the encrypted envelope to the **context gateway**. Your agent authenticates to the gateway with a read-only token, fetches ciphertext, and decrypts it locally with your separate Agent Context key.
 
 ```
-getbased (browser) ──pushes context──▶ Context Gateway ◀──queries with token── AI agent
+getbased (browser)
+  ├─ signs the write with your Sync identity
+  ├─ encrypts context with your Agent Context key
+  └─ pushes ciphertext ──▶ Context Gateway ◀── token fetch ── local MCP decrypt ── AI agent
 ```
 
-1. You turn on Agent Access in Settings and receive a read-only token.
-2. getbased pushes your assembled context to the gateway — the same text the in-app AI chat sees, not raw entries.
-3. Your agent uses the token to query the gateway and answer your questions.
+1. You turn on Cross-device Sync and Agent Access in Settings.
+2. getbased creates two Agent Access values:
+   - `GETBASED_TOKEN` — read-only relay authorization.
+   - `GETBASED_AGENT_CONTEXT_KEY` — local AES-GCM decryption key.
+3. The browser signs the gateway write with your Sync owner identity so storage/quota are bound to that identity, not to a random token.
+4. The gateway stores only ciphertext and maps your token to that Sync owner.
+5. Your local MCP client fetches the encrypted envelope with `GETBASED_TOKEN` and decrypts it locally with `GETBASED_AGENT_CONTEXT_KEY`.
 
-The gateway is content-blind: it stores ciphertext and forwards it. It contains no raw lab entries, no sync mnemonic, and no database access. The summary is refreshed automatically whenever you save changes in getbased.
+The gateway is content-blind: it stores ciphertext and forwards it. It contains no raw lab entries, no sync mnemonic, and no Agent Context key. The summary is refreshed automatically whenever you save changes in getbased.
 
 ## Setup
 
 <Steps>
-  <Step title="Enable Agent Access">
-    1. Open **Settings → Agent Access**
-    2. Toggle it **on**
-    3. A read-only token appears — click **Copy** to put it on your clipboard (the clipboard is cleared after 60 seconds)
+  <Step title="Enable Sync and Agent Access">
+    1. Open **Settings → Cross-device Sync** and make sure Sync is enabled.
+    2. Open **Settings → Agent Access**.
+    3. Toggle Agent Access **on**.
+    4. Copy both generated values:
+       - **Read-only token** → `GETBASED_TOKEN`
+       - **Context encryption key** → `GETBASED_AGENT_CONTEXT_KEY`
 
     <Note>
-      The token is masked by default. Click **Show** to reveal it. Treat the token like a password — do not commit it to a public repository or share it publicly.
+      The token and context key are masked by default. Click **Show** to reveal them. Treat both like passwords — do not commit them to a public repository or share them publicly.
     </Note>
   </Step>
 
@@ -55,8 +65,8 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
     After `install.sh` runs on Linux, it starts the RAG server and a browser dashboard as systemd user services. Open the dashboard at `http://127.0.0.1:8323` to get paste-ready config blocks for every supported client — no manual YAML or JSON authoring required.
   </Step>
 
-  <Step title="Add your token to your agent's config">
-    Paste your token into your agent's MCP configuration. See the [Hermes Agent example](#hermes-agent-config-example) below, or open the dashboard at `http://127.0.0.1:8323` for auto-generated config for Claude Code, Claude Desktop, Cursor, Cline, Windsurf, and more.
+  <Step title="Add both Agent Access values to your agent's config">
+    Paste both `GETBASED_TOKEN` and `GETBASED_AGENT_CONTEXT_KEY` into your agent's MCP configuration. See the [Hermes Agent example](#hermes-agent-config-example) below, or open the dashboard at `http://127.0.0.1:8323` for auto-generated config for Claude Code, Claude Desktop, Cursor, Cline, Windsurf, and more.
   </Step>
 
   <Step title="Query your labs">
@@ -92,9 +102,10 @@ mcp_servers:
     env:
       GETBASED_GATEWAY: https://sync.getbased.health
       GETBASED_TOKEN: your-token-here
+      GETBASED_AGENT_CONTEXT_KEY: your-context-key-here
 ```
 
-Replace `your-token-here` with the token from **Settings → Agent Access**.
+Replace `your-token-here` and `your-context-key-here` with the two values from **Settings → Agent Access**. The token authorizes the relay fetch; the context key decrypts the payload locally in your MCP process.
 
 ## Multi-profile support
 
@@ -148,14 +159,16 @@ The specific anatomical regions array (e.g. `['breast-chest', 'legs-front']`) is
 
 Agent Access is designed to share the minimum needed for an agent to be useful:
 
-- **Read-only token** — grants access to a pre-built text summary only. No writes, no database queries, no mutations.
-- **No raw data exposed** — the gateway stores the same assembled context the in-app AI chat uses, not your underlying lab entries or personal records.
-- **Mnemonic never leaves your browser** — Agent Access does not use or transmit your sync mnemonic.
-- **Revocable at any time** — toggle Agent Access off in Settings to immediately invalidate the token. Click **Regenerate** to issue a new token and invalidate the old one.
-- **Self-hostable** — the context gateway runs on the same server as the sync relay. Self-host both for full control over where your summary is stored.
+- **Relay token is not the encryption key** — `GETBASED_TOKEN` only authorizes reads from the gateway.
+- **Separate local decryption key** — `GETBASED_AGENT_CONTEXT_KEY` decrypts the context locally in your MCP client. The gateway never receives it.
+- **Owner-bound writes** — browser writes are signed with your Sync identity so relay storage and quotas are tied to your Sync owner, not to arbitrary tokens.
+- **No raw data exposed** — the gateway stores an AES-GCM encrypted context envelope, not your underlying lab entries or personal records.
+- **Mnemonic never leaves your browser** — Agent Access uses Sync identity only to prove ownership; it does not transmit your sync mnemonic.
+- **Revocable at any time** — toggle Agent Access off in Settings to invalidate the token mapping. Click **Regenerate** to issue a new token and invalidate the old one.
+- **Self-hostable** — the context gateway runs on the same server as the sync relay. Self-host both for full control over where encrypted summaries are stored.
 
 <Warning>
-  Your token grants read access to your lab summary. Do not share it publicly or commit it to a public repository.
+  Your token and context key together grant read access to your lab summary. Do not share them publicly or commit them to a public repository.
 </Warning>
 
 ## Troubleshooting
