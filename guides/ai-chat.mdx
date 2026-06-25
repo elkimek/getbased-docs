@@ -1,6 +1,6 @@
 ---
 title: "AI chat for lab result interpretation"
-description: "Ask anything about your labs. The AI holds your full health history — biomarkers, lifestyle context, supplements, and wearables — no pasting required."
+description: "Ask questions about your labs without pasting results manually. getbased sends the AI the relevant profile context when you chat."
 ---
 
 The AI chat panel is a streaming conversation window built into getbased. It is also the main guided path for fresh profiles: after the first-visit tour, chat helps you decide what to add first and routes you to import, setup, or profile context only when needed. Every message you send automatically includes a snapshot of the current profile data.
@@ -21,7 +21,7 @@ If no AI provider is configured, the chat panel shows a setup guide instead of t
 
 ## What the AI knows
 
-Every message includes your complete health context. You never need to paste results into the chat.
+Every message includes the relevant context from your current profile. You never need to paste results into the chat.
 
 | Context sent | Details |
 |---|---|
@@ -56,7 +56,7 @@ The AI adapts its communication style based on the personality you choose. Switc
     A sharp, skeptical clinician who asks uncomfortable questions. Pushes back on assumptions and digs for root causes.
   </Accordion>
   <Accordion title="Custom">
-    Type a name in the custom personality field and click **Generate**. getbased creates a full personality profile — communication style, analytical approach, and philosophical lens. You can edit the generated text before saving.
+    Type a name in the custom personality field and click **Generate**. getbased creates a draft style prompt with tone, reasoning preferences, and any perspective you asked for. You can edit the generated text before saving.
 
     Custom personalities are saved per profile and persist across sessions. You can create a persona based on a specific medical philosophy, a fictional doctor character, or any style that makes conversations more useful for you.
   </Accordion>

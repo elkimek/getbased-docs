@@ -1,9 +1,10 @@
 ---
-title: "Fill in lifestyle context cards in getbased"
-description: "Nine lifestyle panels capture diet, sleep, environment, and history — giving the AI context that shapes your labs and a typical GP visit never explores."
+title: "Add lifestyle context for better AI answers"
+sidebarTitle: "Lifestyle context"
+description: "Nine context cards capture diet, sleep, environment, medical history, and other factors that can help explain your lab results."
 ---
 
-Context cards are nine lifestyle panels that capture the health context behind your lab results — information a typical appointment rarely has time to explore. They live in **Insight → Manage → Context** and can also appear in dashboard widgets when you add them to your overview.
+Context cards capture the health context behind your lab results: diet, sleep, environment, medical history, stress, goals, and more. They live in **Insight → Manage → Context** and can also appear in dashboard widgets when you add them to your overview.
 
 New users do not need to fill every card before using getbased. Guided chat can route you to the relevant context only when it helps.
 
@@ -32,7 +33,7 @@ Each card shows a small colored dot and a brief AI-generated tip (up to 12 words
 | 🔴 Red | This area may be contributing to out-of-range results |
 | ⚪ Gray | Not enough information to assess |
 
-The dots and tips are cached and only refresh when your data or card content changes, so they do not burn API calls on every page load.
+The dots and tips are cached. They refresh only when your data or card content changes, so getbased does not call the AI provider on every page load.
 
 <Tip>
 Fill in the cards that are relevant now. The AI uses all nine cards when interpreting your lab results in chat and in Current Focus. Each filled card adds meaningful context that the AI cannot infer from numbers alone.
@@ -44,11 +45,11 @@ Open **Insight → Manage → Context** or a context dashboard widget, then clic
 
 ## Medical history card
 
-The Medical History card has two subsections that the AI weights differently:
+The Medical History card has two sections, and getbased uses them for different kinds of context:
 
 **Your conditions** captures diagnoses you live with. Each entry includes a condition name, optional severity (major, mild, or minor), and an optional "since" year. The AI uses this to understand why certain biomarkers may be expected to deviate from population reference ranges.
 
-**Family history** captures what runs in your family. Each entry has a relative, a condition, an optional age of onset, and an optional note (for example, *"survived, on statin since 2010"*). The relative list covers first-degree relatives plus all four grandparents — signal-to-noise drops fast beyond that. A father's heart attack at 52 makes a borderline LDL result more actionable; the AI uses this context to calibrate risk interpretation.
+**Family history** captures what runs in your family. Each entry has a relative, a condition, an optional age of onset, and an optional note (for example, *"survived, on statin since 2010"*). The relative list covers first-degree relatives and all four grandparents. More distant relatives are usually less useful. For example, a father's heart attack at 52 may make a borderline LDL result more important to discuss.
 
 The condition picker is shared between both subsections — type any name and accept an autocomplete suggestion, or enter free text if your condition is not listed.
 
@@ -78,7 +79,7 @@ Contaminant warnings are intentionally conservative. They are there to start a b
 
 When you send a chat message or Current Focus refreshes, all nine cards plus the freeform notes attached to profile context are included in the context. Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant.
 
-The AI uses this context to give you interpretations that go beyond numbers — flagging when your sleep schedule, diet, or environment might explain a result, or surfacing a pattern that connects something you mentioned in a card to a trend in your labs.
+This helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
 
 ## Change history
 

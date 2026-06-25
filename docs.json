@@ -76,6 +76,7 @@
               "introduction",
               "quickstart",
               "guides/dashboard",
+              "guides/privacy",
               "ai-providers"
             ]
           },
@@ -121,13 +122,13 @@
               "guides/context-cards",
               "guides/interpretive-lens",
               "guides/knowledge-base",
+              "guides/agent-access",
               "guides/routstr"
             ]
           },
           {
-            "group": "Data & Privacy",
+            "group": "Data, Sync & Backup",
             "pages": [
-              "guides/privacy",
               "guides/profile-sharing",
               "guides/cross-device-sync",
               "guides/encryption",
@@ -138,7 +139,6 @@
           {
             "group": "Advanced",
             "pages": [
-              "guides/agent-access",
               "guides/self-hosting"
             ]
           }

@@ -1,9 +1,10 @@
 ---
-title: "Give AI agents access to your lab data"
-description: "Connect MCP-compatible AI agents to getbased using both GETBASED_TOKEN and GETBASED_AGENT_CONTEXT_KEY. The relay stores only encrypted context; decryption happens locally."
+title: "Connect getbased to external AI assistants"
+sidebarTitle: "Agent Access"
+description: "Connect MCP-compatible AI assistants to getbased with a private setup command. The gateway stores only encrypted context; decryption happens locally."
 ---
 
-Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. getbased shares only an encrypted, pre-built context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
+Agent Access is an opt-in feature that lets an AI assistant you configure read your getbased context outside the browser tab. After you enable it in Settings, an MCP-compatible tool — such as a coding agent, terminal assistant, or messenger bot — can fetch the encrypted summary and answer questions about your labs. getbased shares only a pre-built encrypted context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
 
 <Note>
   Updated 2026-06-25: Agent Access now supports one-paste private setup from Settings → Agent Access for Hermes Agent, OpenClaw, Claude Code, Claude Desktop, Cursor, Cline, and Codex CLI.
@@ -28,7 +29,7 @@ getbased (browser)
 4. The gateway stores only ciphertext and maps your token to that Sync owner.
 5. Your local MCP client fetches the encrypted envelope with `GETBASED_TOKEN` and decrypts it locally with `GETBASED_AGENT_CONTEXT_KEY`.
 
-The gateway is content-blind: it stores ciphertext and forwards it. It contains no raw lab entries, no sync mnemonic, and no Agent Context key. The summary is refreshed automatically whenever you save changes in getbased.
+The gateway cannot read the summary. It only stores and forwards encrypted data. It contains no raw lab entries, no sync mnemonic, and no Agent Context key. The summary is refreshed automatically whenever you save changes in getbased.
 
 ## Setup
 
@@ -52,7 +53,7 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
   </Step>
 
   <Step title="Install getbased-agent-stack (public agent path)">
-    The universal adapter is **getbased-agent-stack** — one install covers the MCP adapter, a local RAG knowledge server, and a browser setup dashboard. This public install path is safe for agents to discover from `/.well-known/getbased-agent.md` or `/llms.txt`; it installs software but does not grant access to private lab data.
+    Install **getbased-agent-stack** if you want the full local setup: the MCP adapter, the local knowledge-base server, and a browser dashboard. This public install command only installs software. It does not give access to your lab data; access requires the private setup command copied from getbased.
 
     <CodeGroup>
       ```bash Linux (one command)
@@ -71,7 +72,7 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
       If you only want the MCP adapter without the RAG server, `pipx install getbased-mcp` is a smaller (~10 MB) alternative.
     </Tip>
 
-    After `install.sh` runs on Linux, it starts the RAG server and a browser dashboard as systemd user services. Open the dashboard at `http://127.0.0.1:8323` to get paste-ready config blocks for every supported client — no manual YAML or JSON authoring required.
+    After `install.sh` runs on Linux, it starts the knowledge server and a browser dashboard as systemd user services. Open the dashboard at `http://127.0.0.1:8323` to copy ready-made config blocks for supported clients. You do not need to write YAML or JSON by hand.
   </Step>
 
   <Step title="Paste the setup command into your agent machine">
@@ -97,7 +98,9 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
   </Step>
 </Steps>
 
-## MCP tools reference
+## Advanced MCP tools reference
+
+Most users do not need this section. It is here for people checking what a connected assistant can call after setup.
 
 `getbased-mcp` exposes the following tools to any connected agent:
 
@@ -107,7 +110,7 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
 | `getbased_section` | Query a specific named section (e.g. `hormones`, `wearables`, `sun`) or list all available sections. |
 | `getbased_wearables_series` | Daily wearable time-series (HRV, resting HR, sleep score, readiness, steps, weight, and more) over the 7-, 30-, or 90-day window you opt into. |
 | `getbased_list_profiles` | List all profiles by name and ID. |
-| `knowledge_search` | Semantic search over your knowledge base. Requires a local RAG server (default `http://127.0.0.1:8322`, configurable via `LENS_URL`). Degrades gracefully — lab-context tools keep working even when no RAG server is reachable. |
+| `knowledge_search` | Semantic search over your knowledge base. Requires a local knowledge server (default `http://127.0.0.1:8322`, configurable via `LENS_URL`). If the server is not running, knowledge search will not work, but the lab-context tools still will. |
 | `knowledge_list_libraries` | List all libraries on the RAG server with their IDs and which one is currently active. |
 | `knowledge_activate_library` | Switch the active library. Subsequent searches target the new one. |
 | `knowledge_stats` | Per-source chunk counts for the active library — useful for diagnosing missing search results. |

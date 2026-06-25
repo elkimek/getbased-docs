@@ -1,9 +1,10 @@
 ---
-title: "Self-host getbased on your own server"
-description: "Run getbased on your own hardware in minutes — no build tools required. Covers Vercel deploys, wearable OAuth, sync relay, and local AI."
+title: "Self-host getbased"
+sidebarTitle: "Self-hosting"
+description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased is a pure ES-module web app with no build step and no bundler. The production runtime is a folder of static files — HTML, CSS, and JavaScript — that any HTTP server can serve. You can be running your own instance in under two minutes.
+getbased is a native ES-module web app with no app bundler. The production runtime is mostly static files — HTML, CSS, and JavaScript — plus optional API routes for hosted features. You can serve it locally in minutes, while production-style deploys may also use helper scripts and runtime configuration.
 
 ## Quick start
 

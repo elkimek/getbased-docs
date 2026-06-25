@@ -1,11 +1,12 @@
 ---
-title: "Connect a custom knowledge base to getbased"
-description: "Ground AI answers in your own documents — research papers, clinical guides, or notes — using a private in-browser engine or a self-hosted RAG server."
+title: "Use your own documents in AI answers"
+sidebarTitle: "Knowledge Base"
+description: "Let getbased search your research papers, clinical guides, or notes before the AI answers. Use the in-browser engine or connect an external knowledge server."
 ---
 
-A knowledge base (also called a Custom Knowledge Source) gives the AI access to documents you have curated — research papers, clinical guides, textbook chapters, personal notes, or any collection of text. Instead of answering from general training knowledge alone, the AI retrieves the most relevant passages from your library before responding and cites them inline.
+A knowledge base gives the AI access to documents you have collected: research papers, clinical guides, textbook chapters, personal notes, or any other text. Instead of answering from general training knowledge alone, getbased searches your library first, sends the most relevant passages with your question, and asks the AI to cite them when useful.
 
-getbased supports two backends: an **in-browser engine** that runs entirely on your device with no install required, and an **external server** you self-host for larger corpora or hardware-accelerated retrieval.
+getbased supports two backends: an **in-browser engine** that runs on your device with no install required, and an **external knowledge server** you self-host for larger document libraries or faster retrieval.
 
 ## Open the knowledge base panel
 
@@ -63,7 +64,7 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
     Toggle **"Improve recall with query rewriting"** in the knowledge base panel (default: on). Each rewrite uses roughly 100 tokens from your configured provider. Repeat questions in the same session use cached rewrites.
   </Tab>
   <Tab title="External server (self-hosted)">
-    The external server backend connects to a knowledge server you run — useful for larger corpora, shared libraries, or hardware-accelerated GPU retrieval that a browser cannot match.
+    The external server backend connects to a knowledge server you run — useful for larger document libraries, shared libraries, or faster GPU retrieval that a browser cannot match.
 
     ### Install the agent stack
 
@@ -132,44 +133,15 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
       </Step>
     </Steps>
 
-    ### Endpoint contract
+    ### Developer endpoint contract
 
-    Any server that implements the following `POST` route works as an external knowledge source — you are not required to use the getbased-agent-stack.
-
-    **Request:**
-
-    ```http
-    POST /your-endpoint
-    Authorization: Bearer your-api-key
-    Content-Type: application/json
-
-    { "version": 1, "query": "what could drive a rising ferritin?", "top_k": 5 }
-    ```
-
-    **Response (200):**
-
-    ```json
-    {
-      "chunks": [
-        { "text": "Elevated ferritin in the absence of anemia often...", "source": "Clinical Guide p.142" },
-        { "text": "Inflammatory ferritin elevation is typically...", "source": "Case study #47" }
-      ]
-    }
-    ```
-
-    **Constraints:**
-    - HTTPS is required for public hosts. Plain `http://` is accepted for loopback (`127.0.0.1`, `localhost`), RFC1918 LAN ranges, and `.local` mDNS hosts
-    - Maximum response size: 32 KB
-    - Maximum passages: 10 (client truncates)
-    - Your server must respond with `Access-Control-Allow-Origin: *`
-    - Timeout: 30 seconds — slower responses fall back to unenriched AI
-    - Redirects (3xx) are rejected
+    Developers implementing their own compatible server should use the [Lens endpoint contract](/developers/lens-endpoint-contract). Normal users do not need the HTTP request and response details.
   </Tab>
 </Tabs>
 
 ## Where knowledge base results appear
 
-When a library is active, knowledge base retrieval runs automatically on every chat message and Current Focus refresh. getbased fetches the top-K passages (default 5, configurable 1–10 in the knowledge base panel) and folds them into the AI's context before the response streams. The AI cites them inline when relevant.
+When a library is active, knowledge base search runs automatically on every chat message and Current Focus refresh. getbased fetches the most relevant passages and sends them with your health context before the AI answers. The AI cites them inline when relevant.
 
 A **badge in the chat header** shows the active library name whenever retrieval is running.
 

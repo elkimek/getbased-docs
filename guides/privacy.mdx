@@ -18,7 +18,7 @@ Clearing your browser data will erase your local getbased data, so use the [expo
 
 ## Encryption at rest
 
-By default, data sits in plaintext localStorage (only your browser can read it). For an extra layer of protection, you can enable **AES-256-GCM encryption at rest** from **Settings → Data → Security**. When active, your data is encrypted with a key derived from your passphrase via PBKDF2 before being written to storage. Without your passphrase, the ciphertext is unreadable — even if someone had direct access to your machine.
+By default, data is stored unencrypted in your browser's local storage. Other websites cannot read it, but someone with access to your device, browser profile, or malicious extensions may be able to. For an extra layer of protection, you can enable **AES-256-GCM encryption at rest** from **Settings → Data → Security**. When active, your data is encrypted with a key derived from your passphrase via PBKDF2 before being written to storage.
 
 See [Encrypt your data](/guides/encryption) for setup instructions and passphrase requirements.
 
@@ -49,13 +49,13 @@ getbased supports multiple AI backends. The privacy implications differ by provi
 
 ### Venice end-to-end encryption
 
-When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is decrypted only inside a verified Intel TDX enclave — not even Venice can read it. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
+When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is designed to be decrypted only inside a verified Intel TDX enclave, so Venice's normal servers should not see the plaintext prompt. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
 
 A **🔒✓** indicator in the chat header confirms attestation passed.
 
 ### PPQ Private TEE mode
 
-PPQ Private TEE mode uses the same local-first idea without requiring you to run a proxy. getbased verifies the private endpoint, encrypts the request in your browser, sends ciphertext to PPQ's private API, and shows lock/attestation status in chat. Web search is disabled in private mode so prompts do not leak into external search tools.
+PPQ Private TEE mode gives you encrypted prompt handling without requiring you to run your own proxy. getbased verifies the private endpoint, encrypts the request in your browser, sends ciphertext to PPQ's private API, and shows lock/attestation status in chat. Web search is disabled in private mode so prompts do not leak into external search tools.
 
 ### Fully local AI
 
@@ -73,7 +73,7 @@ Anyone who has both the link and the password can import the shared profile unti
 
 ## Agent Access
 
-Agent Access is opt-in and separate from cross-device sync. When enabled, your browser encrypts a compact agent context with `GETBASED_AGENT_CONTEXT_KEY`, then pushes only the encrypted envelope to the context gateway. `GETBASED_TOKEN` authorizes relay reads, but it is not the decryption key. Your local MCP client fetches the ciphertext and decrypts it locally. See [Give AI agents access to your lab data](/guides/agent-access) for setup and revocation.
+Agent Access is opt-in and separate from cross-device sync. When enabled, your browser encrypts a compact agent context with `GETBASED_AGENT_CONTEXT_KEY`, then pushes only the encrypted envelope to the context gateway. `GETBASED_TOKEN` authorizes relay reads, but it is not the decryption key. Your local MCP client fetches the ciphertext and decrypts it locally. See [Connect getbased to external AI assistants](/guides/agent-access) for setup and revocation.
 
 ## Terms, Privacy, and analytics consent
 
