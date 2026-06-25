@@ -33,17 +33,21 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
     1. Open **Settings → Cross-device Sync** and make sure Sync is enabled.
     2. Open **Settings → Agent Access**.
     3. Toggle Agent Access **on**.
-    4. Copy both generated values:
-       - **Read-only token** → `GETBASED_TOKEN`
-       - **Context encryption key** → `GETBASED_AGENT_CONTEXT_KEY`
+    4. Click **Copy setup command**.
+
+    The copied command looks like this:
+
+    ```bash
+    curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
+    ```
 
     <Note>
-      The token and context key are masked by default. Click **Show** to reveal them. Treat both like passwords — do not commit them to a public repository or share them publicly.
+      The setup command is private. It contains the read token and local context-decryption key needed to connect your own agent. Paste it only into a terminal you control. Public agent docs can explain how to install getbased, but only this app-generated command can grant access to your encrypted context.
     </Note>
   </Step>
 
-  <Step title="Install getbased-agent-stack">
-    The universal adapter is **getbased-agent-stack** — one install covers the MCP adapter, a local RAG knowledge server, and a browser setup dashboard.
+  <Step title="Install getbased-agent-stack (public agent path)">
+    The universal adapter is **getbased-agent-stack** — one install covers the MCP adapter, a local RAG knowledge server, and a browser setup dashboard. This public install path is safe for agents to discover from `/.well-known/getbased-agent.md` or `/llms.txt`; it installs software but does not grant access to private lab data.
 
     <CodeGroup>
       ```bash Linux (one command)
@@ -65,8 +69,21 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
     After `install.sh` runs on Linux, it starts the RAG server and a browser dashboard as systemd user services. Open the dashboard at `http://127.0.0.1:8323` to get paste-ready config blocks for every supported client — no manual YAML or JSON authoring required.
   </Step>
 
-  <Step title="Add both Agent Access values to your agent's config">
-    Paste both `GETBASED_TOKEN` and `GETBASED_AGENT_CONTEXT_KEY` into your agent's MCP configuration. See the [Hermes Agent example](#hermes-agent-config-example) below, or open the dashboard at `http://127.0.0.1:8323` for auto-generated config for Claude Code, Claude Desktop, Cursor, Cline, Windsurf, and more.
+  <Step title="Paste the setup command into your agent machine">
+    In the terminal where Hermes runs, paste the command copied from getbased:
+
+    ```bash
+    curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
+    ```
+
+    The command does the setup for you:
+
+    - stores the token and context key in `~/.config/getbased/env` with local-only permissions;
+    - registers `getbased-mcp` with Hermes using `GETBASED_STACK_MANAGED=1`;
+    - runs a connection test;
+    - restarts Hermes gateway when the command is running from a normal shell, or prints an external-shell restart instruction when it detects it is running inside Hermes.
+
+    No manual YAML editing is required for Hermes.
   </Step>
 
   <Step title="Query your labs">
@@ -92,7 +109,29 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
 
 ## Hermes Agent config example
 
-[Hermes Agent](https://github.com/hermes-agent/hermes-agent) is a self-hosted AI assistant with built-in support for Matrix, Telegram, Signal, Discord, and other messengers. Add the following to `~/.hermes/config.yaml`, then restart the gateway with `hermes gateway restart`:
+[Hermes Agent](https://github.com/hermes-agent/hermes-agent) is a self-hosted AI assistant with built-in support for Matrix, Telegram, Signal, Discord, and other messengers. For Hermes, the normal path is the private bootstrap command copied from **Settings → Agent Access**:
+
+```bash
+curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
+```
+
+It installs or upgrades the public getbased stack, stores secrets in the shared getbased env file, registers `getbased-mcp` through Hermes' MCP manager, tests the connection, and asks Hermes gateway to restart when safe.
+
+### Advanced/manual Hermes config
+
+If you need to configure Hermes manually, generate the snippet:
+
+```bash
+getbased-stack mcp-config hermes
+```
+
+Paste the output into `~/.hermes/config.yaml`, then restart Hermes:
+
+```bash
+hermes gateway restart
+```
+
+The generated snippet looks like this:
 
 ```yaml
 mcp_servers:
@@ -105,7 +144,35 @@ mcp_servers:
       GETBASED_AGENT_CONTEXT_KEY: your-context-key-here
 ```
 
-Replace `your-token-here` and `your-context-key-here` with the two values from **Settings → Agent Access**. The token authorizes the relay fetch; the context key decrypts the payload locally in your MCP process.
+This keeps `GETBASED_TOKEN` and `GETBASED_AGENT_CONTEXT_KEY` out of Hermes config. If you prefer a single-file setup, you may put both values directly in the MCP server `env` block instead; explicit environment variables win over the shared stack env file.
+
+## Sync mnemonic changes and relay recovery
+
+Cross-device Sync and Agent Access use different secrets:
+
+- The **Sync mnemonic** controls encrypted cross-device sync.
+- `GETBASED_TOKEN` authorizes your agent's read from the context gateway.
+- `GETBASED_AGENT_CONTEXT_KEY` decrypts the Agent Access context locally.
+
+If you reset or regenerate your Sync mnemonic because the sync relay is wedged, pair your devices with the new mnemonic first, then force Agent Access to re-push under the new Sync owner:
+
+1. Open getbased on the device that has the correct local profile data.
+2. Confirm Sync is enabled with the new mnemonic.
+3. Open **Settings → Agent Access**.
+4. Click **Copy setup command**.
+5. Paste the new command into the terminal where your agent runs:
+
+```bash
+curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_new...'
+```
+
+The reconnect command updates the shared local env file and re-tests Hermes. Because Hermes stores only `GETBASED_STACK_MANAGED=1`, you do not need to edit Hermes config again.
+
+6. Restart your non-Hermes agent or MCP client if it does not restart automatically.
+
+<Note>
+  The Sync mnemonic never goes into your agent config. Agents only need the Agent Access token and context key. Changing the Sync mnemonic means the browser must push Agent Access context again, because gateway writes are owner-bound.
+</Note>
 
 ## Multi-profile support
 
