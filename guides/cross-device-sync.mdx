@@ -60,13 +60,14 @@ Anyone who has your mnemonic can access your synced data. Treat it like a passwo
 
 The following data flows across all paired devices:
 
-- All profile data — lab entries, context cards, notes, supplements, cycle data, custom markers, EMF assessments
+- All profile data — lab entries, per-file import history, context cards, notes, supplements, cycle data, custom markers, EMF assessments
 - Profile metadata — name, sex, date of birth, location, tags
-- AI settings — provider, API keys, model selections, Venice E2EE toggle
+- AI settings — provider, API keys, model selections, Venice E2EE toggle, PPQ private-mode preference
+- Agent Access state — enabled flag, relay profile metadata, read token, Agent Context key, and the selected wearable daily-series window
 - Chat threads, messages, and custom personalities
 - Display preferences — unit system, range mode, chart overlays
 
-Settings such as theme are device-specific and do not sync.
+Settings such as theme are device-specific and do not sync. Wearable OAuth refresh tokens also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
 
 ### Wearable data
 

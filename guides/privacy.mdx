@@ -3,7 +3,7 @@ title: "How getbased protects your health data"
 description: "getbased keeps your health data local by default, with opt-in encrypted sync and password-protected sharing when you choose to use them."
 ---
 
-getbased is built on one principle: your health data belongs to you and no one else. By default, your lab results, DNA data, wearable history, and AI conversations stay in your browser's local storage and IndexedDB. There is no account, no sign-up, and no analytics tied to your usage.
+getbased is built on one principle: your health data belongs to you and no one else. By default, your lab results, DNA data, wearable history, and AI conversations stay in your browser's local storage and IndexedDB. There is no account and no sign-up.
 
 Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, creating a password-protected profile share link, or enabling Agent Access for a local MCP agent. In encrypted modes, the hosted service stores or forwards ciphertext rather than readable health data.
 
@@ -14,7 +14,7 @@ During normal local use, profile data such as lab entries, context cards, notes,
 - **localStorage** for profile data, settings, and app state
 - **IndexedDB** for wearable time-series rows, knowledge base vectors, and backup snapshots
 
-Clearing your browser data will erase your local getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control. Opt-in network features such as AI providers, sync, and profile sharing are covered below.
+Clearing your browser data will erase your local getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control. Opt-in network features such as AI providers, sync, profile sharing, and Agent Access are covered below.
 
 ## Encryption at rest
 
@@ -75,9 +75,15 @@ Anyone who has both the link and the password can import the shared profile unti
 
 Agent Access is opt-in and separate from cross-device sync. When enabled, your browser encrypts a compact agent context with `GETBASED_AGENT_CONTEXT_KEY`, then pushes only the encrypted envelope to the context gateway. `GETBASED_TOKEN` authorizes relay reads, but it is not the decryption key. Your local MCP client fetches the ciphertext and decrypts it locally. See [Give AI agents access to your lab data](/guides/agent-access) for setup and revocation.
 
-## No account, no tracking
+## Terms, Privacy, and analytics consent
 
-getbased has no user accounts, no login, no cookies for tracking, and no analytics tied to your identity. The app is open source — you can verify every claim on [GitHub](https://github.com/elkimek/get-based).
+On first launch, getbased shows a Terms & Privacy gate before the normal tour, changelog, backup nudges, or other startup prompts. The acceptance record is stored locally in your browser with the Terms and Privacy version dates. If either document version changes, getbased asks you to accept the updated versions again on that browser.
+
+The hosted app may collect anonymous cookieless usage stats for product health. The first-run notice and **Settings → Privacy → Anonymous Usage Stats** explain the boundary: no IP address, no health data, no profile contents, no AI messages. You can disable usage stats at any time.
+
+## No account or identity tracking
+
+getbased has no user accounts, no login, and no cookies tied to your identity. The app is open source — you can verify every claim on [GitHub](https://github.com/elkimek/get-based).
 
 ## Data portability
 

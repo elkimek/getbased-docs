@@ -91,6 +91,28 @@ Stored as JSON at `labcharts-{profileId}-imported`. This is everything a user ca
     // ... more entries
   ],
 
+  // Per-file AI import history. entries[] holds the current live marker values;
+  // importSnapshots[] preserves which source file created/reviewed them.
+  importSnapshots: [
+    {
+      id: "snap_1782290000000_abcd",
+      date: "2025-03-15",
+      fileName: "lab-report.pdf",
+      testType: "blood",
+      importedAt: 1782290000000,
+      importHash: "sha256-or-parser-hash",
+      costInfo: { provider: "openrouter", modelId: "..." },
+      markers: [
+        { rawName: "Glucose", mappedKey: "biochemistry.glucose", value: 5.2, unit: "mmol/L" }
+      ],
+      excludedIndices: []
+    }
+  ],
+
+  // entries[].markerSources links current live marker values back to snapshots.
+  // Snapshot delete/re-review must mutate through data-merge/lab-entry helpers
+  // so marker tombstones and importSnapshots tombstones sync correctly.
+
   // Standalone notes (independent of lab dates)
   notes: [
     { date: "2025-03-10", text: "Started vitamin D protocol" }
@@ -309,7 +331,19 @@ Stored as JSON at `labcharts-{profileId}-imported`. This is everything a user ca
   changeHistory: [
     { field: "diet", date: "2026-03-01", snapshot: { type: "carnivore", ... } },
     { field: "stress", date: "2026-02-15", snapshot: { level: "moderate", ... } }
-  ]
+  ],
+
+  // Agent Access profile-scoped state. Raw setup blobs are never stored;
+  // this is the synced state used to reconnect browsers and re-push context.
+  agentAccess: {
+    enabled: true,
+    token: "opaque-read-token",
+    contextKey: "base64url-raw-256-bit-key",
+    relayProfileId: "profile-id",
+    updatedAt: 1782290000000,
+    lastPushedAt: 1782290000000
+  },
+  agentAccessWearableSeriesDays: 30
 }
 ```
 

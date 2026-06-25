@@ -1,6 +1,6 @@
 ---
 title: "Architecture"
-description: "How the zero-build getbased app is structured, started, and layered."
+description: "How the native-module getbased app is structured, started, tested, and layered."
 ---
 
 {/* Synced during developer-docs migration. */}
@@ -8,16 +8,28 @@ description: "How the zero-build getbased app is structured, started, and layere
 
 # Architecture
 
-## Zero-build philosophy
+## Native-module philosophy
 
-getbased has no bundler, no package manager, and no compile step. It uses native ES modules (`<script type="module">`) supported by every modern browser. The development workflow is:
+getbased has no app bundler: the browser loads native ES modules (`<script type="module">`) directly. The shipped JS remains human-readable as files, and most UI work is still edit → reload.
+
+That does **not** mean the repo has no tooling. The current repository uses npm for tests, type checks, Playwright, Vercel helpers, and a deploy-time catalog fetch. The practical development workflow is:
 
 1. Edit a file
-2. Reload the browser
+2. Reload the browser for quick local feedback
+3. Run the relevant checks before committing
 
-That is the entire build process. There is nothing else.
+Common commands:
 
-This constraint is intentional — it keeps the codebase approachable, removes tooling churn, and makes every file human-readable as shipped.
+```bash
+npm run dev-server
+npm test
+npm run typecheck
+npm run typecheck:checkjs
+npm run quality
+npm run test:playwright
+```
+
+Vercel also runs `node scripts/fetch-catalog.mjs` before deployment. Treat the project as **zero-bundler**, not as a tooling-free repository.
 
 ## File layout
 
@@ -26,7 +38,9 @@ index.html          — HTML structure only; script/CSS includes; SEO meta tags
 styles.css          — Core CSS: tokens, base resets, shared components, responsive/touch rules
 css/app-shell.css   — App chrome: header, sidebar navigation, footer, mobile shell, profile and sync controls
 css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
-api/share.js        — Vercel Edge Function for encrypted profile share envelope storage
+api/share.js        — Vercel function for encrypted profile share envelope storage
+api/proxy.js        — same-origin proxy for wearable runtime config, CAMS/light data, and allowed API helpers
+api/commit.js       — current deployed commit/version helper
 manifest.json       — PWA manifest (installable as a native app)
 service-worker.js   — PWA cache strategies, API bypass rules
 data/
@@ -60,7 +74,7 @@ js/
   state.js          — Single shared mutable state object
   utils.js          — escapeHTML, hashString, getStatus, formatValue, showNotification, linearRegression
   theme.js          — Theme get/set/toggle, getChartColors, time format helpers
-  api.js            — AI provider routing, 6 providers (PPQ, Routstr, OpenRouter, Venice, Local AI, Custom), model management
+  api.js            — AI provider routing, OpenRouter, PPQ, Routstr, Venice, Local AI, Custom API, private modes, model management
   api-transport.js  — shared AI API fetch retry/timeouts and streaming read stall guard
   profile.js        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
   data.js           — getActiveData() pipeline, unit conversion, date range, saveImportedData

@@ -6,7 +6,7 @@ description: "getbased is a free, open-source personal health platform that inte
 {/* Synced during developer-docs migration. */}
 
 
-getbased is a personal health intelligence platform organized around a customizable dashboard and five lenses on your biology — Labs, Genome, Body, Light, and Insight. Every lens informs every other: your DNA shapes how labs are interpreted, your wearable physiology shapes which biomarkers matter most, your light environment shapes your sleep and hormones, and the AI synthesizes across all of them with full context. Your data lives in your browser, encrypted, with no account required.
+getbased is a personal health intelligence platform organized around a customizable dashboard and five lenses on your biology — Labs, Genome, Body, Light, and Insight. Every lens informs every other: your DNA shapes how labs are interpreted, your wearable physiology shapes which biomarkers matter most, your light environment shapes your sleep and hormones, and the AI synthesizes across all of them with full context. Your data lives in your browser by default, with optional local encryption and no account required.
 
 The dashboard is the overview for the current profile. The lenses are the deeper workspaces. Recommendations turn signals from all lenses into data-linked next steps.
 
@@ -33,13 +33,13 @@ The dashboard is the overview for the current profile. The lenses are the deeper
 
 getbased is built around a few principles that set it apart from most health apps:
 
-**Local-first.** All your data is stored in your browser using localStorage and IndexedDB, encrypted at rest with AES-256-GCM. Nothing goes to a server unless you explicitly opt in to sync.
+**Local-first.** Your profile data is stored in your browser using localStorage and IndexedDB. AES-256-GCM local encryption is optional in **Settings → Data → Security**. Nothing goes to a server unless you choose a network feature such as AI, sync, profile sharing, backup, or Agent Access.
 
-**No account required.** Open the app and start using it. There is no sign-up, no email, no tracking.
+**No account required.** Open the app and start using it. There is no sign-up or email. The hosted app may run anonymous cookieless usage stats for product health — no IP, no health data — and you can disable this in **Settings → Privacy**.
 
 **Free and open-source.** getbased is licensed under AGPL-3.0. You can inspect every line, self-host it, or contribute.
 
-**Six AI providers, including fully local.** You choose how AI works — pay-per-query with crypto, one-click OAuth, a privacy-first cloud provider, or a model running entirely on your own machine.
+**Several AI provider paths, including fully local.** You choose how AI works — pay-per-query with crypto, one-click OAuth, private-enclave modes, a privacy-first cloud provider, or a model running entirely on your own machine.
 
 **Any lab PDF, any format.** The AI import pipeline reads lab reports from any country, language, or lab. There is no approved lab list.
 
@@ -73,8 +73,8 @@ getbased is built around a few principles that set it apart from most health app
 | Scope | Five integrated lenses (Labs, Genome, Body, Light, Insight) | One data class only |
 | Open source | AGPL-3.0 | Closed source |
 | Cost | Free | Free tier + paid upsell |
-| Data storage | Local browser, encrypted | Cloud (their servers) |
-| AI providers | 6 choices, including fully local and bring-your-own | Locked to one |
+| Data storage | Local browser by default; optional local encryption and encrypted sync | Cloud (their servers) |
+| AI providers | Multiple choices, including private-enclave, fully local, and bring-your-own | Locked to one |
 | Lab import | Any PDF, any format, any language | Specific labs or formats only |
 | Biomarkers | 287+ standard + unlimited custom | Limited set |
 | Specialty labs | OAT, fatty acids + custom marker pipeline for any test | Blood only |

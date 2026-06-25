@@ -12,10 +12,12 @@ getbased is deployed on Vercel. The browser app is shipped as static files, and 
 
 ## Vercel configuration
 
-`vercel.json` uses the legacy `routes` array (not `rewrites` or `headers`):
+`vercel.json` uses a deploy-time catalog fetch plus the legacy `routes` array (not `rewrites` or `headers`):
 
 ```json
 {
+  "buildCommand": "node scripts/fetch-catalog.mjs",
+  "outputDirectory": ".",
   "routes": [
     {
       "src": "/(.*)",
@@ -39,6 +41,8 @@ getbased is deployed on Vercel. The browser app is shipped as static files, and 
 |---|---|
 | `/` | `index.html` — the application (served by Vercel filesystem default) |
 | `/api/share` | `api/share.js` — encrypted profile share envelope storage |
+| `/api/proxy` | `api/proxy.js` — same-origin helper for wearable runtime config, CAMS/light data, and allowlisted external API calls |
+| `/api/commit` | `api/commit.js` — deployed commit/version helper used by diagnostics and smoke checks |
 | `/guide/*` | 301 redirect to the equivalent old `/docs/guide/*` compatibility path |
 | `/docs` | 301 redirect to `https://docs.getbased.health/` |
 | `/docs/guide/getting-started` | 301 redirect to `https://docs.getbased.health/quickstart` |
@@ -71,6 +75,23 @@ Production requires a Vercel Blob write token configured as a sensitive environm
 
 Local development mirrors the endpoint in `dev-server.js` with an in-memory store so the modal and deep-link flow can be smoke-tested without Blob credentials. That local store is process-local and disappears when the dev server restarts.
 
+### `/api/proxy`
+
+`api/proxy.js` is the controlled same-origin proxy boundary. It exists for browser flows that cannot safely call a third-party endpoint directly from `app.getbased.health`.
+
+Current responsibilities:
+
+- wearable runtime configuration and OAuth helper calls where client IDs/secrets must not be hardcoded into docs;
+- CAMS/light-data relay paths used by Sun & Light calculations;
+- Custom API proxying with public-host and allowlist checks so it cannot become a general SSRF tunnel;
+- CORS and method handling for the app's own allowed origins.
+
+Do not add a new proxy mode without documenting the target host, the caller allowlist, what secrets it can see, and which tests cover the branch.
+
+### `/api/commit`
+
+`api/commit.js` returns the deployed app identity used by smoke checks, diagnostics, and “which build am I looking at?” debugging. Keep it cheap, no-store, and free of private deployment-provider details.
+
 ## Domain layout
 
 The app and landing page are deployed as two separate Vercel projects on the same domain:
@@ -93,27 +114,30 @@ The landing page is self-contained (all CSS/JS inline) and depends only on three
 | `/` | Landing page from `../get-based-site/index.html` |
 | `/app` | App from `index.html` |
 | `/api/share` | In-memory encrypted profile share endpoint |
+| `/api/proxy` | local proxy/runtime-config mirror with LAN/same-origin safety gates |
+| `/api/commit` | local commit/version helper |
+| `/api/deploy-catalog` | local git/Vercel deploy-catalog helper for operator workflows |
 | `/docs/*` | 301 redirect to `docs.getbased.health` |
 
 Without the sibling repo, `/` serves the app directly. Override the site path with `SITE_DIR=/path/to/site node dev-server.js`.
 
 ## CSP headers
 
-The Content-Security-Policy allows exactly what the app needs:
+The Content-Security-Policy allows what the current app needs:
 
 ```
 default-src 'self'
-script-src  'self' 'unsafe-inline' https://cloud.umami.is
+script-src  'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:
+            https://umami-iota-olive.vercel.app
+            https://cdn.jsdelivr.net
 style-src   'self' 'unsafe-inline'
 font-src    'self'
-connect-src 'self'
-            https://openrouter.ai
-            https://api.venice.ai
-            https://api.github.com
-            https://cloud.umami.is
-            https://api-gateway.umami.dev
+connect-src 'self' https: wss:
             http://localhost:*
             http://127.0.0.1:*
+            ws://localhost:*
+            ws://*.onion
+            http://*.onion
 img-src     'self' data: blob:
 worker-src  'self' blob:
 manifest-src 'self'
@@ -122,13 +146,15 @@ object-src  'none'
 base-uri    'self'
 ```
 
-`'unsafe-inline'` is required for scripts because `index.html` has inline `onclick` attributes (by design — the architecture relies on window-exported functions called from HTML).
+`'unsafe-inline'` is required for scripts because `index.html` has inline bootstrapping and legacy window-exported action hooks. `'wasm-unsafe-eval'` and `blob:` are needed for in-browser model/vector/worker paths such as local Knowledge Base and private transports.
 
-All JS libraries (Chart.js, pdf.js) and fonts are bundled locally in `vendor/`. No external CDN calls. Run `./update-vendor.sh` to re-download when bumping versions.
+Most JS libraries are bundled locally in `vendor/`, but the CSP currently permits `https://cdn.jsdelivr.net` for explicitly allowed browser-runtime dependencies. Run `./update-vendor.sh` when bumping vendored assets, and update `vercel.json` whenever a provider or runtime dependency needs a new host.
 
 `localhost:*` and `127.0.0.1:*` in `connect-src` allow local AI servers (Ollama, LM Studio, Jan, etc.) running on the same machine. LAN IPs (e.g. `192.168.x.x`) are not supported from the hosted HTTPS app due to browser mixed-content blocking — this is a browser security fundamental, not a CSP limitation.
 
-If a new AI provider is added, its hostname must be added to `connect-src` in `vercel.json`.
+If a new AI provider, wearable provider, private transport, worker runtime, or relay host is added, review `connect-src`, `script-src`, service-worker bypass rules, and `api/proxy.js` together.
+
+`vercel.json` also sets `Onion-Location` for Tor discovery and `Link` service descriptors for `/.well-known/mcp.json` and `/.well-known/agent-skills/index.json`.
 
 ## Service worker
 
