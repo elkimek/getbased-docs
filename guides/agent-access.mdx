@@ -5,6 +5,10 @@ description: "Connect MCP-compatible AI agents to getbased using both GETBASED_T
 
 Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. getbased shares only an encrypted, pre-built context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
 
+<Note>
+  Updated 2026-06-25: Agent Access now supports the one-paste private setup command from Settings → Agent Access: `curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'`.
+</Note>
+
 ## How it works
 
 When you enable Agent Access, getbased encrypts a text summary of your labs, context cards, supplements, goals, and notes in your browser, then pushes the encrypted envelope to the **context gateway**. Your agent authenticates to the gateway with a read-only token, fetches ciphertext, and decrypts it locally with your separate Agent Context key.
