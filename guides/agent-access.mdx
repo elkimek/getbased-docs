@@ -6,7 +6,7 @@ description: "Connect MCP-compatible AI agents to getbased using both GETBASED_T
 Agent Access is an opt-in feature that lets AI agents read your lab context outside the getbased browser tab. Enable it once in Settings and any MCP-compatible tool — coding agents, messenger bots, terminal assistants — can answer questions about your labs in real time. getbased shares only an encrypted, pre-built context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
 
 <Note>
-  Updated 2026-06-25: Agent Access now supports the one-paste private setup command from Settings → Agent Access: `curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'`.
+  Updated 2026-06-25: Agent Access now supports one-paste private setup from Settings → Agent Access for Hermes Agent, OpenClaw, Claude Code, Claude Desktop, Cursor, Cline, and Codex CLI.
 </Note>
 
 ## How it works
@@ -37,12 +37,13 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
     1. Open **Settings → Cross-device Sync** and make sure Sync is enabled.
     2. Open **Settings → Agent Access**.
     3. Toggle Agent Access **on**.
-    4. Click **Copy setup command**.
+    4. Choose your setup target: **Hermes Agent**, **OpenClaw**, **Claude Code**, **Claude Desktop**, **Cursor**, **Cline**, or **Codex CLI**.
+    5. Click **Copy setup command**.
 
     The copied command looks like this:
 
     ```bash
-    curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
+    curl -fsSL https://getbased.health/install.sh | bash -s -- connect <target> --setup 'gbsetup_v1_...'
     ```
 
     <Note>
@@ -74,20 +75,21 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
   </Step>
 
   <Step title="Paste the setup command into your agent machine">
-    In the terminal where Hermes runs, paste the command copied from getbased:
+    In the terminal where that agent runs, paste the command copied from getbased. The target in the command matches the chip you selected in Settings:
 
     ```bash
-    curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
+    curl -fsSL https://getbased.health/install.sh | bash -s -- connect <target> --setup 'gbsetup_v1_...'
     ```
 
     The command does the setup for you:
 
     - stores the token and context key in `~/.config/getbased/env` with local-only permissions;
-    - registers `getbased-mcp` with Hermes using `GETBASED_STACK_MANAGED=1`;
+    - registers `getbased-mcp` automatically when the selected client supports it;
+    - prints a paste-ready manual config snippet when a client cannot be auto-registered;
     - runs a connection test;
-    - restarts Hermes gateway when the command is running from a normal shell, or prints an external-shell restart instruction when it detects it is running inside Hermes.
+    - restarts or tells you how to restart the agent when the selected client needs a reload.
 
-    No manual YAML editing is required for Hermes.
+    No manual YAML or JSON editing is required for the normal setup path.
   </Step>
 
   <Step title="Query your labs">
@@ -111,9 +113,31 @@ The gateway is content-blind: it stores ciphertext and forwards it. It contains 
 | `knowledge_stats` | Per-source chunk counts for the active library — useful for diagnosing missing search results. |
 | `getbased_lens_config` | Show the Custom Knowledge Source endpoint and key from getbased so the agent stays in sync with what the app is configured to query. |
 
-## Hermes Agent config example
+## Supported clients and manual config
 
-[Hermes Agent](https://github.com/hermes-agent/hermes-agent) is a self-hosted AI assistant with built-in support for Matrix, Telegram, Signal, Discord, and other messengers. For Hermes, the normal path is the private bootstrap command copied from **Settings → Agent Access**:
+In Settings → Agent Access, choose the tool you want to connect before copying the private setup command:
+
+| Target | What the setup command does |
+|---|---|
+| Hermes Agent | Registers `getbased-mcp` through Hermes' MCP manager, stores secrets in the shared getbased env file, tests the connection, and restarts the gateway when safe. |
+| OpenClaw | Stores the Agent Access secrets and prints the OpenClaw MCP config when automatic registration is not available. |
+| Claude Code | Stores the Agent Access secrets and prepares the MCP config for Claude Code. |
+| Claude Desktop | Stores the Agent Access secrets and prepares the desktop MCP config snippet. |
+| Cursor | Stores the Agent Access secrets and prepares the Cursor MCP config snippet. |
+| Cline | Stores the Agent Access secrets and prepares the Cline MCP config snippet. |
+| Codex CLI | Stores the Agent Access secrets and prepares the Codex MCP config snippet. |
+
+You can also ask the stack to print a config block for any supported target:
+
+```bash
+getbased-stack mcp-config <target>
+```
+
+The supported target names are `hermes`, `openclaw`, `claude-code`, `claude-desktop`, `cursor`, `cline`, and `codex`.
+
+### Hermes Agent config example
+
+[Hermes Agent](https://github.com/hermes-agent/hermes-agent) is a self-hosted AI assistant with built-in support for Matrix, Telegram, Signal, Discord, and other messengers. For Hermes, the normal path is the private bootstrap command copied after selecting **Hermes Agent** in **Settings → Agent Access**:
 
 ```bash
 curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_...'
@@ -163,16 +187,17 @@ If you reset or regenerate your Sync mnemonic because the sync relay is wedged, 
 1. Open getbased on the device that has the correct local profile data.
 2. Confirm Sync is enabled with the new mnemonic.
 3. Open **Settings → Agent Access**.
-4. Click **Copy setup command**.
-5. Paste the new command into the terminal where your agent runs:
+4. Pick the same setup target you use for that agent.
+5. Click **Copy setup command**.
+6. Paste the new command into the terminal where your agent runs:
 
 ```bash
-curl -fsSL https://getbased.health/install.sh | bash -s -- connect hermes --setup 'gbsetup_v1_new...'
+curl -fsSL https://getbased.health/install.sh | bash -s -- connect <target> --setup 'gbsetup_v1_new...'
 ```
 
-The reconnect command updates the shared local env file and re-tests Hermes. Because Hermes stores only `GETBASED_STACK_MANAGED=1`, you do not need to edit Hermes config again.
+The reconnect command updates the shared local env file and re-tests the selected client. Because clients can read secrets from the stack-managed env file, you do not need to paste raw secrets into normal config files again.
 
-6. Restart your non-Hermes agent or MCP client if it does not restart automatically.
+7. Restart your agent or MCP client if it does not restart automatically.
 
 <Note>
   The Sync mnemonic never goes into your agent config. Agents only need the Agent Access token and context key. Changing the Sync mnemonic means the browser must push Agent Access context again, because gateway writes are owner-bound.
