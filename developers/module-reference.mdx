@@ -941,7 +941,7 @@ Conversation summary generation, saved-summary profile storage, and summary moda
 
 ### `settings.js`
 
-Settings modal shell with profile, display, AI, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.js`, wearables rows to `wearables-settings-panel.js`, and sync/Agent Access panels to `settings-sync-panel.js`.
+Settings modal shell with profile, display, AI, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.js`, wearables rows to `wearables-settings-panel.js`, sync controls to `settings-sync-panel.js`, and Agent Access rendering/actions to `settings-agent-access-panel.js`.
 
 **Key exports:**
 - `openSettingsModal()` / `closeSettingsModal()`
@@ -955,15 +955,27 @@ Settings modal shell with profile, display, AI, privacy, data, wearables, and Ag
 
 ### `settings-sync-panel.js`
 
-Settings subpanel module for cross-device sync and Agent Access. Owns the Settings → Data sync section, sync setup/restore modal, mnemonic and relay controls, and the Settings → Agent token/series controls.
+Settings subpanel module for cross-device sync. Owns the Settings → Data sync section, sync setup/restore modal, mnemonic and relay controls, and delegates Settings → Agent Access rendering/actions to `settings-agent-access-panel.js`.
 
 **Key exports:**
 - `renderSyncSection()` — renders the Settings → Data sync panel
-- `renderMessengerSection()` — renders the Settings → Agent Access panel
+- `renderMessengerSection()` — compatibility export that renders the Settings → Agent Access panel through `settings-agent-access-panel.js`
 - `hydrateSettingsSyncPanel()` — loads mnemonic and relay status after the settings modal is painted
 - `showSyncSetupModal()` — opens the cross-device sync setup wizard directly; used by the dashboard data-protection picker
 
 **Window exports:** `showSyncSetupModal`, `toggleSync`, `toggleMnemonicVisibility`, `copyMnemonic`, `saveSyncRelay`, `openRestoreMnemonicDialog`, `closeRestoreMnemonicDialog`, `confirmRestoreMnemonic`, `closeSyncSetup`, `syncSetupNew`, `syncSetupRestore`, `syncSetupBack`, `syncSetupDoRestore`, `syncSetupDone`, `toggleMessenger`, `toggleMessengerToken`, `copyMessengerToken`, `regenerateMessengerToken`
+
+---
+
+### `settings-agent-access-panel.js`
+
+Settings → Agent Access renderer and action handler. It owns the enable/disable state, synced Agent Access metadata, read-only relay token display, local context-key display, wearable daily-series window, and the one-paste setup-command builder for supported MCP clients.
+
+**Key exports:**
+- `renderMessengerSection()` — renders the Agent Access settings panel, including the target-client chip group
+- `buildAgentAccessSetupCommand(client)` — builds the private `gbsetup_v1_...` bootstrap command for `hermes`, `openclaw`, `claude-code`, `claude-desktop`, `cursor`, `cline`, or `codex`
+- `handleMessengerAction(action, el)` — delegated action handler for enabling, regenerating, copying secrets, copying setup commands, and series-window changes
+- `toggleMessengerToken()` / `copyMessengerToken()` / `regenerateMessengerToken()` — compatibility actions for legacy window bindings
 
 ---
 
@@ -1631,7 +1643,7 @@ Not separately documented because their exports are best read from source — ke
 - `sync-apply.js` — inbound sync apply helpers for AI provider settings and display prefs, with compatibility re-exports for chat apply helpers.
 - `sync-chat-apply.js` — inbound chat thread/message application, chat delete tombstones, and local freshness locks that protect just-edited local chat from stale remote rows.
 - `sync-tombstones.js` — remote profile delete propagation helpers, inbound tombstone application, batched-delete quarantine, and apply/reject pending tombstone actions for Settings.
-- `sync-messenger.js` — Agent Access token helpers and debounced lab-context push to the messenger/MCP gateway.
+- `sync-messenger.js` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
 - `sync-environment.js` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
 - `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers for Evolu owner identity.
 - `sync-diagnostics.js` — Evolu diagnostics facade; stable exports for configuration, row snapshots, and copy-text formatting.

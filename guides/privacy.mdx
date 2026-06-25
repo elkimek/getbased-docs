@@ -5,7 +5,7 @@ description: "getbased keeps your health data local by default, with opt-in encr
 
 getbased is built on one principle: your health data belongs to you and no one else. By default, your lab results, DNA data, wearable history, and AI conversations stay in your browser's local storage and IndexedDB. There is no account, no sign-up, and no analytics tied to your usage.
 
-Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, or creating a password-protected profile share link.
+Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, creating a password-protected profile share link, or enabling Agent Access for a local MCP agent. In encrypted modes, the hosted service stores or forwards ciphertext rather than readable health data.
 
 ## Where your data lives
 
@@ -37,13 +37,14 @@ Even with PII obfuscation active, the anonymized text is sent to your configured
 
 ## AI provider options and what they see
 
-getbased supports six AI backends. The privacy implications differ by provider:
+getbased supports multiple AI backends. The privacy implications differ by provider:
 
 | Provider | What they receive | Network? |
 |---|---|---|
 | PPQ / Routstr / OpenRouter | Obfuscated lab text over HTTPS | Yes |
 | Venice AI (standard) | Obfuscated lab text over HTTPS, no-log policy | Yes |
 | Venice AI (E2EE) | Ciphertext — decrypted only inside a TEE | Yes, encrypted |
+| PPQ Private TEE | Browser-encrypted request body — decrypted only inside a verified Tinfoil secure enclave | Yes, encrypted |
 | Local AI (Ollama, LM Studio, Jan) | Nothing leaves your device | No |
 
 ### Venice end-to-end encryption
@@ -51,6 +52,10 @@ getbased supports six AI backends. The privacy implications differ by provider:
 When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is decrypted only inside a verified Intel TDX enclave — not even Venice can read it. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
 
 A **🔒✓** indicator in the chat header confirms attestation passed.
+
+### PPQ Private TEE mode
+
+PPQ Private TEE mode uses the same local-first idea without requiring you to run a proxy. getbased verifies the private endpoint, encrypts the request in your browser, sends ciphertext to PPQ's private API, and shows lock/attestation status in chat. Web search is disabled in private mode so prompts do not leak into external search tools.
 
 ### Fully local AI
 
@@ -66,6 +71,10 @@ Profile sharing is opt-in. When you create a share link, getbased locks a copy o
 
 Anyone who has both the link and the password can import the shared profile until the link expires or you stop sharing it. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
 
+## Agent Access
+
+Agent Access is opt-in and separate from cross-device sync. When enabled, your browser encrypts a compact agent context with `GETBASED_AGENT_CONTEXT_KEY`, then pushes only the encrypted envelope to the context gateway. `GETBASED_TOKEN` authorizes relay reads, but it is not the decryption key. Your local MCP client fetches the ciphertext and decrypts it locally. See [Give AI agents access to your lab data](/guides/agent-access) for setup and revocation.
+
 ## No account, no tracking
 
 getbased has no user accounts, no login, no cookies for tracking, and no analytics tied to your identity. The app is open source — you can verify every claim on [GitHub](https://github.com/elkimek/get-based).
@@ -76,6 +85,7 @@ You own your data and can take it with you at any time:
 
 - **JSON export** — download a full plaintext copy from **Settings → Data → Export**. See [Export and import](/guides/export-import).
 - **Profile sharing** — create a temporary password-protected link for one profile. See [Profile sharing](/guides/profile-sharing).
+- **Agent Access** — share an encrypted summary with your own MCP-compatible agent. See [Agent Access](/guides/agent-access).
 - **Folder backup** — auto-save daily snapshots to any local folder, Proton Drive, or Dropbox. See [Backup](/guides/backup).
 - **Cross-device sync** — move data to a new device without exporting a file. See [Sync across devices](/guides/cross-device-sync).
 

@@ -64,6 +64,18 @@ To import multiple reports at once, select or drag multiple files. getbased proc
 
 For each file you can **Confirm** to save or **Skip** to discard and move on. If a file fails due to a network error, getbased retries it once automatically before offering the option to skip.
 
+### Per-file import history
+
+Confirmed AI imports are stored as individual import records in **Settings → Data**. This matters when several reports share the same collection date: the live lab entry still shows one current value per marker/date, but each source file remains reviewable.
+
+From **Settings → Data** you can:
+
+- click **Review & Edit** to reopen the saved import preview without paying for another AI parse;
+- edit values, units, mappings, or excluded rows, then re-import the corrected snapshot;
+- click **Delete** to remove only the markers owned by that import snapshot while preserving unrelated same-day data.
+
+Reports imported before per-file storage existed were saved only as date-based lab entries. To make an old report individually reviewable, import that report again.
+
 <Note>
 Before a large batch import, export a JSON backup from Settings or use [Backup](/guides/backup). Restoring from a backup is easier than deleting many values manually.
 </Note>
@@ -106,7 +118,7 @@ Markers not in the built-in schema are created automatically as custom markers a
 
 **Can I import the same PDF twice?**
 
-If you import a report for a date that already has data, the new values are merged with the existing ones. Existing values are not overwritten.
+If you import a report for a date that already has data, the report is saved as its own import record and the live lab entry is merged by marker/date. When two same-day reports contain the same marker, the newest confirmed value becomes the live value, while the older file remains in import history so you can review or restore it deliberately.
 
 **What about below-detection-limit values like `<0.5`?**
 
@@ -114,8 +126,8 @@ These are imported at the detection limit value itself (`<0.5` becomes `0.5`). T
 
 **Can I undo an import?**
 
-Not directly after confirming. Restore from an automatic snapshot or JSON backup if an import created bad data.
+Yes, for imports saved with per-file history. Open **Settings → Data**, find the imported report, then use **Review & Edit** to correct it or **Delete** to remove that report's imported markers. For older date-only imports, restore from an automatic snapshot or JSON backup if the import created bad data.
 
 <Warning>
-If you see unexpected results after a batch import, restore from a pre-import snapshot rather than deleting values individually.
+If you see unexpected results after a large batch import, start with the per-file **Review & Edit** / **Delete** controls in Settings → Data. If the problem came from older date-only imports or broad accidental changes, restore from a pre-import snapshot instead of manually deleting many marker values.
 </Warning>

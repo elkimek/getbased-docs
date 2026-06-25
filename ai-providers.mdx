@@ -1,10 +1,10 @@
 ---
 title: "Connect an AI provider to getbased"
 sidebarTitle: "AI providers"
-description: "getbased supports six AI backends — from one-click OAuth to fully local models. Compare providers and learn how to set each one up."
+description: "getbased supports cloud, private-enclave, crypto-paid, custom, and fully local AI backends. Compare providers and learn how to set each one up."
 ---
 
-getbased supports six AI providers for PDF import, chat, and dashboard AI features. You can switch between them at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
+getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice E2EE. You can switch between providers at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
 
 ## Which features need AI?
 
@@ -84,6 +84,10 @@ All non-AI features work fully without any provider configured. You can load a d
     </Steps>
 
     You can also paste an existing API key from [ppq.ai](https://ppq.ai) if you already have an account.
+
+    <Tip>
+      **Private TEE mode:** PPQ can run through a private endpoint where getbased encrypts the request in your browser, verifies the Tinfoil secure-enclave path, and shows lock/attestation status in chat. No local proxy is required. Web search is disabled while Private TEE mode is active.
+    </Tip>
   </Tab>
 
   <Tab title="Routstr">
