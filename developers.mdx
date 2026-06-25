@@ -1,50 +1,64 @@
 ---
 title: "Developer documentation"
-description: "Developer guide index for getbased: architecture, module map, data pipeline, storage, testing, deployment, and feature internals."
+description: "Developer guide index for getbased: architecture, data model, AI surfaces, feature internals, testing, deployment, and release gates."
 ---
 
 # Developer documentation
 
-getbased is a native ES module web app with no app bundler. It still has npm tooling for tests, type checks, Playwright, and deployment helpers. This section is the canonical developer documentation, kept here so contributor docs and public docs stay in one Mintlify site.
+getbased is a native ES module web app with no app bundler. It still uses npm for tests, type checks, Playwright, and deployment helpers.
 
-**New here?** Start with [CONTRIBUTING.md](https://github.com/elkimek/get-based/blob/main/CONTRIBUTING.md) for setup, running locally, tests, and PR guidelines.
+If you are new here, start with [CONTRIBUTING.md](https://github.com/elkimek/get-based/blob/main/CONTRIBUTING.md) for setup, local runs, tests, and PR guidelines. Use this section when you need implementation details that are too technical for the user guides.
 
-## Primary reference
+## Start here
 
-Use this section as the public, human-readable implementation reference. Keep internal agent handoff notes and private deployment context out of the public docs.
-
-## Contributor docs map
-
-| Page | What it covers |
+| Page | Use it for |
 |---|---|
-| [Architecture](/developers/architecture) | Native-module architecture, tooling, file layout, 6-layer dependency graph |
-| [Module Reference](/developers/module-reference) | All JS modules: exports, purpose, window bindings |
-| [Cross-Module Patterns](/developers/cross-module-patterns) | Window exports, circular dep avoidance, state access |
-| [Context Assembly](/developers/context-assembly) | How lab context is assembled for the AI |
-| [Data Pipeline](/developers/data-pipeline) | `getActiveData()` walkthrough, marker keys, values arrays |
-| [Storage Schema](/developers/storage-schema) | All localStorage keys, importedData structure, IndexedDB |
-| [Sync and Delta Internals](/developers/sync-delta-internals) | Synced profile surfaces, tombstones, import snapshots, and Agent Access state |
-| [AI Provider Internals](/developers/ai-provider-internals) | Provider routing, private transports, Custom API proxying, OAuth, and web-search boundaries |
-| [Agent Access Relay](/developers/agent-access-relay) | Owner-bound encrypted context relay, setup payload, and MCP decrypt behavior |
-| [Local Lens Internals](/developers/lens-local-internals) | In-browser Knowledge Base libraries, embeddings, chunks, and worker behavior |
-| [Wearables Internals](/developers/wearables-internals) | OAuth, local daily rows, synced summaries, runtime config, and Agent Access series |
-| [Legal Consent](/developers/legal-consent) | First-launch legal gate, re-consent versioning, startup ordering, and release checks |
-| [Testing](/developers/testing) | Headless test runner, `./run-tests.sh`, writing new assertions |
-| [Routstr/Cashu Safety](/developers/routstr-cashu-safety) | Money-path invariants and required tests for Routstr wallet, node deposit/refund, token export, seed restore, and Cashu TS migration |
-| [Deployment](/developers/deployment) | Vercel config, CSP, service worker cache, PWA |
+| [Architecture](/developers/architecture) | How the app is structured, started, and deployed without bundling app source |
+| [Module Reference](/developers/module-reference) | Finding the JS module that owns a feature or window binding |
+| [Cross-Module Patterns](/developers/cross-module-patterns) | Shared patterns: window exports, state access, dependency boundaries |
+
+## Data model and sync
+
+| Page | Use it for |
+|---|---|
+| [Data Pipeline](/developers/data-pipeline) | How `getActiveData()` builds the data used by charts and AI context |
+| [Storage Schema](/developers/storage-schema) | localStorage, importedData, IndexedDB, export/import, and Agent Access state |
+| [Sync and Delta Internals](/developers/sync-delta-internals) | Cross-device sync surfaces, tombstones, import snapshots, and merge rules |
+| [Context Assembly](/developers/context-assembly) | How labs, context cards, wearables, notes, and Agent Access context are assembled |
+
+## AI and agents
+
+| Page | Use it for |
+|---|---|
+| [AI Surfaces Map](/developers/ai-surfaces-map) | Which features use AI and which are deterministic |
+| [AI Provider Internals](/developers/ai-provider-internals) | Provider routing, private transports, Custom API proxying, OAuth, and web search |
+| [Agent Access Relay](/developers/agent-access-relay) | Owner-bound encrypted context relay, setup payload, and local MCP decrypt behavior |
+| [Local Lens Internals](/developers/lens-local-internals) | In-browser Knowledge Base storage, chunks, embeddings, and worker behavior |
+| [Lens Endpoint Contract](/developers/lens-endpoint-contract) | Wire spec for an external Knowledge Source server |
+
+## Feature internals
+
+| Page | Use it for |
+|---|---|
+| [Biology Scores](/developers/biology-scores) | Score engine, coverage planner, context gate, adapters, UI, and tests |
 | [Sun Spectrum Model](/developers/sun-spectrum-model) | Bird-Riordan spectral reconstruction for Light sessions |
-| [AI Surfaces Map](/developers/ai-surfaces-map) | Canonical map of where AI runs vs deterministic math |
-| [Biology Scores](/developers/biology-scores) | Biology Scores internals: score engine, context gate, adapters, sync, UI, tests |
-| [Lens Endpoint Contract](/developers/lens-endpoint-contract) | Wire spec for a custom Knowledge Source server |
+| [Wearables Internals](/developers/wearables-internals) | OAuth, local daily rows, synced summaries, runtime config, and Agent Access series |
 
+## Operations and release checks
 
-## Current implementation audit
+| Page | Use it for |
+|---|---|
+| [Testing](/developers/testing) | Test commands, browser specs, and how to add assertions |
+| [Deployment](/developers/deployment) | Vercel config, CSP, service worker, API routes, and PWA behavior |
+| [Legal Consent](/developers/legal-consent) | First-launch Terms/Privacy gate, re-consent, startup ordering, and release checks |
+| [Routstr/Cashu Safety](/developers/routstr-cashu-safety) | Money-path invariants and required tests for wallet/node/session flows |
+| [Codex PR Coverage Workflow](/developers/codex-pr-coverage-workflow) | PR review and coverage workflow for agent-assisted changes |
 
-This section was moved from `get-based/dev-docs` into the Mintlify docs site. During the move, the docs were checked against the live app tree on this machine:
+## Maintenance rule
 
-- the app still uses native browser ES modules without bundling the app source;
-- the repository does use npm tooling and a Vercel catalog-fetch step, so “zero-bundler” should not be confused with tooling-free;
-- Biology Scores currently expose 19 definitions including Biological Coherence;
-- public user docs live in `/guides`, while implementation details live here under `/developers`;
+When adding a user-visible feature, update both sides in this repo:
 
-When adding a user-visible feature, update both the relevant user guide and the matching developer page in this same docs repo. Do not create a second long-lived docs surface in the app repository.
+- the user guide that explains what the feature does and how to use it;
+- the developer page that explains storage, sync, privacy, tests, and owner modules.
+
+Do not create a second long-lived docs surface in the app repository. The app repo may keep executable tests and temporary notes; durable docs belong here.

@@ -54,29 +54,9 @@ The condition picker is shared between both subsections — type any name and ac
 
 ## EMF assessment (Environment card)
 
-The Environment card includes a dedicated **Baubiologie EMF Assessment** sub-module for tracking electromagnetic field measurements room by room. Open the Environment card and click **Open EMF Assessment** to access it.
+The Environment card also has an **EMF Assessment** for measured room-level exposure: electric fields, magnetic fields, RF/microwave radiation, dirty electricity, and DC magnetic deviation.
 
-<AccordionGroup>
-  <Accordion title="Room-by-room measurements">
-    Add a bedroom, office, living room, or a custom room. Mark each room as a sleeping or daytime area — this changes the severity thresholds applied to your readings.
-  </Accordion>
-  <Accordion title="SBM-2015 severity grading">
-    Measurements are rated against Building Biology (Baubiologie) standards across five types: AC electric fields (V/m), AC magnetic fields (nT), RF/microwave radiation (µW/m²), dirty electricity (GS), and DC magnetic deviation (µT). Severity runs from No Concern (green) to Extreme Concern (red).
-  </Accordion>
-  <Accordion title="Sources, mitigations, and photos">
-    Tag common EMF sources (WiFi router, smart meter, cell tower) and mitigation steps (demand switch, shielding paint, WiFi off at night) per room. Attach up to six photos per room to document meter readings or setup.
-  </Accordion>
-  <Accordion title="AI interpretation and comparison">
-    Click **Interpret** inside the EMF editor to generate a streaming AI analysis of your room-by-room measurements, including severity, source attribution, and mitigation recommendations. You can also compare two saved assessments (before vs after remediation) with color-coded delta arrows.
-  </Accordion>
-  <Accordion title="PDF import">
-    Import professional consultant EMF reports via AI-powered PDF extraction — the same pipeline used for lab reports.
-  </Accordion>
-</AccordionGroup>
-
-For the full workflow, see [Measure EMF exposure in getbased](/guides/emf-assessment).
-
-EMF data is included in the AI chat context and in your JSON export.
+Use it when you have meter readings or a consultant report and want those readings included in AI context, export/import, sync, and recommendations. For the full workflow, see [Log EMF measurements](/guides/emf-assessment).
 
 ## Supplement and medication timeline
 
@@ -86,7 +66,7 @@ When you chat with the AI, it can reason about whether a supplement you started 
 
 ## Diet contaminant warnings
 
-The Diet & Digestion card can surface food-contaminant warnings when your diet text matches known high-signal food items. These warnings are deterministic keyword/database checks, not AI diagnosis.
+The Diet & Digestion card can show food-contaminant warnings when your diet text matches foods from public lists. These are simple database checks, not AI diagnosis.
 
 Current sources include public food-contaminant lists such as EWG Dirty Dozen / Clean Fifteen and PlasticList-style plasticizer findings. getbased uses the warning as context: it can flag that a frequently eaten food may deserve sourcing, washing, peeling, filtering, or rotation attention, but it does not claim that the food caused a lab result.
 

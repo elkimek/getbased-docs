@@ -86,7 +86,8 @@
               "guides/manual-entry",
               "guides/specialty-labs",
               "guides/biomarker-charts",
-              "guides/trend-alerts"
+              "guides/trend-alerts",
+              "guides/custom-markers"
             ]
           },
           {
@@ -103,7 +104,7 @@
             ]
           },
           {
-            "group": "Light",
+            "group": "Light & Environment",
             "pages": [
               "guides/sun-sessions",
               "guides/light-environment",
@@ -116,11 +117,11 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
-              "guides/routstr",
               "guides/recommendations",
+              "guides/context-cards",
               "guides/interpretive-lens",
               "guides/knowledge-base",
-              "guides/context-cards"
+              "guides/routstr"
             ]
           },
           {
@@ -138,8 +139,7 @@
             "group": "Advanced",
             "pages": [
               "guides/agent-access",
-              "guides/self-hosting",
-              "guides/custom-markers"
+              "guides/self-hosting"
             ]
           }
         ]
@@ -157,34 +157,39 @@
             ]
           },
           {
-            "group": "Data and AI",
+            "group": "Data model & sync",
             "pages": [
               "developers/data-pipeline",
-              "developers/context-assembly",
               "developers/storage-schema",
-              "developers/agent-access-relay",
-              "developers/ai-surfaces-map",
-              "developers/lens-endpoint-contract",
               "developers/sync-delta-internals",
-              "developers/ai-provider-internals",
-              "developers/lens-local-internals"
+              "developers/context-assembly"
             ]
           },
           {
-            "group": "Features",
+            "group": "AI & agents",
+            "pages": [
+              "developers/ai-surfaces-map",
+              "developers/ai-provider-internals",
+              "developers/agent-access-relay",
+              "developers/lens-local-internals",
+              "developers/lens-endpoint-contract"
+            ]
+          },
+          {
+            "group": "Feature internals",
             "pages": [
               "developers/biology-scores",
               "developers/sun-spectrum-model",
-              "developers/wearables-internals",
-              "developers/legal-consent"
+              "developers/wearables-internals"
             ]
           },
           {
-            "group": "Operations",
+            "group": "Operations & release",
             "pages": [
               "developers/testing",
-              "developers/routstr-cashu-safety",
               "developers/deployment",
+              "developers/legal-consent",
+              "developers/routstr-cashu-safety",
               "developers/codex-pr-coverage-workflow"
             ]
           }
