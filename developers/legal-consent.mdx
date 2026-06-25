@@ -21,7 +21,7 @@ This is intentionally local. getbased has no user account to attach consent to.
 
 ## Startup ordering
 
-Legal consent appears before normal startup overlays, including:
+Startup ordering is part of the legal-consent contract. Legal consent appears before normal startup overlays, including:
 
 - first-run tour;
 - changelog modal;
@@ -37,7 +37,7 @@ The legal gate should clearly say:
 - getbased is an educational/wellness tool, not a medical device;
 - it does not provide diagnosis or medical advice;
 - data is local by default, with opt-in network features;
-- anonymous cookieless usage stats may be collected on the hosted app and can be disabled in Settings → Privacy;
+- Anonymous Usage Stats may be collected on the hosted app and can be disabled in Settings → Privacy;
 - the user must accept Terms and Privacy to continue.
 
 Do not include private deployment details, analytics implementation internals, or raw legal text inside the developer doc. Link to the public Terms and Privacy pages from the app UI.
