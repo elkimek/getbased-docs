@@ -1,0 +1,67 @@
+---
+title: "Sync and delta internals"
+description: "How getbased adds profile surfaces to encrypted cross-device sync without breaking local edits, tombstones, or import provenance."
+---
+
+getbased sync is local-first CRDT storage plus app-level delta surfaces. The relay carries encrypted Evolu data, but the browser still needs deterministic merge rules for profile arrays, maps, tombstones, import snapshots, and Agent Access state.
+
+This page is the contributor contract for adding or changing a synced profile surface.
+
+## Core modules
+
+| Module | Role |
+|---|---|
+| `sync-delta-surfaces.js` | Names the profile surfaces that participate in delta sync |
+| `sync-delta-surface-config.js` | Per-surface identity keys, tombstone keys, map transforms, and user-visible labels |
+| `sync-push-deltas.js` | Builds and pushes deltas; advances snapshots only after successful remote application |
+| `sync-apply.js` / `sync-chat-apply.js` | Applies inbound profile and chat changes safely |
+| `sync-tombstones.js` | Profile and item-delete propagation, including batched-delete quarantine |
+| `sync-diagnostics.js` | Debug snapshots, status panels, and copyable diagnostics |
+
+## Delta surface types
+
+| Type | Examples | Identity rule |
+|---|---|---|
+| dated item arrays | `entries`, `changeHistory` | stable date/item fields plus surface-specific tombstones |
+| stable-id arrays | `importSnapshots`, `supplements`, `healthGoals`, `notes`, `chatSummaries` | item `id` or configured key |
+| maps | `manualValues`, `markerValueNotes` | key transform, not array identity |
+| scalar/profile state | `agentAccess`, `agentAccessWearableSeriesDays` | profile-level last-write-wins |
+
+`importSnapshots` are user-visible because Settings → Data can reopen a saved import review. They must keep stable IDs and tombstones so deleting one source file does not delete unrelated same-day marker values.
+
+## Snapshot advancement rule
+
+Do not advance the local “last pushed” snapshot until the remote operation applies successfully. This protects local edits from being marked synced when the relay write failed or was rejected.
+
+When adding a surface:
+
+1. Add it to `sync-delta-surfaces.js`.
+2. Add identity/tombstone behavior in `sync-delta-surface-config.js`.
+3. Verify export/import behavior if the surface belongs in JSON backups.
+4. Add apply/merge tests for local-vs-remote conflicts.
+5. Add observability if the surface is user-visible in Settings diagnostics.
+
+## Tombstones and deletes
+
+Deletes are explicit tombstones, not absence. This matters for:
+
+- marker/date values that should stay deleted after another device still has the old value;
+- per-file import snapshots where Settings → Data delete removes only markers owned by that snapshot;
+- profile deletes, where single deletes propagate automatically but batched deletes are quarantined.
+
+For batched profile deletes, receiving browsers show an apply/restore UI in Settings → Data. This prevents a stolen mnemonic from silently wiping every profile on every paired device.
+
+## Agent Access sync
+
+Agent Access state is part of the encrypted profile. The enabled state, read token, Agent Context key, relay metadata, and wearable-series window can travel to another paired browser. Wearable OAuth refresh tokens do not sync; each device must reconnect wearable vendors independently.
+
+## Verification checklist
+
+Before shipping sync changes:
+
+- run targeted unit tests for the touched surface;
+- run browser sync specs if the surface is visible in Settings or the dashboard;
+- verify tombstone behavior for delete/recreate conflicts;
+- verify snapshot advancement after simulated failed pushes;
+- check Settings → Data diagnostics for a useful label and no plaintext secrets;
+- test export/import if the surface should survive backups.

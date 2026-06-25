@@ -1,0 +1,72 @@
+---
+title: "Measure EMF exposure in getbased"
+description: "Use the Baubiologie EMF Assessment to record room-by-room electric, magnetic, RF, dirty-electricity, and DC magnetic readings, then feed them into AI context and recommendations."
+---
+
+The EMF Assessment is a structured way to track electromagnetic field exposure in the places where you spend time. It lives inside the **Environment** context card and is included in AI context, export/import, sync, and recommendations.
+
+Use it when you have meter readings from your bedroom, office, living room, or a professional building-biology report and want those measurements to be interpreted alongside your labs, sleep, light, and symptoms.
+
+## Where to find it
+
+<Steps>
+  <Step title="Open Manage → Context">
+    Open **Insight → Manage → Context**, or add the context widget to your dashboard and open **Environment**.
+  </Step>
+  <Step title="Open EMF Assessment">
+    In the Environment card, click **Open EMF Assessment**.
+  </Step>
+  <Step title="Add rooms and readings">
+    Add a room, mark whether it is a sleeping area or daytime area, then enter readings from your meter or consultant report.
+  </Step>
+</Steps>
+
+## What you can record
+
+| Measurement | Unit | Typical source |
+|---|---:|---|
+| AC electric fields | V/m | wiring, ungrounded lamps, bedside cables |
+| AC magnetic fields | nT | transformers, panels, appliances, nearby power lines |
+| RF / microwave radiation | µW/m² | WiFi, phones, cell towers, smart meters |
+| Dirty electricity | GS | switching power supplies, dimmers, solar inverters |
+| DC magnetic deviation | µT | steel beds, magnets, local magnetic-field distortion |
+
+Each room can also include source tags, mitigation tags, notes, and photos of meter readings or room setup.
+
+## How ratings work
+
+getbased grades each measurement against SBM-2015-style building-biology thresholds. Sleeping areas are treated more strictly than daytime rooms because exposure duration and recovery biology are different.
+
+The rating colors are meant to help you prioritize, not to diagnose disease:
+
+| Rating | Meaning |
+|---|---|
+| No concern | Nothing obvious in the reading |
+| Slight concern | Worth watching or retesting |
+| Severe concern | Likely worth mitigation if repeatable |
+| Extreme concern | Highest-priority exposure to investigate |
+
+<Note>
+Meter technique matters. Distance, orientation, body shielding, background signals, and meter bandwidth can change readings. Treat one measurement as a clue; repeat measurements before making expensive changes.
+</Note>
+
+## AI interpretation
+
+Click **Interpret** inside the EMF editor to ask the active AI provider to synthesize the room-by-room readings. The interpretation can explain likely sources, rank the rooms by priority, and suggest mitigations.
+
+If you save multiple assessments, getbased can compare before/after readings so you can see whether a mitigation actually changed the measurement.
+
+## Import professional reports
+
+If you have a consultant PDF or photo report, import it from the EMF Assessment. getbased uses the same AI import/review pattern as lab reports: extract readings, review them, then save the structured snapshot.
+
+## How EMF data affects the rest of getbased
+
+- **AI chat** receives a summary of saved EMF assessments as part of profile context.
+- **Recommendations** can surface mitigation steps or product/meter suggestions when the readings justify it.
+- **Sync/export/import** include saved assessments with the profile.
+- **Environment context** still keeps the simpler high-level EMF/source fields; the assessment is for measured room-level detail.
+
+<Warning>
+EMF recommendations are informational. getbased cannot prove that a reading caused a symptom or lab result. Use the assessment to organize measurements and decisions, and consult a qualified building-biology or electrical professional for remediation work.
+</Warning>

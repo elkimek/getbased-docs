@@ -1,0 +1,68 @@
+---
+title: "Wearables internals"
+description: "Developer contract for wearable OAuth, local daily rows, synced summaries, runtime configuration, and Agent Access series export."
+---
+
+Wearables span vendor OAuth, local IndexedDB time-series storage, compact synced summaries, dashboard UI, and Agent Access series export. This page documents the boundaries contributors must preserve.
+
+## Supported paths
+
+| Source | Path |
+|---|---|
+| Oura, Fitbit, Withings, Polar, WHOOP, Ultrahuman | OAuth/API fetchers plus normalized metric adapters |
+| Apple Health | XML/ZIP file import, parsed locally |
+| Manual values | manual weight, blood pressure, resting HR, and related metrics |
+
+## Core modules
+
+| Module family | Role |
+|---|---|
+| `wearables-*.js` | provider-specific OAuth, fetch, and UI helpers |
+| `wearable-adapters.js` | normalize vendor payloads into getbased metric ids |
+| `wearables-store.js` | local daily rows, encrypted backup snapshots, and summary persistence |
+| `wearables-detail-modal.js` | per-metric charts and manual-entry detail UI |
+| `settings` wearables panel | provider connection status and runtime configuration |
+| `sync-messenger.js` / Agent Access helpers | optional wearable daily-series push |
+
+## Storage split
+
+Wearable data deliberately has two layers:
+
+| Layer | Sync behavior | Why |
+|---|---|---|
+| compact summaries, baselines, trends, anomalies | syncs with the profile | enough for dashboard cards and AI context on another device |
+| raw daily rows | local only | large, provider-specific, and not worth exposing through the sync payload |
+| OAuth refresh tokens | local only | a mnemonic should not grant live vendor-account access |
+| Agent Access series window | syncs | lets another paired browser keep the same MCP export preference |
+
+If a new metric needs detailed charts on another device, do not silently sync the whole raw table. Add a compact summary first and decide deliberately whether detail rows belong in sync.
+
+## Runtime configuration
+
+Self-hosted and production deployments can provide wearable client ids/secrets through runtime config and `api/proxy.js`. Do not hardcode real provider credentials in docs, source, test snapshots, or browser-visible constants.
+
+When adding a provider, document:
+
+- OAuth callback path and allowed origin expectations;
+- token storage key and encryption behavior;
+- normalized metric ids;
+- whether the provider supports backfill and how many days;
+- how disconnect/revoke behaves;
+- test fixtures with fake payloads only.
+
+## Agent Access wearable series
+
+Settings → Agent Access can push a daily-series section for MCP clients: off, 7 days, 30 days, or 90 days. The browser serializes one metric per line, oldest to newest, using `—` for missing days and source labels in parentheses.
+
+This is a read-only export surface. The MCP must not write wearable values back through Agent Access.
+
+## Verification checklist
+
+Before shipping wearable changes:
+
+- run provider fetcher/adapter tests with fixture payloads;
+- run sync-flow tests proving summaries sync and OAuth tokens do not;
+- run browser specs for connect/disconnect UI if touched;
+- verify Apple Health imports stay local and large files remain cancellable;
+- verify manual entries merge with vendor values without duplicating days;
+- verify Agent Access series output if metric ids or daily-row shape changed.

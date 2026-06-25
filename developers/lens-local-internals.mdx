@@ -1,0 +1,73 @@
+---
+title: "Local Lens internals"
+description: "How the in-browser getbased Knowledge Base stores libraries, chunks documents, embeds passages, and differs from the external Lens endpoint contract."
+---
+
+getbased has two Lens paths:
+
+- **Local Lens**: in-browser Knowledge Base libraries stored in OPFS/IndexedDB-style browser storage and queried from a worker.
+- **External Lens endpoint**: an OpenAI-like search endpoint documented in [Lens endpoint contract](/developers/lens-endpoint-contract).
+
+This page covers the local in-browser path.
+
+## Core modules
+
+| Module | Role |
+|---|---|
+| `lens-local-worker.js` | Worker runtime, library CRUD, chunking, embedding, search, abort handling |
+| `lens-local.js` / Lens UI modules | Browser-facing library setup, file ingest, active-library selection |
+| parser helpers | PDF/text/markdown/document extraction before chunking |
+| chat/context modules | Query rewriting and passage injection before AI calls |
+
+## Storage model
+
+Local Lens persists user libraries inside browser storage, not getbased servers. Each library has:
+
+- an id and display name;
+- selected embedding model metadata;
+- source documents and extracted text;
+- chunks with offsets and source attribution;
+- embeddings for the selected model;
+- lightweight search/index metadata.
+
+Because this is browser storage, clearing site data removes the local library unless the user has exported a backup outside the browser.
+
+## Embedding model behavior
+
+The worker supports a small model catalog, including MiniLM/BGE/E5-style options. The active library's model controls how new chunks are embedded. Changing a model may require re-embedding the library because vector dimensions and embedding spaces are not interchangeable.
+
+WebGPU is preferred when available. WASM/CPU fallback should remain functional, slower, and visibly cancellable.
+
+## Chunking and retrieval
+
+The local worker chunks source text, embeds each chunk, then retrieves relevant passages for chat. Query rewriting and MMR-style diversity logic prevent every result from coming from the same paragraph when a document repeats the same phrase.
+
+When implementing retrieval changes, preserve:
+
+- source title and filename attribution;
+- chunk offsets or enough metadata to reopen the source context;
+- abortability during long imports;
+- partial-ingest safety if the user closes the modal or cancels.
+
+## Difference from external Lens
+
+| Concern | Local Lens | External Lens endpoint |
+|---|---|---|
+| Storage | user's browser | operator's server |
+| Embeddings | browser worker | server-defined |
+| Auth | local app state | endpoint/API-key contract |
+| Failure mode | browser storage/performance limits | network/server/API errors |
+| Privacy boundary | documents stay local unless used in an AI prompt | depends on external server policy |
+
+Do not document an external endpoint behavior as if it applies to local Lens. The external contract is only the wire protocol for a configured remote RAG server.
+
+## Verification checklist
+
+Before shipping local Lens changes:
+
+- run worker/runtime unit tests for ingest, query, delete, abort, and model switching;
+- run browser specs for library creation and active-library selection;
+- verify large imports can be cancelled without corrupting the library;
+- verify source attribution appears in chat grounding;
+- verify clearing/deleting a library removes its chunks and embeddings;
+- test WebGPU-unavailable fallback when the change touches model loading.

@@ -3,7 +3,7 @@ title: "Fill in lifestyle context cards in getbased"
 description: "Nine lifestyle panels capture diet, sleep, environment, and history — giving the AI context that shapes your labs and a typical GP visit never explores."
 ---
 
-Context cards are nine lifestyle panels that capture the health context behind your lab results — information a typical appointment rarely has time to explore. They live in the **Profile Context** widget and in the **Insight** lens. Add the widget to your dashboard if you want those cards in your overview.
+Context cards are nine lifestyle panels that capture the health context behind your lab results — information a typical appointment rarely has time to explore. They live in **Insight → Manage → Context** and can also appear in dashboard widgets when you add them to your overview.
 
 New users do not need to fill every card before using getbased. Guided chat can route you to the relevant context only when it helps.
 
@@ -40,7 +40,7 @@ Fill in the cards that are relevant now. The AI uses all nine cards when interpr
 
 ## How to fill in a card
 
-Open **Insight** or the **Profile Context** dashboard widget, then click any card to edit it. Each editor uses pill-button selectors and tag chips for multi-select options. Click **Save** to apply your changes.
+Open **Insight → Manage → Context** or a context dashboard widget, then click any card to edit it. Each editor uses pill-button selectors and tag chips for multi-select options. Click **Save** to apply your changes.
 
 ## Medical history card
 
@@ -74,6 +74,8 @@ The Environment card includes a dedicated **Baubiologie EMF Assessment** sub-mod
   </Accordion>
 </AccordionGroup>
 
+For the full workflow, see [Measure EMF exposure in getbased](/guides/emf-assessment).
+
 EMF data is included in the AI chat context and in your JSON export.
 
 ## Supplement and medication timeline
@@ -81,6 +83,16 @@ EMF data is included in the AI chat context and in your JSON export.
 Supplements are managed from the **Supplements & Meds** widget and the Body lens, not inside a context card. Each supplement entry has a start date and optional end date, forming a timeline that the AI can use to correlate supplementation periods with biomarker trends. The same timeline approach applies to medications you log.
 
 When you chat with the AI, it can reason about whether a supplement you started three months ago might explain a shift in a marker from your most recent draw.
+
+## Diet contaminant warnings
+
+The Diet & Digestion card can surface food-contaminant warnings when your diet text matches known high-signal food items. These warnings are deterministic keyword/database checks, not AI diagnosis.
+
+Current sources include public food-contaminant lists such as EWG Dirty Dozen / Clean Fifteen and PlasticList-style plasticizer findings. getbased uses the warning as context: it can flag that a frequently eaten food may deserve sourcing, washing, peeling, filtering, or rotation attention, but it does not claim that the food caused a lab result.
+
+<Note>
+Contaminant warnings are intentionally conservative. They are there to start a better question — “is this exposure worth reducing?” — not to make your diet smaller or more anxious.
+</Note>
 
 ## How context reaches the AI
 

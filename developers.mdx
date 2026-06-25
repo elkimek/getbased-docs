@@ -5,7 +5,7 @@ description: "Developer guide index for getbased: architecture, module map, data
 
 # Developer documentation
 
-getbased is a zero-build, native ES module web app — no install step, no compiler, no bundler. This section is now the canonical developer documentation, moved here so contributor docs and public docs stay in one Mintlify site.
+getbased is a native ES module web app with no app bundler. It still has npm tooling for tests, type checks, Playwright, and deployment helpers. This section is the canonical developer documentation, kept here so contributor docs and public docs stay in one Mintlify site.
 
 **New here?** Start with [CONTRIBUTING.md](https://github.com/elkimek/get-based/blob/main/CONTRIBUTING.md) for setup, running locally, tests, and PR guidelines.
 
@@ -17,12 +17,18 @@ Use this section as the public, human-readable implementation reference. Keep in
 
 | Page | What it covers |
 |---|---|
-| [Architecture](/developers/architecture) | Zero-build philosophy, file layout, 6-layer dependency graph |
+| [Architecture](/developers/architecture) | Native-module architecture, tooling, file layout, 6-layer dependency graph |
 | [Module Reference](/developers/module-reference) | All JS modules: exports, purpose, window bindings |
 | [Cross-Module Patterns](/developers/cross-module-patterns) | Window exports, circular dep avoidance, state access |
 | [Context Assembly](/developers/context-assembly) | How lab context is assembled for the AI |
 | [Data Pipeline](/developers/data-pipeline) | `getActiveData()` walkthrough, marker keys, values arrays |
 | [Storage Schema](/developers/storage-schema) | All localStorage keys, importedData structure, IndexedDB |
+| [Sync and Delta Internals](/developers/sync-delta-internals) | Synced profile surfaces, tombstones, import snapshots, and Agent Access state |
+| [AI Provider Internals](/developers/ai-provider-internals) | Provider routing, private transports, Custom API proxying, OAuth, and web-search boundaries |
+| [Agent Access Relay](/developers/agent-access-relay) | Owner-bound encrypted context relay, setup payload, and MCP decrypt behavior |
+| [Local Lens Internals](/developers/lens-local-internals) | In-browser Knowledge Base libraries, embeddings, chunks, and worker behavior |
+| [Wearables Internals](/developers/wearables-internals) | OAuth, local daily rows, synced summaries, runtime config, and Agent Access series |
+| [Legal Consent](/developers/legal-consent) | First-launch legal gate, re-consent versioning, startup ordering, and release checks |
 | [Testing](/developers/testing) | Headless test runner, `./run-tests.sh`, writing new assertions |
 | [Routstr/Cashu Safety](/developers/routstr-cashu-safety) | Money-path invariants and required tests for Routstr wallet, node deposit/refund, token export, seed restore, and Cashu TS migration |
 | [Deployment](/developers/deployment) | Vercel config, CSP, service worker cache, PWA |
@@ -36,8 +42,8 @@ Use this section as the public, human-readable implementation reference. Keep in
 
 This section was moved from `get-based/dev-docs` into the Mintlify docs site. During the move, the docs were checked against the live app tree on this machine:
 
-- the app still uses the zero-build native ES module architecture;
-- the `js/` tree currently contains 332 modules, so the module reference should be treated as a guided map rather than a literal exhaustive file list;
+- the app still uses native browser ES modules without bundling the app source;
+- the repository does use npm tooling and a Vercel catalog-fetch step, so “zero-bundler” should not be confused with tooling-free;
 - Biology Scores currently expose 19 definitions including Biological Coherence;
 - public user docs live in `/guides`, while implementation details live here under `/developers`;
 

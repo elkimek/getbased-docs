@@ -1,0 +1,64 @@
+---
+title: "Legal consent and release gates"
+description: "How getbased gates first launch and legal re-consent before tours, changelogs, analytics notices, and other startup overlays."
+---
+
+getbased has a first-launch Terms & Privacy gate. It is not a marketing modal; it is a startup-order boundary that protects legal consent, analytics disclosure, and “not medical advice” framing before the rest of the app starts talking to the user.
+
+## Core module
+
+| Module | Role |
+|---|---|
+| `legal-consent.js` | current Terms/Privacy version dates, accepted-version storage, modal rendering, and re-consent trigger |
+| `app-foundation-modules.js` | imports the legal gate early during startup |
+| `changelog.js` / tour modules | must wait behind the legal gate instead of competing with it |
+
+## Stored consent
+
+The browser stores accepted Terms and Privacy version dates locally. If either current version changes, the user is asked to accept the updated versions again on that browser.
+
+This is intentionally local. getbased has no user account to attach consent to.
+
+## Startup ordering
+
+Legal consent appears before normal startup overlays, including:
+
+- first-run tour;
+- changelog modal;
+- backup/encryption nudges;
+- other onboarding prompts.
+
+Do not add a modal that can render above the legal gate. If a new startup prompt is needed, make it wait until legal consent is satisfied.
+
+## Content boundary
+
+The legal gate should clearly say:
+
+- getbased is an educational/wellness tool, not a medical device;
+- it does not provide diagnosis or medical advice;
+- data is local by default, with opt-in network features;
+- anonymous cookieless usage stats may be collected on the hosted app and can be disabled in Settings → Privacy;
+- the user must accept Terms and Privacy to continue.
+
+Do not include private deployment details, analytics implementation internals, or raw legal text inside the developer doc. Link to the public Terms and Privacy pages from the app UI.
+
+## Version bump procedure
+
+When Terms or Privacy copy changes materially:
+
+1. Update the public Terms/Privacy document.
+2. Bump the corresponding current version date in `legal-consent.js`.
+3. Verify first launch shows the gate on a fresh profile/browser.
+4. Verify existing accepted browsers see re-consent after the version bump.
+5. Verify changelog/tour/backup prompts wait until consent is accepted.
+6. Verify Settings → Privacy still exposes the analytics toggle.
+
+## Tests and smoke checks
+
+Before shipping a legal-gate change:
+
+- run unit/browser tests that cover first-launch modal rendering and accepted-version storage;
+- smoke-test a fresh browser profile;
+- smoke-test an existing profile with old accepted versions;
+- check focus trapping, keyboard close behavior, and mobile viewport layout;
+- verify analytics notice text still matches the privacy guide.

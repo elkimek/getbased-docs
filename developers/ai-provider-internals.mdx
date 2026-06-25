@@ -1,0 +1,75 @@
+---
+title: "AI provider internals"
+description: "Developer contract for provider routing, private transports, Custom API proxying, model storage, OAuth, and web-search boundaries."
+---
+
+AI provider code touches health context, API keys, browser transport, private TEE modes, web search, import parsing, and chat streaming. Treat it as a privacy/security surface, not just a dropdown.
+
+## Provider map
+
+| Provider | Main path | Notes |
+|---|---|---|
+| OpenRouter | direct API / OAuth token | PKCE/state validation for OAuth; supports web search where model/provider allows |
+| PPQ | direct API key | anonymous account/top-up flow; regular and private model selections are separate |
+| PPQ Private TEE | Tinfoil/private endpoint wrapper | browser-encrypted request body, attestation/lock state, web search disabled |
+| Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
+| Venice | standard or E2EE | E2EE uses TEE attestation; web search/image attachments are disabled in E2EE |
+| Custom API | same-origin proxy | public-host/allowlist checks prevent generic SSRF behavior |
+| Local AI | OpenAI-compatible localhost | no network provider sees prompts; hosted HTTPS can only call localhost/127.0.0.1 |
+
+## Core modules
+
+| Module | Role |
+|---|---|
+| `api.js` | provider routing, model lists, streaming calls, PPQ private transport creation |
+| `api-provider-storage.js` | localStorage keys for provider, model, private-mode, and key state |
+| `provider-panel-renderers.js` | Settings → AI panel markup, PPQ Private TEE UI, model dropdowns |
+| `provider-model-controls.js` | dropdown changes, model persistence, E2EE/private-mode switching |
+| `provider-ppq-panels.js` | PPQ account, balance, top-up, and private-model panel behavior |
+| `chat-attestation.js` | lock/attestation status shown in chat |
+| `api/proxy.js` | Custom API and runtime proxy boundary |
+
+## Model storage rules
+
+Regular and private/encrypted modes may need separate model keys. Do not let a model selected for a public provider path leak into a private-mode request if the private endpoint has a smaller model list.
+
+When switching encryption/private modes:
+
+- clear or reset incompatible sessions;
+- restore the last valid model for that mode when possible;
+- hide unavailable controls rather than sending unsupported requests;
+- update pricing/usage hints after the final model is selected.
+
+## Web search boundary
+
+Web search can add external search results to the prompt. It must be disabled when the active transport promises private/encrypted prompt handling that would be broken by search, including PPQ Private TEE and Venice E2EE.
+
+User docs should say this plainly, and UI state should match it: no visible Web toggle when search is unavailable.
+
+## Custom API proxy boundary
+
+Custom API uses `api/proxy.js`, not a raw browser call to arbitrary URLs. The proxy must keep:
+
+- method restrictions;
+- CORS restrictions;
+- private-network/public-host checks;
+- target allowlist or explicit validation;
+- no logging of prompt bodies or API keys.
+
+Any relaxation of this boundary needs a security review and tests.
+
+## OpenRouter OAuth invariants
+
+OpenRouter OAuth must bind state to the browser session and use PKCE/state validation. Do not accept callback tokens without matching the pending state. OAuth errors should leave existing manually-entered keys untouched unless the user explicitly clears them.
+
+## Verification checklist
+
+Before shipping provider changes:
+
+- run targeted provider tests for the touched provider;
+- run chat streaming tests if transport code changed;
+- run Settings panel tests if dropdowns/toggles changed;
+- verify web search visibility for public vs private modes;
+- verify wrong/missing API key errors are clear and do not erase saved keys;
+- verify private/E2EE attestation status is visible and fail-closed;
+- verify no raw keys, tokens, prompts, or setup blobs appear in logs or docs.

@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
   "name": "getbased",
-  "description": "Personal health intelligence that's actually yours \u2014 free, local-first, no account required.",
+  "description": "Personal health intelligence that's actually yours — free, local-first, no account required.",
   "colors": {
     "primary": "#4a87f3",
     "light": "#34548c",
@@ -107,7 +107,8 @@
             "pages": [
               "guides/sun-sessions",
               "guides/light-environment",
-              "guides/light-tools"
+              "guides/light-tools",
+              "guides/emf-assessment"
             ]
           },
           {
@@ -163,14 +164,19 @@
               "developers/storage-schema",
               "developers/agent-access-relay",
               "developers/ai-surfaces-map",
-              "developers/lens-endpoint-contract"
+              "developers/lens-endpoint-contract",
+              "developers/sync-delta-internals",
+              "developers/ai-provider-internals",
+              "developers/lens-local-internals"
             ]
           },
           {
             "group": "Features",
             "pages": [
               "developers/biology-scores",
-              "developers/sun-spectrum-model"
+              "developers/sun-spectrum-model",
+              "developers/wearables-internals",
+              "developers/legal-consent"
             ]
           },
           {
