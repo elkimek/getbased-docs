@@ -64,7 +64,7 @@ The gateway cannot read the summary. It only stores and forwards encrypted data.
       pipx install --include-deps "getbased-agent-stack[full]"
       # --include-deps is required — without it the MCP, RAG, and dashboard
       # binaries from bundled dependencies aren't exposed on your PATH
-      getbased-stack init --yes   # scaffolds config and starts services where supported
+      getbased-stack init --yes --local-only   # scaffolds config and starts services where supported
       ```
     </CodeGroup>
 
