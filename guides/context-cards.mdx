@@ -36,7 +36,7 @@ Each card shows a small colored dot and a brief AI-generated tip (up to 12 words
 The dots and tips are cached. They refresh only when your data or card content changes, so getbased does not call the AI provider on every page load.
 
 <Tip>
-Fill in the cards that are relevant now. The AI uses all nine cards when interpreting your lab results in chat and in Current Focus. Each filled card adds meaningful context that the AI cannot infer from numbers alone.
+Fill in the cards that are relevant now. Filled cards add context the AI cannot infer from numbers alone. You can also turn the whole Insight Context Cards source on or off from **Insight → Manage → Context → Data sources**.
 </Tip>
 
 ## How to fill in a card
@@ -57,7 +57,7 @@ The condition picker is shared between both subsections — type any name and ac
 
 The Environment card also has an **EMF Assessment** for measured room-level exposure: electric fields, magnetic fields, RF/microwave radiation, dirty electricity, and DC magnetic deviation.
 
-Use it when you have meter readings or a consultant report and want those readings included in AI context, export/import, sync, and recommendations. For the full workflow, see [Log EMF measurements](/guides/emf-assessment).
+Use it when you have meter readings or a consultant report and want those readings available to AI context, export/import, sync, and recommendations. EMF readings reach in-app AI only while **Insight Context Cards** are enabled in **Manage → Context → Data sources**. For the full workflow, see [Log EMF measurements](/guides/emf-assessment).
 
 ## Supplement and medication timeline
 
@@ -77,15 +77,17 @@ Contaminant warnings are intentionally conservative. They are there to start a b
 
 ## How context reaches the AI
 
-When you send a chat message or Current Focus refreshes, all nine cards plus the freeform notes attached to profile context are included in the context. Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant.
+When you send a chat message, getbased includes filled cards only if the **Insight Context Cards** source is enabled. Current Focus uses a compact subset of profile context and honors the same Insight Context Cards switch.
 
-This helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
+Open **Insight → Manage → Context → Data sources** to control that source. The same panel has separate switches for **Supplements & Medications**, **Blood marker results**, genome context, **Light & Sun**, and **Wearable recovery context**.
+
+Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. When the relevant source is enabled, this helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
 
 ## Change history
 
 getbased automatically timestamps every change you make to a context card. When you switch from Mediterranean to carnivore diet, or change your stress level from high to moderate, the previous value and the date of the change are recorded.
 
-This timeline is included in the AI context so the AI can reason about temporal correlations — for example, connecting a dietary change on March 1 to a shift in your LDL two weeks later. You do not need to do anything to enable this; it records automatically whenever you save a card.
+This timeline is included in AI context when **Insight Context Cards** are enabled, so the AI can reason about temporal correlations — for example, connecting a dietary change on March 1 to a shift in your LDL two weeks later. You do not need to do anything to record it; it records automatically whenever you save a card.
 
 Change history is included in your [JSON export and import](/guides/export-import).
 

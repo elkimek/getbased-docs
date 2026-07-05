@@ -126,8 +126,8 @@ Use **Add metrics** in the Biometrics Overview widget to choose which wearable a
 - **Raw daily rows never leave your device.** They are stored in your browser's IndexedDB, encrypted at rest.
 - **Compact summary data** syncs to your other devices via Evolu CRDT, which is end-to-end encrypted using your mnemonic identity.
 - **OAuth refresh tokens stay local.** They are not included in the sync payload — you reconnect each vendor on each device.
-- **AI chat context** includes a ~200-token wearable summary by default. You can disable this in **Settings → AI → AI Context**.
-- **Personal Agent (MCP)** receives the same compact summary. You can optionally push a daily time series in **Settings → Agent Access** for richer time-series reasoning.
+- **AI chat context** includes a compact wearable summary by default when **Insight → Manage → Context → Data sources → Body → Wearable recovery context** is on. Turn that source off to keep wearables out of in-app chat and Body-related score modifiers.
+- **Personal Agent (MCP)** is controlled separately in **Settings → Agent Access**. When Agent Access is enabled, the agent receives the compact wearable summary; you can optionally push a daily time series there for richer time-series reasoning.
 
 ## Self-hosting OAuth
 

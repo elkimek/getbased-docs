@@ -31,6 +31,10 @@ getbased (browser)
 
 The gateway cannot read the summary. It only stores and forwards encrypted data. It contains no raw lab entries, no sync mnemonic, and no Agent Context key. The summary is refreshed automatically whenever you save changes in getbased.
 
+<Note>
+  The **Data sources** switches in **Insight → Manage → Context** control in-app AI chat, Biology Score context, and source-driven warnings. Agent Access is a separate external-sharing permission in **Settings → Agent Access**. When Agent Access is on, the browser builds the encrypted gateway summary from the full available profile context, including specialty lab groups and wearable summaries. To keep external agents from reading that summary, turn Agent Access off or regenerate/remove its credentials.
+</Note>
+
 ## Setup
 
 <Steps>
@@ -217,7 +221,7 @@ To update a profile's gateway context, switch to that profile in getbased, make 
 
 ## Wearable data in agent context
 
-If you have wearables connected (Oura, Polar, WHOOP, Fitbit, Withings, Ultrahuman, Apple Health, or manual entries) and **Settings → AI → AI Context → Include wearable data** is on, the agent automatically receives a `[section:wearables]` block when it calls `getbased_lab_context`. The block is approximately 200 tokens and includes current value, baseline, weekly trend, and recent anomaly events for each metric.
+If you have wearables connected (Oura, Polar, WHOOP, Fitbit, Withings, Ultrahuman, Apple Health, or manual entries) and **Agent Access** is on, the agent automatically receives a `[section:wearables]` block when it calls `getbased_lab_context`. The block is compact and includes current value, baseline, weekly trend, and recent anomaly events for each metric. The in-app **Body → Wearable recovery context** switch does not filter Agent Access; external sharing is controlled from **Settings → Agent Access**.
 
 To pull just the wearables section directly:
 
@@ -227,7 +231,7 @@ getbased_section('wearables', profile='Main')
 
 ### 30-day daily series (opt-in)
 
-For time-series reasoning — "did my HRV drop the week before I got sick?" — the always-on summary is not enough. Open **Settings → Agent Access** and turn on **Push wearable daily series**. getbased then writes a pivoted daily matrix into a separate section:
+For time-series reasoning — "did my HRV drop the week before I got sick?" — the compact summary is not enough. Open **Settings → Agent Access** and turn on **Push wearable daily series**. getbased then writes a pivoted daily matrix into a separate section:
 
 ```
 getbased_section('wearables-series-30d', profile='Main')
@@ -248,11 +252,11 @@ Steps (oura): 7800→8200→…→4250
 
 One line per metric, `→` separates daily values oldest-first, `—` means no reading that day. Raw daily samples never sync via the CRDT relay — they live in your browser's IndexedDB only. The browser renders the section string and posts it to the gateway.
 
-## Sun & Light sessions (body regions opt-in)
+## Sun & Light sessions
 
-If you log Sun & Light sessions, the agent can pull them via `getbased_section('sun')`. The default field set includes session date, duration, channel doses, atmosphere, eye-exposure mode, and a body summary.
+If you log Sun & Light sessions, the agent can pull them via `getbased_section('sun')`. The section is generated from the same Light & Sun context as the browser: sun sessions, light-device sessions, indoor light environment, channel doses, atmosphere, eye-exposure mode, and body-exposure summaries when present.
 
-The specific anatomical regions array (e.g. `['breast-chest', 'legs-front']`) is opt-in and off by default. Turn on **Settings → AI → AI Context → "Share body regions in Sun & Light context"** to include it. With the toggle off, the agent sees that you exposed roughly 45% of your body to the sun for 30 minutes, but not which 45%.
+The earlier separate body-region detail toggle has been folded into the Light & Sun source. Detailed body-region keys are treated as Light & Sun context; precise location still stays out unless a caller explicitly asks for it through the session APIs.
 
 ## Security
 

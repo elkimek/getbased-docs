@@ -21,24 +21,23 @@ If no AI provider is configured, the chat panel shows a setup guide instead of t
 
 ## What the AI knows
 
-Every message includes the relevant context from your current profile. You never need to paste results into the chat.
+Every message includes enabled context from your current profile. You never need to paste results into the chat, but you do control which stored sources are allowed to shape answers: open **Insight → Manage → Context → Data sources**.
 
-| Context sent | Details |
-|---|---|
-| Lab results | All biomarker values across every draw date, with reference ranges and trend direction |
-| Context cards | All nine lifestyle cards (diet, sleep, exercise, environment, and more) |
-| Interpretive lens | Your chosen scientific paradigm or expert frameworks |
-| Health goals | What you are working toward |
-| Supplements | Full supplement list with date ranges |
-| Change timeline | Timestamped log of card updates — the AI can correlate a diet change on March 1 with an LDL shift two weeks later |
-| Wearables | Connected wearable metrics (heart rate variability, sleep scores, etc.) |
-| DNA context | Relevant SNP data when you have a genome file loaded |
-| Notes | Your freeform marker and profile notes |
-| Cycle data | Menstrual phase context for female profiles |
+| Context source | What it can send | Control |
+|---|---|---|
+| Lab results | Biomarker values, reference ranges, trends, Biology Score context, marker notes, and flagged-result summaries | **Labs → Blood marker results**. Imported specialty lab groups can be excluded one group at a time. |
+| Insight Context Cards | Goals, medical history, biometrics, cycle context, diet, exercise, sleep, stress, environment, EMF assessment, notes, and change timeline | **Profile → Insight Context Cards** |
+| Supplements & medications | Supplement/medication timeline, ingredients, timing, mitochondrial warnings, and supplement-impact context | **Profile → Supplements & Medications** |
+| Wearables | HRV, sleep, resting pulse, recovery, body metrics, trends, and recent anomaly summaries | **Body → Wearable recovery context** |
+| DNA context | APOE/mtDNA summary, priority SNP findings, and optional Other SNP lookup inventory | **Genome** switches for each tier |
+| Light & Sun | Sun sessions, device sessions, indoor light environment, light-tool warnings, and light-related score modifiers | **Light & Sun → Light & Sun context** |
+| Interpretive lens and Knowledge Base | Your preferred reasoning lens and optional document retrieval | **Answer grounding** cards in **Manage → Context** |
+
+Turning a source off does not delete the data. It stops that source from influencing in-app AI chat, Biology Score context, and source-driven warnings until you turn it back on.
 
 ## Current Focus
 
-The **Current Focus** card appears on the dashboard and in the Insight lens. It shows a one-to-three sentence AI-generated insight drawn from your recent lab trends, health goals, wearable signals, and profile context. It gives you an orientation before you start typing and updates when your data changes.
+The **Current Focus** card appears on the dashboard and in the Insight lens. It shows a one-to-three sentence AI-generated insight drawn from your recent lab trends, health goals, conditions, supplements, and enabled profile context. It gives you an orientation before you start typing and updates when your data changes.
 
 <Tip>
 Use Current Focus as a starting point. Click **Ask AI** next to a finding or open chat from any view to ask a follow-up about that specific marker or recommendation.

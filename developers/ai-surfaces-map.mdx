@@ -151,8 +151,8 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 ## Caching + privacy notes
 
 - Every per-row verdict caches against a fingerprint of the underlying data. If nothing's changed, the cached verdict is returned without a fresh API call.
-- The chat panel + Interpretive Lens both pull from `buildLabContext()` — the assembled section block of your full data minus anything you've gated off (e.g., the per-profile "Share body regions in Sun & Light context" toggle in **Settings → AI**, which keeps coverage fraction + preset names in but strips the anatomical region list).
-- The body-regions toggle is the only privacy gate that affects the agent slice + chat context shape. All other data flows through if-data-exists, same as the rest of the app.
+- The chat panel pulls from `buildLabContext()` — the assembled section block filtered by **Manage → Context → Data sources** (`contextSourceSettings`). Those switches gate Insight Context Cards, Supplements & Medications, Blood marker results, per-specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context for in-app AI, score context, and source-driven warnings.
+- Interpretive Lens and Knowledge Base live in the Answer grounding panel, separate from data-source gates. Agent Access is separate again: the browser pushes an encrypted gateway summary only after **Settings → Agent Access** is enabled, and that push calls `buildLabContext({ skipGroupFilter: true, ignoreContextToggles: true })` so external agents do not inherit the in-app Data sources switches.
 - Custom-marker creation, manual-value entry, sidebar edits, and chip-picker changes do NOT trigger AI calls — they update local data, AI sees them on the next chat turn or the next per-state verdict render.
 
 ## Related guides

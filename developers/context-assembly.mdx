@@ -37,6 +37,8 @@ How user-provided data becomes AI prompts. This is the core intelligence layer �
 
 Every AI call passes the same shape: `{ system, messages, maxTokens, onStream? }`. The caller assembles the prompt; the router just delivers it.
 
+In-app AI context is filtered by **Manage → Context → Data sources**. Those per-profile settings live in `importedData.contextSourceSettings` and are read through `context-source-registry.js` / `lab-context.js`. Agent Access is intentionally different: the gateway push is controlled by **Settings → Agent Access** and builds its encrypted summary with `ignoreContextToggles: true`.
+
 ## Data Sources
 
 Everything the AI can know about the user comes from these sources:
@@ -70,11 +72,11 @@ Everything the AI can know about the user comes from these sources:
 
 ## buildLabContext() — The Central Serializer
 
-`buildLabContext()` in `lab-context.js` is the single function that converts all user data into a plain-text block. It is used by Chat and Health Dots. The Focus Card uses the lighter `buildFocusContext()` instead.
+`buildLabContext()` in `lab-context.js` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead.
 
 ### Output Structure
 
-Sections are ordered by priority — the AI sees "what are you trying to solve?" first, then "what do the numbers say?", then medical/lifestyle context. This exploits primacy bias in LLMs.
+Sections are ordered by priority — the AI sees "what are you trying to solve?" first, then "what do the numbers say?", then medical/lifestyle context. This exploits primacy bias in LLMs. The example below assumes the relevant Context sources are enabled.
 
 Each section is wrapped in `[section:name]...[/section:name]` tags for machine-parsable extraction (used by getbased-mcp, Hermes Agent, OpenClaw). Flagged results use `[critical]...[/critical]`. Lab sections include an `updated:date` attribute.
 
@@ -187,7 +189,7 @@ Started cold plunges in January
 
 ### Empty-Card Guards
 
-Cards with no meaningful content are omitted entirely (not sent as empty sections). Each card checks for actual data:
+Cards with no meaningful content are omitted entirely (not sent as empty sections). This happens after the **Insight Context Cards** source gate. Each card checks for actual data:
 
 - `diagnoses`: conditions array not empty OR note has text
 - `diet`: type set OR any meal content OR note
@@ -281,7 +283,7 @@ The most complex composition — layers 4 components. Lab context is placed befo
 │                       +                              │
 │  ┌────────────────────────────────────────────────┐  │
 │  │ "Current lab data:\n"                          │  │
-│  │ buildLabContext()  ← entire serialized context │  │
+│  │ buildLabContext()  ← enabled serialized context│  │
 │  └────────────────────────────────────────────────┘  │
 │                       +                              │
 │  ┌────────────────────────────────────────────────┐  │
@@ -332,7 +334,7 @@ Uses the lightweight `buildFocusContext()` (~200-400 tokens) instead of full `bu
 │  maxTokens: 100  │  streaming: no                     │
 ├──────────────────────────────────────────────────────┤
 │  CACHE: fingerprint = hash(entries + sex + DOB +      │
-│         all 9 cards + lens + notes + cycle + supps)   │
+│         filled cards + lens + notes + cycle + supps)  │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -438,7 +440,7 @@ Each AI feature has independent caching to avoid redundant API calls:
 
 | Feature | Cache Key | Fingerprint Inputs | Invalidation |
 |---|---|---|---|
-| Focus Card | `labcharts-{profile}-focusCard` | entries + sex + DOB + 9 cards + lens + notes + cycle + supps | Any data change |
+| Focus Card | `labcharts-{profile}-focusCard` | entries + sex + DOB + diagnoses + goals + lens + notes + supplements + marker notes | Any data change in the fingerprint |
 | Health Dots | `labcharts-{profile}-contextHealth` | Per-card: lab data + card data + sex + DOB | Only changed cards re-fetched |
 | Chat | `labcharts-{profile}-chat-t_{id}` | N/A (conversation history) | Never invalidated, 50-thread cap |
 | PDF Import | N/A | N/A | No caching |
@@ -471,6 +473,8 @@ Each AI feature has independent caching to avoid redundant API calls:
 7. **Effective ranges**: `askAIAboutMarker()` uses effective (phase-aware) reference ranges, not the static schema ranges. Also includes trend direction with percentage change.
 
 8. **Robust JSON parsing**: `loadContextHealthDots()` wraps the AI response JSON.parse in try-catch. On malformed responses, stale cards get gray dots while cached good data is preserved.
+
+9. **Context source gates**: In-app Chat, Biology Score context, and source-driven warnings respect `contextSourceSettings`. Current Focus uses its own compact serializer and currently honors the lab, insight-card, supplements, and specialty-lab group gates it imports directly. Agent Access does not reuse the in-app gates; it has a separate Settings permission and pushes an encrypted full-profile summary only when enabled.
 
 ## Prompt Improvement Methodology
 
@@ -605,7 +609,10 @@ Each entry documents:
 |---|---|
 | `js/utils.js` | `hasCardContent()` — generic empty-card gate for context assembly |
 | `js/constants.js` | `CHAT_SYSTEM_PROMPT` — priority-tiered system prompt |
+| `js/context-source-registry.js` | `CONTEXT_SOURCE_IDS`, profile-scoped source toggles, lab-group slug helpers |
+| `js/context-card-dashboard-ai.js` | Manage → Context modal, Answer grounding cards, Data sources UI |
 | `js/lab-context.js` | `buildLabContext()` — central serializer (full context) |
+| `js/sync-messenger.js` | Agent Access context push, encrypted gateway envelope, `ignoreContextToggles` external-sharing path |
 | `js/chat-send.js` | `sendChatMessage()` — chat prompt composition |
 | `js/chat-marker-prompts.js` | `askAIAboutMarker()` — per-marker prompt (effective ranges + trend) |
 | `js/chat-personalities.js` | `generateCustomPersonality()` — persona generator prompt |

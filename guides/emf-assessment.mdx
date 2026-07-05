@@ -1,9 +1,9 @@
 ---
 title: "Log EMF measurements"
-description: "Record room-by-room EMF readings, rate them against building-biology thresholds, and include them in AI context and recommendations."
+description: "Record room-by-room EMF readings, rate them against building-biology thresholds, and include them in profile context and recommendations."
 ---
 
-The EMF Assessment is for measured electromagnetic-field readings in the places where you spend time. It lives inside the **Environment** context card and is included in AI context, export/import, sync, and recommendations.
+The EMF Assessment is for measured electromagnetic-field readings in the places where you spend time. It lives inside the **Environment** context card and is included in export/import, sync, and recommendations. It reaches in-app AI context when **Insight → Manage → Context → Data sources → Insight Context Cards** is enabled.
 
 Use it when you have meter readings from your bedroom, office, living room, or a professional building-biology report and want those measurements to be interpreted alongside your labs, sleep, light, and symptoms.
 
@@ -62,7 +62,7 @@ If you have a consultant PDF or photo report, import it from the EMF Assessment.
 
 ## How EMF data affects the rest of getbased
 
-- **AI chat** receives a summary of saved EMF assessments as part of profile context.
+- **AI chat** receives a summary of saved EMF assessments as part of profile context when **Insight Context Cards** are enabled in Manage → Context.
 - **Recommendations** can suggest mitigation steps, meters, or products when your readings are high enough to warrant attention.
 - **Sync/export/import** include saved assessments with the profile.
 - **Environment context** still keeps the simpler high-level EMF/source fields; the assessment is for measured room-level detail.
