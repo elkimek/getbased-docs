@@ -184,6 +184,12 @@
             ]
           },
           {
+            "group": "Security architecture",
+            "pages": [
+              "developers/tee-attestation"
+            ]
+          },
+          {
             "group": "Operations & release",
             "pages": [
               "developers/testing",

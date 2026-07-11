@@ -41,21 +41,36 @@ getbased supports multiple AI backends. The privacy implications differ by provi
 
 | Provider | What they receive | Network? |
 |---|---|---|
-| PPQ / Routstr / OpenRouter | Obfuscated lab text over HTTPS | Yes |
+| OpenRouter | Obfuscated lab text over HTTPS | Yes |
+| PPQ / Routstr (standard) | Obfuscated lab text over HTTPS | Yes |
+| PPQ / Routstr (Private TEE) | Encrypted body — decrypted inside an attested TEE | Yes, encrypted |
 | Venice AI (standard) | Obfuscated lab text over HTTPS, no-log policy | Yes |
 | Venice AI (E2EE) | Ciphertext — decrypted only inside a TEE | Yes, encrypted |
-| PPQ Private TEE | Browser-encrypted request body — decrypted only inside a verified Tinfoil secure enclave | Yes, encrypted |
 | Local AI (Ollama, LM Studio, Jan) | Nothing leaves your device | No |
+
+### PPQ and Routstr Private TEE modes
+
+When you select a private model, getbased verifies an AMD SEV-SNP attestation in your browser before sending the request. The verification checks the AMD hardware certificate chain, rejects debug-enabled enclaves, confirms the running code measurement matches a tagged Sigstore-signed release, and binds the encryption public key to that verified enclave.
+
+After verification, getbased uses HPKE and the Encrypted HTTP Body Protocol (EHBP) to encrypt the prompt, conversation messages, system context, and response body between your browser and the enclave. The PPQ or Routstr proxy forwards ciphertext and cannot decrypt those bodies.
+
+This does not mean that your device holds the only key. Your browser keeps ephemeral request key material, while the attested enclave holds the corresponding server-side private key. The security guarantee is that the proxy does not receive the body-decryption key and that getbased encrypts only to a key bound to the verified enclave.
+
+The proxy still sees the authentication credential and routing headers it needs to process the request. For Routstr, this includes your session credential, selected model, timing and approximate size, network metadata, and billing information. Web search is disabled in both private modes; Routstr also disables image attachments.
+
+A **🔒✓** indicator appears in the chat header after attestation succeeds. Hover over it to see the enclave hostname, code fingerprint, and verification status. If attestation fails or a successful response is not EHBP-encrypted, getbased stops the request rather than falling back to a standard plaintext model.
+
+<Note>
+Attestation proves that an encryption key belongs to a hardware-protected enclave running code that matches a signed release. It does not prove that the signed code has no defects, and it cannot protect plaintext from a compromised browser, extension, operating system, or app delivery path before encryption.
+</Note>
+
+For the complete verification chain, key lifecycle, failure behavior, and trust assumptions, see [TEE attestation and encrypted AI transport](/developers/tee-attestation).
 
 ### Venice end-to-end encryption
 
 When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is designed to be decrypted only inside a verified Intel TDX enclave, so Venice's normal servers should not see the plaintext prompt. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
 
 A **🔒✓** indicator in the chat header confirms attestation passed.
-
-### PPQ Private TEE mode
-
-PPQ Private TEE mode gives you encrypted prompt handling without requiring you to run your own proxy. getbased verifies the private endpoint, encrypts the request in your browser, sends ciphertext to PPQ's private API, and shows lock/attestation status in chat. Web search is disabled in private mode so prompts do not leak into external search tools.
 
 ### Fully local AI
 

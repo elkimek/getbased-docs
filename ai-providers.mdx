@@ -86,7 +86,7 @@ All non-AI features work fully without any provider configured. You can load a d
     You can also paste an existing API key from [ppq.ai](https://ppq.ai) if you already have an account.
 
     <Tip>
-      **Private TEE mode:** PPQ can run through a private endpoint where getbased encrypts the request in your browser, verifies the Tinfoil secure-enclave path, and shows lock/attestation status in chat. No local proxy is required. Web search is disabled while Private TEE mode is active.
+      **Private TEE mode:** When PPQ advertises supported private models, enable **Private TEE mode** to encrypt prompts and responses between your browser and a verified Tinfoil enclave. No local proxy is required. The green **🔒✓** indicator appears after attestation succeeds. Web search is disabled while Private TEE mode is active.
     </Tip>
   </Tab>
 
@@ -123,6 +123,10 @@ All non-AI features work fully without any provider configured. You can load a d
     </Warning>
 
     For the full wallet, refund, token export, and recovery behavior, see [Routstr AI provider](/guides/routstr).
+
+    <Tip>
+      **Private TEE mode:** Nodes that support attested private models show a **Private TEE** badge. Enable the toggle to encrypt prompt and response bodies in your browser before the node forwards them to a verified Tinfoil enclave. The node can still see your session credential, selected model, request timing and size, network metadata, and billing information. Web search and image attachments are disabled.
+    </Tip>
   </Tab>
 
   <Tab title="Venice AI">

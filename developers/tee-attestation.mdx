@@ -1,0 +1,96 @@
+---
+title: "TEE attestation and encrypted AI transport"
+sidebarTitle: "TEE attestation"
+description: "How getbased verifies Tinfoil enclaves and encrypts PPQ and Routstr private-model traffic with HPKE and EHBP."
+---
+
+getbased uses the Tinfoil verifier and Encrypted HTTP Body Protocol (EHBP) for PPQ and Routstr private models. The browser verifies the enclave before encrypting a request. A provider-side proxy routes and bills the request, but it does not receive the key needed to decrypt the OpenAI-compatible JSON body.
+
+This transport is end-to-end encrypted between the browser and the attested enclave. It is separate from local encryption at rest, cross-device sync encryption, and Venice's Intel TDX E2EE implementation.
+
+## Security property
+
+The client establishes three linked facts before it sends private content:
+
+1. **A genuine supported AMD platform produced the report.** The browser verifies the AMD SEV-SNP report signature and the ARK → ASK → chip-specific VCEK certificate chain.
+2. **The enclave is running an expected release.** The browser verifies a Sigstore DSSE bundle issued through GitHub Actions for a tagged release of the expected repository, checks Rekor consistency, and compares the signed release measurement with the measurement in the hardware report.
+3. **The encryption key belongs to that enclave.** The report data contains the enclave's HPKE public key. Certificate verification binds the expected domain, HPKE key, and attestation-document hash together.
+
+`securityVerified` becomes true only when every verification stage succeeds. getbased additionally requires a non-empty attested HPKE public key before creating the private transport.
+
+## Verification flow
+
+1. The app creates a Tinfoil `SecureClient` with `transport: 'ehbp'`.
+2. The client fetches an attestation bundle containing the SEV-SNP report, VCEK certificate, signed release data, enclave certificate, and routing domain.
+3. The verifier checks the AMD certificate chain, report signature, firmware and TCB minimums, production guest policy, and that debug and migration-agent modes are disabled.
+4. The verifier validates the Sigstore identity, tagged workflow reference, release digest, and signed code measurement for the expected repository.
+5. It compares the signed measurement with the live enclave measurement.
+6. It verifies that the enclave certificate matches the domain and embeds both the attested HPKE key and the attestation-document hash.
+7. getbased accepts the returned key only when `securityVerified` is true and then binds the secure fetch implementation to the verified proxy and enclave origins.
+
+For Routstr, the selected node is the proxy base URL and Tinfoil resolves the attested enclave endpoint. PPQ uses its explicit `/private` attestation bundle and private chat endpoint.
+
+## Key model
+
+Private TEE mode does not use a long-lived private key owned only by the user.
+
+- **Browser:** EHBP creates ephemeral HPKE sender material and retains the per-request context in browser memory.
+- **Enclave:** The enclave holds the private key corresponding to the HPKE public key embedded in its signed hardware report.
+- **Proxy:** The PPQ or Routstr proxy receives the encrypted request and routing headers but has neither endpoint's body-decryption material.
+
+EHBP currently uses DHKEM(X25519, HKDF-SHA256), HKDF-SHA256, and AES-256-GCM. The request's HPKE encapsulated key is carried in the `Ehbp-Encapsulated-Key` header. The encrypted response keys are derived from the request exporter secret, encapsulated key, and a fresh response nonce.
+
+## Request and response handling
+
+getbased builds the normal OpenAI-compatible request before the secure fetch layer encrypts its body. For Routstr, the encrypted JSON uses the enclave model ID without the `tinfoil-` prefix, while the full advertised model ID remains in `X-Routstr-Model` for routing and billing.
+
+The proxy must be able to read operational headers. Depending on the provider, visible information includes:
+
+- API or session bearer credentials
+- Selected private model and query-source headers
+- Destination, IP address, timing, and approximate payload size
+- Balance, reservation, and billing metadata
+
+Prompts, system context, conversation messages, and successful model responses remain encrypted between the browser and enclave. Routstr disables web search and image inputs in Private TEE Mode. PPQ disables web search; private PPQ models may separately advertise vision support.
+
+For responses, getbased follows two rules:
+
+- A plaintext proxy error such as authentication, insufficient balance, or rate limiting can pass through unchanged because it was generated before enclave processing.
+- A successful response must include `Ehbp-Response-Nonce`. The browser rejects a plaintext success response and decrypts only a nonce-bound EHBP stream.
+
+Streaming response chunks are independently authenticated and decrypted. A failed authentication tag stops the stream.
+
+## Failure and rotation behavior
+
+Private selections fail closed. They never fall through to the provider's standard plaintext request path.
+
+- Missing or failed attestation stops setup.
+- An unverified or missing HPKE key stops setup.
+- Requests to origins outside the verified proxy/enclave set are rejected locally.
+- A successful response without the EHBP nonce is rejected.
+- An EHBP key-configuration mismatch resets the client, performs one fresh attestation, and retries once.
+- Changing the Routstr node clears node-scoped models and cached attestation clients.
+
+The chat header receives the successful verification document after setup. Its **🔒✓** tooltip shows the enclave hostname, shortened code fingerprint, code-verification status, enclave-attestation status, and measurement match.
+
+## Trust assumptions and non-guarantees
+
+Remote attestation identifies the running enclave and binds its encryption key. It is not a general proof that the software is safe.
+
+The design still trusts:
+
+- The getbased JavaScript delivered to the browser and the locked Tinfoil/EHBP dependencies
+- The browser, operating system, and extensions before encryption and after decryption
+- AMD SEV-SNP hardware, firmware, root certificates, and the verifier's policy
+- The expected GitHub repository, its tagged Sigstore release workflow, and the audited behavior of the measured release
+- The absence of exploitable TEE implementation bugs and relevant side channels
+
+The verifier proves that the measurement matches a correctly signed tagged release. It does not prove that the release is the newest possible release or that its code contains no logging, exfiltration, or logic defects. Those properties require source review, release policy, and operational controls in addition to attestation.
+
+## Implementation references
+
+- [`js/tinfoil-secure-fetch.js`](https://github.com/elkimek/get-based/blob/main/js/tinfoil-secure-fetch.js) — shared verified EHBP transport and fail-closed response handling
+- [`js/api-routstr.js`](https://github.com/elkimek/get-based/blob/main/js/api-routstr.js) — Routstr private model routing and metadata boundary
+- [`js/api-ppq.js`](https://github.com/elkimek/get-based/blob/main/js/api-ppq.js) — PPQ private endpoint integration
+- [`js/chat-attestation.js`](https://github.com/elkimek/get-based/blob/main/js/chat-attestation.js) — user-visible verification status
+- [`tests/tinfoil-secure-fetch.test.js`](https://github.com/elkimek/get-based/blob/main/tests/tinfoil-secure-fetch.test.js) — transport security regression coverage
