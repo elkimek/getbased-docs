@@ -153,7 +153,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-ui-flows.js` | Behavioral UI tests: key user flows, rendered output verification |
 | `tests/test-unit-import.js` | Unit normalization on import: SI conversion, enzyme units, FA adapter safety |
 | `tests/test-v1-6-shipped.js` | Regression coverage for v1.6.7..v1.6.16 ship arc |
-| `tests/test-venice-e2ee.js` | Venice E2EE: ECDH key exchange, AES-GCM encryption, TEE headers, model detection |
+| `tests/test-venice-e2ee.js` | Venice encrypted mode: ECDH/AES-GCM, fail-closed responses, binding-level attestation UI, TEE headers, model detection |
 | `tests/test-vendor-personal-info.js` | `fetchXxxPersonalInfo` + `logDebug` rails for Fitbit / Ultrahuman / Whoop / Polar (one stubbed `/api/proxy` response per vendor) |
 | `tests/test-coverage-stragglers.js` | Targeted probes for the 1-fn gaps left after the AI-verdict + vendor sweeps: image-utils onerror, lens-local-parsers extractDocx, oura-auth json-catch, utils animationend, FileReader stub, AbortSignal.any polyfill, SSE handler, IDB onerror rails (blob / cashu / ws / backup), cashu open onerror, dna worker.onerror |
 | `tests/test-wearables-bp-merge.js` | BP renders as one paired card (sys/dia): strip-render filter, reorder-mode behavior |

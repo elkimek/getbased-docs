@@ -145,7 +145,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **Knowledge Base (Interpretive Lens default)** | On-device transformers.js + OPFS — your knowledge documents never leave the browser. |
 | **Local AI provider** (Ollama / LM Studio / Jan, configured in Settings → AI → Local AI) | Your machine. No network calls beyond your localhost. |
 | **PII obfuscation (local-AI streaming sanitizer)** | Optional, runs through your Local AI before any cloud call. |
-| **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | Whichever endpoint you configured. Venice uses an E2EE branch (ECDH + AES-GCM) so the provider doesn't see your prompts in plaintext. |
+| **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | Whichever endpoint you configured. Venice Encrypted TEE Mode encrypts message content with ECDH + AES-GCM, but Venice still sees request metadata and getbased currently performs binding checks rather than full attestation verification. |
 | **Camera frames** (light tools, label scan) | Captured + processed in the browser, then either kept on-device (light-tools metric extraction) or sent as a single base64 image to the configured AI provider for the vision call (label scan, photo lab import). |
 
 ## Caching + privacy notes

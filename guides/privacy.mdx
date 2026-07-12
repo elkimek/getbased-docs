@@ -5,7 +5,7 @@ description: "getbased keeps your health data local by default, with opt-in encr
 
 getbased is built on one principle: your health data belongs to you and no one else. By default, your lab results, DNA data, wearable history, and AI conversations stay in your browser's local storage and IndexedDB. There is no account and no sign-up.
 
-Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, creating a password-protected profile share link, or enabling Agent Access for a local MCP agent. In encrypted modes, the hosted service stores or forwards ciphertext rather than readable health data.
+Data leaves your browser only when you choose a feature that needs it: sending obfuscated lab text to an AI provider, enabling encrypted cross-device sync, creating a password-protected profile share link, or enabling Agent Access for a local MCP agent. Depending on the encrypted mode, a hosted service may receive an encrypted field or body while still seeing operational metadata.
 
 ## Where your data lives
 
@@ -44,8 +44,8 @@ getbased supports multiple AI backends. The privacy implications differ by provi
 | OpenRouter | Obfuscated lab text over HTTPS | Yes |
 | PPQ / Routstr (standard) | Obfuscated lab text over HTTPS | Yes |
 | PPQ / Routstr (Private TEE) | Encrypted body — decrypted inside an attested TEE | Yes, encrypted |
-| Venice AI (standard) | Obfuscated lab text over HTTPS, no-log policy | Yes |
-| Venice AI (E2EE) | Ciphertext — decrypted only inside a TEE | Yes, encrypted |
+| Venice AI (standard) | Obfuscated lab text over HTTPS; provider retention policy applies | Yes |
+| Venice AI (Encrypted TEE Mode) | Encrypted message content; request metadata remains visible | Yes, partly encrypted |
 | Local AI (Ollama, LM Studio, Jan) | Nothing leaves your device | No |
 
 ### PPQ and Routstr Private TEE modes
@@ -66,11 +66,23 @@ Attestation proves that an encryption key belongs to a hardware-protected enclav
 
 For the complete verification chain, key lifecycle, failure behavior, and trust assumptions, see [TEE attestation and encrypted AI transport](/developers/tee-attestation).
 
-### Venice end-to-end encryption
+### Venice Encrypted TEE Mode
 
-When you enable E2EE on the Venice provider, your prompts are encrypted in the browser before transmission using **ECDH (secp256k1)** key exchange with the model's Trusted Execution Environment (TEE) attestation key, **HKDF-SHA256** key derivation, and **AES-256-GCM** message encryption. The prompt is designed to be decrypted only inside a verified Intel TDX enclave, so Venice's normal servers should not see the plaintext prompt. getbased verifies TEE attestation (nonce binding, signing key binding, debug mode rejection) before establishing each session.
+When you enable this mode, getbased encrypts each message's `content` field in the browser using **ECDH (secp256k1)**, **HKDF-SHA256**, and **AES-256-GCM**. It expects encrypted model-output chunks and stops the request if a successful content chunk arrives as plaintext. Empty or whitespace-only formatting chunks are allowed.
 
-A **🔒✓** indicator in the chat header confirms attestation passed.
+The surrounding request is not opaque. Venice still receives the API credential, selected model, message roles, token and streaming settings, request structure, timing, approximate sizes, billing information, IP address, and other network metadata.
+
+Before deriving the message key, getbased parses the Intel TDX quote and checks:
+
+- the fresh client nonce in `REPORTDATA`;
+- the requested model ID;
+- the signing-key address in `REPORTDATA`;
+- that debug mode is not enabled;
+- negative or inconsistent verification fields reported by Venice.
+
+These are **binding checks**, not full attestation verification. getbased does not currently validate the complete DCAP certificate, signature, revocation, and TCB chain; validate NVIDIA GPU evidence; compare measurements with an approved Venice release allowlist; or verify the separate Venice response signature. The per-chunk response key is therefore not independently bound to the attested signing key by getbased.
+
+An amber **🔒~** indicator means the limited binding checks passed and message encryption is active. It must not be read as “the enclave and its code were fully verified.” A red **🔒✗** means a configured check failed. See [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the protocol boundary and remaining assumptions.
 
 ### Fully local AI
 
