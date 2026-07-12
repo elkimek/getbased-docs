@@ -1,12 +1,12 @@
 ---
 title: "TEE attestation and encrypted AI transport"
 sidebarTitle: "TEE attestation"
-description: "How getbased verifies Tinfoil enclaves and encrypts PPQ and Routstr private-model traffic with HPKE and EHBP."
+description: "How getbased verifies Tinfoil enclaves, how Venice's separate encrypted protocol differs, and what each transport does and does not establish."
 ---
 
 getbased uses the Tinfoil verifier and Encrypted HTTP Body Protocol (EHBP) for PPQ and Routstr private models. The browser verifies the enclave before encrypting a request. A provider-side proxy routes and bills the request, but it does not receive the key needed to decrypt the OpenAI-compatible JSON body.
 
-This transport is end-to-end encrypted between the browser and the attested enclave. It is separate from local encryption at rest, cross-device sync encryption, and Venice's Intel TDX E2EE implementation.
+This Tinfoil transport is end-to-end encrypted between the browser and the attested enclave. It is separate from local encryption at rest, cross-device sync encryption, and Venice's Intel TDX encrypted-message implementation.
 
 ## Security property
 
@@ -72,6 +72,57 @@ Private selections fail closed. They never fall through to the provider's standa
 - Changing the Routstr node clears node-scoped models and cached attestation clients.
 
 The chat header receives the successful verification document after setup. Its **🔒✓** tooltip shows the enclave hostname, shortened code fingerprint, code-verification status, enclave-attestation status, and measurement match.
+
+## Venice Encrypted TEE Mode
+
+Venice uses a different protocol and a different verification level from the PPQ/Routstr Tinfoil path. Do not infer the Tinfoil guarantees above from the Venice lock icon.
+
+### Encrypted and visible fields
+
+getbased encrypts each message `content` value with ECDH on secp256k1, HKDF-SHA256, and AES-256-GCM. The request carries the client public key, the model public key returned with the attestation evidence, and the selected Venice E2EE model. Streaming output is expected as AES-GCM-encrypted chunks with a fresh server ephemeral public key in each chunk.
+
+The outer HTTP and JSON metadata is not encrypted by this protocol. Venice can observe:
+
+- the API credential and E2EE headers;
+- the selected model and message roles;
+- token limits, streaming flags, request shape, and other unencrypted parameters;
+- IP address, destination, timing, approximate sizes, rate limits, and billing metadata.
+
+Web search and image inputs are disabled because those features would expand the plaintext boundary.
+
+### Checks performed by getbased
+
+For each new cached session, the client generates a 32-byte nonce and fetches Venice's TDX evidence. It then:
+
+1. accepts the documented hex or base64 quote representation and checks that it is an Intel TDX quote;
+2. confirms the evidence names the requested model;
+3. confirms the nonce appears in TDX `REPORTDATA`;
+4. derives the signing-key Ethereum address and compares it with `REPORTDATA`;
+5. rejects the TDX debug attribute;
+6. rejects negative or inconsistent verification fields reported by Venice;
+7. parses and reports TDX measurements without treating them as approved values.
+
+Passing these steps produces `verificationLevel: "binding"`. The chat UI deliberately shows amber **🔒~**, not green **🔒✓**.
+
+### Checks not currently performed
+
+getbased does not currently:
+
+- run a full client-side DCAP certificate, quote-signature, collateral, revocation, and TCB verification chain;
+- validate NVIDIA GPU attestation evidence;
+- compare TDX measurements with an authenticated allowlist of approved Venice releases;
+- verify the separate response signature described by Venice;
+- cryptographically bind each streaming response's ephemeral key to the signing key found in the TDX evidence.
+
+The reusable [`venice-e2ee`](https://github.com/elkimek/venice-e2ee) client exposes parsed measurements, optional DCAP and measurement policies, and explicit `binding`, `dcap`, or `measured` evidence levels. getbased intentionally remains at `binding` until it can configure those stronger policies from trustworthy published inputs.
+
+### Failure behavior and interpretation
+
+Venice encrypted mode never falls through to a regular Venice model. Missing or failed binding checks stop session setup. After a successful HTTP response, non-whitespace plaintext model content is rejected rather than displayed. AES-GCM authentication failures also stop the response.
+
+This fail-closed behavior prevents a silent plaintext downgrade. It does not resolve the unverified quote chain, code identity, GPU evidence, or response-origin binding described above. The **🔒~** mark means “message encryption active; limited binding checks passed,” not “Venice and the running enclave were fully verified.”
+
+Venice's current protocol and production recommendations are documented in [TEE & E2EE Models](https://docs.venice.ai/guides/features/tee-e2ee-models).
 
 ## Trust assumptions and non-guarantees
 

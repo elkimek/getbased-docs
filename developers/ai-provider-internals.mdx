@@ -13,7 +13,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 | PPQ | direct API key | anonymous account/top-up flow; regular and private model selections are separate |
 | PPQ Private TEE | Tinfoil/private endpoint wrapper | browser-encrypted request body, attestation/lock state, web search disabled |
 | Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
-| Venice | standard or E2EE | E2EE uses TEE attestation; web search/image attachments are disabled in E2EE |
+| Venice | standard or Encrypted TEE Mode | Encrypts message content and applies TDX binding checks; metadata remains visible; web search/images are disabled |
 | Custom API | same-origin proxy | public-host/allowlist checks prevent generic SSRF behavior |
 | Local AI | OpenAI-compatible localhost | no network provider sees prompts; hosted HTTPS can only call localhost/127.0.0.1 |
 
@@ -42,7 +42,7 @@ When switching encryption/private modes:
 
 ## Web search boundary
 
-Web search can add external search results to the prompt. It must be disabled when the active transport promises private/encrypted prompt handling that would be broken by search, including PPQ Private TEE and Venice E2EE.
+Web search can add external search results to the prompt. It must be disabled when the active transport promises private/encrypted prompt handling that would be broken by search, including PPQ Private TEE and Venice Encrypted TEE Mode.
 
 User docs should say this plainly, and UI state should match it: no visible Web toggle when search is unavailable.
 

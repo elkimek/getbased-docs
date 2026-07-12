@@ -4,7 +4,7 @@ sidebarTitle: "AI providers"
 description: "getbased supports cloud, private-enclave, crypto-paid, custom, and fully local AI backends. Compare providers and learn how to set each one up."
 ---
 
-getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice E2EE. You can switch between providers at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
+getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
 
 ## Which features need AI?
 
@@ -130,7 +130,7 @@ All non-AI features work fully without any provider configured. You can load a d
   </Tab>
 
   <Tab title="Venice AI">
-    Venice is a privacy-focused cloud provider with a no-log policy — your conversations and data are not stored on their servers. Venice also proxies access to GPT, Grok, and DeepSeek models. Supports web search in chat with any model.
+    Venice is a hosted AI provider that advertises a no-log policy. That is a provider policy, not something getbased independently verifies. Venice also proxies access to third-party models. Web search is available with standard Venice models but disabled in encrypted mode.
 
     <Steps>
       <Step title="Get an API key">
@@ -143,12 +143,12 @@ All non-AI features work fully without any provider configured. You can load a d
         Enter your API key in the field provided.
       </Step>
       <Step title="Choose a model">
-        Pick a model from the dropdown. Venice's own models run on their privacy-preserving infrastructure; proxied models (GPT, Grok, DeepSeek) run on their respective providers.
+        Pick a model from the dropdown. The model catalog identifies which current models support Venice's encrypted protocol.
       </Step>
     </Steps>
 
     <Tip>
-      **End-to-end encryption:** Venice offers E2EE models where your prompts are encrypted in your browser using ECDH + AES-256-GCM and only decrypted inside a verified Intel TDX Trusted Execution Environment. Not even Venice can read them in transit. Enable the **End-to-End Encryption** toggle in Venice settings to switch to E2EE models. A green lock icon in the chat header confirms TEE attestation passed. Note: web search and image attachments are disabled in E2EE mode.
+      **Encrypted TEE Mode:** Message content is encrypted in your browser with ECDH, HKDF-SHA256, and AES-256-GCM. The API key, model, roles, request settings, timing, sizes, and network metadata remain visible to Venice. getbased checks quote freshness, signing-key binding, the requested model, and debug mode, but it does not currently perform full DCAP or GPU-evidence validation, enforce approved code measurements, or verify Venice response signatures. The amber **🔒~** indicator means those limited binding checks passed; it is not a fully verified-attestation mark. Web search and image attachments are disabled.
     </Tip>
   </Tab>
 
