@@ -150,7 +150,7 @@ base-uri    'self'
 
 Most JS libraries are bundled locally in `vendor/`, but the CSP currently permits `https://cdn.jsdelivr.net` for explicitly allowed browser-runtime dependencies. Run `./update-vendor.sh` when bumping vendored assets, and update `vercel.json` whenever a provider or runtime dependency needs a new host.
 
-`localhost:*` and `127.0.0.1:*` in `connect-src` allow local AI servers (Ollama, LM Studio, Jan, etc.) running on the same machine. LAN IPs (e.g. `192.168.x.x`) are not supported from the hosted HTTPS app due to browser mixed-content blocking — this is a browser security fundamental, not a CSP limitation.
+`localhost:*` and `127.0.0.1:*` in `connect-src` allow plain HTTP Local AI servers on the same machine. The general `https:` source permits HTTPS LAN and remote compatible endpoints. A plain HTTP LAN endpoint such as `http://192.168.x.x` is blocked from the hosted HTTPS app by browser mixed-content rules; this is separate from CORS and cannot be relaxed by changing the CSP alone. An encrypted tunnel or HTTPS reverse proxy is required.
 
 If a new AI provider, wearable provider, private transport, worker runtime, or relay host is added, review `connect-src`, `script-src`, service-worker bypass rules, and `api/proxy.js` together.
 

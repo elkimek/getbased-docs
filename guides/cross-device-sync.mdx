@@ -67,7 +67,13 @@ The following data flows across all paired devices:
 - Chat threads, messages, and custom personalities
 - Display preferences — unit system, range mode, chart overlays
 
-Settings such as theme are device-specific and do not sync. Wearable OAuth refresh tokens also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
+Settings such as theme are device-specific and do not sync. Wearable OAuth refresh tokens, raw wearable daily rows, and AI model-test history also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
+
+### AI model-test history
+
+Model-test records include timing, loaded-model state, context, and hardware-related details that are meaningful only on the device that ran the test. getbased excludes these records from outbound sync and preserves the receiving device's local history during a merge. Run tests separately on each device if you want to compare their performance.
+
+Confirmed lab results and per-file import history still sync normally. Deleting a model-test record affects only its local diagnostics, not the imported health data. See [Test and compare AI models](/guides/ai-model-testing).
 
 ### Wearable data
 

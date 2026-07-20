@@ -193,10 +193,10 @@ AI provider routing and model management. All AI calls flow through `callClaudeA
 - `callRoutstrAPI(opts)` — Routstr via `callOpenAICompatibleAPI`
 - `callPPQAPI(opts)` — PPQ via `callOpenAICompatibleAPI`
 - `callVeniceAPI(opts)` — Venice AI via `callOpenAICompatibleAPI`
-- `callOpenAICompatibleLocalAPI(opts)` — Local AI via shared `callOpenAICompatibleAPI` helper
+- `callOpenAICompatibleLocalAPI(opts)` — compatibility re-export for Local AI request planning and adapter inference in `api-local.js`
 - `callOpenAICompatibleAPI(endpoint, key, model, providerName, opts, extraHeaders)` — shared OpenAI-format helper
 - `getAIProvider()` / `setAIProvider(provider)` — `'openrouter'` | `'routstr'` | `'ppq'` | `'venice'` | `'ollama'` (internal key for Local)
-- `hasAIProvider()` — returns `true` if any provider is configured; gates all 7 AI features
+- `hasAIProvider()` — returns `true` if any provider is configured; gates AI features
 - `getOpenRouterModel()`, `getRoutstrModel()`, `getPPQModel()`, `getVeniceModel()`, `getOllamaMainModel()`
 - `fetchOpenRouterModels()`, `fetchRoutstrModels()`, `fetchPPQModels()`, `fetchVeniceModels()` — dynamic model lists
 - `getModelPricing(modelId)` — checks dynamic OpenRouter pricing cache, falls back to `MODEL_PRICING`
@@ -218,6 +218,33 @@ Shared AI API transport helpers used by `api.js`.
 - `STREAM_STALL_TIMEOUT_MS`, `FETCH_REQUEST_TIMEOUT_MS`, `AI_IMPORT_REQUEST_TIMEOUT_MS` — public timeout constants re-exported by `api.js`
 
 **Window exports:** none
+
+---
+
+### Local AI provider modules
+
+Local AI uses a normalized adapter layer so compatible endpoints work without hiding richer Ollama and LM Studio capabilities.
+
+**Key modules and exports:**
+
+- `local-ai-provider-registry.js` — `LOCAL_AI_PROVIDER_ADAPTERS`, `getLocalAiProviderAdapter()`, capability lookup, and detection precedence
+- `local-ai-provider-ollama.js` — native discovery, streaming inference, context override, performance diagnostics, and unload
+- `local-ai-provider-lmstudio.js` — native discovery/model enrichment, context-aware inference, performance diagnostics, and unload
+- `local-ai-provider-openai-compatible.js` — generic `/v1/models` discovery and `/v1/chat/completions` inference
+- `local-ai-provider-shared.js` — base URL normalization, execution-location classification, compatible-model normalization, and secret redaction
+- `local-ai-discovery.js` — short-lived discovery cache and loaded-model metadata updates
+- `api-local.js` — prompt-token estimation, context/output planning, adapter selection, and normalized inference diagnostics
+- `local-ai-lifecycle.js` — memory-only runtime handoff and best-effort model release across same-machine endpoints
+
+See [AI provider internals](/developers/ai-provider-internals#local-ai-adapter-contract) for the capability and lifecycle contract.
+
+---
+
+### Import model-testing modules
+
+`import-benchmarks.js` captures durable, device-local diagnostics around production PDF/image imports. `import-reference-benchmark.js` runs and scores the bundled reference report. `settings-import-benchmark-controller.js` and the benchmark helpers in `settings-data.js` own the user-facing history and comparison UI.
+
+See [AI model testing internals](/developers/ai-model-testing-internals) for record statuses, scoring layers, same-input comparison, persistence, and fixture maintenance.
 
 ---
 

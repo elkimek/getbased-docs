@@ -29,6 +29,18 @@ This page is the contributor contract for adding or changing a synced profile su
 
 `importSnapshots` are user-visible because Settings → Data can reopen a saved import review. They must keep stable IDs and tombstones so deleting one source file does not delete unrelated same-day marker values.
 
+## Device-local profile fields
+
+`importBenchmarks` and `deletedImportBenchmarkIds` live in the imported-data blob for local persistence and full backups, but they must never enter cross-device sync. Their timing, loaded-model state, context, and hardware metadata describe the browser that ran the test.
+
+The boundary has three parts:
+
+1. benchmark saves use `saveImportedData({ immediate: true, skipSync: true })`;
+2. `stripLocalOnlyProfileData()` removes both keys from legacy blob and v4 delta serialization; and
+3. `preserveLocalOnlyProfileData()` restores the receiving browser's local values after an inbound merge.
+
+Do not add these keys to a delta map. A remote payload must not erase or replace local benchmark history. Confirmed lab entries and `importSnapshots` remain normal synced surfaces even when their related model-test diagnostics are local-only.
+
 ## Snapshot advancement rule
 
 Do not advance the local “last pushed” snapshot until the remote operation applies successfully. This protects local edits from being marked synced when the relay write failed or was rejected.

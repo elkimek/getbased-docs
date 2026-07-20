@@ -39,7 +39,9 @@ getbased is built around a few principles that set it apart from most health app
 
 **Free and open-source.** getbased is licensed under AGPL-3.0. You can inspect every line, self-host it, or contribute.
 
-**Several AI provider paths, including fully local.** You choose how AI works — pay-per-query with crypto, one-click OAuth, private-enclave modes, a privacy-first cloud provider, or a model running entirely on your own machine.
+**Several AI provider paths, including fully local.** You choose how AI works — pay-per-query with crypto, one-click OAuth, private-enclave modes, a hosted compatible endpoint, or a downloaded model running entirely on your own machine. getbased identifies whether a Local AI setup runs on this device, your LAN, a remote server, or the cloud.
+
+**Compare models with evidence.** Run a verified 68-result sample report or repeat one of your own imports to compare accuracy, review effort, speed, and runtime details across local models, hosted models, and cloud providers.
 
 **Any lab PDF, any format.** The AI import pipeline reads lab reports from any country, language, or lab. There is no approved lab list.
 
@@ -54,6 +56,9 @@ getbased is built around a few principles that set it apart from most health app
   </Card>
   <Card title="Import a lab PDF" icon="file-arrow-up" href="/guides/pdf-import">
     Drop any lab report and let the AI extract and map your results automatically.
+  </Card>
+  <Card title="Compare AI models" icon="gauge" href="/guides/ai-model-testing">
+    Test local and hosted models or cloud providers with the same lab report.
   </Card>
   <Card title="Import DNA data" icon="dna" href="/guides/dna-import">
     Upload raw data from AncestryDNA, 23andMe, MyHeritage, FTDNA, or Living DNA.
@@ -74,7 +79,8 @@ getbased is built around a few principles that set it apart from most health app
 | Open source | AGPL-3.0 | Closed source |
 | Cost | Free | Free tier + paid upsell |
 | Data storage | Local browser by default; optional local encryption and encrypted sync | Cloud (their servers) |
-| AI providers | Multiple choices, including private-enclave, fully local, and bring-your-own | Locked to one |
+| AI providers | Multiple choices, including private-enclave, on-device, hosted compatible, and bring-your-own | Locked to one |
+| Model comparison | Built-in answer key and personal-report comparisons across providers | Usually unavailable |
 | Lab import | Any PDF, any format, any language | Specific labs or formats only |
 | Biomarkers | 287+ standard + unlimited custom | Limited set |
 | Specialty labs | OAT, fatty acids + custom marker pipeline for any test | Blood only |

@@ -61,6 +61,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 
 | File | What it covers |
 |---|---|
+| `tests/api-provider-contracts.test.js` | **Vitest** — provider adapter inference, Local AI context planning, native capability fallbacks, transport diagnostics, and secret redaction |
 | `tests/test-a11y-axe.js` | Runtime axe-core 4.10 scan across every lens + 6 Settings tabs + EMF editor (14 stops). Baseline-locked CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
 | `tests/test-a11y-phase3.js` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
 | `tests/test-ai-verdict-engine-instance.js` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
@@ -105,6 +106,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-hardware.js` | Model Advisor: GPU detection, VRAM badges, model fitness ratings |
 | `tests/test-image-utils.js` | Image utilities: resize, format, vision content building |
 | `tests/test-integration-batch2.js` | Integration: batch import, marker keys, custom markers, adapters |
+| `tests/playwright/import-benchmarks.spec.js` | **Playwright** — model-test modal, reference scoring, same-report/provider comparison, review metrics, persistence, sync exclusion, and fixture integrity |
 | `tests/test-lens-local-utils.js` | **node** — pure helpers from `js/lens-local-utils.js`: chunking, MMR selection, cosine similarity |
 | `tests/test-lens-local-worker.js` | Full message-protocol round-trip against `lens-local-worker.js` with a mocked embedder |
 | `tests/test-lens-multi-query.js` | Multi-query rewrite + reciprocal-rank-fusion chunk fusion |
@@ -130,6 +132,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-phase-ranges.js` | Phase-aware reference ranges for estradiol and progesterone aligned with dates |
 | `tests/test-pii.js` | PII obfuscation: regex patterns, streaming sanitizer |
 | `tests/test-prelab.js` | Pre-lab onboarding: context assembly without data, chat prompts |
+| `tests/test-provider-local-ai-runtime.js` | Local AI discovery, backend precedence, context planning, location disclosure, runtime handoff, unload, CORS, and mixed-content guards |
 | `tests/test-provenance.js` | Import provenance: markerSources tracking, PDF/manual source attribution |
 | `tests/test-recommendations.js` | Supplement recommendations: catalog slots, keyword scanner, safety caveats, disclosure gate |
 | `tests/test-schema.js` | MARKER_SCHEMA integrity, unit conversions, optimal ranges, phase ranges |
@@ -165,6 +168,17 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-wearables.js` | Wearable adapter registry + L1 store + L2 summary + AI context + JSZip lazy-load (Apple Health) |
 
 The landing page test (`test-landing.js`) lives in the [get-based-site](https://github.com/elkimek/get-based-site) repo.
+
+## Local AI and model-testing checks
+
+Run the focused native suites while iterating:
+
+```bash
+npx vitest run tests/api-provider-contracts.test.js
+npx playwright test tests/playwright/import-benchmarks.spec.js
+```
+
+`tests/test-provider-local-ai-runtime.js` is a legacy browser fixture executed by the Playwright browser-script runner as part of `./run-tests.sh`. Always run the full script before shipping because Local AI changes also affect Settings, PDF import, sync, service-worker assets, and provider routing.
 
 ## Run all tests headlessly
 

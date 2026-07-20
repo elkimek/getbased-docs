@@ -11,7 +11,7 @@ getbased automatically creates snapshots of your data in the background as you m
 
 - A snapshot is triggered **60 seconds after any data change** (debounced — rapid changes create only one snapshot, not many).
 - Up to **5 snapshots** are stored. When a new one is added, the oldest is pruned.
-- Each snapshot includes all your lab entries, context cards, notes, supplements, cycle data, and per-profile preferences.
+- Each snapshot includes the active profile's stored data, including lab entries, context cards, notes, supplements, cycle data, per-profile preferences, and device-local AI model-test history.
 
 Snapshots are stored in IndexedDB and never leave your browser. They are not affected by clearing localStorage.
 
@@ -66,6 +66,7 @@ Each folder backup is a full snapshot of your getbased database:
 - Chat history and conversation threads
 - Custom personalities and marker definitions
 - API keys and app settings
+- Device-local AI model-test history
 - Full wearable IndexedDB — all per-device daily rows including HRV, sleep, RHR, and manual entries
 
 Two files are written to your chosen folder on each backup:
@@ -102,5 +103,7 @@ If you have not configured folder backup and have not manually exported in over 
 ## Manual JSON export as a backup strategy
 
 In addition to automatic backups, you can download a plaintext JSON copy of your data at any time from **Settings → Data → Export**. This is your most portable backup — it is a plain file you can store anywhere: a password manager, an encrypted USB drive, or an offline backup.
+
+An **Export All** database bundle contains each profile's complete stored data, including local AI model-test records. A curated single-profile JSON export does not include model-test diagnostics. Model-test history is also excluded from cross-device sync, so use a full database or folder backup if you want to preserve it.
 
 See [Export and import your data](/guides/export-import) for the full export and import workflow.

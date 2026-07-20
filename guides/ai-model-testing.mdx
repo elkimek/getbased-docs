@@ -1,0 +1,121 @@
+---
+title: "Test and compare AI models"
+description: "Measure lab-import accuracy and speed with a verified sample report or your own imports, then compare local models, hosted models, and cloud providers side by side."
+---
+
+Different models can read the same lab report with different accuracy, speed, and cost. getbased records those differences so you can choose a model based on your own priorities instead of relying on a generic leaderboard.
+
+You can compare:
+
+- local models running through Ollama, LM Studio, Jan, llama.cpp, or another compatible server;
+- hosted models exposed by a remote Local AI or Custom API endpoint;
+- built-in cloud providers such as OpenRouter, PPQ, Routstr, and Venice; and
+- the same model served by different providers.
+
+Each provider and model combination is treated as a separate model setup.
+
+## Open model tests
+
+Go to **Settings → Data → Test models on lab reports**, then click **Open model tests**. You need an active AI provider and model before you can start a test.
+
+The page shows the current provider and model, saved successful tests, tests that did not finish, and any comparisons you select.
+
+## Test with the built-in answer key
+
+The built-in test uses a synthetic three-page PDF containing 68 lab results. Every expected marker, value, unit, reference range, collection date, and report type has been verified.
+
+<Steps>
+  <Step title="Choose a provider and model">
+    Open **Settings → AI**, select the provider and model you want to measure, and make sure the connection works.
+  </Step>
+  <Step title="Open model tests">
+    Go to **Settings → Data → Test models on lab reports** and click **Open model tests**.
+  </Step>
+  <Step title="Run the sample report">
+    Click **Test current model**. getbased sends the synthetic report through the real lab-import pipeline and saves the result when it finishes.
+  </Step>
+  <Step title="Repeat with another setup">
+    Change the provider, model, endpoint, quantization, or local runtime configuration, then run the test again.
+  </Step>
+  <Step title="Compare results">
+    Select **Compare** on two or more matching tests. Your first selection becomes the baseline, and later columns show their difference from it.
+  </Step>
+</Steps>
+
+The **Answer key** card always shows 100%. It is the verified target, not a model run, so it has no speed or token measurements. The synthetic sample is not added to your health record.
+
+<Note>
+Closing the modal does not cancel a running sample test. Reopen model tests to see its progress or result. Only one built-in sample test can run at a time.
+</Note>
+
+## Compare models with your own report
+
+Normal confirmed PDF and image imports also create model-test records. This lets you compare models on the report formats and languages you actually use.
+
+To make a personal comparison:
+
+1. Configure the first provider and model.
+2. Import your report normally, review it carefully, and click **Confirm**.
+3. Configure the next provider or model.
+4. Import the exact same file again and confirm it.
+5. Open **Settings → Data → Test models on lab reports** and select the matching runs.
+
+getbased only compares runs created from the same report. Built-in sample runs must also use the same fixture and benchmark protocol version.
+
+<Warning>
+Personal-report tests are real imports, not dry runs. Repeating a report can update the live value for the same marker and date, while each source file remains available in per-file import history. Review the preview before confirming and make a [backup](/guides/backup) first if needed.
+</Warning>
+
+Deleting a model-test record removes only its diagnostics. It does not delete or undo imported health data. Use the per-file **Review & Edit** or **Delete** controls described in [Import lab PDFs](/guides/pdf-import#per-file-import-history) to change imported results.
+
+## Understand the results
+
+### Built-in accuracy scores
+
+The reference test separates the model's answer from getbased's deterministic cleanup:
+
+- **Raw model accuracy** measures the model output before automatic marker reconciliation. It includes fully correct results, field accuracy, precision, recall, F1, marker matching, values, units, reference ranges, collection date, and report type.
+- **After getbased corrections** shows the final fields after deterministic marker reconciliation.
+- **Review differences** shows what the answer key expected and what the model returned for missing, unexpected, or incorrect fields.
+
+This separation helps you see whether the model was correct on its own or whether the import pipeline repaired its output.
+
+### Personal-report quality signals
+
+Your own reports do not have a built-in answer key. Instead, getbased measures the review decisions you made before confirming:
+
+- results found and kept;
+- results that needed no edits;
+- marker, value, or unit corrections;
+- excluded or unmatched results; and
+- collection-date corrections.
+
+Careful review matters: these measurements describe your confirmed choices, so accepting an incorrect preview will make that run look cleaner than it was.
+
+### Speed and runtime details
+
+When the provider exposes the information, a test can include:
+
+- total time and model time;
+- input, output, and reasoning tokens;
+- generation speed, model load time, and time to first response; and
+- local context size, quantization, execution location, API path, and warm or cold start state.
+
+Some endpoints do not report every metric. A missing value does not necessarily mean the model failed.
+
+<Tip>
+For a fair speed comparison, keep the report, endpoint location, loaded context, and hardware load as consistent as possible. A cold local model can be much slower than the same model after it is already loaded.
+</Tip>
+
+## Privacy, cost, and storage
+
+- The built-in report is synthetic and contains no personal health information.
+- Your own reports follow the normal [PII and import privacy flow](/guides/privacy#pii-stripped-before-ai-sees-your-labs).
+- Cloud and hosted endpoints may charge for each sample test or repeated import. Check the active provider before running it.
+- Test history stays on the device that produced it and is excluded from cross-device sync because timing and hardware details are device-specific.
+- Failed or incomplete runs are retained for troubleshooting but cannot be compared.
+- Full database exports and folder backups can preserve local model-test history. Single-profile JSON exports do not include these diagnostics.
+
+<Warning>
+The built-in score measures one synthetic report and is not a clinical safety certification. Always review imported values against the original report before using them.
+</Warning>

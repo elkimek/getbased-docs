@@ -74,7 +74,7 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 
 ## importedData structure
 
-Stored as JSON at `labcharts-{profileId}-imported`. This is everything a user can export/import.
+Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder backups preserve this blob, while curated single-profile exports select user-facing fields from it.
 
 ```js
 {
@@ -108,6 +108,31 @@ Stored as JSON at `labcharts-{profileId}-imported`. This is everything a user ca
       excludedIndices: []
     }
   ],
+
+  // Device-local diagnostics for AI lab-import attempts. These are capped,
+  // excluded from cross-device sync, and preserved during inbound sync merges.
+  importBenchmarks: [
+    {
+      id: "bench_1782290000000_abcd",
+      status: "confirmed", // or reference-scored/reference-passed/diagnostic status
+      benchmarkAt: 1782290000000,
+      fileName: "lab-report.pdf",
+      inputHash: "...",    // same-input comparison identity for personal reports
+      provider: "ollama",
+      modelId: "qwen3:14b",
+      importMode: "text",
+      timings: { analysisMs: 9200, piiMs: 450 },
+      usage: { inputTokens: 3100, outputTokens: 1400 },
+      runtime: {
+        provider: "ollama",
+        executionLocation: "local",
+        contextLength: 16384,
+        quantLevel: "Q4_K_M",
+        loadedAtStart: true
+      }
+    }
+  ],
+  deletedImportBenchmarkIds: [],
 
   // entries[].markerSources links current live marker values back to snapshots.
   // Snapshot delete/re-review must mutate through data-merge/lab-entry helpers

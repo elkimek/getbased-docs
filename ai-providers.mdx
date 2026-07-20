@@ -1,10 +1,10 @@
 ---
 title: "Connect an AI provider to getbased"
 sidebarTitle: "AI providers"
-description: "getbased supports cloud, private-enclave, crypto-paid, custom, and fully local AI backends. Compare providers and learn how to set each one up."
+description: "Connect cloud, private-enclave, crypto-paid, custom, local, and remote compatible AI backends, then compare their lab-import accuracy and speed."
 ---
 
-getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. Your API keys are stored locally in your browser and are never sent to getbased servers.
+getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. API keys are stored in your browser profile. Built-in provider and Local AI keys go directly to their endpoints; Custom API requests may pass through getbased's same-origin proxy, which forwards keys without storing them.
 
 ## Which features need AI?
 
@@ -16,6 +16,7 @@ getbased supports several AI provider paths for PDF import, chat, and dashboard 
 | Health status dots on context cards | Yes |
 | AI-generated card tips | Yes |
 | Web search in chat | Yes (OpenRouter, PPQ, Venice) |
+| Test AI models with the built-in report | Yes |
 | Charts, tables, trend alerts | No |
 | Manual entry | No |
 | JSON export / import | No |
@@ -173,14 +174,22 @@ All non-AI features work fully without any provider configured. You can load a d
     <Tip>
       Use Custom when you have a direct API key for a service that is not one of the built-in providers. If the service is available through OpenRouter or PPQ, those are easier — they handle model discovery and show pricing automatically.
     </Tip>
+
+    <Note>
+      Public Custom API endpoints may be called through getbased's same-origin proxy when direct browser CORS is unavailable. The proxy validates the destination and forwards the request and API key without storing them. Local and private-network Custom URLs are called directly.
+    </Note>
   </Tab>
 
   <Tab title="Local AI">
-    Run a language model entirely on your own machine. Nothing is sent over the network — not even for PDF import. Local AI connects via the standard OpenAI-compatible API, supported by all major local server applications.
+    Connect directly to an OpenAI-compatible server. That server can run on this device, another machine on your LAN, or a remote host. getbased identifies the execution location in Settings so you can distinguish truly local models from LAN, remote, and cloud-hosted models.
+
+    <Warning>
+      **Local AI describes the connection type, not a privacy guarantee.** Only a loopback server such as `localhost`, `127.0.0.1`, or `[::1]` running a downloaded model keeps requests on this device. LAN and remote endpoints send data off this browser device, and Ollama `:cloud` models run on Ollama's servers.
+    </Warning>
 
     <Steps>
-      <Step title="Install a local AI server">
-        Choose one of the supported applications and install it on your machine:
+      <Step title="Choose a compatible server">
+        Install a server locally or obtain the address of a compatible endpoint:
 
         - [Ollama](https://ollama.com) — command-line, easiest setup
         - [LM Studio](https://lmstudio.ai) — GUI with drag-and-drop model loading
@@ -200,35 +209,43 @@ All non-AI features work fully without any provider configured. You can load a d
         Open **Settings → AI** and select **Local**.
       </Step>
       <Step title="Enter your server URL">
-        The default is `http://localhost:11434` for Ollama. Change it if your server runs on a different port.
+        The default is `http://localhost:11434` for Ollama. Enter the base URL for another local, LAN, or remote server. Add an API key if that endpoint requires one.
       </Step>
       <Step title="Test the connection">
-        Click **Test**. The app auto-discovers available models from your server. Add an API key only if your server requires one — most don't.
+        Click **Test**. getbased detects native Ollama and LM Studio servers when possible, otherwise it uses the standard OpenAI-compatible model list. Choose a text-generation model from the discovered list.
       </Step>
     </Steps>
 
-    **CORS setup**
+    ### Native server support
 
-    Local AI servers block requests from web pages by default. getbased detects this and shows setup instructions, but here is the quick reference:
+    Ollama and LM Studio expose extra information beyond the compatible API. When detected, getbased can show loaded state, context length, quantization, model size, and VRAM use. It can also request a larger context for complex imports and release a loaded model when switching between supported servers on the same machine.
+
+    Generic compatible servers continue to work through `/v1/models` and `/v1/chat/completions`, but they may not expose loaded state, context controls, native performance metrics, or model unloading.
+
+    <Note>
+      If getbased says the loaded context is too small, reload the model with a larger context or use a smaller or chunked input. Imports can request a larger native context from supported Ollama and LM Studio servers; a long LM Studio chat with assistant history may still require a manual reload.
+    </Note>
+
+    ### CORS setup
+
+    The server must allow requests from the exact origin where you opened getbased. For the hosted app, that origin is `https://app.getbased.health`. Avoid `*` when the server supports an explicit origin, especially if API authentication is enabled.
 
     | Server | How to enable CORS |
     |---|---|
-    | Ollama (Linux) | `OLLAMA_ORIGINS=* ollama serve` |
-    | Ollama (macOS) | `launchctl setenv OLLAMA_ORIGINS "*"` then restart Ollama |
-    | Ollama (Windows) | Add `OLLAMA_ORIGINS` = `*` as a system environment variable, then restart Ollama |
-    | LM Studio | Settings → Enable CORS |
+    | Ollama (Linux) | `OLLAMA_ORIGINS=https://app.getbased.health ollama serve` |
+    | Ollama (macOS) | `launchctl setenv OLLAMA_ORIGINS "https://app.getbased.health"` then restart Ollama |
+    | Ollama (Windows) | Add `OLLAMA_ORIGINS` = `https://app.getbased.health` as a system environment variable, then restart Ollama |
+    | LM Studio | Enable CORS and API authentication in LM Studio Settings |
     | Jan | Settings → Advanced → Enable CORS |
 
-    <Warning>
-      The hosted app at `app.getbased.health` runs over HTTPS. Browsers block HTTPS pages from making requests to plain HTTP servers on your local network (mixed content). This means Local AI must run on the same machine — only `localhost` and `127.0.0.1` will work. If you need to reach a model on another device, self-host the app using `node dev-server.js`, which runs over HTTP.
-    </Warning>
+    If you self-host getbased at another origin, replace `https://app.getbased.health` with the origin shown in your browser, including its scheme and port.
 
     <Warning>
-      Ollama supports `:cloud` models that run on Ollama's servers, not your machine. If privacy is your reason for choosing Local AI, stick with locally-running models. The Model Advisor marks cloud models with a cloud badge so you can tell them apart.
+      An HTTPS page cannot call a plain HTTP LAN or remote server because browsers block mixed content. Use an HTTPS endpoint, a loopback address, or an encrypted local tunnel. A self-hosted getbased page served over plain HTTP can call an HTTP LAN server when CORS permits it, but that traffic is unencrypted unless a VPN or tunnel protects it.
     </Warning>
 
     <Tip>
-      When connected to Ollama, the Model Advisor panel appears below the model dropdown. Each installed model gets a fitness rating for lab analysis (Recommended, Capable, Underpowered, or Inadequate) and a VRAM fit check. If none of your models are recommended, the Advisor suggests the best one to pull for your hardware.
+      The Model Advisor appears for discovered Local AI endpoints. It rates suitable text models for lab analysis and shows the metadata the server exposes. Ollama can also suggest a model to pull; remote servers let you enter their available VRAM for a fit estimate.
     </Tip>
   </Tab>
 </Tabs>
@@ -246,6 +263,12 @@ Recommended models are chosen for accuracy with medical and scientific data. You
   **Use the same model for all your imports.** When you import a lab PDF, the AI generates marker keys (like `biochemistry.glucose`) to map results. Different models may generate slightly different keys for the same marker, which can cause the same biomarker to appear as two separate entries in your charts. Pick a model and stick with it. If you do switch, getbased runs a pre-flight check before each import and warns you if your model has changed since the last import.
 </Warning>
 
+## Test before you choose
+
+Open **Settings → Data → Test models on lab reports** to run the same verified 68-result report through different setups. You can compare raw accuracy, getbased's corrected result, speed, tokens, and runtime details side by side.
+
+The comparison works across local models, hosted compatible endpoints, and built-in cloud providers. You can also import the same personal report with different setups and compare the review effort each one required. See [Test and compare AI models](/guides/ai-model-testing).
+
 ## How much does it cost?
 
 AI providers charge based on how much text is sent and received. getbased displays the exact cost of every interaction in the chat panel. Here is what real usage costs with the recommended models:
@@ -257,7 +280,8 @@ AI providers charge based on how much text is sent and received. getbased displa
 | Gemini 3.1 Pro | OpenRouter / Venice / Routstr / PPQ | ~$0.03 | ~$0.01 | ~$0.60 | ~$0.35 |
 | Grok 4 | OpenRouter / Venice / Routstr / PPQ | ~$0.01 | ~$0.005 | ~$0.25 | ~$0.15 |
 | Any model | Custom API (direct key) | Varies | Varies | Varies | Varies |
-| Any local model | Local AI (Ollama, LM Studio, Jan) | Free | Free | Free | Free |
+| Self-hosted model | Local AI (Ollama, LM Studio, Jan) | No provider fee | No provider fee | Electricity only | Electricity only |
+| Hosted compatible model | Local AI / Custom API | Varies | Varies | Varies | Varies |
 
 \* _First month: importing your first labs and setting up your profile through chat — typically 3–5 imports and 30+ chat messages._
 
@@ -268,5 +292,5 @@ AI providers charge based on how much text is sent and received. getbased displa
 </Tip>
 
 <Tip>
-  Run a local model with [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), or [Jan](https://jan.ai) and pay nothing. You will need 8GB or more of VRAM — or a Mac with 16GB or more of unified memory — for capable models. The Model Advisor in Settings shows exactly what fits your hardware.
+  Run a downloaded model on your own hardware with [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), or [Jan](https://jan.ai) and pay no provider fee. You will need 8GB or more of VRAM — or a Mac with 16GB or more of unified memory — for capable models. The Model Advisor in Settings shows what fits your hardware.
 </Tip>

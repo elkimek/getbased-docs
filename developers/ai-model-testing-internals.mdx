@@ -1,0 +1,122 @@
+---
+title: "AI model testing internals"
+description: "Developer contract for import benchmark capture, reference scoring, comparison identity, local-only persistence, and fixture maintenance."
+---
+
+The model-testing feature instruments the real lab-import pipeline. It records enough information to compare provider/model setups without turning runtime diagnostics into synced health data.
+
+## Module map
+
+| Module | Role |
+|---|---|
+| `js/import-benchmarks.js` | Starts, updates, finishes, persists, recovers, and deletes model-test records |
+| `js/import-reference-benchmark.js` | Loads the bundled fixture, runs the real parser, and scores raw and reconciled output |
+| `js/settings-import-benchmark-controller.js` | Owns the modal lifecycle, reference-test action, selection, comparison, and deletion |
+| `js/settings-data.js` | Normalizes saved records and renders cards, metrics, discrepancies, and comparison tables |
+| `js/pdf-import.js` | Captures timings and diagnostics during normal imports |
+| `js/pdf-import-commit.js` | Finalizes review-quality metrics when the user confirms an import |
+| `js/sync-payload.js` | Removes device-local benchmark arrays from outbound sync payloads |
+| `js/sync-pull-merge.js` | Preserves local benchmark arrays during inbound merges |
+
+The bundled assets are `data/import-benchmark-reference-us-v2.pdf` and `data/import-benchmark-reference-us-v2.gold.json`. `scripts/generate-import-reference-pdf.mjs` regenerates the PDF from the manifest.
+
+## Record lifecycle
+
+`startImportBenchmark()` appends a record before the expensive work begins. Import stages update the same record with transport, timing, usage, and parser diagnostics. A normal run becomes comparable only after the user confirms the preview.
+
+Comparable statuses are:
+
+- `confirmed` for a normal report import;
+- `reference-scored` for a completed reference run with differences; and
+- `reference-passed` for an exact reference match.
+
+Failed, cancelled, preview-only, or otherwise incomplete records remain diagnostic-only. The UI groups them under **Tests that didn't finish** and does not offer comparison checkboxes.
+
+Records are capped at 50 per profile. Deletion writes a bounded tombstone list so legacy import snapshots do not immediately reconstruct a deleted diagnostic. Deleting a benchmark never mutates lab entries or per-file import snapshots.
+
+## Reference fixture and protocol
+
+The current fixture identity is `getbased-reference-us-v2`, fixture version `2`, benchmark protocol version `2`, with 68 expected markers across a three-page text PDF.
+
+`runBundledImportReferenceBenchmark()`:
+
+1. captures the provider and model selected at the start;
+2. loads the manifest and PDF without browser caching;
+3. extracts the PDF text through the production extractor;
+4. calls the production AI parser with raw-output capture and deterministic benchmark mode;
+5. scores both raw model output and the reconciled pipeline result; and
+6. persists either a completed score or a scrubbed failure record.
+
+The gold card is generated in code by `getBundledImportReferenceGoldBenchmark()`. It is a locked comparison target, not a stored inference run.
+
+When the fixture content or expected output changes, update the fixture ID or version. When parsing or scoring semantics change, bump `IMPORT_REFERENCE_PROTOCOL_VERSION`. Runs with different fixture/protocol identities must not compare.
+
+## Scoring layers
+
+Reference scoring deliberately keeps two layers:
+
+- **Raw model** measures missing and unexpected results, exact marker fields, precision, recall, F1, marker mapping, values, units, reference ranges, date, and report type before deterministic correction.
+- **Pipeline result** measures the final output after deterministic marker reconciliation.
+
+Do not overwrite raw scores with corrected values. That would hide provider/model errors and turn the benchmark into a test of the reconciliation layer alone.
+
+Exact discrepancy groups retain a bounded, escaped representation of expected and actual fields for review. The UI must continue to state that the result is not a clinical safety certification.
+
+Normal report imports have no gold answer. Their quality signals come from the confirmation review: kept, clean, corrected mapping/value/unit, excluded, unmatched, and date-correction counts.
+
+## Comparison identity
+
+`importBenchmarksUseSameInput()` is the comparison gate:
+
+- normal imports match by input hash;
+- reference runs match by fixture ID, fixture version, and protocol version.
+
+The first selected run is the baseline. Every later column shows the provider, model, and delta from that baseline. Provider remains part of the displayed setup identity, so the same model on OpenRouter and Venice produces two distinguishable columns.
+
+Never allow a filename alone to establish equality. Different files can share a name, and the same report can be renamed.
+
+## Runtime diagnostics
+
+All providers contribute provider/model identity, timings, and usage when available. Local AI can additionally capture normalized adapter metadata such as:
+
+- native versus OpenAI-compatible API path;
+- local, LAN, remote, or cloud execution location;
+- context and maximum context length;
+- quantization and parameter size;
+- allocated VRAM and loaded-at-start state; and
+- native generation speed, load duration, and first-response timing.
+
+Endpoint capabilities vary, so all optional metrics must render safely when absent.
+
+## Persistence and privacy invariants
+
+Benchmark arrays live inside the active profile's imported-data blob, but they are deliberately device-local:
+
+- `persistImportBenchmarks()` calls `saveImportedData({ immediate: true, skipSync: true })`;
+- `stripLocalOnlyProfileData()` removes `importBenchmarks` and `deletedImportBenchmarkIds` before legacy and delta sync serialization; and
+- inbound merge restores the local values after merging remote data.
+
+Full database and folder backups retain the imported-data blob. The curated single-profile export does not include `importBenchmarks`.
+
+Failure text is limited to 500 characters and scrubs bearer tokens and `sk-`-style secrets. Keep raw prompts, report text, API keys, authorization headers, and provider response bodies out of benchmark records.
+
+## Verification
+
+Run the full suite after changing this surface:
+
+```bash
+./run-tests.sh
+```
+
+The primary browser contract is `tests/playwright/import-benchmarks.spec.js`. It covers modal behavior, same-input gating, cloud-provider identity, raw-versus-corrected scoring, exact discrepancy review, background completion, normal-import capture, deletion, secret scrubbing, sync exclusion, and fixture integrity.
+
+Local runtime metadata depends on the provider adapter contract covered by `tests/api-provider-contracts.test.js` and `tests/test-provider-local-ai-runtime.js`.
+
+When changing the reference manifest, regenerate the PDF and run the fixture-integrity tests:
+
+```bash
+node scripts/generate-import-reference-pdf.mjs
+./run-tests.sh
+```
+
+The generated PDF and gold manifest are application assets. Keep them in `service-worker.js`, bump `version.js` when required by the app release process, and review both files in the same change.

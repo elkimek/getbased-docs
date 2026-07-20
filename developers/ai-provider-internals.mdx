@@ -1,6 +1,6 @@
 ---
 title: "AI provider internals"
-description: "Developer contract for provider routing, private transports, Custom API proxying, model storage, OAuth, and web-search boundaries."
+description: "Developer contract for provider routing, private transports, Local AI adapters and lifecycle, Custom API proxying, model storage, OAuth, and web-search boundaries."
 ---
 
 AI provider code touches health context, API keys, browser transport, private TEE modes, web search, import parsing, and chat streaming. Treat it as a privacy/security surface, not just a dropdown.
@@ -15,7 +15,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 | Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
 | Venice | standard or Encrypted TEE Mode | Encrypts message content and applies TDX binding checks; metadata remains visible; web search/images are disabled |
 | Custom API | same-origin proxy | public-host/allowlist checks prevent generic SSRF behavior |
-| Local AI | OpenAI-compatible localhost | no network provider sees prompts; hosted HTTPS can only call localhost/127.0.0.1 |
+| Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; native Ollama/LM Studio features are capability-gated |
 
 ## Core modules
 
@@ -26,8 +26,71 @@ AI provider code touches health context, API keys, browser transport, private TE
 | `provider-panel-renderers.js` | Settings → AI panel markup, PPQ Private TEE UI, model dropdowns |
 | `provider-model-controls.js` | dropdown changes, model persistence, E2EE/private-mode switching |
 | `provider-ppq-panels.js` | PPQ account, balance, top-up, and private-model panel behavior |
+| `provider-local-ai-controls.js` | Local AI URL validation, discovery UI, CORS help, Advisor, and server switching |
+| `local-ai-provider-registry.js` | normalized Local AI adapter registry and detection precedence |
+| `local-ai-provider-{ollama,lmstudio,openai-compatible}.js` | backend discovery, inference, context, performance, and unload implementations |
+| `local-ai-provider-shared.js` | URL normalization, location classification, model normalization, and secret redaction |
+| `local-ai-discovery.js` | cached discovery orchestration and runtime metadata updates |
+| `api-local.js` | Local AI prompt sizing, context planning, native request selection, and normalized diagnostics |
+| `local-ai-lifecycle.js` | memory-only runtime tracking and same-machine model handoff/unload |
 | `chat-attestation.js` | lock/attestation status shown in chat |
 | `api/proxy.js` | Custom API and runtime proxy boundary |
+
+## Local AI adapter contract
+
+`LOCAL_AI_PROVIDER_ADAPTERS` registers three adapters with a stable `id`, user-facing `label`, normalized `capabilities`, and `discover()` method. Adapters can also implement `infer()`, `prepareNativeRequest()`, and `unload()`.
+
+| Capability | Ollama | LM Studio | Generic compatible endpoint |
+|---|---|---|---|
+| Native discovery | Yes | Yes | No |
+| Loaded-model state | Yes | Yes | No |
+| Context override | Yes | Yes | No |
+| Native streaming | Yes | No | No |
+| Structured output | Yes | No | Compatible request hint |
+| Native performance stats | Yes | Yes | Endpoint-dependent |
+| Model unload | Yes | Yes | No |
+
+Code outside the adapters must branch on capabilities or optional methods, not hard-coded product names. Unknown providers fall back to the compatible adapter.
+
+### Detection order
+
+Discovery normalizes the base URL before caching or probing.
+
+1. Probe LM Studio's native API and `/v1/models` in parallel.
+2. If the native LM Studio API succeeds, merge its richer metadata with compatible model IDs and do not send Ollama-only probes.
+3. Otherwise probe Ollama's `/api/tags` and `/api/ps` endpoints.
+4. Prefer Ollama when it is available with models; otherwise use the compatible result.
+
+Successful discovery is cached for 30 seconds and failed discovery for 3 seconds. Explicit connection tests force refresh. Cache entries include the normalized URL and API key so results cannot cross credentials.
+
+### Location and privacy classification
+
+`getLocalAiExecutionLocation()` reports:
+
+- `local` for `localhost`, `127.0.0.1`, and IPv6 loopback;
+- `lan` for `.local`, private IPv4, link-local, and private/link-local IPv6 hosts;
+- `remote` for other hosts; and
+- `cloud` for cloud-tagged model names, regardless of the URL.
+
+This is UI disclosure and diagnostic metadata, not endpoint attestation. A remote operator can misrepresent what runs behind an endpoint. Plain HTTP outside loopback must show an unencrypted-transport warning unless an underlying VPN or tunnel provides encryption.
+
+Use the exact browser origin in CORS help. Do not recommend wildcard origins. Mixed-content preflight must continue to reject an HTTP LAN/remote endpoint from an HTTPS page while allowing the browser's loopback exception.
+
+### Context planning and inference
+
+`api-local.js` estimates prompt tokens, adds a safety reserve, and clamps requested output to the loaded context. If the remaining context cannot satisfy the minimum output, it fails with the current and maximum context sizes instead of sending a predictably truncated request.
+
+Imports opt into discovery and native context planning because a full report can exceed a default loaded context. Routine chat avoids an extra discovery probe before the first token. Ollama can pass `num_ctx`; LM Studio can use its native chat endpoint when the request contains compatible input. Requests with assistant history that cannot use the LM Studio native override must ask the user to reload the model with a larger context.
+
+All adapters return the common text/usage result plus optional diagnostics. Generic compatible endpoints use direct browser requests to `/v1/chat/completions`; they do not go through the Custom API proxy.
+
+### Runtime handoff and VRAM
+
+`local-ai-lifecycle.js` keeps only the last base URL, adapter ID, and model in module memory. Before using a different endpoint/model on the same machine, it discovers the previous runtime and unloads its loaded model when the adapter supports that operation.
+
+Do not persist runtime-use state: it becomes stale after refresh and can expose misleading loaded-model claims. If a supported unload operation fails while changing servers in Settings, keep the new selection unsaved and return an actionable manual-unload error. An adapter without unload support can proceed without automatic release. Never attempt to unload cloud-tagged models or models on a different machine.
+
+Model-test runtime capture is documented in [AI model testing internals](/developers/ai-model-testing-internals).
 
 ## Model storage rules
 
@@ -67,8 +130,13 @@ OpenRouter OAuth must bind state to the browser session and use PKCE/state valid
 Before shipping provider changes:
 
 - run targeted provider tests for the touched provider;
+- run `tests/api-provider-contracts.test.js` for adapter inference and redaction contracts;
+- run `tests/test-provider-local-ai-runtime.js` for discovery, context, location, and lifecycle behavior;
 - run chat streaming tests if transport code changed;
 - run Settings panel tests if dropdowns/toggles changed;
+- verify Local AI connection copy for loopback, LAN, remote, cloud, CORS, and mixed-content cases;
+- verify capability-optional fields render safely for a generic compatible endpoint;
+- verify switching same-machine Ollama/LM Studio runtimes unloads only when supported;
 - verify web search visibility for public vs private modes;
 - verify wrong/missing API key errors are clear and do not erase saved keys;
 - verify private/E2EE attestation status is visible and fail-closed;

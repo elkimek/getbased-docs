@@ -118,6 +118,7 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
+              "guides/ai-model-testing",
               "guides/recommendations",
               "guides/context-cards",
               "guides/interpretive-lens",
@@ -170,6 +171,7 @@
             "pages": [
               "developers/ai-surfaces-map",
               "developers/ai-provider-internals",
+              "developers/ai-model-testing-internals",
               "developers/agent-access-relay",
               "developers/lens-local-internals",
               "developers/lens-endpoint-contract"

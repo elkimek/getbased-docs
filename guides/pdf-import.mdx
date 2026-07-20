@@ -1,9 +1,9 @@
 ---
 title: "Import lab PDFs into getbased"
-description: "Drop lab reports as PDFs, photos, or screenshots and let the AI extract results, strip personal information, and map markers — any lab, format, or language."
+description: "Import lab reports as PDFs, photos, or screenshots, review AI-extracted results, and understand the privacy boundary for text and image modes."
 ---
 
-getbased can read lab reports from virtually any provider worldwide. Use the header import button or drop a file onto the app. The AI extracts results, maps them to known biomarkers, and shows you a preview before saving anything. Personal information is stripped before the file reaches your AI provider.
+getbased can read lab reports from virtually any provider worldwide. Use the header import button or drop a file onto the app. The AI extracts results, maps them to known biomarkers, and shows you a preview before saving anything. Text-based reports go through PII obfuscation before the content reaches your AI provider; image-mode imports can include personal information visible on the page.
 
 ## Before you start
 
@@ -19,13 +19,13 @@ You need an AI provider configured in **Settings → AI**. Manual lab entry, JSO
     Click the header import button or drag files onto the page. Supported report formats include PDF, JPG, PNG, and WebP.
   </Step>
   <Step title="Wait for AI analysis">
-    getbased processes the file locally, strips personal information, then sends anonymized text or images to your AI provider. This typically takes 5-20 seconds for a normal report.
+    getbased processes the file locally, strips personal information from extracted text, then sends the prepared text or page images to your AI provider. Time varies with the report, provider, model, network, and local hardware; large local models can take several minutes.
   </Step>
   <Step title="Review the import preview">
     Before anything is saved, you see exactly what the AI found. Review each row and exclude anything you do not want by clicking the **×** button. The button toggles to **+** so you can re-include rows.
   </Step>
   <Step title="Confirm">
-    Click **Confirm** to save the results. Your values appear in Labs, dashboard widgets, marker details, comparisons, correlations, and AI context while **Blood marker results** are enabled in Manage → Context.
+    Click **Confirm** to save the results. Your values appear in Labs, dashboard widgets, marker details, comparisons, correlations, and AI context while **Blood marker results** are enabled in Manage → Context. getbased also saves a device-local model-test record with timing, model, and review-quality information.
   </Step>
 </Steps>
 
@@ -76,6 +76,14 @@ From **Settings → Data** you can:
 
 Reports imported before per-file storage existed were saved only as date-based lab entries. To make an old report individually reviewable, import that report again.
 
+### Model-test history
+
+Every confirmed AI import also appears under **Settings → Data → Test models on lab reports**. The record shows the provider and model, results found and kept, corrections and exclusions from your review, and performance details the provider exposed.
+
+Import the exact same report with another model or provider to compare the two runs side by side. These are real imports: repeating a report can update the live value for the same marker and date. Deleting a model-test record removes only its diagnostics, not the imported health data.
+
+See [Test and compare AI models](/guides/ai-model-testing) for the built-in answer key, personal-report workflow, and comparison metrics.
+
 <Note>
 Before a large batch import, export a JSON backup from Settings or use [Backup](/guides/backup). Restoring from a backup is easier than deleting many values manually.
 </Note>
@@ -85,6 +93,10 @@ Before a large batch import, export a JSON backup from Settings or use [Backup](
 Most lab PDFs contain selectable text. If your PDF is a scanned image, getbased detects this and switches to image mode, rendering pages for the AI to read visually.
 
 You can also import lab reports saved as photos or screenshots directly. JPG, PNG, and WebP files go through the same image pipeline as scanned PDFs.
+
+<Warning>
+Image mode sends rendered page images to the configured AI provider. Text PII obfuscation cannot remove a name, address, barcode, or other identifier visible in those images. The app warns you before switching a PDF to image mode; redact the source image first if needed.
+</Warning>
 
 <Tip>
 If results are missing after an image-mode import, try exporting the report as a PDF directly from your lab's portal. Text-based PDFs usually produce more reliable results than scans.
@@ -98,7 +110,7 @@ See [Import specialty lab panels](/guides/specialty-labs) for details.
 
 ## Privacy during import
 
-Your file is processed locally first. Personal information is stripped before anything is sent to your AI provider. See [Privacy](/guides/privacy) for full details on PII obfuscation.
+Your file is processed in the browser first. Extracted text goes through regex obfuscation and, when configured, a separate compatible text model before it is sent to the active AI provider. Image mode sends page images without text PII obfuscation. See [Privacy](/guides/privacy) for the complete boundary.
 
 ## What gets extracted
 

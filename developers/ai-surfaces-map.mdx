@@ -80,7 +80,7 @@ Verdicts that recommend lighting hardware all share a load-bearing prompt block 
 
 ## Provider requirements
 
-Verdicts require an AI provider configured in **Settings → AI**. Supported providers: OpenRouter, PPQ, Routstr, Venice, Local AI (Ollama / LM Studio / Jan), Custom. Cost per verdict is roughly $0.003–0.01 on commercial providers (about 600–1,500 input + 100–300 output tokens). Local AI is free.
+Verdicts require an AI provider configured in **Settings → AI**. Supported providers: OpenRouter, PPQ, Routstr, Venice, Local AI (Ollama / LM Studio / Jan / compatible endpoints), Custom. Cost per verdict is roughly $0.003–0.01 on commercial providers (about 600–1,500 input + 100–300 output tokens). A downloaded model running on the user's own hardware has no provider fee; remote or cloud-tagged Local AI models may charge.
 
 ## Disabling verdicts
 
@@ -115,6 +115,7 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | Surface | Where | What it does |
 |---|---|---|
 | **PDF lab import** | Drop a PDF on the dashboard or sidebar | Extracts text → obfuscates PII (regex + optional local-AI streaming sanitizer) → AI parses values + maps to schema markers. Specialty labs (OAT, fatty acids) flow through the custom-marker path. |
+| **Built-in model test** | Settings → Data → Test models on lab reports | Runs the production PDF parser against a synthetic 68-result reference report, preserving raw model output so deterministic scoring can compare it with the verified answer key. |
 | **Photo lab import** | Same drop-zone, accepts JPG / PNG / HEIC | Vision-extract path — same downstream as PDF, but starts from a phone snap of a printed lab report. |
 | **Custom-marker suggestion (from PDF)** | Inside the PDF import flow | When a parsed value can't be matched to a known marker, AI suggests a key + name + unit + reference range based on the surrounding PDF context. |
 | **Supplement label scan** | Supplements → "📷 Scan label" | Vision-extract product name + active ingredients (with dosage per serving) from a photo of a supplement bottle. Skips fillers + excipients. |
@@ -143,14 +144,15 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | Path | Where it runs |
 |---|---|
 | **Knowledge Base (Interpretive Lens default)** | On-device transformers.js + OPFS — your knowledge documents never leave the browser. |
-| **Local AI provider** (Ollama / LM Studio / Jan, configured in Settings → AI → Local AI) | Your machine. No network calls beyond your localhost. |
-| **PII obfuscation (local-AI streaming sanitizer)** | Optional, runs through your Local AI before any cloud call. |
+| **Local AI provider** (Ollama / LM Studio / Jan / compatible endpoints, configured in Settings → AI → Local AI) | Direct from the browser to the configured endpoint. Loopback runs stay on the device; LAN, remote, and cloud-tagged setups leave it. |
+| **PII obfuscation (compatible streaming sanitizer)** | Optional. It stays on-device only with a loopback endpoint and downloaded model, then passes the prepared content to the active provider. |
 | **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | Whichever endpoint you configured. Venice Encrypted TEE Mode encrypts message content with ECDH + AES-GCM, but Venice still sees request metadata and getbased currently performs binding checks rather than full attestation verification. |
 | **Camera frames** (light tools, label scan) | Captured + processed in the browser, then either kept on-device (light-tools metric extraction) or sent as a single base64 image to the configured AI provider for the vision call (label scan, photo lab import). |
 
 ## Caching + privacy notes
 
 - Every per-row verdict caches against a fingerprint of the underlying data. If nothing's changed, the cached verdict is returned without a fresh API call.
+- Import model-test records stay device-local and are stripped from sync payloads because timing, loaded state, and hardware metadata do not transfer meaningfully. See [AI model testing internals](/developers/ai-model-testing-internals).
 - The chat panel pulls from `buildLabContext()` — the assembled section block filtered by **Manage → Context → Data sources** (`contextSourceSettings`). Those switches gate Insight Context Cards, Supplements & Medications, Blood marker results, per-specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context for in-app AI, score context, and source-driven warnings.
 - Interpretive Lens and Knowledge Base live in the Answer grounding panel, separate from data-source gates. Agent Access is separate again: the browser pushes an encrypted gateway summary only after **Settings → Agent Access** is enabled, and that push calls `buildLabContext({ skipGroupFilter: true, ignoreContextToggles: true })` so external agents do not inherit the in-app Data sources switches.
 - Custom-marker creation, manual-value entry, sidebar edits, and chip-picker changes do NOT trigger AI calls — they update local data, AI sees them on the next chat turn or the next per-state verdict render.

@@ -158,11 +158,17 @@ Cross-device sync uses a **relay** — a blind store-and-forward server that hol
 
 ## Local AI with a self-hosted instance
 
-getbased supports any OpenAI-compatible local AI server — Ollama, LM Studio, Jan, llama.cpp, and others — via the **Local AI** provider in **Settings → AI**. Enter your server's base URL and the app routes all AI calls there. Nothing leaves your machine.
+getbased supports Ollama, LM Studio, Jan, llama.cpp, and other OpenAI-compatible servers through **Settings → AI → Local AI**. Enter the server's base URL and getbased sends AI calls directly from the browser to that endpoint.
+
+Privacy depends on the address and model you choose. A loopback endpoint with a downloaded model keeps inference on the browser device. A LAN server moves requests to another machine, while a remote endpoint or Ollama `:cloud` model sends them off your network. getbased shows the detected execution location in the provider panel.
 
 <Warning>
-  Local AI servers (Ollama, LM Studio, etc.) typically serve on `http://localhost` without TLS. Because getbased enforces HTTPS on its hosted domain, this works out of the box only when you access your self-hosted instance over `http://localhost` or `http://127.0.0.1`. If you access your instance over HTTPS (e.g. a Vercel or Caddy deployment), the browser will block mixed-content requests to a plain HTTP local AI server. Run your local AI server behind a local TLS proxy (e.g. Caddy on `localhost:11434`) to resolve this.
+  The page and model-server schemes must satisfy browser mixed-content rules. An HTTPS getbased page can use an HTTP loopback endpoint, but the browser blocks plain HTTP LAN and remote endpoints. Put the model server behind HTTPS or an encrypted local tunnel. A getbased instance served over plain HTTP can call an HTTP LAN server when CORS allows the page origin, but the traffic itself is unencrypted unless a VPN or tunnel protects it.
 </Warning>
+
+Allow the exact getbased origin in your model server's CORS configuration. For example, a self-hosted page at `http://192.168.1.20:8000` should use that origin instead of `*` in `OLLAMA_ORIGINS`. LM Studio users should enable CORS and API authentication.
+
+See [Connect an AI provider](/ai-providers) for backend detection, context and VRAM behavior, and model-testing links.
 
 ## Tor access
 

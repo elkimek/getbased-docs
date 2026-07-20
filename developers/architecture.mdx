@@ -76,6 +76,9 @@ js/
   theme.js          — Theme get/set/toggle, getChartColors, time format helpers
   api.js            — AI provider routing, OpenRouter, PPQ, Routstr, Venice, Local AI, Custom API, private modes, model management
   api-transport.js  — shared AI API fetch retry/timeouts and streaming read stall guard
+  api-local.js      — Local AI prompt/context planning and adapter orchestration
+  local-ai-provider-registry.js — normalized Ollama, LM Studio, and compatible-endpoint adapter registry
+  local-ai-discovery.js / local-ai-lifecycle.js — cached capability discovery and same-machine model handoff
   profile.js        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
   data.js           — getActiveData() pipeline, unit conversion, date range, saveImportedData
   pii.js            — PII obfuscation: local AI (OpenAI-compatible) + regex fallback, diff viewer
@@ -96,6 +99,7 @@ js/
   pdf-import-marker-normalization.js — shared AI marker sanitization, adapter normalization, specialty guards
   pdf-import-persistence.js — imported-data snapshot, rollback, refresh, remove, and rename save flows
   pdf-import-review.js — import review modal rendering, row filtering/mapping UI state
+  import-benchmarks.js / import-reference-benchmark.js — device-local import diagnostics and verified sample scoring
   import-file-input.js — lazy file-picker import binding and import routing
   import-drop-zone.js — lazy import drop-zone binding shared by page shells
   export.js         — JSON export/import (single, per-client, database bundle), PDF report, clearAllData
@@ -126,6 +130,7 @@ js/
   cashu-wallet.js   — In-app Cashu eCash wallet: BIP-39 seed, IndexedDB proofs, Lightning fund/withdraw
   nostr-discovery.js — Nostr relay queries for Routstr nodes (Kind 38421), health checks, caching
   settings.js       — Settings modal shell: profile, display, AI providers, privacy, security
+  settings-import-benchmark-controller.js — model-test modal lifecycle, selection, comparison, and deletion
   settings-sync-panel.js — Settings Data/Agent panels: cross-device sync setup, mnemonic/relay UI, Agent Access token UI
   feedback.js       — Feedback modal (bug reports, feature requests)
   tour.js           — Guided tour spotlight engine (app tour + cycle tour)
