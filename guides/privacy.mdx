@@ -97,6 +97,22 @@ getbased classifies the configured setup as **this device**, **LAN server**, **r
 
 For a fully on-device path, use a loopback URL and a model downloaded to that machine. See [Connect an AI provider](/ai-providers#local-ai) for setup and browser transport restrictions.
 
+## Voice processing
+
+Voice is configured separately from the AI provider that generates chat answers. The privacy boundary depends on the service selected in **Settings → Voice**:
+
+| Voice service | Dictation boundary | Spoken-reply boundary |
+|---|---|---|
+| **On this device** | The temporary microphone recording is transcribed by a downloaded Whisper model in a browser worker | The selected assistant reply is synthesized by a downloaded Kokoro model in a browser worker |
+| **Compatible voice server** | The recording is sent directly to the configured `/v1/audio/transcriptions` endpoint | The selected reply text is sent directly to the configured `/v1/audio/speech` endpoint |
+| **xAI / ElevenLabs** | The recording and voice API key pass through the bounded same-origin getbased relay to the selected provider | The selected reply text and voice API key pass through the relay to the selected provider |
+
+Raw microphone recordings are not added to profile storage, backups, sync, or chat history. Dictation inserts a transcript into the composer for review. The transcript reaches the main AI provider only when you choose to send the message, at which point normal chat context rules apply.
+
+On-device model files and fetched voice lists are rebuildable browser caches and do not sync or enter backups. Voice credentials are encrypted at rest only when **Settings → Data → Security** encryption is enabled and unlocked; otherwise they are plaintext in browser storage.
+
+xAI and ElevenLabs voice settings and keys can be included in end-to-end encrypted cross-device sync. Compatible-server connection details and its optional key are device-scoped and do not sync. Full database and folder backups include all configured Voice settings and credentials in their stored form. That means backups preserve encrypted values when local encryption is enabled but contain plaintext credentials when it is disabled. See [Use voice in AI chat](/guides/voice) for setup and provider behavior.
+
 ## Model-test history
 
 Model tests record the provider, model, accuracy or review-quality signals, timings, token usage, and available local runtime details. They do not store the bundled sample report as health data.

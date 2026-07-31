@@ -118,6 +118,7 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
+              "guides/voice",
               "guides/ai-model-testing",
               "guides/recommendations",
               "guides/context-cards",

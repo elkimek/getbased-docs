@@ -908,7 +908,7 @@ Thread rail message-content search and match highlighting. It owns the debounced
 
 ### `chat-actions.js`
 
-Chat message action bar rendering and message-level handlers. The module owns `Regenerate`, `Copy`, and context-details toggle behavior while calling back to `window.renderChatMessages?.()`, `window.sendChatMessage?.()`, and `window.isChatStreaming?.()` to avoid importing the streaming/rendering module.
+Chat message action bar rendering and message-level handlers. The module owns `Regenerate`, `Copy`, `Listen`, and context-details toggle behavior while calling back to `window.renderChatMessages?.()`, `window.sendChatMessage?.()`, and `window.isChatStreaming?.()` to avoid importing the streaming/rendering module. Voice actions cross the lazy boundary through `voice-loader.js`.
 
 **Key exports:** `buildActionBar`, `regenerateLastMessage`, `copyMessage`, `toggleContextDetails`
 
@@ -966,9 +966,40 @@ Conversation summary generation, saved-summary profile storage, and summary moda
 
 ---
 
+### Voice subsystem
+
+Voice is a first-use chat subsystem rather than part of the startup bundle. `voice-loader.js` keeps microphone capture and speech dependencies cold until the user records, listens, or enables automatic reading. It binds each pending action to the active chat thread and message so late transcription or speech work cannot update a stale conversation.
+
+**Chat orchestration:**
+
+- `voice-controller.js` owns microphone state, transcript insertion, per-message playback, automatic reading, cancellation, and thread/message identity checks.
+- `voice-capture.js`, `voice-player.js`, `voice-audio.js`, and `voice-text.js` own ephemeral recording, progressive audio playback, PCM/WAV handling, and safe speech-text normalization/chunking.
+- `voice-service.js` and `voice-provider-registry.js` select the configured STT/TTS provider without coupling chat controls to provider implementations.
+
+**Provider paths:**
+
+- `voice-provider-browser-local.js` runs downloaded Whisper STT and Kokoro TTS through `voice-local-stt-worker.js`, `voice-local-tts-worker.js`, and the serialized `voice-local-engine.js` worker controller.
+- `voice-provider-local-server.js` calls OpenAI-compatible `/v1/audio/transcriptions`, `/v1/audio/speech`, and `/v1/models` endpoints directly from the browser.
+- `voice-provider-xai.js` and `voice-provider-elevenlabs.js` use `voice-provider-cloud-shared.js` to call the bounded same-origin `/api/voice` relay.
+- `voice-provider-catalog.js` owns capability and execution-location metadata; `voice-model-catalog.js` pins local models, voices, languages, download sizes, and CPU/WebGPU modes.
+
+**Settings and storage:**
+
+- `settings-voice-panel.js`, `settings-voice-view.js`, `settings-voice-model-controller.js`, and `settings-voice-hardware.js` own the **Settings → Voice** UI, downloads, connection tests, voice catalogs, and hardware guidance.
+- `voice-settings-schema.js` is the authority for device-local, syncable, secret, and backup keys. `voice-settings-storage.js` validates preferences and delegates secret writes to encrypted provider storage.
+- Downloaded model assets and fetched voice catalogs are rebuildable caches. They are not sync payloads or backup data.
+
+**Server boundary:** `api/voice.js` delegates to `lib/voice-relay-handler.js`; `lib/voice-relay-policy.js` allowlists providers/actions, bounds request and response sizes, validates identifiers and languages, and maps normalized requests to xAI or ElevenLabs.
+
+**Key exports:** `loadVoiceModule`, `toggleVoiceRecording`, `toggleMessageSpeech`, `maybeAutoReadAssistantMessage`, `stopVoiceActivity`, `getVoiceSettings`, `setVoiceSetting`, `transcribeVoice`, `createVoiceSynthesizer`
+
+**Window exports:** none; chat and shell actions use module callbacks.
+
+---
+
 ### `settings.js`
 
-Settings modal shell with profile, display, AI, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.js`, wearables rows to `wearables-settings-panel.js`, sync controls to `settings-sync-panel.js`, and Agent Access rendering/actions to `settings-agent-access-panel.js`.
+Settings modal shell with profile, display, AI, Voice, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.js`, Voice rendering and actions to `settings-voice-panel.js`, wearables rows to `wearables-settings-panel.js`, sync controls to `settings-sync-panel.js`, and Agent Access rendering/actions to `settings-agent-access-panel.js`.
 
 **Key exports:**
 - `openSettingsModal()` / `closeSettingsModal()`

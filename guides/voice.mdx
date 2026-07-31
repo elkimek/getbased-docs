@@ -1,0 +1,129 @@
+---
+title: "Use voice in AI chat"
+sidebarTitle: "Voice"
+description: "Dictate chat messages and listen to AI replies with on-device models, a compatible voice server, xAI, or ElevenLabs."
+---
+
+Voice lets you speak into the chat composer and hear assistant replies read aloud. It is separate from the AI provider that generates the answer: your AI provider handles the conversation, while the voice service you choose handles transcription, spoken replies, or both.
+
+You can keep voice processing in this browser after a one-time model download, connect an OpenAI-compatible voice server you control, or use xAI or ElevenLabs with your own API key.
+
+## Choose where voice is processed
+
+Open **Settings → Voice**, then choose one service for dictation and spoken replies.
+
+| Voice service | Dictation | Spoken replies | What leaves this browser device |
+|---|---:|---:|---|
+| **On this device** | Yes | Yes | Nothing for the voice operation after the model files are downloaded |
+| **Local voice server** | Yes | Yes | The recording or reply text goes directly to the server URL you configure |
+| **xAI** | Yes | Yes | The requested recording or reply text, plus your voice API credential, is forwarded to xAI through the getbased voice relay |
+| **ElevenLabs** | Yes | Yes | The requested recording or reply text, plus your voice API credential, is forwarded to ElevenLabs through the getbased voice relay |
+
+<Note>
+Voice processing and AI chat are two separate steps. Dictation first places a transcript in the composer so you can review it. When you send that message, your configured AI provider receives it together with the enabled chat context described in [AI chat](/guides/ai-chat#what-the-ai-knows).
+</Note>
+
+## Set up on-device voice
+
+On-device voice is the default and most private option. Models run in a browser worker and are downloaded only when you explicitly request them.
+
+<Steps>
+  <Step title="Open Voice settings">
+    Open **Settings → Voice** and choose **On this device** under **Where voice is processed**.
+  </Step>
+  <Step title="Choose transcription quality">
+    **Whisper Small** is the recommended balance of speed and accuracy and downloads about 260 MB. **Whisper Large v3 Turbo** may be more accurate, but downloads about 770 MB and needs more memory.
+  </Step>
+  <Step title="Choose processing hardware">
+    Keep **Automatic** unless you are troubleshooting. getbased can use your main processor or WebGPU-capable graphics processor and remembers measured performance after use.
+  </Step>
+  <Step title="Download the models you need">
+    Under **Built-in local models**, click **Download** for transcription, speech, or both. The Kokoro speech model is about 95 MB for main-processor use; its graphics-processor assets are larger.
+  </Step>
+  <Step title="Choose a voice">
+    Select an American or British English voice and adjust the speaking speed. On-device spoken replies currently support English. On-device Whisper supports multilingual dictation.
+  </Step>
+</Steps>
+
+Model files are stored as rebuildable browser caches. They are not included in sync or backups, and your browser may remove them when storage is scarce. If that happens, getbased asks you to download the model again before the next voice action.
+
+## Dictate a message
+
+<Steps>
+  <Step title="Start recording">
+    Open chat and click or tap the **microphone** beside the composer. The first use asks for browser microphone permission.
+  </Step>
+  <Step title="Speak, then stop">
+    Tap the microphone again when you are finished. A recording can run for up to five minutes; getbased stops and transcribes it automatically at that limit.
+  </Step>
+  <Step title="Review before sending">
+    The transcript is inserted at the cursor in the composer. Edit it as needed, then send it like any typed message.
+  </Step>
+</Steps>
+
+The microphone recording is held only for the active transcription operation. getbased does not add the raw recording to chat history or profile storage.
+
+## Listen to replies
+
+Choose **Listen** under an assistant reply to generate and play speech. Choose **Stop** to end playback.
+
+To hear every new reply while chat is open, enable **Read new replies automatically** in **Settings → Voice**. Browsers normally require one direct playback action before allowing automatic audio, so tap **Listen** once after enabling it.
+
+Closing chat, changing threads, leaving the page, starting a recording, or choosing another reply stops stale playback. A reply is read only in the thread where the request started.
+
+## Use different services for dictation and listening
+
+Enable **Use different services for dictation and listening** in **Settings → Voice** when one service does not fit both jobs. For example, you can keep dictation on-device while using a cloud voice for spoken replies.
+
+Each operation follows its own privacy boundary:
+
+- the dictation service receives the microphone recording;
+- the spoken-replies service receives only the assistant reply being read;
+- neither voice operation automatically receives your full profile or complete chat history.
+
+## Connect a compatible voice server
+
+Choose **Local voice server** to connect directly from the browser to a server you control. Compatible servers need these OpenAI-style endpoints:
+
+- `POST /v1/audio/transcriptions` for dictation;
+- `POST /v1/audio/speech` for spoken replies;
+- `GET /v1/models` for the connection test.
+
+In **Settings → Voice → Connections → OpenAI-compatible local server**, enter the base URL, optional API key, model names, and voice identifier expected by your server. Examples include Whisper.cpp, LocalAI, and Speaches when configured with the required endpoints.
+
+<Warning>
+“Local voice server” means a direct compatible connection, not necessarily inference on this browser device. A LAN or remote URL receives the recording or reply text. Use HTTPS or a trusted encrypted tunnel for any connection that leaves your device, and make sure the server allows browser requests from the getbased origin.
+</Warning>
+
+## Connect xAI or ElevenLabs
+
+Expand the provider under **Settings → Voice → Connections**, paste a voice API key, then click **Save key** and **Test connection**. Refresh the voice list before choosing a hosted voice.
+
+Cloud voice requests use the same-origin getbased relay because browsers cannot safely call every provider API cross-origin. The relay validates and bounds the request, forwards your key only for that request, and returns the transcription, voice list, or audio response. xAI and ElevenLabs apply their own pricing, retention, and account policies.
+
+Voice credentials follow the app-wide storage setting. With **Settings → Data → Security** encryption enabled and unlocked, xAI, ElevenLabs, and compatible-server keys are encrypted at rest. With encryption disabled, they are plaintext in browser storage.
+
+xAI and ElevenLabs voice settings and keys can be carried by end-to-end encrypted cross-device sync. The compatible-server URL and optional key are device-scoped and are not synced. Full database and folder backups include all configured Voice settings and credentials as stored: encrypted when local encryption is enabled, otherwise plaintext. Treat an unencrypted backup as sensitive. See [Voice privacy and storage](/guides/privacy#voice-processing) for the full boundary.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The browser denied microphone access">
+    Allow microphone access for the getbased site in your browser's site settings, then try the microphone again. Voice capture requires a secure browser context, such as the hosted HTTPS app or `localhost` during development.
+  </Accordion>
+  <Accordion title="On-device Voice asks for a model download">
+    Open **Settings → Voice → Built-in local models** and download the model for the action you want. Browser storage cleanup can remove cached model files even when the previous installation marker still exists; getbased verifies the cache before use.
+  </Accordion>
+  <Accordion title="Graphics processing is unavailable or unreliable">
+    Set **Processing** to **Automatic** or **Main processor (CPU)**. WebGPU availability depends on the browser, operating system, graphics driver, and device.
+  </Accordion>
+  <Accordion title="Automatic reading does not start">
+    Tap **Listen** on one assistant reply to grant playback activation in that browser. Automatic reading works only while chat is open.
+  </Accordion>
+  <Accordion title="A cloud voice is missing">
+    Open its connection card in **Settings → Voice**, test the key, then click **Refresh voices**. ElevenLabs requires a selected voice before it can read replies.
+  </Accordion>
+  <Accordion title="A compatible server does not connect">
+    Confirm the base URL, optional bearer key, and the three supported endpoints. Also check HTTPS mixed-content rules and the server's CORS configuration.
+  </Accordion>
+</AccordionGroup>
