@@ -109,7 +109,9 @@ Voice is configured separately from the AI provider that generates chat answers.
 
 Raw microphone recordings are not added to profile storage, backups, sync, or chat history. Dictation inserts a transcript into the composer for review. The transcript reaches the main AI provider only when you choose to send the message, at which point normal chat context rules apply.
 
-On-device model files and fetched voice lists are rebuildable browser caches and do not sync. The xAI and ElevenLabs voice keys are encrypted in browser storage and can be included in encrypted cross-device sync when enabled. Compatible-server connection details and its optional key remain device-local. See [Use voice in AI chat](/guides/voice) for setup and provider behavior.
+On-device model files and fetched voice lists are rebuildable browser caches and do not sync or enter backups. Voice credentials are encrypted at rest only when **Settings → Data → Security** encryption is enabled and unlocked; otherwise they are plaintext in browser storage.
+
+xAI and ElevenLabs voice settings and keys can be included in end-to-end encrypted cross-device sync. Compatible-server connection details and its optional key are device-scoped and do not sync. Full database and folder backups include all configured Voice settings and credentials in their stored form. That means backups preserve encrypted values when local encryption is enabled but contain plaintext credentials when it is disabled. See [Use voice in AI chat](/guides/voice) for setup and provider behavior.
 
 ## Model-test history
 

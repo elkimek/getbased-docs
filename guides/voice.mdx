@@ -101,7 +101,9 @@ Expand the provider under **Settings → Voice → Connections**, paste a voice 
 
 Cloud voice requests use the same-origin getbased relay because browsers cannot safely call every provider API cross-origin. The relay validates and bounds the request, forwards your key only for that request, and returns the transcription, voice list, or audio response. xAI and ElevenLabs apply their own pricing, retention, and account policies.
 
-The xAI and ElevenLabs voice keys are stored encrypted in the browser and are included only in encrypted sync when you enable cross-device sync. A compatible-server key and server URL stay on the current device. See [Voice privacy and storage](/guides/privacy#voice-processing) for the full boundary.
+Voice credentials follow the app-wide storage setting. With **Settings → Data → Security** encryption enabled and unlocked, xAI, ElevenLabs, and compatible-server keys are encrypted at rest. With encryption disabled, they are plaintext in browser storage.
+
+xAI and ElevenLabs voice settings and keys can be carried by end-to-end encrypted cross-device sync. The compatible-server URL and optional key are device-scoped and are not synced. Full database and folder backups include all configured Voice settings and credentials as stored: encrypted when local encryption is enabled, otherwise plaintext. Treat an unencrypted backup as sensitive. See [Voice privacy and storage](/guides/privacy#voice-processing) for the full boundary.
 
 ## Troubleshooting
 
