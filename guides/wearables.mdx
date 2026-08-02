@@ -28,8 +28,8 @@ Metrics surfaced on the strip include:
 | **Google Health** | Google OAuth 2.0 | Self-host only. Uses read-only access for supported Fitbit, Pixel Watch, and other data in the connected Google account. The official hosted app does not enable it. |
 | **Fitbit (legacy)** | Fitbit OAuth 2.0 (PKCE) | Existing connections only. They can continue syncing while their authorization remains valid and the legacy API is available, but new connections and legacy reconnection are not offered. |
 | **Apple Health** | File import | Export from the iPhone Health app and drop the `.zip` file. No OAuth, no server contact. |
-| **WHOOP** | Beta | Code is ready; the connect row is hidden until WHOOP partner credentials are validated. |
-| **Ultrahuman** | Beta | Code is ready; the connect row is hidden until Ultrahuman partner credentials are validated. |
+| **WHOOP** | Experimental OAuth 2.0 | Self-host only. Requires the operator's WHOOP developer app, client ID, client secret, and explicit enable flag. Hidden on unconfigured hosted deployments. |
+| **Ultrahuman** | Experimental OAuth 2.0 | Self-host only. Requires the operator's Ultrahuman developer app, client ID, client secret, and explicit enable flag. Hidden on unconfigured hosted deployments. |
 | **Manual** | None | Built-in. Log weight, blood pressure, and resting HR directly on the dashboard without a device. |
 
 ## How to connect a wearable
@@ -145,8 +145,12 @@ If you self-host getbased, the OAuth `client_id` values bundled with the app are
 | `OURA_CLIENT_ID` | Oura | Also requires `OURA_CLIENT_SECRET` in `.env.local`. |
 | `WITHINGS_CLIENT_ID` | Withings | Also requires `WITHINGS_CLIENT_SECRET`. |
 | `POLAR_CLIENT_ID` | Polar | Also requires `POLAR_CLIENT_SECRET`. |
+| `ULTRAHUMAN_ENABLED` | Ultrahuman | Must be exactly `true`; experimental self-host integration. |
 | `ULTRAHUMAN_CLIENT_ID` | Ultrahuman | Also requires `ULTRAHUMAN_CLIENT_SECRET`. |
-| `WHOOP_CLIENT_ID` | WHOOP | PKCE — no secret needed. |
+| `ULTRAHUMAN_CLIENT_SECRET` | Ultrahuman | Keep server-side. |
+| `WHOOP_ENABLED` | WHOOP | Must be exactly `true`; experimental self-host integration. |
+| `WHOOP_CLIENT_ID` | WHOOP | Also requires `WHOOP_CLIENT_SECRET`; WHOOP uses a confidential OAuth client. |
+| `WHOOP_CLIENT_SECRET` | WHOOP | Keep server-side. |
 | `GOOGLE_HEALTH_ENABLED` | Google Health | Must be exactly `true`. |
 | `GOOGLE_HEALTH_CLIENT_ID` | Google Health | Requires your deployment's confidential Web OAuth client. |
 | `GOOGLE_HEALTH_CLIENT_SECRET` | Google Health | Keep server-side; never expose it in browser code or public docs. |
@@ -154,8 +158,10 @@ If you self-host getbased, the OAuth `client_id` values bundled with the app are
 Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. For a custom hostname that is not already listed, add the same URI to the provider's `oauth.redirectUris` entry in `js/wearable-adapters.js` in your fork. Apple Health is file-import only and requires no credentials on any install.
 
 <Note>
-When provider variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. Google Health is an exception to the normal fallback: it stays disabled unless `GOOGLE_HEALTH_ENABLED=true` and both Google OAuth credential variables are present. The browser receives only the public client ID and an availability flag; the secret stays behind `/api/proxy`.
+When provider variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. Google Health, WHOOP, and Ultrahuman stay disabled unless their `*_ENABLED=true` flag and both OAuth credential variables are present. The browser receives only public client IDs and availability flags; secrets stay behind `/api/proxy`.
 </Note>
+
+On `localhost`, WHOOP and Ultrahuman appear as **experimental · setup required** until configured. On other unconfigured hosted domains, they are hidden. A fully configured self-host shows **experimental · self-hosted** and enables **Connect**. If an operator later disables either provider, existing connections remain removable but sync and reconnect pause.
 
 Google Health requests three restricted, read-only scopes: activity and fitness, health metrics and measurements, and sleep. The operator of each self-hosted OAuth project is responsible for Google's consent-screen, verification, user-limit, and any security-assessment requirements. Personal testing can use Google's testing mode; a public rollout may require verification and an annual Cloud App Security Assessment. Follow the [Google Health setup guide](https://developers.google.com/health/setup) for the current requirements.
 
@@ -178,6 +184,6 @@ Google Health requests three restricted, read-only scopes: activity and fitness,
     Large Apple Health exports can be 100 MB or more for multi-year history. Parsing runs entirely in your browser — no server is involved — so expect 30–60 seconds for large files.
   </Accordion>
   <Accordion title="WHOOP or Ultrahuman is not in the connect list">
-    Both integrations are fully implemented but hidden until production OAuth credentials are validated with each partner. Follow the getbased changelog for updates.
+    These are experimental self-host integrations and are hidden on an unconfigured hosted domain. Set `WHOOP_ENABLED=true` with `WHOOP_CLIENT_ID` and `WHOOP_CLIENT_SECRET`, or `ULTRAHUMAN_ENABLED=true` with `ULTRAHUMAN_CLIENT_ID` and `ULTRAHUMAN_CLIENT_SECRET`, then restart the deployment. `localhost` shows the disabled setup rows even before configuration.
   </Accordion>
 </AccordionGroup>
