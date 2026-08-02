@@ -9,7 +9,9 @@ Wearables span vendor OAuth, local IndexedDB time-series storage, compact synced
 
 | Source | Path |
 |---|---|
-| Oura, Fitbit, Withings, Polar, WHOOP, Ultrahuman | OAuth/API fetchers plus normalized metric adapters |
+| Oura, Withings, Polar, WHOOP, Ultrahuman | Direct OAuth/API fetchers plus normalized metric adapters |
+| Google Health | Self-host-only OAuth/API aggregator for Fitbit, Pixel Watch, and supported Google-account data |
+| Fitbit | Legacy adapter retained only for already-connected users during the September 2026 migration window |
 | Apple Health | XML/ZIP file import, parsed locally |
 | Manual values | manual weight, blood pressure, resting HR, and related metrics |
 
@@ -40,6 +42,10 @@ If a new metric needs detailed charts on another device, do not silently sync th
 ## Runtime configuration
 
 Self-hosted and production deployments can provide wearable client ids/secrets through runtime config and `api/proxy.js`. Do not hardcode real provider credentials in docs, source, test snapshots, or browser-visible constants.
+
+Google Health is a fail-closed capability. `collectWearableConfigured()` reports it available only when `GOOGLE_HEALTH_ENABLED=true`, `GOOGLE_HEALTH_CLIENT_ID`, and `GOOGLE_HEALTH_CLIENT_SECRET` are all present. Runtime config returns the public client ID and boolean capability, never the secret. Disabled deployments must block connect, token exchange, refresh, sync, and backfill while preserving disconnect and account-wide revocation for previously stored connections.
+
+The legacy Fitbit adapter is hidden for new users but remains visible and syncable for existing connections while their current token and the legacy API still work. Do not add a legacy reconnect path; Google requires users to re-consent through Google OAuth for migration.
 
 When adding a provider, document:
 
