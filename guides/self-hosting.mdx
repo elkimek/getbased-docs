@@ -18,19 +18,18 @@ getbased is a native ES-module web app with no app bundler. The production runti
 
   <Step title="Start a local server">
     ```bash
-    python3 -m http.server 8000
-    # or: node dev-server.js  (recommended for development — mirrors production routing)
+    node dev-server.js 8000
     ```
 
     Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
 
     <Note>
-      `node dev-server.js` also serves the docs at `/docs` and is recommended for local development — it mirrors the production routing. For production hosting, any static file server works.
+      Use `node dev-server.js` for wearable OAuth and other features that depend on `/api/proxy`. A static server such as `python3 -m http.server 8000` is sufficient only for browser-local features; it cannot load deployment OAuth settings or exchange confidential OAuth tokens, so Google Health remains unavailable there.
     </Note>
   </Step>
 </Steps>
 
-No build tools, no `npm install`, no compilation. The app is installable as a **PWA** and works fully offline for non-AI features — labs, charts, custom markers, wearable data, and all local encryption are available without a network connection after the first load.
+No build tools, no `npm install`, no compilation. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
 
 ## Wearable OAuth apps
 
