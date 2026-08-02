@@ -221,7 +221,7 @@ To update a profile's gateway context, switch to that profile in getbased, make 
 
 ## Wearable data in agent context
 
-If you have wearables connected (Oura, Polar, WHOOP, Fitbit, Withings, Ultrahuman, Apple Health, or manual entries) and **Agent Access** is on, the agent automatically receives a `[section:wearables]` block when it calls `getbased_lab_context`. The block is compact and includes current value, baseline, weekly trend, and recent anomaly events for each metric. The in-app **Body → Wearable recovery context** switch does not filter Agent Access; external sharing is controlled from **Settings → Agent Access**.
+If you have wearables connected (Oura, Polar, WHOOP, Withings, Ultrahuman, self-hosted Google Health, Apple Health, legacy Fitbit, or manual entries) and **Agent Access** is on, the agent automatically receives a `[section:wearables]` block when it calls `getbased_lab_context`. The block is compact and includes current value, baseline, weekly trend, and recent anomaly events for each metric. The in-app **Body → Wearable recovery context** switch does not filter Agent Access; external sharing is controlled from **Settings → Agent Access**.
 
 To pull just the wearables section directly:
 

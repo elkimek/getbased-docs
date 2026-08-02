@@ -1,6 +1,6 @@
 ---
 title: "Connect wearables and track biometrics"
-description: "Sync Oura, Fitbit, Withings, Polar, Apple Health, and more alongside your blood work — or log readings manually without any device."
+description: "Sync direct wearable providers, import Apple Health, enable Google Health when self-hosting, or log readings manually."
 ---
 
 The Body lens pulls data from your connected devices into a unified biometrics workspace. HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more can appear in the Body lens and in the **Biometrics Overview** dashboard widget. If you do not own a wearable, you can log weight, blood pressure, and resting heart rate manually.
@@ -23,9 +23,10 @@ Metrics surfaced on the strip include:
 | Vendor | Auth | Notes |
 |---|---|---|
 | **Oura** | OAuth 2.0 | Requires an Oura account and ring. |
-| **Fitbit** | OAuth 2.0 (PKCE) | Sleep score is approximated from efficiency — Fitbit's API does not expose the in-app Sleep Score. |
 | **Withings** | OAuth 2.0 | Surfaces every metric your Withings hardware produces. Cards for unsupported metrics are hidden automatically. |
 | **Polar** | OAuth 2.0 | Sync your device to Polar Flow before connecting — Polar's API returns no data until the device has uploaded. HRV is workout-only (chest strap), not overnight. |
+| **Google Health** | Google OAuth 2.0 | Self-host only. Uses read-only access for supported Fitbit, Pixel Watch, and other data in the connected Google account. The official hosted app does not enable it. |
+| **Fitbit (legacy)** | Fitbit OAuth 2.0 (PKCE) | Existing connections only. They can continue syncing while their authorization remains valid and the legacy API is available, but new connections and legacy reconnection are not offered. |
 | **Apple Health** | File import | Export from the iPhone Health app and drop the `.zip` file. No OAuth, no server contact. |
 | **WHOOP** | Beta | Code is ready; the connect row is hidden until WHOOP partner credentials are validated. |
 | **Ultrahuman** | Beta | Code is ready; the connect row is hidden until Ultrahuman partner credentials are validated. |
@@ -47,6 +48,10 @@ Metrics surfaced on the strip include:
     getbased fetches the last 90 days of data. Raw daily rows are stored in your browser's local database; a compact summary populates the Body lens and Biometrics Overview widget.
   </Step>
 </Steps>
+
+<Warning>
+Google says the legacy Fitbit Web API will stop syncing in September 2026, but has not published an exact shutdown day. Existing getbased connections are retained as a temporary bridge; do not assume they will work through September 30. Google Health is the replacement only on self-hosted deployments configured with their own Google Cloud OAuth project. See [Google's migration notice](https://developers.google.com/health/about).
+</Warning>
 
 ## Apple Health setup
 
@@ -106,12 +111,14 @@ Your choice is saved per metric, per profile, and syncs across your devices. Ven
 
 ## Sync controls
 
-Each connected vendor row in **Settings → Wearables** has two sync actions:
+Each current supported vendor row in **Settings → Wearables** normally has two sync actions:
 
 - **Sync now** — refetches the last 7 days. Use this when you've just synced your device and want the dashboard to update immediately.
 - **Backfill 90 days** — refetches the full 90-day window. Use this after returning from a trip, switching devices, or noticing a gap in the chart. This is slower — some vendors apply rate limits that add 30 seconds or more to the request.
 
 Background sync runs automatically every 6 hours while the tab is open, so the dashboard typically stays current on its own.
+
+Legacy Fitbit connections remain eligible for background sync while their current authorization works, but their row offers migration and disconnection instead of a legacy reconnect flow. If Fitbit rejects the token, that connection cannot be reauthorized in getbased.
 
 <Tip>
 An "as of {date}" hint on a card means that metric's most recent reading is older than other data from the same vendor. This is usually the vendor's processing pipeline finishing late — Oura's HRV often lags its sleep score by several hours. Hover the hint for an explanation.
@@ -139,14 +146,18 @@ If you self-host getbased, the OAuth `client_id` values bundled with the app are
 | `WITHINGS_CLIENT_ID` | Withings | Also requires `WITHINGS_CLIENT_SECRET`. |
 | `POLAR_CLIENT_ID` | Polar | Also requires `POLAR_CLIENT_SECRET`. |
 | `ULTRAHUMAN_CLIENT_ID` | Ultrahuman | Also requires `ULTRAHUMAN_CLIENT_SECRET`. |
-| `FITBIT_CLIENT_ID` | Fitbit | PKCE — no secret needed. |
 | `WHOOP_CLIENT_ID` | WHOOP | PKCE — no secret needed. |
+| `GOOGLE_HEALTH_ENABLED` | Google Health | Must be exactly `true`. |
+| `GOOGLE_HEALTH_CLIENT_ID` | Google Health | Requires your deployment's confidential Web OAuth client. |
+| `GOOGLE_HEALTH_CLIENT_SECRET` | Google Health | Keep server-side; never expose it in browser code or public docs. |
 
-Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. Apple Health is file-import only and requires no credentials on any install.
+Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. For a custom hostname that is not already listed, add the same URI to the provider's `oauth.redirectUris` entry in `js/wearable-adapters.js` in your fork. Apple Health is file-import only and requires no credentials on any install.
 
 <Note>
-When these variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. When unset, the bundled maintainer values are used and hosted users see no change.
+When provider variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. Google Health is an exception to the normal fallback: it stays disabled unless `GOOGLE_HEALTH_ENABLED=true` and both Google OAuth credential variables are present. The browser receives only the public client ID and an availability flag; the secret stays behind `/api/proxy`.
 </Note>
+
+Google Health requests three restricted, read-only scopes: activity and fitness, health metrics and measurements, and sleep. The operator of each self-hosted OAuth project is responsible for Google's consent-screen, verification, user-limit, and any security-assessment requirements. Personal testing can use Google's testing mode; a public rollout may require verification and an annual Cloud App Security Assessment. Follow the [Google Health setup guide](https://developers.google.com/health/setup) for the current requirements.
 
 ## Troubleshooting
 
@@ -155,7 +166,10 @@ When these variables are set, the app picks them up at startup and uses your `cl
     The OAuth handshake succeeded, but Polar's API uses a transactions model that returns no data until your device has uploaded a sync to Polar Flow. Open the Polar app on your phone, sync your watch, then click **Sync now** in getbased.
   </Accordion>
   <Accordion title="'Needs reconnection' badge on a vendor row">
-    The OAuth refresh token expired or was revoked. Click **Reconnect** on that vendor row to re-authorize.
+    The OAuth refresh token expired or was revoked. Click **Reconnect** on a current supported vendor row to re-authorize. Legacy Fitbit is the exception: its old authorization cannot be reconnected in getbased.
+  </Accordion>
+  <Accordion title="Google Health says 'self-host only' or 'host access unavailable'">
+    The official hosted app intentionally does not provide Google Health OAuth. On a self-hosted deployment, confirm that `GOOGLE_HEALTH_ENABLED=true`, `GOOGLE_HEALTH_CLIENT_ID`, and `GOOGLE_HEALTH_CLIENT_SECRET` are all present on the server, then restart the deployment. Existing Google Health credentials remain removable when host access is unavailable, but sync and reconnect stay paused.
   </Accordion>
   <Accordion title="A vendor doesn't appear when picking a metric source">
     The vendor doesn't expose that metric through their API. For example, WHOOP does not provide weight data, and Withings does not provide HRV (RMSSD). Only vendors that actually report a given metric appear in the source picker for that metric.

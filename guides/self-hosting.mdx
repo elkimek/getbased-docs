@@ -45,11 +45,12 @@ To run wearable OAuth on your own host, register your own OAuth app with each pr
 | Oura | [cloud.ouraring.com/oauth/applications](https://cloud.ouraring.com/oauth/applications) |
 | Withings | [developer.withings.com/dashboard](https://developer.withings.com/dashboard/) |
 | Polar | [admin.polaraccesslink.com](https://admin.polaraccesslink.com/) |
-| Fitbit | [dev.fitbit.com/apps/new](https://dev.fitbit.com/apps/new) |
+| Google Health | [Google Health API setup](https://developers.google.com/health/setup) |
+| Fitbit | Legacy connections only; use Google Health for new Fitbit access. |
 | WHOOP | WHOOP partner credentials (gated — hidden until validated) |
 | Ultrahuman | Ultrahuman partner credentials (gated — hidden until validated) |
 
-When registering, add both your local dev redirect URI (`http://localhost:8000/app`) and your production hostname (e.g. `https://your-host.example/app`) to the allowed redirect URI list in each provider's portal — the URIs must match character-for-character.
+When registering, add both your local dev redirect URI (`http://localhost:8000/app`) and your production hostname (e.g. `https://your-host.example/app`) to the allowed redirect URI list in each provider's portal — the URIs must match character-for-character. For a custom hostname that is not already listed, add the same URI to that provider's `oauth.redirectUris` entry in `js/wearable-adapters.js` in your fork.
 
 ### Environment variables
 
@@ -69,8 +70,12 @@ ULTRAHUMAN_CLIENT_SECRET=
 POLAR_CLIENT_ID=
 POLAR_CLIENT_SECRET=
 
+# Google Health is disabled unless all three values are present
+GOOGLE_HEALTH_ENABLED=true
+GOOGLE_HEALTH_CLIENT_ID=
+GOOGLE_HEALTH_CLIENT_SECRET=
+
 # PKCE clients — client_id only, no secret needed
-FITBIT_CLIENT_ID=
 WHOOP_CLIENT_ID=
 ```
 
@@ -78,7 +83,23 @@ WHOOP_CLIENT_ID=
   Apple Health is file-import only — no OAuth, no credentials, no portal registration. It works identically on every self-hosted install.
 </Info>
 
-At startup, the browser fetches the active `client_id` values from `/api/proxy`. When the env vars are set, your own IDs are used for both the authorize URL and the token exchange. When unset, the hardcoded maintainer defaults are used and hosted users see no change.
+At startup, the browser fetches active public `client_id` values from `/api/proxy`. When provider env vars are set, your own IDs are used for authorization and token exchange. Google Health is fail-closed: it is available only when `GOOGLE_HEALTH_ENABLED` is exactly `true` and both Google credential variables are present. Only its public client ID and availability flag reach the browser; the client secret stays on the server.
+
+<Warning>
+  Google Health uses restricted, read-only OAuth scopes. The owner of each self-hosted Google Cloud project is responsible for the OAuth consent screen, verification, testing-user limits, and any Cloud App Security Assessment that Google requires. Do not reuse the official getbased OAuth project. See [Google Health setup](https://developers.google.com/health/setup) for current requirements.
+</Warning>
+
+The integration requests only these scopes:
+
+- `https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly`
+- `https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly`
+- `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
+
+A copy-ready explanation for Google's **How will the scopes be used?** field is kept under 1,000 characters in [`google-health-scope-justification.md`](https://github.com/elkimek/get-based/blob/main/google-health-scope-justification.md).
+
+<Note>
+  Google currently caps a new unverified OAuth client at 100 users. Testing mode requires each tester to be added explicitly, and its refresh tokens expire after seven days. Supporting more than 100 users requires a third-party security review. Check Google's setup page before launch because these requirements can change.
+</Note>
 
 ## Deploying to Vercel
 
@@ -90,7 +111,7 @@ A `vercel.json` is already present in the repo root — no extra configuration i
   </Step>
 
   <Step title="Set environment variables">
-    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. The `*_CLIENT_ID` values for PKCE clients (Fitbit, WHOOP) do not need a secret.
+    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. `WHOOP_CLIENT_ID` is a PKCE client and does not need a secret. Google Health requires its enable flag, client ID, and secret.
   </Step>
 
   <Step title="Deploy">

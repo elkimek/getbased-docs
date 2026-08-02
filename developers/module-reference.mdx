@@ -1588,11 +1588,12 @@ Knowledge Base / Interpretive Lens — RAG endpoint config + multi-query rewrite
 Canonical wearable-metric registry + per-vendor adapter registry. Source of truth for OAuth client IDs, redirect URIs, scopes, and metric → endpoint mappings.
 
 **Key exports:**
-- `ADAPTERS` — array of `{id, displayName, authType, oauth?, apiHost?, metrics, accountInfo?}` for the 8 supported sources (Oura / Withings / Ultrahuman / WHOOP / Fitbit / Polar / Apple Health / manual)
+- `ADAPTERS` — array of `{id, displayName, authType, oauth?, apiHost?, metrics, accountInfo?}` for the 9 registered sources (Oura / Withings / Ultrahuman / WHOOP / legacy Fitbit / Google Health / Polar / Apple Health / manual)
 - `CANONICAL_METRICS` — `{id: {label, sub, unit, worseWhen}}` for every metric the strip can render
 - `DEFAULT_METRIC_ORDER` — preferred order when multiple sources contribute
 - `adapterById(id)` / `visibleAdapters(connectedIds)` / `adapterSupportsMetric(adapterId, metricId)` / `metricsForSources(sourceIds)` / `canonicalMetric(id)`
 - `applyOAuthOverrides(map)` — merges a `{adapterId: clientId}` map into the runtime override store; called from `loadWearableRuntimeConfig()`
+- `applyOAuthConfigured(map)` / `isOAuthAdapterConfigured(adapterOrId)` — apply and read server-confirmed capability flags; Google Health uses this gate independently from its client-ID override
 - `getOAuthClientId(adapterOrId)` — returns the runtime override if set, falling back to the adapter's hardcoded `oauth.clientId`. Every consumer reads through this helper so self-host overrides apply uniformly
 - `_resetOAuthOverrides()` — test surface
 
@@ -1611,7 +1612,7 @@ Connect/disconnect/backfill orchestration. OAuth dispatch table, scheduled stale
 - `getConnection(adapterId)` / `listConnectedSources()` / `disconnectAdapter(adapterId)`
 - `syncNow(adapterId, opts?)` / `forceBackfill(adapterId, days)`
 - `initWearableScheduler()` — visibility-change + 6h interval poll; awaits `runtimeConfigReady()` before first sync to prevent race against override fetch
-- `loadWearableRuntimeConfig()` — POSTs `{wearable_runtime_config: true}` to `/api/proxy`, applies the returned `*_CLIENT_ID` overrides via `applyOAuthOverrides`. Memoized as a promise raced against a 1.5s soft timeout
+- `loadWearableRuntimeConfig()` — POSTs `{wearable_runtime_config: true}` to `/api/proxy`, applies returned public client-ID overrides and capability booleans, and clears failed cached requests so a later scheduler pass can retry. A 1.5s soft timeout keeps startup non-blocking
 
 **Window exports:** none
 
@@ -1621,9 +1622,9 @@ Connect/disconnect/backfill orchestration. OAuth dispatch table, scheduled stale
 
 Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wearables-<vendor>-auth.js` (OAuth dance). Apple Health and Manual skip the auth half — Apple is file-import only, Manual is fully local. Tokens never leave the device; `sync-payload.js` strips `wearableConnections` from the synced payload (and again on pull as defense-in-depth).
 
-**OAuth2 (server-side secret):** `wearables-oura.js` + `…-oura-auth.js`, `…-withings.js` + `…-withings-auth.js`, `…-ultrahuman.js` + `…-ultrahuman-auth.js`, `…-polar.js` + `…-polar-auth.js`. Secrets live in `.env.local` + `/api/proxy`.
+**OAuth2 (server-side secret):** `wearables-oura.js` + `…-oura-auth.js`, `…-withings.js` + `…-withings-auth.js`, `…-ultrahuman.js` + `…-ultrahuman-auth.js`, `…-polar.js` + `…-polar-auth.js`, and `…-google-health.js` + `…-google-health-auth.js`. Secrets live in `.env.local` + `/api/proxy`. Google Health additionally requires the explicit server capability gate and encrypts its credentials and raw rows with its device-local credential vault key.
 
-**OAuth2 PKCE (no secret):** `wearables-whoop.js` + `…-whoop-auth.js`, `wearables-fitbit.js` + `…-fitbit-auth.js`. Code verifier + S256 challenge per the IETF spec.
+**OAuth2 PKCE (no secret):** `wearables-whoop.js` + `…-whoop-auth.js`. The Fitbit PKCE modules remain only to sync already-connected legacy users during the migration window; the adapter is hidden for new connections.
 
 **No OAuth:** `wearables-apple-health.js` (file-import — `parseAppleHealthXml` reads the `export.xml` from a Health zip), `wearables-manual.js` (`logManualMetric` / `logManualBP` + `MANUAL_TAGS` whitelist for what users can log by hand).
 
