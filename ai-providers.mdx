@@ -153,7 +153,7 @@ All non-AI features work fully without any provider configured. You can load a d
     </Steps>
 
     <Tip>
-      **Encrypted TEE Mode:** Message content is encrypted in your browser with ECDH, HKDF-SHA256, and AES-256-GCM. The API key, model, roles, request settings, timing, sizes, and network metadata remain visible to Venice. getbased checks quote freshness, signing-key binding, the requested model, and debug mode, but it does not currently perform full DCAP or GPU-evidence validation, enforce approved code measurements, or verify Venice response signatures. The amber **🔒~** indicator means those limited binding checks passed; it is not a fully verified-attestation mark. Web search and image attachments are disabled.
+      **Encrypted TEE Mode:** Message content is encrypted in your browser with ECDH, HKDF-SHA256, and AES-256-GCM. Before connecting, getbased requires full Intel TDX verification with DCAP and signed NVIDIA GPU evidence through NRAS. If either check fails, the encrypted session does not start. The **🔒 TEE + GPU** badge means both required checks passed; hover, focus, or tap it for the individual results and remaining limits. The checks do not prove that the TDX environment and GPU run together, enforce an approved Venice code-measurement allowlist, or independently verify the source of every response. The API key, model, roles, request settings, timing, sizes, and network metadata remain visible to Venice. Web search and image attachments are disabled.
     </Tip>
   </Tab>
 

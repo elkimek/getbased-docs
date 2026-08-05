@@ -77,17 +77,16 @@ When you enable this mode, getbased encrypts each message's `content` field in t
 
 The surrounding request is not opaque. Venice still receives the API credential, selected model, message roles, token and streaming settings, request structure, timing, approximate sizes, billing information, IP address, and other network metadata.
 
-Before deriving the message key, getbased parses the Intel TDX quote and checks:
+Before starting an encrypted session, getbased requires two independent hardware checks:
 
-- the fresh client nonce in `REPORTDATA`;
-- the requested model ID;
-- the signing-key address in `REPORTDATA`;
-- that debug mode is not enabled;
-- negative or inconsistent verification fields reported by Venice.
+- **TEE check:** The browser verifies the Intel TDX quote with DCAP, including its signature, certificate chain, revocation information, and TCB status. It also checks session freshness, the requested model, encryption-key binding, and that debug mode is disabled.
+- **GPU check:** NVIDIA's Remote Attestation Service (NRAS) evaluates the supplied GPU evidence. The browser then verifies every signed NRAS result against NVIDIA's published keys and checks the shared session nonce, secure boot, disabled debug mode, and NVIDIA's measurement verdict.
 
-These are **binding checks**, not full attestation verification. getbased does not currently validate the complete DCAP certificate, signature, revocation, and TCB chain; validate NVIDIA GPU evidence; compare measurements with an approved Venice release allowlist; or verify the separate Venice response signature. The per-chunk response key is therefore not independently bound to the attested signing key by getbased.
+If either required check is absent or fails, the encrypted session does not start. The header then shows **🔒 TEE + GPU** after both checks pass. Hover, focus, or tap the badge to see the individual results and current limits. A plain **🔒** means encrypted mode is selected but the current session has not yet supplied verification details; **🔒 failed** means setup was stopped.
 
-An amber **🔒~** indicator means the limited binding checks passed and message encryption is active. It must not be read as “the enclave and its code were fully verified.” A red **🔒✗** means a configured check failed. See [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the protocol boundary and remaining assumptions.
+The two checks do not prove that the TDX environment and GPU are running together. getbased also does not currently enforce an approved Venice code-measurement allowlist or independently verify the source of every response. The per-chunk response key is therefore not independently bound to the attested signing key.
+
+NVIDIA does not accept the GPU-check request directly from a browser, so the deployment's same-origin proxy relays the GPU evidence to NRAS. Message content is not included. The signed NRAS results are still verified in your browser, and NVIDIA learns that an attestation was checked. See [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the full protocol boundary and remaining assumptions.
 
 ### Local AI endpoint location
 

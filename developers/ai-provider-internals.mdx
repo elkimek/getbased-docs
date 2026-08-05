@@ -13,7 +13,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 | PPQ | direct API key | anonymous account/top-up flow; regular and private model selections are separate |
 | PPQ Private TEE | Tinfoil/private endpoint wrapper | browser-encrypted request body, attestation/lock state, web search disabled |
 | Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
-| Venice | standard or Encrypted TEE Mode | Encrypts message content and applies TDX binding checks; metadata remains visible; web search/images are disabled |
+| Venice | standard or Encrypted TEE Mode | Encrypts message content; requires TDX binding, Intel DCAP, NVIDIA NRAS, and NRAS-token signature checks; metadata remains visible; web search/images are disabled |
 | Custom API | same-origin proxy | public-host/allowlist checks prevent generic SSRF behavior |
 | Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; native Ollama/LM Studio features are capability-gated |
 

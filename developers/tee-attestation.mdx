@@ -92,35 +92,34 @@ Web search and image inputs are disabled because those features would expand the
 
 ### Checks performed by getbased
 
-For each new cached session, the client generates a 32-byte nonce and fetches Venice's TDX evidence. It then:
+getbased uses [`venice-e2ee@0.4.1`](https://github.com/elkimek/venice-e2ee/releases/tag/v0.4.1) with both `requireDcap` and `requireGpu` enabled. For each new cached session, the client generates a 32-byte nonce and fetches Venice's TDX and GPU evidence. Session creation requires all of the following:
 
-1. accepts the documented hex or base64 quote representation and checks that it is an Intel TDX quote;
-2. confirms the evidence names the requested model;
-3. confirms the nonce appears in TDX `REPORTDATA`;
-4. derives the signing-key Ethereum address and compares it with `REPORTDATA`;
-5. rejects the TDX debug attribute;
-6. rejects negative or inconsistent verification fields reported by Venice;
-7. parses and reports TDX measurements without treating them as approved values.
+1. **Quote binding:** The client accepts the documented hex or base64 quote representation, checks that it is an Intel TDX quote, confirms the requested model and fresh nonce, binds the signing-key address to TDX `REPORTDATA`, rejects the debug attribute, and rejects negative or inconsistent fields reported by Venice.
+2. **Intel DCAP verification:** The browser runs the TDX quote through the vendored `@phala/dcap-qvl` verifier. This validates the quote signature, PCK certificate chain, collateral and revocation information, and TCB status. Unknown or rejected TCB states fail the session.
+3. **NVIDIA GPU verification:** The raw `nvidia_payload` is relayed to NVIDIA's Remote Attestation Service (NRAS). getbased requires a positive overall result and at least one GPU, then checks every GPU's shared session nonce, secure boot, disabled debug mode, successful NVIDIA measurement result, and report-nonce match.
+4. **NRAS token authentication:** The browser verifies the ES384 signature on the overall and every per-GPU NRAS token against NVIDIA's published key set. It also fixes the expected issuer and validates token expiration and not-before times. No claims from an unsigned or partially verified token are accepted.
 
-Passing these steps produces `verificationLevel: "binding"`. The chat UI deliberately shows amber **🔒~**, not green **🔒✓**.
+The DCAP result raises the library's `verificationLevel` to `"dcap"`. GPU verification is a separate required policy recorded through `gpuVerified` and `gpu.tokensVerified`; it is not folded into that string value.
+
+NVIDIA does not accept this POST directly from a browser. The hosted deployment therefore allows only the fixed NRAS URL through `/api/proxy` and relays the evidence body verbatim. Message content is not part of the GPU evidence. The browser authenticates the returned tokens independently, but NVIDIA learns that the evidence was checked.
 
 ### Checks not currently performed
 
 getbased does not currently:
 
-- run a full client-side DCAP certificate, quote-signature, collateral, revocation, and TCB verification chain;
-- validate NVIDIA GPU attestation evidence;
 - compare TDX measurements with an authenticated allowlist of approved Venice releases;
+- independently evaluate the NVIDIA GPU quote instead of relying on NVIDIA's signed NRAS verdict;
+- prove that the verified TDX environment and GPU run together—the shared nonce proves only that both pieces of evidence were produced for the same request;
 - verify the separate response signature described by Venice;
 - cryptographically bind each streaming response's ephemeral key to the signing key found in the TDX evidence.
 
-The reusable [`venice-e2ee`](https://github.com/elkimek/venice-e2ee) client exposes parsed measurements, optional DCAP and measurement policies, and explicit `binding`, `dcap`, or `measured` evidence levels. getbased intentionally remains at `binding` until it can configure those stronger policies from trustworthy published inputs.
+The reusable [`venice-e2ee`](https://github.com/elkimek/venice-e2ee) client reports the parsed TDX measurements, but reporting a measurement is not the same as approving it. Venice does not currently publish a stable measurement allowlist that getbased can authenticate and enforce.
 
 ### Failure behavior and interpretation
 
-Venice encrypted mode never falls through to a regular Venice model. Missing or failed binding checks stop session setup. After a successful HTTP response, non-whitespace plaintext model content is rejected rather than displayed. AES-GCM authentication failures also stop the response.
+Venice encrypted mode never falls through to a regular Venice model. Missing or failed binding, DCAP, GPU, or NRAS-token checks stop session setup. Transient attestation gateway failures are retried twice before the request fails. After a successful HTTP response, non-whitespace plaintext model content is rejected rather than displayed. AES-GCM authentication failures also stop the response.
 
-This fail-closed behavior prevents a silent plaintext downgrade. It does not resolve the unverified quote chain, code identity, GPU evidence, or response-origin binding described above. The **🔒~** mark means “message encryption active; limited binding checks passed,” not “Venice and the running enclave were fully verified.”
+The chat header shows **🔒 TEE + GPU** only after the required DCAP and signed NRAS checks pass. Hovering, focusing, or tapping the badge lists the successful checks and remaining limits. A plain **🔒** means encrypted mode is selected but no session evidence is available yet; **🔒 failed** means setup was stopped. These labels describe the evidence getbased checked, not a guarantee that approved code is running or that every response came from that code.
 
 Venice's current protocol and production recommendations are documented in [TEE & E2EE Models](https://docs.venice.ai/guides/features/tee-e2ee-models).
 
@@ -133,6 +132,8 @@ The design still trusts:
 - The getbased JavaScript delivered to the browser and the locked Tinfoil/EHBP dependencies
 - The browser, operating system, and extensions before encryption and after decryption
 - AMD SEV-SNP hardware, firmware, root certificates, and the verifier's policy
+- Intel TDX hardware, DCAP certificates and collateral, and the vendored DCAP verifier used for Venice
+- NVIDIA GPU hardware, NRAS's evaluation of the evidence, and NVIDIA's published token-signing keys
 - The expected GitHub repository, its tagged Sigstore release workflow, and the audited behavior of the measured release
 - The absence of exploitable TEE implementation bugs and relevant side channels
 
@@ -143,5 +144,7 @@ The verifier proves that the measurement matches a correctly signed tagged relea
 - [`js/tinfoil-secure-fetch.js`](https://github.com/elkimek/get-based/blob/main/js/tinfoil-secure-fetch.js) — shared verified EHBP transport and fail-closed response handling
 - [`js/api-routstr.js`](https://github.com/elkimek/get-based/blob/main/js/api-routstr.js) — Routstr private model routing and metadata boundary
 - [`js/api-ppq.js`](https://github.com/elkimek/get-based/blob/main/js/api-ppq.js) — PPQ private endpoint integration
+- [`js/api-venice.js`](https://github.com/elkimek/get-based/blob/main/js/api-venice.js) — Venice DCAP/NRAS policy, bounded NRAS relay, retries, and encrypted streaming path
 - [`js/chat-attestation.js`](https://github.com/elkimek/get-based/blob/main/js/chat-attestation.js) — user-visible verification status
 - [`tests/tinfoil-secure-fetch.test.js`](https://github.com/elkimek/get-based/blob/main/tests/tinfoil-secure-fetch.test.js) — transport security regression coverage
+- [`tests/test-venice-e2ee.js`](https://github.com/elkimek/get-based/blob/main/tests/test-venice-e2ee.js) — Venice encryption, attestation, badge, and fail-closed regression coverage

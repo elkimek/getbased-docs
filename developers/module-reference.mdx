@@ -928,7 +928,7 @@ Shared chat SVG icon strings and icon-button DOM helper extracted from `chat.js`
 
 ### `chat-attestation.js`
 
-Private-transport attestation display helpers shared by the chat header and assistant-message cost footnotes. Tinfoil's fully verified state uses **🔒✓**; Venice binding-only evidence uses **🔒~** so the UI does not imply full DCAP, measurement, GPU, or response-signature verification.
+Private-transport attestation display helpers shared by the chat header and assistant-message cost footnotes. Tinfoil uses **🔒 verified** after its full policy passes. Venice uses **🔒 TEE + GPU** after its required DCAP and signed NRAS checks pass, while the tooltip keeps code-measurement, co-location, and response-source limits visible.
 
 **Key exports:** `attestationTooltip`, `e2eeLockHTML`, `e2eeLockFootnote`
 

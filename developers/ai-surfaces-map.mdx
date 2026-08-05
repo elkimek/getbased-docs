@@ -150,7 +150,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **PII obfuscation (compatible streaming sanitizer)** | Optional. It stays on-device only with a loopback endpoint and downloaded model, then passes the prepared content to the active provider. |
 | **Voice — On this device** | Downloaded Whisper and Kokoro models run in browser workers. Raw recordings are transient and model files are rebuildable caches. |
 | **Voice — compatible server / xAI / ElevenLabs** | The selected voice service receives only the recording being transcribed or assistant reply being synthesized. Compatible servers are called directly; hosted-provider requests use the bounded same-origin voice relay. |
-| **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | Whichever endpoint you configured. Venice Encrypted TEE Mode encrypts message content with ECDH + AES-GCM, but Venice still sees request metadata and getbased currently performs binding checks rather than full attestation verification. |
+| **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | Whichever endpoint you configured. Venice Encrypted TEE Mode encrypts message content with ECDH + AES-GCM and requires Intel TDX DCAP plus signed NVIDIA NRAS checks, but Venice still sees request metadata. The checks do not prove TDX/GPU co-location, approved code measurements, or the source of every response. |
 | **Camera frames** (light tools, label scan) | Captured + processed in the browser, then either kept on-device (light-tools metric extraction) or sent as a single base64 image to the configured AI provider for the vision call (label scan, photo lab import). |
 
 ## Caching + privacy notes

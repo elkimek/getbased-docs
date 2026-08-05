@@ -129,6 +129,14 @@ Web search injects search results into the AI's context, significantly increasin
 Web search is available with **OpenRouter**, **PPQ**, and **Venice**. The toggle is hidden when you are using other providers. If **PPQ Private TEE Mode** or **Venice Encrypted TEE Mode** is active, web search is disabled so encrypted/private prompts are not sent into external search tooling.
 </Note>
 
+## Read the encrypted-chat badge
+
+When a private or encrypted provider mode is selected, the chat header shows a lock beside the model name. A plain **🔒** means the mode is selected but a verified session has not yet supplied details. After Venice establishes a session, **🔒 TEE + GPU** means the required Intel confidential-computing and NVIDIA GPU checks both passed. **🔒 failed** means a required check failed and the encrypted request was stopped.
+
+Hover, focus, or tap a labeled badge to see what was checked and what the result does not establish. For Venice, the details name the underlying DCAP and NRAS checks and explain that independently valid TEE and GPU evidence does not prove that both ran together. The badge describes the connection used for that chat; it is not a general claim that the provider's code is free of defects.
+
+See [Privacy and data handling](/guides/privacy#venice-encrypted-tee-mode) for what remains visible and [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the technical verification flow.
+
 ## Stop and continue responses
 
 While the AI is generating a response, a **Stop** button appears in the chat input area. Click it to halt generation mid-stream — useful when the AI is heading in the wrong direction and you want to rephrase your question.

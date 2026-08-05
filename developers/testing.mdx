@@ -17,23 +17,6 @@ Routstr/Cashu wallet work has an extra release gate because it touches bearer mo
 
 Some browser fixtures are still self-executing IIFEs with local `assert()` helpers; Playwright executes those through `tests/playwright/browser-script-runner.js` so they run in the same browser suite as native Playwright specs.
 
-## Dependency and compiler upgrade gates
-
-Runtime dependency bumps are code changes when they affect a security boundary. The proxy's exact Undici pins and their rationale are documented under [Transport dependency pins](/developers/deployment#transport-dependency-pins). For either the direct proxy transport or the nested `@vercel/blob` transport, run:
-
-```bash
-npm ci
-npm test -- tests/proxy-network.test.js tests/proxy-upstream.test.js tests/proxy-entrypoint-runtime.test.js tests/proxy-rate-limit.test.js
-npm run typecheck:server
-npm run supply-chain:check
-```
-
-`npm ci` should finish with no known vulnerabilities. Do not make the exact-version assertions permissive just to accept a bot update: they force a deliberate review of the transport that production will load. GitHub Actions owns the exhaustive Chromium and combined-coverage run after the focused local checks pass.
-
-The repository also intentionally remains on the TypeScript 6 compiler API. `scripts/architecture-map.mjs`, `scripts/app-shell-budget.mjs`, `scripts/dom-sink-audit.mjs`, and `scripts/strict-null-ratchet.mjs` import `typescript` programmatically. TypeScript 7's native release does not ship that API, so replacing the existing package with TypeScript 7 breaks these gates even when the `tsc` command itself works.
-
-A future TypeScript 7 migration should be a dual-toolchain change: use the native package for the `tsc` CLI and keep `@typescript/typescript6` available for programmatic imports. Run every typecheck, the strict-null ratchet, architecture check, and quality gate before changing the compiler pin. Do not merge a generated single-package major bump as-is. See the [TypeScript 7.0 migration guidance](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/).
-
 ## The assert pattern
 
 Browser-script fixture files define a local `assert` helper and collect results:
@@ -150,10 +133,6 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-pii.js` | PII obfuscation: regex patterns, streaming sanitizer |
 | `tests/test-prelab.js` | Pre-lab onboarding: context assembly without data, chat prompts |
 | `tests/test-provider-local-ai-runtime.js` | Local AI discovery, backend precedence, context planning, location disclosure, runtime handoff, unload, CORS, and mixed-content guards |
-| `tests/proxy-entrypoint-runtime.test.js` | **Vitest** — production proxy entrypoint, Blob SDK artifact pin, preflight behavior, and limiter-boundary loading |
-| `tests/proxy-network.test.js` | **Vitest** — public-DNS validation, exact Undici transport pin, socket lookup binding, dispatcher cleanup, and abort behavior |
-| `tests/proxy-rate-limit.test.js` | **Vitest** — distributed Blob-backed and bounded local proxy rate-limit behavior |
-| `tests/proxy-upstream.test.js` | **Vitest** — upstream proxy request routing through the protected network transport |
 | `tests/test-provenance.js` | Import provenance: markerSources tracking, PDF/manual source attribution |
 | `tests/test-recommendations.js` | Supplement recommendations: catalog slots, keyword scanner, safety caveats, disclosure gate |
 | `tests/test-schema.js` | MARKER_SCHEMA integrity, unit conversions, optimal ranges, phase ranges |
@@ -177,7 +156,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-ui-flows.js` | Behavioral UI tests: key user flows, rendered output verification |
 | `tests/test-unit-import.js` | Unit normalization on import: SI conversion, enzyme units, FA adapter safety |
 | `tests/test-v1-6-shipped.js` | Regression coverage for v1.6.7..v1.6.16 ship arc |
-| `tests/test-venice-e2ee.js` | Venice encrypted mode: ECDH/AES-GCM, fail-closed responses, binding-level attestation UI, TEE headers, model detection |
+| `tests/test-venice-e2ee.js` | Venice encrypted mode: ECDH/AES-GCM, fail-closed responses, required DCAP/NRAS verification, attestation badge states, TEE headers, and model detection |
 | `tests/test-vendor-personal-info.js` | `fetchXxxPersonalInfo` + `logDebug` rails for Fitbit / Ultrahuman / Whoop / Polar (one stubbed `/api/proxy` response per vendor) |
 | `tests/test-coverage-stragglers.js` | Targeted probes for the 1-fn gaps left after the AI-verdict + vendor sweeps: image-utils onerror, lens-local-parsers extractDocx, oura-auth json-catch, utils animationend, FileReader stub, AbortSignal.any polyfill, SSE handler, IDB onerror rails (blob / cashu / ws / backup), cashu open onerror, dna worker.onerror |
 | `tests/test-wearables-bp-merge.js` | BP renders as one paired card (sys/dia): strip-render filter, reorder-mode behavior |
