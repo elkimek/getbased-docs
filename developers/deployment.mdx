@@ -88,6 +88,21 @@ Current responsibilities:
 
 Do not add a new proxy mode without documenting the target host, the caller allowlist, what secrets it can see, and which tests cover the branch.
 
+#### Transport dependency pins
+
+The protected Node transport lives in `lib/proxy-network.js`. It resolves an HTTPS hostname once, rejects the complete DNS answer set if any address is non-public, and passes the validated addresses into an explicit Undici `Agent` lookup. This keeps the policy check and the actual socket connection on the same DNS result instead of validating one address and connecting through a second lookup.
+
+Two server-side Undici versions are intentionally pinned:
+
+| Scope | Current pin | Why it is exact |
+|---|---|---|
+| Protected outbound proxy transport | `undici@7.29.0` | This is the reviewed Node 24 transport and includes the current 7.x security fixes. |
+| `@vercel/blob@2.4.0` internal transport | `undici@6.28.0` through an npm override | This keeps the Blob SDK on its expected 6.x line while applying the patched release. |
+
+The pins are review gates, not stale test data. `tests/proxy-network.test.js` locks the direct transport, while `tests/proxy-entrypoint-runtime.test.js` locks the Blob SDK artifact. Update the package metadata, lockfile, and matching assertion together, then run the focused proxy checks documented in [Testing](/developers/testing#dependency-and-compiler-upgrade-gates).
+
+Treat Undici 8 as a transport migration rather than a routine version bump. Version 8 enables HTTP/2 by default and changes the dispatcher handler contract. Before adopting it, add an integration test that exercises a real Undici `Agent` and proves the pinned lookup still controls the actual socket path; dependency-injected fetch mocks alone do not verify that property. See the [Undici 8.0 release notes](https://github.com/nodejs/undici/releases/tag/v8.0.0).
+
 ### `/api/commit`
 
 `api/commit.js` returns the deployed app identity used by smoke checks, diagnostics, and “which build am I looking at?” debugging. Keep it cheap, no-store, and free of private deployment-provider details.
