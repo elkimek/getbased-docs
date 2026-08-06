@@ -135,18 +135,23 @@ A `vercel.json` is already present in the repo root — no extra configuration i
 Cross-device sync uses a **relay** — a blind store-and-forward server that holds encrypted blobs. The relay never sees your plaintext data. By default, getbased connects to `wss://sync.getbased.health`. You can run your own.
 
 <Steps>
-  <Step title="Start the relay container">
-    The relay runs as a single Docker container with an embedded SQLite database — no external dependencies:
+  <Step title="Clone the relay">
+    [getbased-relay](https://github.com/elkimek/getbased-relay) wraps Evolu's sync protocol with configurable quotas, health checks, metrics, and owner-signed storage recovery.
 
     ```bash
-    docker run -d \
-      --name evolu-relay \
-      --network host \
-      --restart unless-stopped \
-      evoluhq/relay:latest
+    git clone https://github.com/elkimek/getbased-relay
+    cd getbased-relay
     ```
 
-    This starts the relay on port 4000 (WebSocket only).
+    Review `docker-compose.yml` before starting it. In particular, set `QUOTA_PER_OWNER_MB` to the encrypted-history allowance you want each Sync identity to have.
+  </Step>
+
+  <Step title="Start the relay">
+    ```bash
+    docker compose up -d --build
+    ```
+
+    The default compose file starts the WebSocket relay on port `4000`, the loopback-only owner self-service API on port `4003`, and persists the SQLite database in a Docker volume.
   </Step>
 
   <Step title="Add TLS with Caddy">
@@ -154,9 +159,15 @@ Cross-device sync uses a **relay** — a blind store-and-forward server that hol
 
     ```
     sync.yourdomain.com {
-        reverse_proxy 127.0.0.1:4000 {
-            transport http {
-                versions h1
+        handle /self/* {
+            reverse_proxy 127.0.0.1:4003
+        }
+
+        handle {
+            reverse_proxy 127.0.0.1:4000 {
+                transport http {
+                    versions h1
+                }
             }
         }
     }
@@ -176,13 +187,17 @@ Cross-device sync uses a **relay** — a blind store-and-forward server that hol
   </Step>
 
   <Step title="Point getbased at your relay">
-    In getbased, go to **Settings → Data → Advanced** and enter `wss://sync.yourdomain.com`. The status dot turns green when connected.
+    In getbased, open **Settings → Data → Cross-device sync → Advanced**, enter `wss://sync.yourdomain.com`, and click **Save**. Use **Sync status & storage** to verify both relay connectivity and the configured quota.
   </Step>
 </Steps>
 
 <Info>
-  Minimum server spec: any Linux VPS with 1 CPU, 1 GB RAM (~$5/month), Docker, and a domain with TLS.
+  A small Linux VPS with 1 CPU, 1 GB RAM, Docker, persistent storage, and a domain with TLS is sufficient for a personal relay. Monitor disk usage and keep regular backups of the relay volume.
 </Info>
+
+<Warning>
+Do not expose the admin port or SQLite database volume publicly. Route `/self/*` through the same TLS hostname as the WebSocket relay; those endpoints verify owner signatures and let the app report or rebuild only the caller's own encrypted history.
+</Warning>
 
 ## Local AI with a self-hosted instance
 

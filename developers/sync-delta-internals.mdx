@@ -16,6 +16,10 @@ This page is the contributor contract for adding or changing a synced profile su
 | `sync-push-deltas.js` | Builds and pushes deltas; advances snapshots only after successful remote application |
 | `sync-apply.js` / `sync-chat-apply.js` | Applies inbound profile and chat changes safely |
 | `sync-tombstones.js` | Profile and item-delete propagation, including batched-delete quarantine |
+| `sync-dirty-state.js` | Durable per-profile edit generations used to protect pending local work |
+| `sync-profile-fields.js` | Shared deterministic profile-field allowlist for push and pull |
+| `sync-origin-state.js` | Tab-local committed timestamps used to suppress source-browser update notices |
+| `sync-relay-health.js` | Authoritative storage checks, quota warnings, and owner-signed relay maintenance |
 | `sync-diagnostics.js` | Debug snapshots, status panels, and copyable diagnostics |
 
 ## Delta surface types
@@ -53,6 +57,35 @@ When adding a surface:
 4. Add apply/merge tests for local-vs-remote conflicts.
 5. Add observability if the surface is user-visible in Settings diagnostics.
 
+## No-op and dirty-generation rules
+
+Equivalent maintenance saves must not create relay history. `data.js` skips an imported-data write when the stored value is unchanged, and `sync-push.js` skips an outbound profile payload when its deterministic content matches the last committed payload. Forced rebuilds are the explicit exception.
+
+Every real local edit marks its profile dirty before the debounced push. The marker is a generation token, not a boolean:
+
+1. a push captures the generation it is sending;
+2. successful remote completion clears only that captured generation; and
+3. an edit that arrives during the push leaves a newer generation dirty.
+
+Before an inbound pull can merge remote scalar state, it flushes pending local work. If the flush cannot commit, the pull must fail closed rather than let stale remote state overwrite the local edit. This rule applies to inactive profiles too: durable profile storage, not only the active in-memory profile, is the source for their pending push.
+
+`sync-origin-state.js` records exact committed `syncedAt` values for the current tab. An inbound subscription with one of those timestamps still refreshes local state but does not show the misleading “updated from another device” notice. Other tabs and devices do not share this in-memory marker and still show the notice.
+
+## Relay storage and compaction
+
+Relay quota measures append-only encrypted message history. The client gets authoritative `storedBytes` and `quotaBytes` from the owner-signed `/self/owner-storage` endpoint when the relay supports it; a local estimate is only a temporary fallback.
+
+Self-service compaction is a guarded rebuild, not a blind delete:
+
+1. flush every dirty local profile, including inactive profiles;
+2. pull and merge the latest relay state;
+3. call owner-signed `/self/compact-owner`;
+4. reset local Evolu history under the same owner;
+5. force-push a complete snapshot for every profile; and
+6. verify that the relay contains the rebuilt history.
+
+If any preflight push fails, compaction must not begin. If deletion succeeds but rebuilding is interrupted, the UI keeps a **Retry rebuild** path so the same canonical device can finish without deleting local profile data.
+
 ## Tombstones and deletes
 
 Deletes are explicit tombstones, not absence. This matters for:
@@ -75,5 +108,9 @@ Before shipping sync changes:
 - run browser sync specs if the surface is visible in Settings or the dashboard;
 - verify tombstone behavior for delete/recreate conflicts;
 - verify snapshot advancement after simulated failed pushes;
+- verify equivalent saves and unchanged payloads do not create new pushes;
+- verify pulls and compaction flush dirty active and inactive profiles;
+- verify source-tab notifications are suppressed without suppressing receiving devices;
 - check Settings → Data diagnostics for a useful label and no plaintext secrets;
+- verify owner storage refresh and compaction/rebuild failure recovery when relay maintenance changes;
 - test export/import if the surface should survive backups.

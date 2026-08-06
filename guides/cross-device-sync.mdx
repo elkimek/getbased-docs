@@ -21,11 +21,8 @@ The relay acts as a blind store-and-forward server. It holds encrypted blobs and
   <Step title="Open sync settings">
     Go to **Settings → Data**, or click the **Protect your data** pill on the dashboard and select **Cross-device Sync**.
   </Step>
-  <Step title="Enable sync">
-    Toggle **Cross-device sync** on. A setup modal appears.
-  </Step>
-  <Step title="Choose New setup">
-    Click **New setup** to generate a fresh mnemonic for this account.
+  <Step title="Set up new sync">
+    Click **Set up new sync**. getbased generates a new Sync identity and 24-word mnemonic.
   </Step>
   <Step title="Save your mnemonic">
     Your 24-word mnemonic is displayed in cleartext. Write it down and store it somewhere offline — a piece of paper in a safe place, a password manager, or both. Then check **I have saved my mnemonic somewhere safe**.
@@ -43,18 +40,32 @@ Anyone who has your mnemonic can access your synced data. Treat it like a passwo
 
 <Steps>
   <Step title="Open sync settings on the new device">
-    Go to **Settings → Data** and toggle **Cross-device sync** on.
+    Go to **Settings → Data**.
   </Step>
-  <Step title="Choose Join existing">
-    Click **Join existing** in the setup modal.
+  <Step title="Join your existing identity">
+    Click **Join existing device**.
   </Step>
   <Step title="Enter your mnemonic">
     Paste or type your 24-word mnemonic from your first device.
   </Step>
   <Step title="Restore">
-    Click **Restore**. The page reloads and pulls your data from the relay. All profiles and AI settings appear immediately.
+    Click **Restore**. The page reloads and begins pulling your profiles and settings from the relay.
   </Step>
 </Steps>
+
+<Warning>
+Joining or switching to another Sync identity replaces this browser's local synced profile data. Export a backup first if this browser contains changes that are not present on your other devices.
+</Warning>
+
+## Manage a connected device
+
+Open **Settings → Data → Cross-device sync** to manage the current browser:
+
+- **Sync identity** shows a short, safe comparison code. Matching codes mean two devices use the same 24-word identity. The code does not grant access to your data.
+- **Restore / switch identity** connects this browser to a different mnemonic and reloads its synced data.
+- **Disable on this device** stops sync and clears the Sync identity from this browser. It does not delete relay data or disable your other devices.
+
+To reconnect a disabled browser to the same identity, choose **Join existing device** and restore the saved mnemonic. Choose **Set up new sync** only when you intend to create a separate identity and reconnect your other devices to it.
 
 ## What syncs
 
@@ -94,11 +105,27 @@ When sync is enabled, a small colored dot appears in the header next to the sett
 | Amber | Offline — relay unreachable, changes saved locally |
 | Red | Error — sync failed |
 
-Click the dot to see relay connectivity details, last push and pull timestamps, and a **Sync now** button for manual retry. The **Settings** link in that panel opens the Data tab directly.
+Click the dot to see relay connectivity, recent push and pull status, relay storage usage, and a **Sync now** button for manual retry. The **Settings** button opens the Data tab directly.
+
+For a clearer health check, open **Settings → Data → Cross-device sync → Advanced → Sync status & storage**. This screen leads with a plain-language result, the identity comparison, relay verification, and storage usage. Technical rows and developer metrics stay collapsed unless you open **Technical details**.
+
+## Relay storage and recovery
+
+Relay storage measures encrypted change history, not just the current size of your health data. Repeatedly saving identical data used to grow that history unnecessarily. getbased now skips equivalent local saves and unchanged sync pushes, so refreshing the app without changing data should not keep consuming relay space.
+
+When the relay supports owner self-service, **Sync status & storage** shows the current usage and the relay's configured limit. Use **Refresh usage** to request an authoritative reading.
+
+If storage reaches the amber or red range:
+
+1. Let every connected device finish syncing.
+2. On the device with the most complete data, open **Sync status & storage**.
+3. Click **Reduce storage** and keep the tab open.
+
+getbased first sends pending edits from every local profile, pulls the latest relay state, replaces the old encrypted history with fresh snapshots, and verifies the rebuild. Local profile data is not deleted. If compaction succeeds but rebuilding is interrupted, keep the same device online and use **Retry rebuild**.
 
 ## Conflict resolution
 
-Sync uses **last-write-wins per item**, based on timestamps. Each save ships small per-item CRDT deltas — one lab entry, one marker note, one sun session — rather than re-sending your entire health record. If two devices edit the same item simultaneously before they sync, the most recent push wins. Edits to different items always merge cleanly.
+Sync uses **last-write-wins per item**, based on timestamps. Supported profile surfaces send small per-item CRDT deltas — one lab entry, one marker note, or one sun session — while compatibility and recovery paths can send a complete encrypted snapshot. If two devices edit the same item before they sync, the most recent update wins. Edits to different items merge independently, and unchanged data is not sent again.
 
 ## Mnemonic security
 
@@ -108,9 +135,11 @@ Your mnemonic is your encryption key. getbased takes several precautions to prot
 - **Clipboard auto-clear** — when you copy the mnemonic, the clipboard is cleared after 60 seconds.
 - **No server storage** — the mnemonic is generated and stored locally by the Evolu engine and is never sent to any server.
 
-### Regenerating your mnemonic
+### Changing your mnemonic
 
-Disabling sync resets your identity. Re-enabling sync generates a fresh mnemonic. Your other devices will need to join with the new mnemonic.
+**Disable on this device** affects only the current browser. Relay data and devices already using the old mnemonic remain active. Restoring the old mnemonic reconnects this browser to that identity.
+
+Creating a **New setup** generates a separate identity and mnemonic. To move completely, save the new mnemonic and join that identity from each other device.
 
 <Danger>
 If you lose your mnemonic, there is no recovery. You can still access your local data on each device, but you will need to set up sync again from scratch with a new mnemonic on all devices.
@@ -126,48 +155,9 @@ To reject a quarantined delete, click **Restore** — getbased re-publishes the 
 
 ## Run your own relay server
 
-The relay is open source (the [Evolu relay](https://github.com/evoluhq/evolu/tree/main/apps/relay)) and runs as a single Docker container with an embedded SQLite database. You need a Linux VPS with at least 1 CPU and 1 GB RAM, Docker, and a domain with TLS.
+Use [getbased-relay](https://github.com/elkimek/getbased-relay), the production wrapper around Evolu's sync protocol. It adds configurable quotas, health and metrics, accurate per-identity storage reporting, and the signed self-service recovery endpoints used by **Sync status & storage**.
 
-<Steps>
-  <Step title="Start the relay container">
-    ```bash
-    docker run -d \
-      --name evolu-relay \
-      --network host \
-      --restart unless-stopped \
-      evoluhq/relay:latest
-    ```
-
-    This starts the relay on port 4000 (WebSocket only).
-  </Step>
-  <Step title="Add TLS with Caddy">
-    Install [Caddy](https://caddyserver.com/) and create `/etc/caddy/Caddyfile`:
-
-    ```
-    sync.yourdomain.com {
-        reverse_proxy 127.0.0.1:4000 {
-            transport http {
-                versions h1
-            }
-        }
-    }
-    ```
-
-    The `versions h1` directive is required — WebSocket upgrades need HTTP/1.1.
-
-    ```bash
-    systemctl restart caddy
-    ```
-
-    Caddy provisions a TLS certificate automatically via Let's Encrypt.
-  </Step>
-  <Step title="Point DNS">
-    Add an A record for `sync.yourdomain.com` pointing to your server's IP address.
-  </Step>
-  <Step title="Connect getbased to your relay">
-    In getbased, go to **Settings → Data → Advanced** and enter `wss://sync.yourdomain.com`. The status dot turns green when connected.
-  </Step>
-</Steps>
+The upstream Evolu relay can carry basic encrypted sync traffic, but it does not provide getbased's storage meter or **Reduce storage** workflow. See [Self-host getbased](/guides/self-hosting#running-your-own-sync-relay) for the Docker and reverse-proxy setup.
 
 <Tip>
 For a production relay, disable SSH password authentication, enable a firewall (allow only ports 22, 80, and 443), and enable automatic security updates.
