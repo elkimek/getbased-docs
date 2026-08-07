@@ -348,20 +348,31 @@ Requests structured JSON for only the stale (changed) cards. JSON.parse is wrapp
 │  profile context, assess each profile area.           │
 │  Return ONLY valid JSON with these keys..."           │
 │                                                      │
-│  { "diet": {"dot":"...","tip":"..."},                │
-│    "stress": {"dot":"...","tip":"..."} }    ← only   │
-│                                               stale  │
-│  Dot: green/yellow/red/gray                  cards   │
-│  Tip: max 12 words, reference specific markers       │
+│  { "diet": {"summary":"...", "dot":"...",            │
+│              "tip":"..."},                      ← only   │
+│    "stress": {"summary":"...", "dot":"...",           │
+│                "tip":"..."} }                    stale   │
+│  Summary: reported card facts only, max 24 words     │
+│  Dot: green/yellow/red/gray                          │
+│  Tip: max 8 words, reference specific markers        │
 ├──────────────────────────────────────────────────────┤
 │  USER: buildLabContext()                              │
 ├──────────────────────────────────────────────────────┤
-│  maxTokens: 500  │  streaming: no                     │
+│  maxTokens: 2048  │  streaming: no                    │
 ├──────────────────────────────────────────────────────┤
 │  CACHE: per-card fingerprint via getCardFingerprint() │
 │         only stale cards re-fetched                   │
 └──────────────────────────────────────────────────────┘
 ```
+
+The implementation lives in `context-card-health-dots.js`; `context-cards.js` keeps compatibility exports and owns the visible enable/disable controls. Normal profiles can recalculate stale cards whenever AI is available. Demo profiles follow a stricter policy:
+
+- Bundled summaries, dots, and tips are seeded into the per-profile cache at demo import, so ordinary exploration uses no inference.
+- A non-cloud Ollama/local model recalculates stale demo cards automatically.
+- Cloud and other potentially paid providers require explicit consent for the active demo profile, provider, and model. Consent is held only in memory and is cleared on reload or provider/model change.
+- Without live consent, an edited card is retained but its stale insight is marked as not recalculated.
+
+The cache stores a fingerprint per card. A fingerprint includes lab entries, the card value, shared context notes and interpretive lens, sex, and date of birth; only changed cards are sent on the next live recalculation.
 
 ### 4. PDF Import (`parseLabPDFWithAI`)
 
@@ -611,15 +622,18 @@ Each entry documents:
 | `js/constants.js` | `CHAT_SYSTEM_PROMPT` — priority-tiered system prompt |
 | `js/context-source-registry.js` | `CONTEXT_SOURCE_IDS`, profile-scoped source toggles, lab-group slug helpers |
 | `js/context-card-dashboard-ai.js` | Manage → Context modal, Answer grounding cards, Data sources UI |
+| `js/context-card-health-dots.js` | Card summaries/dots/tips, per-card fingerprints and cache, demo live-AI policy |
+| `js/context-cards.js` | Card rendering facade, save/refresh lifecycle, demo AI confirmation controls |
 | `js/lab-context.js` | `buildLabContext()` — central serializer (full context) |
+| `js/lab-context-change-timeline.js` | Context-card and profile-context history section |
+| `js/lab-context-wearables.js` | Wearable summary sections and structured sleep-context mismatch warnings |
 | `js/sync-messenger.js` | Agent Access context push, encrypted gateway envelope, `ignoreContextToggles` external-sharing path |
 | `js/chat-send.js` | `sendChatMessage()` — chat prompt composition |
 | `js/chat-marker-prompts.js` | `askAIAboutMarker()` — per-marker prompt (effective ranges + trend) |
 | `js/chat-personalities.js` | `generateCustomPersonality()` — persona generator prompt |
 | `js/views.js` | `buildFocusContext()` — lightweight focus card context (~200-400 tokens) |
 | `js/views.js` | `loadFocusCard()` — focus card prompt (health-goals-aware) |
-| `js/context-cards.js` | `recordChange(field)` — timestamps context field snapshots into `changeHistory` |
-| `js/context-cards.js` | `loadContextHealthDots()` — health dots prompt (JSON.parse guarded) |
+| `js/context-cards.js` | `recordChange(field)` — compatibility facade for timestamped context snapshots |
 | `js/pdf-import.js` | `parseLabPDFWithAI()` — PDF import prompt (filename included) |
 | `js/pdf-import.js` | `buildMarkerReference()` — marker schema serializer |
 | `js/api.js` | `callClaudeAPI()` — provider router |

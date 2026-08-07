@@ -451,27 +451,37 @@ Menstrual cycle tracking, helpers, and dashboard rendering.
 
 ### `context-cards.js`
 
-Lifestyle context card rendering plus AI health dots, Interpretive Lens / Knowledge Base dashboard rows, dashboard CTA pills, context change history, and legacy compatibility exports for summary/editor helpers.
+Health-context card rendering and lifecycle facade. It owns the grid, save-and-refresh flow, context notes, demo live-AI confirmation controls, card-tip launchers, and compatibility exports for the split editor, summary, dashboard-AI, and health-dot modules.
 
 **Key exports:**
-- `renderProfileContextCards(data)` — renders the 3-column context card grid on the dashboard
+- `renderProfileContextCards()` — renders the responsive nine-card grid, progress, demo AI status, and additional-context notes
 - `renderInterpretiveLensSection()` — renders the lens row (when set) + KB status row (when configured) + AI personalize CTA pill + Data protection CTA pill
 - `renderKnowledgeBaseSection()` — pure-render helper for the KB status row (returns `''` when no library configured)
 - `renderDataProtectionCta(stateOverride?)` — pure render of the data-protection pill; accepts an explicit state override for testability
 - `openPersonalizeAIPicker()` — 2-card picker (Lens / Knowledge Base) shown when both are unset
 - `openDataProtectionPicker()` — 3-card picker (Encryption / Sync / Auto-backup) with configured cards grayed out
 - `triggerDNAFilePicker()` — programmatic file input trigger that routes through `window.handleDNAFile`; used by the genetics empty-state stub
-- `loadContextHealthDots()` — async; fetches AI health ratings for stale cards (per-card fingerprint caching)
-- `getCardFingerprint(key)` — djb2 hash of lab data + card data + sex + DOB for cache invalidation
-- Per-card editor functions: `openDiagnosesEditor`, `openDietEditor`, `openExerciseEditor`, `openSleepEditor`, `openLightEditor`, `openStressEditor`, `openLoveLifeEditor`, `openEnvironmentEditor`, `openHealthGoalsEditor`; Medical History helpers are compatibility re-exports from `context-card-medical-history-editor.js`, and lifestyle/simple editors are compatibility re-exports from `context-card-lifestyle-editors.js`
-- Per-card save functions: `saveDiagnoses`, `saveDiet`, `saveExercise`, `saveSleep`, `saveLight`, `saveStress`, `saveLoveLife`, `saveEnvironment`, `saveHealthGoals`; `saveDiagnoses` is a compatibility re-export from `context-card-medical-history-editor.js`, and lifestyle/simple saves are compatibility re-exports from `context-card-lifestyle-editors.js`
+- `loadContextHealthDots()` — compatibility facade for stale-card assessment in `context-card-health-dots.js`
+- `getCardFingerprint(key)` — djb2 hash of lab data, card data, shared notes/lens, sex, and DOB for cache invalidation
+- Per-card editor functions: `openDiagnosesEditor`, `openDietEditor`, `openExerciseEditor`, `openSleepRestEditor`, `openLightCircadianEditor`, `openStressEditor`, `openLoveLifeEditor`, `openEnvironmentEditor`, `openHealthGoalsEditor`; Medical History helpers come from `context-card-medical-history-editor.js`, and lifestyle editors come through the cold-safe `context-card-lifestyle-editors.js` facade
+- Matching save/clear functions for all nine context areas are re-exported from their owning editor modules
 - `selectCtxOption(el, group, multi)` — compatibility re-export from `context-card-editor-ui.js`
 - `getSelectedOption(group)` — reads selected value from a `.ctx-btn-group`
 - Summary helpers such as `getDietSummary()` and `getEnvironmentSummary()` — compatibility re-exports from `context-card-summaries.js`
 - `debounceContextNotes()` — auto-saves the free-form context notes textarea
 - `recordChange(field)` — snapshots a context field and appends a timestamped entry to `importedData.changeHistory` (dedup: same-day overwrite, identical skip, 200 cap)
 
-**Window exports:** all open/save functions, `selectCtxOption`, `addCondition`, `deleteCondition`, `addGoal`, `deleteGoal`, `syncDiagnosesNote`, `openInterpretiveLensEditor`, `saveInterpretiveLens`, `renderKnowledgeBaseSection`, `openPersonalizeAIPicker`, `openDataProtectionPicker`, `triggerDNAFilePicker`
+**Window exports:** none; context-card actions are module-only and use delegated data attributes or explicit lazy facades.
+
+---
+
+### `context-card-health-dots.js`
+
+AI-backed profile summaries, colored health dots, and short marker-linked tips for context cards. It fingerprints and caches each card independently, sends only stale cards, normalizes model output, and falls back to gray on malformed or failed responses. Demo profiles use bundled precomputed insights; local models can refresh them automatically, while cloud or paid models require in-memory consent bound to the current demo profile, provider, and model.
+
+**Key exports:** `getDemoContextAIMode()`, `enableDemoContextLiveAI()`, `disableDemoContextLiveAI()`, `applyDotColor()`, `applyAISummary()`, `applyAIProfileSummary()`, `getCardFingerprint()`, `loadContextHealthDots()`, `refreshAllHealthDots()`.
+
+**Window exports:** none directly; compatibility functions are exposed through `context-cards.js`.
 
 ---
 
@@ -481,7 +491,7 @@ Context card metadata, filled-state checks, dashboard summary strings, and the E
 
 **Key exports:** `CONTEXT_CARD_KEYS`, `getContextCardDefs()`, `isContextFilled(key)`, `getConditionsSummary()`, `getDietSummary()`, `getExerciseSummary()`, `getSleepSummary()`, `getLightCircadianSummary()`, `getStressSummary()`, `getLoveLifeSummary()`, `getEnvironmentSummary()`, `getGoalsSummary()`, `getEMFAssessments()`, `renderEMFAssessmentLauncher()`.
 
-**Window exports:** none directly; legacy globals are assigned by `context-cards.js`.
+**Window exports:** none.
 
 ---
 
@@ -491,7 +501,7 @@ Shared context editor modal shell and field-control render/read helpers used by 
 
 **Key exports:** `renderContextEditorModal()`, `renderSelectField()`, `selectCtxOption()`, `getSelectedOption()`, `renderTagsField()`, `toggleCtxTag()`, `getSelectedTags()`, `renderNoteField()`, `contextEditorActions()`.
 
-**Window exports:** none directly; legacy globals are assigned by `context-cards.js`.
+**Window exports:** none.
 
 ---
 
@@ -501,17 +511,33 @@ Medical History editor module for personal conditions and family history. Owns t
 
 **Key exports:** `configureMedicalHistoryEditor()`, `openDiagnosesEditor()`, `renderDiagnosesModal()`, `filterConditionSuggestions()`, `selectConditionSuggestion()`, `closeSuggestionsOnClickOutside()`, `syncDiagnosesNote()`, `addCondition()`, `editCondition()`, `cancelConditionEdit()`, `deleteCondition()`, `addFamilyHistoryEntry()`, `editFamilyHistoryEntry()`, `cancelFamilyHistoryEdit()`, `deleteFamilyHistoryEntry()`, `filterFamilyConditionSuggestions()`, `selectFamilyConditionSuggestion()`, `saveDiagnoses()`, `closeDiagnoses()`, `clearDiagnoses()`.
 
-**Window exports:** none directly; legacy globals are assigned by `context-cards.js`.
+**Window exports:** none.
 
 ---
 
 ### `context-card-lifestyle-editors.js`
 
-Lifestyle/simple context editors for Diet & Digestion, Sleep & Rest, Light & Circadian, Exercise, Stress, Love Life, Environment, Health Goals, Interpretive Lens, and the diet contaminant modal. Uses `configureLifestyleContextEditors()` so `context-cards.js` remains the owner of `recordChange()` and `saveAndRefresh()` while the editor module owns modal rendering and save/clear handlers.
+Cold-safe facade for all lifestyle context editors. It keeps the small diet-contaminant badge path available during dashboard render, lazy-loads `context-card-lifestyle-editors-impl.js` on first editor action, retries a failed module fetch once with a fixed alternate URL, and forwards the save/change callbacks owned by `context-cards.js`.
 
 **Key exports:** `configureLifestyleContextEditors()`, `renderDietContaminantsBadge()`, `openDietEditor()`, `saveDiet()`, `clearDiet()`, `openSleepRestEditor()`, `saveSleepRest()`, `clearSleepRest()`, `openLightCircadianEditor()`, `saveLightCircadian()`, `clearLightCircadian()`, `openExerciseEditor()`, `saveExercise()`, `clearExercise()`, `openStressEditor()`, `saveStress()`, `clearStress()`, `openLoveLifeEditor()`, `saveLoveLife()`, `clearLoveLife()`, `openEnvironmentEditor()`, `saveEnvironment()`, `clearEnvironment()`, `openHealthGoalsEditor()`, `renderHealthGoalsModal()`, `addHealthGoal()`, `deleteHealthGoal()`, `closeHealthGoals()`, `clearHealthGoals()`, `openInterpretiveLensEditor()`, `saveInterpretiveLens()`, `clearInterpretiveLens()`, `showDietContaminantsModal()`.
 
-**Window exports:** none directly; legacy globals are assigned by `context-cards.js`.
+**Window exports:** none.
+
+---
+
+### `context-card-lifestyle-editors-impl.js`
+
+Main editor implementation for Diet & Digestion, Sleep & Rest, Exercise, Stress, Love Life & Relationships, and Environment. It renders the current option sets, progressive detail sections, SI/US hydration labels, diet contaminant badge, and save/clear handlers. Light, goals, interpretive lens, and the contaminant detail modal are delegated to `context-card-lifestyle-special-editors.js` and re-exported.
+
+**Window exports:** none; called through the cold-safe lifestyle facade.
+
+---
+
+### `context-card-lifestyle-special-editors.js`
+
+Specialized editors for Light & Circadian, prioritized Health Goals, Interpretive Lens, and diet contaminant details. It mirrors relevant Light setup values and keeps Health Goals sorted by priority.
+
+**Window exports:** none; re-exported through the lifestyle editor modules and `context-cards.js`.
 
 ---
 
@@ -1511,7 +1537,25 @@ Central AI context serializer. Extracted from `chat.js`.
 **Key exports:**
 - `buildLabContext()` — serializes all lab entries + all 9 context cards + interpretiveLens + contextNotes + cycle data + notes into a structured AI context string
 
-**Window exports:** `buildLabContext`
+**Window exports:** none; callers import it directly or use a configured module facade.
+
+---
+
+### `lab-context-change-timeline.js`
+
+Builds the `[section:changeHistory]` profile-context timeline used by `buildLabContext()`. It filters the timeline by enabled Insight Context Cards and Light & Sun sources, orders snapshots by date, and renders field-level changes.
+
+**Window exports:** none.
+
+---
+
+### `lab-context-wearables.js`
+
+Builds compact wearable context and optional Agent Access series. It also detects contradictions between manually selected Sleep & Rest duration/quality and recent wearable data, returning an explicit mismatch warning instead of silently choosing one source.
+
+**Key exports:** `getSleepContextMismatch()`, `buildWearableContext()`, `buildWearableSeriesSection()`, and the in-app/Agent Access wearable-context setting helpers.
+
+**Window exports:** none.
 
 ---
 
