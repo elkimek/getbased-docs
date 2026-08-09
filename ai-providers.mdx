@@ -17,8 +17,8 @@ Voice uses a separate service chosen in **Settings → Voice**. You can keep dic
 | PDF import | Yes |
 | AI chat panel | Yes |
 | Focus card (dashboard insight) | Yes |
-| Health status dots on context cards | Yes |
-| AI-generated card tips | Yes |
+| Live context-card summaries and status dots | Yes (demo profiles include precomputed versions) |
+| Live AI-generated card tips | Yes (demo profiles include precomputed versions) |
 | Web search in chat | Yes (OpenRouter, PPQ, Venice) |
 | Test AI models with the built-in report | Yes |
 | Charts, tables, trend alerts | No |
@@ -27,6 +27,10 @@ Voice uses a separate service chosen in **Settings → Voice**. You can keep dic
 | Correlations, compare dates | No |
 
 All non-AI features work fully without any provider configured. You can load a demo profile, enter results manually, and explore charts and trends before setting up AI.
+
+<Tip>
+The built-in demo profiles ship with precomputed context-card insights. Local AI can recalculate edited demo cards automatically, while cloud and other potentially paid providers stay off for demo-card recalculation until you explicitly enable live AI for the selected provider and model. The consent is session-only, so a reload or model/provider change requires a new confirmation. See [Health context](/guides/context-cards#demo-profiles-and-ai-cost).
+</Tip>
 
 ## Set up a provider
 

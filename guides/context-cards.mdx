@@ -1,30 +1,32 @@
 ---
-title: "Add lifestyle context for better AI answers"
-sidebarTitle: "Lifestyle context"
-description: "Nine context cards capture diet, sleep, environment, medical history, and other factors that can help explain your lab results."
+title: "Add health context for better interpretation"
+sidebarTitle: "Health context"
+description: "Nine context cards capture goals, medical history, daily life, and environmental factors that can help explain your health data."
 ---
 
-Context cards capture the health context behind your lab results: diet, sleep, environment, medical history, stress, goals, and more. They live in **Insight → Manage → Context** and can also appear in dashboard widgets when you add them to your overview.
+Context cards capture the health context behind your lab results: goals, medical history, diet, sleep, exercise, stress, relationships, environment, and more. They live in **Insight → Manage → Context** and can also appear in dashboard widgets when you add them to your overview.
 
 New users do not need to fill every card before using getbased. Guided chat can route you to the relevant context only when it helps.
+
+Each card starts with the most useful questions. Open the later sections only when you want to add more detail, and use the note field when none of the structured options quite fit. The card grid shows how many areas you have added, a readable summary of each filled card, and—when available—a short assessment connected to your lab data.
 
 ## The nine cards
 
 | # | Card | What it captures |
 |---|---|---|
-| 1 | **Health Goals** | What you are working toward — weight, energy, longevity, athletic performance, or a custom goal |
-| 2 | **Medical History** | Your diagnoses and ongoing conditions, plus family history through grandparents |
-| 3 | **Diet & Digestion** | Eating patterns, meal timing, dietary restrictions, and 10 digestion fields |
-| 4 | **Exercise** | Frequency, types, intensity, and daily movement habits |
-| 5 | **Sleep & Rest** | Duration, quality, sleep environment, and practices such as mouth taping or magnesium |
-| 6 | **Light & Circadian** | Morning sunlight, UV exposure, evening screen habits, and grounding practices |
-| 7 | **Stress** | Stress level, sources, and management strategies |
-| 8 | **Love Life & Relationships** | Relationship quality and sexual health |
-| 9 | **Environment** | Water quality, EMF exposure, air quality, home lighting, and toxin sources |
+| 1 | **Health Goals** | Prioritized goals such as energy, sleep, metabolic health, cardiovascular risk, hormones, nutrient status, recovery, or your own goal |
+| 2 | **Medical History** | Current and past conditions, status and severity, procedures, and family history including extended maternal or paternal relatives |
+| 3 | **Diet & Digestion** | Diet and meal pattern, protein in g/kg/day, fluids in L/day or fl oz/day, restrictions, alcohol, caffeine, recent changes, digestive symptoms, and food sensitivities |
+| 4 | **Exercise** | Frequency, training types including physiotherapy or rehabilitation, intensity, session length, daily movement, muscle context, limitations, and recovery |
+| 5 | **Sleep & Rest** | Duration, quality, sleep issues, daytime sleepiness, apnea/PAP context, naps, schedule, room conditions, and sleep practices |
+| 6 | **Light & Circadian** | Morning and daytime light, UV exposure, evening light, screens and technology, cold exposure, grounding, and meal timing |
+| 7 | **Stress** | Level, duration, trend, sources, and stress-management practices |
+| 8 | **Love Life & Relationships** | Relationship status and quality, satisfaction, libido, sexual health concerns, and reproductive goals in one combined card |
+| 9 | **Environment** | Living setting, climate and altitude, smoke or occupational exposure, water source, EMF, home lighting, air quality, toxins, and building context |
 
 ## AI health dots and tips
 
-Each card shows a small colored dot and a brief AI-generated tip (up to 12 words) tailored to your data.
+Each card can show a colored status, a concise profile summary, and a brief marker-linked AI tip. The status is an interpretation aid, not a diagnosis.
 
 | Dot | Meaning |
 |---|---|
@@ -33,7 +35,7 @@ Each card shows a small colored dot and a brief AI-generated tip (up to 12 words
 | 🔴 Red | This area may be contributing to out-of-range results |
 | ⚪ Gray | Not enough information to assess |
 
-The dots and tips are cached. They refresh only when your data or card content changes, so getbased does not call the AI provider on every page load.
+Summaries, dots, and tips are cached by card. Only cards whose content or relevant health data changed are recalculated, so getbased does not call the AI provider on every page load.
 
 <Tip>
 Fill in the cards that are relevant now. Filled cards add context the AI cannot infer from numbers alone. You can also turn the whole Insight Context Cards source on or off from **Insight → Manage → Context → Data sources**.
@@ -41,15 +43,15 @@ Fill in the cards that are relevant now. Filled cards add context the AI cannot 
 
 ## How to fill in a card
 
-Open **Insight → Manage → Context** or a context dashboard widget, then click any card to edit it. Each editor uses pill-button selectors and tag chips for multi-select options. Click **Save** to apply your changes.
+Open **Insight → Manage → Context** or a context dashboard widget, then click any card to edit it. Each editor uses pill-button selectors and tag chips for multi-select options. Complete only the sections that apply to you, add a note if needed, then click **Save**.
 
 ## Medical history card
 
 The Medical History card has two sections, and getbased uses them for different kinds of context:
 
-**Your conditions** captures diagnoses you live with. Each entry includes a condition name, optional severity (major, mild, or minor), and an optional "since" year. The AI uses this to understand why certain biomarkers may be expected to deviate from population reference ranges.
+**Your conditions** captures diagnoses you live with or had previously. Each entry includes a condition name, optional priority/severity, current status, and an optional "since" year. The AI uses this to understand why certain biomarkers may be expected to deviate from population reference ranges.
 
-**Family history** captures what runs in your family. Each entry has a relative, a condition, an optional age of onset, and an optional note (for example, *"survived, on statin since 2010"*). The relative list covers first-degree relatives and all four grandparents. More distant relatives are usually less useful. For example, a father's heart attack at 52 may make a borderline LDL result more important to discuss.
+**Family history** captures what runs in your family. Each entry has a relative, a condition, an optional age of onset, and an optional note (for example, *"survived, on statin since 2010"*). The relative list covers first-degree relatives, half-siblings, all four grandparents, and another maternal or paternal relative. For example, a father's heart attack at 52 may make a borderline LDL result more important to discuss.
 
 The condition picker is shared between both subsections — type any name and accept an autocomplete suggestion, or enter free text if your condition is not listed.
 
@@ -83,6 +85,16 @@ Open **Insight → Manage → Context → Data sources** to control that source.
 
 Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. When the relevant source is enabled, this helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
 
+## Demo profiles and AI cost
+
+The built-in demo profiles include precomputed card summaries, statuses, and tips, so opening and exploring them does not spend AI tokens.
+
+- With no provider, or while AI is paused, the demo keeps using those precomputed insights.
+- A locally hosted model updates changed demo cards automatically without paid-provider charges.
+- A cloud or otherwise paid model stays off for demo-card recalculation until you click **Enable live AI** and confirm the selected provider and model. That choice lasts only for the current browser session and is cleared when you reload, switch provider or model, or turn live AI off.
+
+If you edit a demo card while live AI is off, getbased keeps your edit and marks the affected demo insight as not recalculated. This is expected: enable live AI if you want a new assessment, or continue exploring without spending tokens.
+
 ## Change history
 
 getbased automatically timestamps every change you make to a context card. When you switch from Mediterranean to carnivore diet, or change your stress level from high to moderate, the previous value and the date of the change are recorded.
@@ -92,5 +104,5 @@ This timeline is included in AI context when **Insight Context Cards** are enabl
 Change history is included in your [JSON export and import](/guides/export-import).
 
 <Warning>
-Context cards never leave your device except as part of AI API calls sent to your chosen provider. See [AI providers](/ai-providers) and [Encryption](/guides/encryption) for details on how your data is handled.
+Context cards remain in browser storage by default. They cross the browser-storage boundary only through a feature you choose, such as an AI request, encrypted sync, profile sharing, Agent Access, or an export you save. See [Privacy](/guides/privacy), [AI providers](/ai-providers), and [Encryption](/guides/encryption) for the relevant boundaries.
 </Warning>

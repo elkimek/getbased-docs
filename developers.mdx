@@ -5,7 +5,7 @@ description: "Developer guide index for getbased: architecture, data model, AI s
 
 # Developer documentation
 
-getbased is a native ES module web app with no app bundler. It still uses npm for tests, type checks, Playwright, and deployment helpers.
+getbased uses native ES modules during local development and a Rolldown production build for hosted deployments. npm also provides tests, type checks, architecture checks, Playwright, and deployment tooling.
 
 If you are new here, start with [CONTRIBUTING.md](https://github.com/elkimek/get-based/blob/main/CONTRIBUTING.md) for setup, local runs, tests, and PR guidelines. Use this section when you need implementation details that are too technical for the user guides.
 
@@ -13,7 +13,7 @@ If you are new here, start with [CONTRIBUTING.md](https://github.com/elkimek/get
 
 | Page | Use it for |
 |---|---|
-| [Architecture](/developers/architecture) | How the app is structured, started, and deployed without bundling app source |
+| [Architecture](/developers/architecture) | How the source-module graph, startup phases, lazy features, and production bundles fit together |
 | [Module Reference](/developers/module-reference) | Finding the JS module that owns a feature or window binding |
 | [Cross-Module Patterns](/developers/cross-module-patterns) | Shared patterns: window exports, state access, dependency boundaries |
 
