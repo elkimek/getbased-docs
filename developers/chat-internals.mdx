@@ -1,0 +1,130 @@
+---
+title: "Chat internals"
+description: "Developer contract for chat drafts, thread storage, bounded rendering, message edits and forks, discussion rounds, custom personas, sync, and backups."
+---
+
+# Chat internals
+
+Chat is a profile-scoped workflow built from small ES modules rather than one panel controller. The active conversation lives in `state.chatHistory`, while durable thread metadata, messages, custom personas, and deletion records use separate storage keys. UI work must preserve four invariants:
+
+1. switching profiles or conversations must not let late async work mutate the new active thread;
+2. an unreadable encrypted record must fail closed instead of being replaced with an empty chat;
+3. creating a conversation must never delete an older one; and
+4. drafts are device-local, while sent messages and personas can participate in backup and optional Sync.
+
+## Ownership map
+
+| Area | Owner modules |
+|---|---|
+| Public entry and callback wiring | `chat.js`, `chat-window-bindings.js`, `app-chat-hooks.js` |
+| Panel and composer | `chat-panel.js`, `chat-composer.js`, `chat-draft-storage.js`, `chat-send.js` |
+| Transcript and scroll | `chat-render.js`, `chat-render-range.js`, `chat-scroll.js`, `chat-stream-status.js` |
+| Message actions, edits, and forks | `chat-actions.js`, `chat-message-edit.js`, `chat-message-action-attrs.js` |
+| Conversation index and search | `chat-threads.js`, `chat-history.js`, `chat-thread-search.js` |
+| Personas | `chat-personalities.js`, `chat-personality-editor.js`, `chat-personality-storage.js`, `chat-personality-merge.js` |
+| Discussion mode | `chat-discussion-*.js` modules |
+| Persisted recommendation disclosure | `chat-recommendation-disclosure.js`, `chat-render.js` |
+| Validation, backup, and Sync | `chat-storage-safety.js`, `backup-chat-storage.js`, `sync-payload-collectors.js`, `sync-chat-apply.js` |
+
+`chat-loader.js` keeps this graph cold until the user opens chat, follows a chat deep link, or enters a chat-first onboarding path. Feature modules communicate through explicit configuration callbacks where a direct import would create a cycle.
+
+## Composer drafts
+
+`chat-composer.js` grows the textarea to its CSS maximum, updates the send-button state, and binds the visible input to the active `{ profileId, threadId }`. `chat-draft-storage.js` debounces writes by 300 ms under:
+
+```text
+labcharts-{profileId}-chatDraft_{threadId}
+```
+
+The draft key is in `crypto.js`'s sensitive-key allowlist. With local data protection enabled and unlocked, `encryptedSetItem()` stores an AES-GCM envelope; otherwise the wrapper stores plaintext. Drafts are deliberately excluded from Sync, single-profile export, database backup, auto-backup, and folder backup.
+
+Thread switches save the visible draft before changing state and restore the destination draft afterward. A monotonic restore request ID plus profile/thread checks prevents a slow decrypt from writing an old conversation's text into the new composer. Sending clears the draft through the ordered write chain, so an already-running debounced save cannot resurrect it.
+
+## Send and response flow
+
+For a normal turn, `chat-send.js`:
+
+1. snapshots the active thread and provider state;
+2. appends and persists the user message;
+3. assembles `CHAT_SYSTEM_PROMPT`, enabled `buildLabContext()` output, web/private-mode hints, and the active persona;
+4. sends up to the last 30 eligible conversation messages;
+5. streams into a thread-bound DOM node and screen-reader status; and
+6. persists the final assistant message, usage, provider/model metadata, context disclosure, knowledge-base sources, and recommendation state.
+
+`CHAT_RESPONSE_MAX_TOKENS` is 16,384. `callChatAPIWithContinuation()` can make up to two automatic continuation calls when provider metadata or the response shape indicates truncation. Usage from all parts is merged. A still-truncated result is persisted with `truncated: true`.
+
+Stopping aborts the active request and keeps a non-empty partial response with `stopped: true`. The regular action bar then offers **Retry**. Recommendations always persist collapsed; `recNew` supplies a finite attention cue only for the first or materially changed set of recommendation slots.
+
+## Bounded rendering and scroll ownership
+
+Stored history is not truncated for rendering. `chat-render-range.js` initially exposes the last 120 records and expands backward in 120-record batches. Search can call `revealChatRenderIndex()` to expose a result outside the current window.
+
+`chat-scroll.js` treats a position within 80 px of the bottom as “near latest.” Streaming follows the response only while the user remains near the bottom. If the user scrolls upward, new content does not steal their position; **Jump to latest** appears and receives a new-content cue. Prepending earlier history compensates for the changed scroll height so the visible messages remain anchored.
+
+The transcript is an ARIA conversation log, but token-by-token DOM updates are not themselves a live region. `chat-stream-status.js` emits concise polite status changes such as responding, stopped, failed, or complete.
+
+## Conversations, search, edits, and forks
+
+The thread index and message records are separate sensitive keys:
+
+```text
+labcharts-{profileId}-chat-threads
+labcharts-{profileId}-chat-t_{threadId}
+```
+
+`chat-threads.js` owns index writes. `pruneOldThreads()` is intentionally a compatibility no-op: retention is a user decision. If an existing index cannot be decrypted or parsed, writes and new-conversation creation are blocked so a corrupt or locked index cannot be overwritten with an empty one.
+
+`chat-thread-search.js` filters names immediately, then debounces message-body search by 250 ms. It decrypts each thread on demand, caches results per active profile, displays at most 30 message matches, and delegates thread switching and bounded-range reveal back to the owners.
+
+`chat-message-edit.js` permits **Edit & retry** only for the latest visible user message, only while no response is streaming, and only when the message has no images. The send preparation trims the current history before that message, then the normal send path appends the edited text and replacement response.
+
+A fork is non-destructive. **Fork to new chat** copies normalized history through the selected assistant response and creates a new thread with `forkedFromThreadId` and `forkedFromMessageIndex`. The new transcript shows a source notice and link when the original still exists.
+
+## Custom personas
+
+Built-in personalities remain in `CHAT_PERSONALITIES`. Profile-scoped custom personas are stored as a normalized array under `labcharts-{profileId}-chatPersonalityCustom`; deletions use the timestamp map `labcharts-{profileId}-chatPersonalityDeleted`.
+
+Each custom record has a stable `custom_...` ID, name, icon, editable `promptText`, `createdAt`, `updatedAt`, and optional hosted-app `personaAgreement`. The official `getbased.health` host requires the current agreement version before a custom persona can be saved or used. Self-hosted origins show a notice but do not require the checkbox.
+
+`chat-personality-storage.js` owns encrypted persistence and the synchronous decrypted cache used by rendering. `chat-personality-merge.js` resolves Sync conflicts per persona by update timestamp and applies deletion tombstones. A selected custom ID that no longer exists falls back to the default personality. Each thread records its own selected personality; a new thread starts with the default.
+
+## Discussion rounds
+
+Discussion state is persisted on the thread, including participant descriptors, the original personality, pending participants, and ended state. The active personality is locked when a discussion begins; the picker adds one participant at a time and discloses the immediate and future number of provider requests.
+
+`chat-discussion-round-runner.js` runs participants sequentially. Each response is a separate API request with its own usage metadata. The runner binds persistence to the origin thread, so switching conversations during a round cannot write into the new active history. Pause stores the unstarted participants; resume runs only the remainder. A failed participant persists a targeted error record so the UI can retry that participant or resume the remaining round without replaying successful responses.
+
+## Backup and Sync
+
+Single-profile JSON export serializes normalized threads, messages, the selected personality, custom personas, and persona tombstones. Full database, auto, and folder backups preserve raw chat index/message values—including ciphertext that cannot be read during a locked backup—through `backup-chat-storage.js`. Drafts remain excluded.
+
+Optional Cross-device Sync collects:
+
+- the thread index and per-thread messages;
+- thread deletion tombstones;
+- the active personality ID;
+- custom persona records; and
+- custom persona deletion tombstones.
+
+Inbound thread merge is last-write-wins by `updatedAt`, with message count as an equal-timestamp tiebreaker. A short active-profile freshness lock protects just-edited local chat from stale inbound records. Persona records merge independently by ID and timestamp, so a conflict in one persona does not replace the whole array.
+
+## Import safety limits
+
+`chat-storage-safety.js` normalizes untrusted import, backup, and Sync shapes before persistence. Current hard ceilings are 5,000 threads, 5,000 messages per thread, 50 custom personas, and 10 persisted thumbnails per message. These are defensive parsing limits, not normal UI retention policies. IDs, timestamps, flags, usage, fork/discussion metadata, image data URLs, and persona agreements are all normalized before use.
+
+The curated single-profile JSON merge has a narrower compatibility limit: `_importChatData()` stops adding imported conversations when the destination index reaches 50. It does not prune or replace conversations already stored. Full database backup/restore preserves the raw chat records and is the appropriate migration path for a larger archive.
+
+## Change-scoped verification
+
+Choose the checks that cover the changed ownership area. Useful focused commands include:
+
+```bash
+npm test -- tests/chat-composer.test.js tests/chat-scroll.test.js tests/chat-render-window.test.js
+npm test -- tests/chat-personality-merge.test.js tests/chat-storage-safety.test.js
+npx playwright test tests/playwright/chat-composer.spec.js tests/playwright/chat-message-edit.spec.js
+npx playwright test tests/playwright/chat-accessibility-polish.spec.js tests/playwright/custom-personality-dom.spec.js
+npm run typecheck:checkjs
+npm run architecture:check
+```
+
+GitHub Actions owns the exhaustive Chromium and combined-coverage matrix.

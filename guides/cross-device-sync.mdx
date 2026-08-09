@@ -49,9 +49,11 @@ Anyone who has your mnemonic can access your synced data. Treat it like a passwo
     Paste or type your 24-word mnemonic from your first device.
   </Step>
   <Step title="Restore">
-    Click **Restore**. The page reloads and begins pulling your profiles and settings from the relay.
+    Click **Restore**. getbased finishes switching the local Sync owner before it performs the controlled page reload, then begins pulling your profiles and settings from the relay.
   </Step>
 </Steps>
+
+After the reload, keep the app open until the header dot turns green. If the device still has no profiles, open **Settings → Data → Cross-device sync**, confirm that its **Sync identity** matches your other device, and choose **Sync now**.
 
 <Warning>
 Joining or switching to another Sync identity replaces this browser's local synced profile data. Export a backup first if this browser contains changes that are not present on your other devices.
@@ -75,10 +77,10 @@ The following data flows across all paired devices:
 - Profile metadata — name, sex, date of birth, location, tags
 - AI settings — provider, API keys, model selections, Venice Encrypted TEE Mode toggle, PPQ private-mode preference
 - Agent Access state — enabled flag, relay profile metadata, read token, Agent Context key, and the selected wearable daily-series window
-- Chat threads, messages, and custom personalities
+- Chat threads, messages, custom personalities, and persona deletion records
 - Display preferences — unit system, range mode, chart overlays
 
-Settings such as theme are device-specific and do not sync. Wearable OAuth refresh tokens, raw wearable daily rows, and AI model-test history also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
+Settings such as theme are device-specific and do not sync. Unsent per-conversation chat drafts, wearable OAuth refresh tokens, raw wearable daily rows, and AI model-test history also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
 
 ### AI model-test history
 
@@ -122,6 +124,12 @@ If storage reaches the amber or red range:
 3. Click **Reduce storage** and keep the tab open.
 
 getbased first sends pending edits from every local profile, pulls the latest relay state, replaces the old encrypted history with fresh snapshots, and verifies the rebuild. Local profile data is not deleted. If compaction succeeds but rebuilding is interrupted, keep the same device online and use **Retry rebuild**.
+
+### Protection when a saved profile cannot be read
+
+Large profile blobs—including imported genome data—can live in IndexedDB even when local encryption is off. Sync reads active and inactive profiles through that canonical storage path.
+
+If a profile is temporarily missing, locked, corrupt, or otherwise unreadable, getbased does not turn the failed read into an empty profile. It skips the outbound update, and **Reduce storage** stops before compaction if any required profile cannot be read. Existing relay data and the other devices' copies remain untouched so you can diagnose the local storage problem without propagating a blank replacement.
 
 ## Conflict resolution
 

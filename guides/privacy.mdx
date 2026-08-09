@@ -9,12 +9,12 @@ Data leaves your browser only when you choose a feature that needs it: sending p
 
 ## Where your data lives
 
-During normal local use, profile data such as lab entries, context cards, notes, supplements, genetics, wearable summaries, model-test history, and chat threads is stored in two browser-native storage areas:
+During normal local use, profile data such as lab entries, context cards, notes, supplements, genetics, wearable summaries, model-test history, sent chat threads, custom personas, and unsent per-thread drafts is stored in two browser-native storage areas:
 
 - **localStorage** for profile data, settings, and app state
 - **IndexedDB** for wearable time-series rows, knowledge base vectors, and backup snapshots
 
-Clearing your browser data will erase your local getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control. Opt-in network features such as AI providers, sync, profile sharing, and Agent Access are covered below.
+Clearing your browser data will erase your local getbased data, so use the [export](/guides/export-import) and [backup](/guides/backup) features to keep copies you control. Sent conversations and custom personas are included in those backup paths; unsent drafts are deliberately device-local and excluded. Opt-in network features such as AI providers, sync, profile sharing, and Agent Access are covered below.
 
 ## Encryption at rest
 

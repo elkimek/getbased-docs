@@ -69,7 +69,21 @@ Every real local edit marks its profile dirty before the debounced push. The mar
 
 Before an inbound pull can merge remote scalar state, it flushes pending local work. If the flush cannot commit, the pull must fail closed rather than let stale remote state overwrite the local edit. This rule applies to inactive profiles too: durable profile storage, not only the active in-memory profile, is the source for their pending push.
 
+`readProfileImportedData()` always uses `encryptedGetItem()` for named profiles. That wrapper owns the IndexedDB-backed `*-imported` route whether or not the blob contents are encrypted. A missing/unreadable named profile returns `null`, not a newly created default object. `sync-push.js`, scheduled pushes, pull preflight, and compaction treat that result as a hard skip/failure so a storage read problem cannot become an authoritative empty relay update.
+
 `sync-origin-state.js` records exact committed `syncedAt` values for the current tab. An inbound subscription with one of those timestamps still refreshes local state but does not show the misleading “updated from another device” notice. Other tabs and devices do not share this in-memory marker and still show the notice.
+
+## Existing-mnemonic restore ordering
+
+Joining a Sync identity must finish application state before navigation. Evolu's default `restoreAppOwner()` behavior can reload from inside its worker before the returned promise resolves. A first-time join previously reloaded while Sync still had provisional `persist: false` state, so the restored owner could not pull relay data.
+
+For a user-entered existing mnemonic, `sync-identity.js` calls:
+
+```js
+await evolu.restoreAppOwner(normalizedMnemonic, { reload: false });
+```
+
+It then enables/persists Sync and completes getbased's join-finalization path before issuing the single controlled reload. The local seeding/recovery path remains separate. Tests for this contract must assert call ordering, not only that `restoreAppOwner()` was invoked.
 
 ## Relay storage and compaction
 
@@ -84,7 +98,7 @@ Self-service compaction is a guarded rebuild, not a blind delete:
 5. force-push a complete snapshot for every profile; and
 6. verify that the relay contains the rebuilt history.
 
-If any preflight push fails, compaction must not begin. If deletion succeeds but rebuilding is interrupted, the UI keeps a **Retry rebuild** path so the same canonical device can finish without deleting local profile data.
+If any preflight push fails—or any required profile blob cannot be read—compaction must not begin. If deletion succeeds but rebuilding is interrupted, the UI keeps a **Retry rebuild** path so the same canonical device can finish without deleting local profile data.
 
 ## Tombstones and deletes
 
@@ -100,6 +114,8 @@ For batched profile deletes, receiving browsers show an apply/restore UI in Sett
 
 Agent Access state is part of the encrypted profile. The enabled state, read token, Agent Context key, relay metadata, and wearable-series window can travel to another paired browser. Wearable OAuth refresh tokens do not sync; each device must reconnect wearable vendors independently.
 
+The encrypted Agent Access summary is produced by the same `buildLabContext()` formatter used by in-app AI, with context toggles bypassed because the Agent Access switch is the external-sharing permission. Context-card serialization must preserve explicit values such as digestive `none`/`normal` answers and Light & Circadian `skinType`; adding a stored card field requires assertions for both the in-app context and encrypted gateway payload.
+
 ## Verification checklist
 
 Before shipping sync changes:
@@ -110,6 +126,8 @@ Before shipping sync changes:
 - verify snapshot advancement after simulated failed pushes;
 - verify equivalent saves and unchanged payloads do not create new pushes;
 - verify pulls and compaction flush dirty active and inactive profiles;
+- verify an unreadable active or inactive profile cannot produce an empty push and stops compaction preflight;
+- verify existing-mnemonic restore persists the joined owner before the controlled reload;
 - verify source-tab notifications are suppressed without suppressing receiving devices;
 - check Settings → Data diagnostics for a useful label and no plaintext secrets;
 - verify owner storage refresh and compaction/rebuild failure recovery when relay maintenance changes;

@@ -69,6 +69,12 @@ HMAC-SHA256(
 
 The relay rejects unsigned writes, stale timestamps, token-owner mismatches, profile-limit excess, token-limit excess, and owner quota excess.
 
+## Context assembly contract
+
+The browser renders Agent Access text through `buildLabContext({ skipGroupFilter: true, ignoreContextToggles: true, ... })`. It is the same serializer used by in-app AI, but Agent Access intentionally bypasses in-app Data sources because **Settings → Agent Access** is the separate external-sharing permission.
+
+Do not maintain a second context-card formatter for the relay. Stored values that mean “answered negatively” must survive just like positive answers: Diet & Digestion serializes values such as `none` and `normal`, and Light & Circadian serializes `skinType`. Tests should decrypt the outgoing envelope and assert those fields in the plaintext, not merely assert that a POST occurred.
+
 ## Envelope shape
 
 Version 2 envelopes use a random raw 256-bit Agent Context key. There is no v2 salt because no token/password KDF is involved.
@@ -119,8 +125,9 @@ Before marking Agent Access ready:
 
 1. Run relay unit tests for signature validation, stale timestamp rejection, owner quota, profile limits, and token limits.
 2. Run browser/app tests proving the POST body contains `context: JSON.stringify({ encryptedContext })`, not plaintext.
-3. Run MCP tests proving v2 decrypt works with `GETBASED_AGENT_CONTEXT_KEY` and wrong-key/token-alone decrypt fails.
-4. Run a live relay E2E against the deployed gateway:
+3. Decrypt a captured browser envelope and prove redesigned context-card fields—including explicit negative/normal digestive answers and skin type—match in-app `buildLabContext()` output.
+4. Run MCP tests proving v2 decrypt works with `GETBASED_AGENT_CONTEXT_KEY` and wrong-key/token-alone decrypt fails.
+5. Run a live relay E2E against the deployed gateway:
    - insert or create a disposable owner;
    - POST an encrypted sentinel;
    - fetch the relay payload directly;

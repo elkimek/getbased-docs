@@ -54,12 +54,14 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-{profileId}-noteOverlay` | string | `'off'` \| `'on'` — note dots on charts |
 | `labcharts-{profileId}-suppOverlay` | string | `'off'` \| `'on'` — supplement bars on charts |
 | `labcharts-{profileId}-phaseOverlay` | string | `'off'` \| `'on'` — cycle phase bands on charts |
-| `labcharts-{profileId}-chatPersonality` | string | `'default'` \| `'house'` \| `'custom'` |
-| `labcharts-{profileId}-chatPersonalityCustom` | JSON | Custom personality: `{ name, icon, promptText, evidenceBased }` |
+| `labcharts-{profileId}-chatPersonality` | string | Active personality ID: `'default'`, `'house'`, or a stable `custom_...` ID |
+| `labcharts-{profileId}-chatPersonalityCustom` | JSON array (may be encrypted) | Custom personas with stable ID, name/icon, editable prompt, timestamps, and optional hosted-use agreement |
+| `labcharts-{profileId}-chatPersonalityDeleted` | JSON map (may be encrypted) | Persona deletion tombstones: `{ [customPersonaId]: deletedAtMs }` |
 | `labcharts-{profileId}-chatRailOpen` | string | `'true'` \| `'false'` — chat thread rail visibility |
-| `labcharts-{profileId}-chat` | JSON (encrypted) | Legacy chat history (migrated to threads on first load) |
-| `labcharts-{profileId}-chat-threads` | JSON | Thread index: `[{ id, name, createdAt, personalityName, personalityIcon }]` |
-| `labcharts-{profileId}-chat-t_{id}` | JSON (encrypted) | Per-thread messages: `[{ role, content, timestamp }]` |
+| `labcharts-{profileId}-chat` | JSON (may be encrypted) | Legacy chat history (migrated to threads on first load) |
+| `labcharts-{profileId}-chat-threads` | JSON array (may be encrypted) | Thread index with timestamps/count, persona, discussion state, and optional fork-source metadata |
+| `labcharts-{profileId}-chat-t_{id}` | JSON array (may be encrypted) | Per-thread normalized user/assistant messages and persisted metadata |
+| `labcharts-{profileId}-chatDraft_{id}` | string (may be encrypted) | Device-local unsent composer text for one thread; excluded from Sync and backups |
 | `labcharts-{profileId}-contextHealth` | JSON | Cached AI health dots: `{ dots, summaries, fingerprints }` |
 | `labcharts-{profileId}-focusCard` | JSON | Cached AI focus card: `{ fingerprint, text }` |
 | `labcharts-{profileId}-tour` | string | `'completed'` — app tour completion flag |
@@ -410,10 +412,11 @@ Each snapshot record:
     suppOverlayMode: "off",
     noteOverlay: "off",
     chatPersonality: "default",
-    chatPersonalityCustom: null,
+    chatPersonalityCustom: [...],
+    chatPersonalityDeleted: { "custom_old": 1782290000000 },
     // ... all per-profile preferences
     threadIndex: [...],            // chat thread index
-    threads: {                     // per-thread messages (encrypted strings)
+    threads: {                     // raw per-thread JSON or ciphertext envelopes
       "t_abc123": "...",
     }
   }
@@ -421,6 +424,8 @@ Each snapshot record:
 ```
 
 Maximum 5 snapshots are kept per profile. The oldest is pruned automatically on each new backup.
+
+Unsent `chatDraft_*` records are intentionally absent from full database, auto, folder, and single-profile backups. Sent conversations and custom personas are included.
 
 ## Encryption
 
@@ -430,7 +435,11 @@ Encrypted key patterns (`SENSITIVE_PATTERNS` in `crypto.js`):
 
 - `*-imported` — all importedData
 - `*-chat` — legacy chat history
+- `*-chat-threads` — thread index
 - `*-chat-t_*` — per-thread messages
+- `*-chatDraft_*` — device-local unsent drafts
+- `*-chatPersonalityCustom` — custom persona records
+- `*-chatPersonalityDeleted` — custom persona tombstones
 
 Keys that are not sensitive (preferences, model selections, pricing caches, profile index) are always stored in plaintext.
 

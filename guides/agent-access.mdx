@@ -7,7 +7,7 @@ description: "Connect MCP-compatible AI assistants to getbased with a private se
 Agent Access is an opt-in feature that lets an AI assistant you configure read your getbased context outside the browser tab. After you enable it in Settings, an MCP-compatible tool — such as a coding agent, terminal assistant, or messenger bot — can fetch the encrypted summary and answer questions about your labs. getbased shares only a pre-built encrypted context summary; your raw data, sync mnemonic, and Agent Context key never leave your browser unless you paste the key into your own local MCP client.
 
 <Note>
-  Updated 2026-06-25: Agent Access now supports one-paste private setup from Settings → Agent Access for Hermes Agent, OpenClaw, Claude Code, Claude Desktop, Cursor, Cline, and Codex CLI.
+  Updated 2026-08-08: newly joined Sync devices now complete their relay restore before reloading, Agent Access controls load in place the first time you open Settings, and external agents receive the complete redesigned health context.
 </Note>
 
 ## How it works
@@ -34,6 +34,19 @@ The gateway cannot read the summary. It only stores and forwards encrypted data.
 <Note>
   The **Data sources** switches in **Insight → Manage → Context** control in-app AI chat, Biology Score context, and source-driven warnings. Agent Access is a separate external-sharing permission in **Settings → Agent Access**. When Agent Access is on, the browser builds the encrypted gateway summary from the full available profile context, including specialty lab groups and wearable summaries. To keep external agents from reading that summary, turn Agent Access off or regenerate/remove its credentials.
 </Note>
+
+## What an agent receives
+
+Agent Access encrypts the same structured context text assembled for in-app AI, then exposes its named sections through the local MCP client. Depending on the profile, that can include:
+
+- lab values, effective reference ranges, trends, specialty lab groups, marker notes, and flagged-result summaries;
+- all nine health-context cards, profile notes, and the context change timeline;
+- supplements and medications, cycle context, curated genome findings, Light & Sun context, and the compact wearable summary; and
+- an optional 7-, 30-, or 90-day wearable series that you enable separately.
+
+Answered context fields remain meaningful even when they rule something out. The summary includes skin type and explicit digestive answers such as **None** or **Normal**; unanswered fields are omitted rather than guessed.
+
+The in-app **Data sources** switches do not filter Agent Access. External sharing is controlled by the separate **Settings → Agent Access** toggle because the browser must produce a consistent complete summary for the MCP tools. The gateway receives only the encrypted envelope; plaintext becomes available only after your local MCP client decrypts it with `GETBASED_AGENT_CONTEXT_KEY`.
 
 ## Setup
 

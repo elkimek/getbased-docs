@@ -113,6 +113,17 @@ js/
   chat-window-bindings.js — Chat callback wiring and legacy window exports
   chat-marker-prompts.js — Per-marker and selected-correlation AI prompt builders
   chat-continuation.js — Response limit detection and automatic continuation
+  chat-prompt-context.js — shared persona, system-prompt, history-tagging, and source helpers
+  chat-panel.js — panel lifecycle, layout, focus, and active-thread restoration
+  chat-composer.js / chat-draft-storage.js — growing composer and per-thread device-local drafts
+  chat-send.js / chat-stream-status.js — thread-bound streaming sends and concise live status
+  chat-render.js / chat-render-range.js / chat-scroll.js — bounded transcript rendering and user-owned scroll state
+  chat-actions.js / chat-message-edit.js — message actions, latest-turn edit-and-retry, and linked forks
+  chat-personalities.js — personality selection, header state, and persona workflow facade
+  chat-personality-editor.js — custom persona dialog and official-host agreement policy
+  chat-personality-storage.js / chat-personality-merge.js — encrypted persona persistence, tombstones, and per-item Sync merge
+  chat-storage-safety.js — normalized bounds for imported, restored, and synced chat records
+  chat-recommendation-disclosure.js — collapsed recommendation discovery and finite new-content cue
   chat-discussion.js — Multi-persona discussion public barrel
   chat-discussion-flow.js — Multi-persona discussion public user-action handlers
   chat-discussion-callbacks.js — Multi-persona discussion callback bridge
@@ -128,15 +139,17 @@ js/
   chat-discussion-ui.js — Multi-persona discussion button and continuation controls
   chat-empty-state.js — Empty chat and onboarding message renderer
   chat-nudge.js      — Chat FAB nudge badge and dismissal state
-  chat-threads.js    — Chat thread index CRUD and rail rendering
-  chat-thread-search.js — Thread rail message search and match highlighting
+  chat-threads.js / chat-history.js — thread index CRUD and per-thread message persistence
+  chat-thread-search.js — rail name/message search, bounded-range reveal, and match highlighting
   client-list.js    — Client List modal: search/sort/filter profiles, inline CRUD, archive/flag/pin
   recommendations.js — Supplement & lifestyle recommendations, lazy catalog, 3 touchpoints
   cashu-wallet.js   — In-app Cashu eCash wallet: BIP-39 seed, IndexedDB proofs, Lightning fund/withdraw
   nostr-discovery.js — Nostr relay queries for Routstr nodes (Kind 38421), health checks, caching
   settings.js       — Settings modal shell: profile, display, AI providers, privacy, security
   settings-import-benchmark-controller.js — model-test modal lifecycle, selection, comparison, and deletion
-  settings-sync-panel.js — Settings Data/Agent panels: cross-device sync setup, mnemonic/relay UI, Agent Access token UI
+  settings-sync-panel.js — cold Settings Sync/Agent facade and in-place placeholder hydration
+  settings-sync-panel-impl.js — Cross-device Sync setup, mnemonic, relay status, and recovery UI
+  settings-agent-access-panel.js — Agent Access state, setup payload, token/key, and wearable-series controls
   feedback.js       — Feedback modal (bug reports, feature requests)
   tour.js           — Guided tour spotlight engine (app tour + cycle tour)
   nav.js            — Sidebar, date range filter, chart layers dropdown
@@ -161,6 +174,7 @@ js/
   views.js          — route wiring and compatibility exports
   crypto.js         — AES-256-GCM encryption, cross-tab sync (BroadcastChannel)
   backup.js          — IndexedDB auto-backup, folder backup (File System Access API), backup restore
+  backup-chat-storage.js — raw thread index/message collection for complete locked backups
   lab-context.js     — buildLabContext() central AI context serializer
   lab-context-change-timeline.js — profile-context history serializer
   lab-context-wearables.js — wearable summaries and sleep-context mismatch flags

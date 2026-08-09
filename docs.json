@@ -182,6 +182,7 @@
             "group": "Feature internals",
             "pages": [
               "developers/biology-scores",
+              "developers/chat-internals",
               "developers/sun-spectrum-model",
               "developers/wearables-internals"
             ]

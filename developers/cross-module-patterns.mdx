@@ -108,7 +108,7 @@ el.innerHTML = `
 
 Safe values (hardcoded strings, enum results, numbers from your own code) do not need escaping, but when in doubt, escape it.
 
-**Never use `innerHTML` with concatenated user input without `escapeHTML`.** The `renderMarkdown()` function in `chat.js` validates URLs against an allowlist (`http`, `https`, `mailto`) before rendering link tags.
+**Never use `innerHTML` with concatenated user input without `escapeHTML`.** The shared `renderMarkdown()` function in `markdown.js` validates URLs against an allowlist (`http`, `https`, `mailto`) before rendering link tags; chat renderers call that shared boundary rather than implementing their own Markdown path.
 
 ---
 

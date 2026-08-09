@@ -19,7 +19,7 @@ Each card starts with the most useful questions. Open the later sections only wh
 | 3 | **Diet & Digestion** | Diet and meal pattern, protein in g/kg/day, fluids in L/day or fl oz/day, restrictions, alcohol, caffeine, recent changes, digestive symptoms, and food sensitivities |
 | 4 | **Exercise** | Frequency, training types including physiotherapy or rehabilitation, intensity, session length, daily movement, muscle context, limitations, and recovery |
 | 5 | **Sleep & Rest** | Duration, quality, sleep issues, daytime sleepiness, apnea/PAP context, naps, schedule, room conditions, and sleep practices |
-| 6 | **Light & Circadian** | Morning and daytime light, UV exposure, evening light, screens and technology, cold exposure, grounding, and meal timing |
+| 6 | **Light & Circadian** | Morning and daytime light, UV exposure and skin type, evening light, screens and technology, cold exposure, grounding, and meal timing |
 | 7 | **Stress** | Level, duration, trend, sources, and stress-management practices |
 | 8 | **Love Life & Relationships** | Relationship status and quality, satisfaction, libido, sexual health concerns, and reproductive goals in one combined card |
 | 9 | **Environment** | Living setting, climate and altitude, smoke or occupational exposure, water source, EMF, home lighting, air quality, toxins, and building context |
@@ -84,6 +84,10 @@ When you send a chat message, getbased includes filled cards only if the **Insig
 Open **Insight → Manage → Context → Data sources** to control that source. The same panel has separate switches for **Supplements & Medications**, **Blood marker results**, genome context, **Light & Sun**, and **Wearable recovery context**.
 
 Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. When the relevant source is enabled, this helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
+
+An explicit answer is different from an unanswered field. For example, selecting **None** for bloating or **Normal** for appetite tells the AI that you ruled out that symptom; leaving the question unanswered omits it. Skin type from **Light & Circadian** is included as context too.
+
+[Agent Access](/guides/agent-access) uses the same complete context formatter, including those explicit negative/normal answers and skin type. It is controlled separately from the in-app Data sources switches: turn **Settings → Agent Access** off when you do not want an external agent to receive the encrypted summary.
 
 ## Demo profiles and AI cost
 

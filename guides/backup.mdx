@@ -9,9 +9,9 @@ Because getbased stores your working data locally in your browser by default, th
 
 getbased automatically creates snapshots of your data in the background as you make changes:
 
-- A snapshot is triggered **60 seconds after any data change** (debounced — rapid changes create only one snapshot, not many).
+- A snapshot is triggered **5 minutes after a data change** (debounced — rapid changes create only one snapshot, not many).
 - Up to **5 snapshots** are stored. When a new one is added, the oldest is pruned.
-- Each snapshot includes the active profile's stored data, including lab entries, context cards, notes, supplements, cycle data, per-profile preferences, and device-local AI model-test history.
+- Each snapshot includes stored profile data, including lab entries, context cards, notes, supplements, cycle data, conversations, custom personas, per-profile preferences, and device-local AI model-test history.
 
 Snapshots are stored in IndexedDB and never leave your browser. They are not affected by clearing localStorage.
 
@@ -68,6 +68,8 @@ Each folder backup is a full snapshot of your getbased database:
 - API keys and app settings
 - Device-local AI model-test history
 - Full wearable IndexedDB — all per-device daily rows including HRV, sleep, RHR, and manual entries
+
+Unsent per-conversation chat drafts stay only in the working browser and are not included in snapshots, folder backups, or manual exports. Sent messages and custom personas are included.
 
 Two files are written to your chosen folder on each backup:
 

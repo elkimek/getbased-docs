@@ -703,7 +703,7 @@ Encrypted single-profile share links. The module creates a profile export throug
 
 ### `chat.js`
 
-Chat public barrel and startup entry point. Importing this module installs `chat-window-bindings.js` for legacy inline handlers, then re-exports the public chat helpers from the feature modules. Per-marker/correlation prompt builders live in `chat-marker-prompts.js`; direct send/streaming and image send integration live in `chat-send.js`; chat transcript rendering lives in `chat-render.js`; empty/onboarding message states live in `chat-empty-state.js`; chat-first onboarding handlers and provider quiz helpers live in `chat-onboarding.js`; multi-persona discussion exports live in `chat-discussion.js`, with public user-action handlers in `chat-discussion-flow.js`, callback bridging in `chat-discussion-callbacks.js`, cleanup/completion helpers in `chat-discussion-lifecycle.js`, round turn execution helpers in `chat-discussion-turns.js`, persona/thread state helpers in `chat-discussion-state.js`, round execution in `chat-discussion-round-runner.js`, round prompt helpers in `chat-discussion-round-prompts.js`, round API request helpers in `chat-discussion-round-request.js`, thread-bound round persistence in `chat-discussion-round-state.js`, live round message DOM helpers in `chat-discussion-round-view.js`, persona picker controls in `chat-discussion-picker.js`, and Discuss button/continue controls in `chat-discussion-ui.js`; panel chrome lives in `chat-panel.js`; FAB nudge state lives in `chat-nudge.js`; personality selection and custom persona editing live in `chat-personalities.js`; current-thread history persistence lives in `chat-history.js`; message action bars live in `chat-actions.js`; chat image attachment state lives in `chat-images.js`; thread index storage and rail rendering live in `chat-threads.js`; thread rail message search and match highlighting live in `chat-thread-search.js`.
+Chat public barrel and startup entry point. Importing this module installs `chat-window-bindings.js` and re-exports the public helpers from the feature modules. The composer/draft, bounded transcript, scroll, edit/fork, recommendation-disclosure, persona persistence, and discussion-round modules keep durable state and high-churn UI behavior out of the public barrel. See [Chat internals](/developers/chat-internals) for the end-to-end ownership, storage, Sync, and backup contract.
 
 **Key exports:**
 - `sendChatMessage()` — re-exported from `chat-send.js` for existing callers
@@ -738,7 +738,7 @@ Per-marker and selected-correlation chat prompt builders. Owns `askAIAboutMarker
 
 ### `chat-send.js`
 
-Direct chat send and streaming state. Owns `sendChatMessage()`, Enter-key handling, stop-button abort state, send-button icon mode, typewriter trickle, image attachment payload injection, API message assembly, usage footnotes, live EMF/product recommendation injection, and partial-message persistence on abort. It is imported by `chat.js`, which re-exports its public entry points and passes its typewriter/abort helpers to `chat-discussion.js`.
+Direct chat send and streaming state. Owns `sendChatMessage()`, Enter-key handling, thread-bound abort state, send-button icon mode, typewriter trickle, image attachment payload injection, API message assembly, usage footnotes, live EMF/product recommendation injection, and partial-message persistence on abort. It delegates textarea/draft behavior to `chat-composer.js`, concise assistive status to `chat-stream-status.js`, continuation handling to `chat-continuation.js`, and collapsed recommendation state to `chat-recommendation-disclosure.js`.
 
 **Key exports:** `sendChatMessage`, `handleChatKeydown`, `isChatStreaming`, `createTypewriter`, `getChatAbortController`, `setChatAbortController`, `setSendButtonMode`, `updateSendButtonState`
 
@@ -748,9 +748,9 @@ Direct chat send and streaming state. Owns `sendChatMessage()`, Enter-key handli
 
 ### `chat-render.js`
 
-Chat transcript rendering. Owns `renderChatMessages()` for persisted messages, lens-source disclosure rendering, assistant footnotes, image badges, EMF hints, and persisted recommendation sections. It delegates empty chat and onboarding states to `chat-empty-state.js` and keeps rendering details out of the chat window wiring module.
+Chat transcript rendering. Owns `renderChatMessages()` for persisted messages, latest-turn and fork action placement, lens-source disclosures, assistant footnotes, image badges, EMF hints, and persisted recommendation sections. It renders only the range supplied by `chat-render-range.js`, delegates scroll ownership to `chat-scroll.js`, and reveals earlier batches without truncating stored history.
 
-**Key exports:** `renderChatMessages`, `_getNoDataPrompts`, `_renderLensSources`
+**Key exports:** `renderChatMessages`, `showEarlierChatMessages`, `revealChatMessage`, `_getNoDataPrompts`, `_renderLensSources`
 
 **Window exports:** `renderChatMessages` is assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
 
@@ -773,6 +773,34 @@ Chat panel chrome and entry-state helpers. Owns open/close/fullscreen behavior, 
 **Key exports:** `configureChatPanel`, `toggleChatPanel`, `toggleChatFullscreen`, `openChatPanel`, `closeChatPanel`, `updateChatInputState`, `getChatWebSearchEnabled`, `setChatWebSearchEnabled`, `refreshWebSearchToggle`; also re-exports `setChatNudge` and `updateChatNudge` from `chat-nudge.js` for compatibility.
 
 **Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+
+---
+
+### `chat-composer.js`
+
+Growing textarea and active-thread draft coordinator. It binds visible input to `{ profileId, threadId }`, restores drafts after async thread switches, clears a sent draft, and prevents a late decrypt from writing into a newly selected thread.
+
+**Key exports:** `configureChatComposer`, `initChatComposer`, `resizeChatInput`, `saveChatDraft`, `getChatDraft`, `restoreChatDraft`, `clearChatDraft`, `resetChatComposer`, `setChatInputValue`.
+
+**Window exports:** none.
+
+---
+
+### `chat-draft-storage.js`
+
+Device-local draft cache and 300 ms debounced persistence. Draft keys use the sensitive storage wrapper but are intentionally excluded from Sync and every backup/export path. Its ordered write chain prevents a pending save from resurrecting a cleared draft.
+
+**Key exports:** `chatDraftStorageKey`, `getCachedChatDraft`, `loadChatDraft`, `rememberChatDraft`, `clearStoredChatDraft`, `flushStoredChatDraft`.
+
+**Window exports:** none.
+
+---
+
+### `chat-render-range.js`, `chat-scroll.js`, and `chat-stream-status.js`
+
+Transcript-scale and interaction helpers. `chat-render-range.js` exposes the latest 120 records and expands in 120-record batches; `chat-scroll.js` follows streaming only while the user remains near the latest message; `chat-stream-status.js` emits concise ARIA status changes without making every streamed token a live-region update.
+
+**Window exports:** none.
 
 ---
 
@@ -838,7 +866,7 @@ Discussion callback bridge. Owns `configureChatDiscussion()` and the callback wr
 
 ### `chat-discussion-round-runner.js`
 
-Discussion round execution loop. Owns per-persona iteration, streaming API calls, abort-controller/send-button state, auto-message insertion, typewriter updates, final assistant message persistence, usage footnotes, and modal-aware round error rendering.
+Discussion round execution loop. Owns sequential per-persona API calls, progress and assistive status, pause/abort state, origin-thread persistence, typewriter updates, usage footnotes, partial-response preservation, and targeted failure records. It returns the remaining participants so resume and per-participant retry do not replay successful responses.
 
 **Key exports:** `runDiscussionRound`
 
@@ -886,7 +914,7 @@ Multi-persona discussion button and continuation prompt controls. Owns the Discu
 
 ### `chat-discussion-picker.js`
 
-Multi-persona discussion picker controls. Owns persona picker markup, active-persona locking, checkbox limiting, and picker selection reads.
+Multi-persona discussion picker controls. Owns persona picker markup, active-persona locking, one-at-a-time participant addition, request-count/charge disclosure, keyboard dismissal, checkbox limiting, and picker selection reads.
 
 **Key exports:** `removeDiscussPersonaPicker`, `readDiscussPersonaPickerSelection`, `showDiscussPersonaPicker`
 
@@ -904,11 +932,31 @@ Multi-persona discussion state helpers. Owns per-thread active discussion detect
 
 ### `chat-personalities.js`
 
-Chat personality storage, personality picker rendering, custom persona editor, AI-powered persona generation, and chat header title/model status. The module imports thread index helpers directly and calls back to `window.renderChatMessages?.()` for the two places that need to repaint chat content without creating a `chat.js` import cycle.
+Personality selection and workflow facade. It renders the picker and chat header, invokes the dedicated custom-persona dialog, streams an editable generated draft, persists through `chat-personality-storage.js`, and updates the active thread's personality metadata.
 
-**Key exports:** `getActivePersonality`, `getCustomPersonalities`, `saveCustomPersonalities`, `getCustomPersonality`, `getCustomPersonalityText`, `pickPersonaIcon`, `setChatPersonality`, `loadChatPersonality`, `updateChatHeaderTitle`, `updateChatHeaderModel`, `updateSummaryButton`, `updatePersonalityBar`, `togglePersonalityBar`, `generateCustomPersonality`, `saveCustomPersonality`, `startNewCustomPersonality`, `editCustomPersonality`, `deleteCustomPersonality`, `autoResizePersonaTextarea`, `markPersonalityDirty`, `snapshotPersonalityClean`
+**Key exports:** `getActivePersonality`, `getCustomPersonalities`, `loadCustomPersonalities`, `saveCustomPersonalities`, `getCustomPersonality`, `setChatPersonality`, `loadChatPersonality`, `updateChatHeaderTitle`, `updateChatHeaderModel`, `updatePersonalityBar`, `togglePersonalityBar`, `generateCustomPersonality`, `saveCustomPersonality`, `startNewCustomPersonality`, `editCustomPersonality`, `deleteCustomPersonality`.
 
 **Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+
+---
+
+### `chat-personality-editor.js`
+
+Custom persona modal and host policy. The official `getbased.health` host requires a versioned acknowledgement that a persona is an AI-generated interpretation and cannot be used to impersonate or imply endorsement. Self-hosted origins receive the responsibility notice without a required checkbox.
+
+**Key exports:** `isOfficialHostedPersonaApp`, `hasCurrentPersonaAgreement`, `isCustomPersonalityUsable`, `buildPersonaAgreementRecord`, `openPersonaEditorDialog`.
+
+**Window exports:** none.
+
+---
+
+### `chat-personality-storage.js` and `chat-personality-merge.js`
+
+Encrypted-wrapper persistence, synchronous decrypted cache, deletion tombstones, and deterministic per-persona Sync merge. Persona updates resolve by `updatedAt`/`createdAt`; a tombstone at least as new as the record removes it without replacing unrelated personas.
+
+**Key exports:** storage-key helpers, load/save/cache helpers, `recordCustomPersonalityDeletion`, `customPersonalityUpdatedAtMs`, and `mergeCustomPersonalityState`.
+
+**Window exports:** none.
 
 ---
 
@@ -919,6 +967,16 @@ Thread-aware chat message persistence and clearing. The module owns the legacy s
 **Key exports:** `getChatStorageKey`, `loadChatHistory`, `saveChatHistory`, `clearChatHistory`
 
 **Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and `chat-threads.js` callbacks.
+
+---
+
+### `chat-threads.js`
+
+Conversation index CRUD, active-thread switching, linked fork creation, rail rendering, and thread deletion tombstones. `pruneOldThreads()` is a compatibility no-op. An existing index that cannot be decrypted or parsed blocks writes and new-chat creation rather than replacing saved conversations with an empty index.
+
+**Key exports:** `loadChatThreads`, `saveChatThreadIndex`, `ensureActiveThread`, `createNewThread`, `createForkedThread`, `switchToThread`, `deleteThread`, `renameThread`, `renderThreadList`, and the search compatibility exports.
+
+**Window exports:** assigned through `chat-window-bindings.js` where legacy callers still require them.
 
 ---
 
@@ -934,11 +992,29 @@ Thread rail message-content search and match highlighting. It owns the debounced
 
 ### `chat-actions.js`
 
-Chat message action bar rendering and message-level handlers. The module owns `Regenerate`, `Copy`, `Listen`, and context-details toggle behavior while calling back to `window.renderChatMessages?.()`, `window.sendChatMessage?.()`, and `window.isChatStreaming?.()` to avoid importing the streaming/rendering module. Voice actions cross the lazy boundary through `voice-loader.js`.
+Chat message action rendering and delegated handlers. It owns Retry/Regenerate, Copy, Listen, context details, responsive overflow actions, discussion pause/resume/retry controls, and callbacks into latest-message editing and linked forks. Voice actions cross the lazy boundary through `voice-loader.js`.
 
-**Key exports:** `buildActionBar`, `regenerateLastMessage`, `copyMessage`, `toggleContextDetails`
+**Key exports:** `configureChatMessageActionDeps`, `installChatMessageActionDelegates`, `buildActionBar`, `buildUserActionBar`, `buildForkSourceNotice`, `regenerateLastMessage`, `copyMessage`, `toggleContextDetails`.
 
 **Window exports:** assigned by the module directly and re-exported by `chat.js` for existing inline handlers.
+
+---
+
+### `chat-message-edit.js`
+
+Latest-turn inline editor and non-destructive assistant-reply forks. Edit-and-retry is limited to the latest visible text-only user message while no response is streaming; fork creation copies normalized history through the selected assistant message into a linked thread.
+
+**Key exports:** `configureChatMessageEditDeps`, `getLatestUserMessageIndex`, `beginChatMessageEdit`, `cancelChatMessageEdit`, `submitChatMessageEdit`, `prepareChatMessageEditSend`, `forkChatFromMessage`.
+
+**Window exports:** none; `chat-actions.js` receives callbacks.
+
+---
+
+### `chat-recommendation-disclosure.js` and `chat-storage-safety.js`
+
+`chat-recommendation-disclosure.js` persists related suggestions collapsed and marks only the first or materially changed slot set as new. `chat-storage-safety.js` normalizes untrusted chat, thread, persona, tombstone, discussion/fork, usage, and image shapes before import, restore, or Sync apply.
+
+**Window exports:** none.
 
 ---
 
@@ -1039,15 +1115,25 @@ Settings modal shell with profile, display, AI, Voice, privacy, data, wearables,
 
 ### `settings-sync-panel.js`
 
-Settings subpanel module for cross-device sync. Owns the Settings → Data sync section, sync setup/restore modal, mnemonic and relay controls, and delegates Settings → Agent Access rendering/actions to `settings-agent-access-panel.js`.
+Cold facade for the Cross-device Sync and Agent Access settings graph. A first Settings render returns marked loading placeholders and starts `settings-sync-panel-impl.js`; when the import resolves, the facade replaces both placeholders in place so the real controls appear without closing and reopening Settings. Action calls use the same loader and retry boundary.
 
 **Key exports:**
 - `renderSyncSection()` — renders the Settings → Data sync panel
 - `renderMessengerSection()` — compatibility export that renders the Settings → Agent Access panel through `settings-agent-access-panel.js`
-- `hydrateSettingsSyncPanel()` — loads mnemonic and relay status after the settings modal is painted
-- `showSyncSetupModal()` — opens the cross-device sync setup wizard directly; used by the dashboard data-protection picker
+- `hydrateSettingsSyncPanel()` — forwards post-paint mnemonic and relay hydration after the implementation loads
+- `showSyncSetupModal()` — loads the implementation and opens the setup wizard
 
 **Window exports:** `showSyncSetupModal`, `toggleSync`, `toggleMnemonicVisibility`, `copyMnemonic`, `saveSyncRelay`, `openRestoreMnemonicDialog`, `closeRestoreMnemonicDialog`, `confirmRestoreMnemonic`, `closeSyncSetup`, `syncSetupNew`, `syncSetupRestore`, `syncSetupBack`, `syncSetupDoRestore`, `syncSetupDone`, `toggleMessenger`, `toggleMessengerToken`, `copyMessengerToken`, `regenerateMessengerToken`
+
+---
+
+### `settings-sync-panel-impl.js`
+
+Loaded implementation for the Settings → Data sync section. It owns setup/restore UI, mnemonic and relay controls, diagnostics entry points, and Agent Access delegation. Existing-mnemonic joins call the controlled restore path in `sync-identity.js`.
+
+**Key exports:** `configureSettingsSyncPanelDeps`, `renderSyncSection`, `renderMessengerSection`, `showSyncSetupModal`, `closeSyncSetup`, `closeRestoreMnemonicDialog`, `hydrateSettingsSyncPanel`.
+
+**Window exports:** none directly; the facade owns compatibility bindings.
 
 ---
 
@@ -1517,14 +1603,16 @@ Data encryption at rest and cross-tab sync.
 
 ### `backup.js`
 
-IndexedDB auto-backup, folder backup via File System Access API, and backup restore. Extracted from `crypto.js`.
+IndexedDB auto-backup, folder backup via File System Access API, manual database backup, and restore. `backup-chat-storage.js` supplements profile collection with raw thread index/message envelopes so a locked or partially recovered index cannot make a full backup omit ciphertext. Unsent draft keys are intentionally excluded.
 
 **Key exports:**
-- `scheduleAutoBackup()` — debounced 60s trigger; saves up to 5 snapshots to IndexedDB + writes to folder backup if configured
-- `buildBackupSnapshot()` — captures all importedData + per-profile preferences
-- `loadBackupSnapshots()` — async; populates the Backup & Restore section with IndexedDB snapshots
-- `restoreAutoBackup(id)` — writes snapshot to localStorage, reloads
-- `saveFolderBackup(snapshot)` — writes `getbased-backup-latest.json` + daily dated snapshot to user-selected folder via File System Access API
+- `scheduleAutoBackup()` — debounced five-minute trigger; saves up to 5 snapshots to IndexedDB + writes to folder backup if configured
+- `buildBackupSnapshot()` — legacy synchronous localStorage snapshot retained for focused tests and compatibility
+- `buildFullBackupSnapshot()` — asynchronously captures IndexedDB-backed profile blobs, chat records, preferences, and device-local data
+- `exportEncryptedBackup()` / `importEncryptedBackup()` — manual full-database bundle export and restore
+- `getAutoBackupSnapshots()` — reads the retained IndexedDB snapshot list
+- `restoreAutoBackup(id)` — restores localStorage plus profile, wearable, and cycle IndexedDB records, then reloads
+- `initFolderBackup()`, `pickFolderForBackup()`, `reauthorizeFolderBackup()`, `removeFolderBackup()` — File System Access lifecycle for latest and daily folder snapshots
 
 **Window exports:** `restoreAutoBackup`, `pickBackupFolder`, `showBackupReminder`
 
@@ -1694,7 +1782,6 @@ Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wea
 Not separately documented because their exports are best read from source — kept thin on purpose.
 
 - `chat-images.js` — image attachment lifecycle (`getPendingAttachments`, `clearAttachments`, etc.). Owns the `_pendingAttachments` queue. Extracted from `chat.js` in v1.21.9.
-- `chat-threads.js` — conversation thread CRUD, list rendering, autoname, `onChatSaved` debounce trigger. Extracted in v1.21.9.
 - `markdown.js` — XSS-safe markdown rendering (`applyInlineMarkdown` for spans, `renderMarkdown` for full blocks). 34 dedicated XSS test assertions.
 - `lab-context.js` — lab-data → AI-prompt context assembly; memoized via fingerprint that includes wearable summary, change history, and all 9 context cards.
 - `provider-panels.js` — Settings → AI provider behavior, validation, balances, dropdown refresh, globals.
@@ -1712,7 +1799,7 @@ Not separately documented because their exports are best read from source — ke
 - `emf.js` — Baubiologie SBM-2015 EMF assessment as a sub-module of the Environment context card.
 - `sync.js` — Public sync entry/barrel; exports sync lifecycle, actions, diagnostics, relay, identity, and cutover APIs while delegating dependency wiring to `sync-configure.js`.
 - `sync-configure.js` — Sync subsystem dependency wiring; configures relay health, push/pull/subscription/tombstone/diagnostic/UI/action/recovery/reconcile modules and browser window bindings.
-- `sync-push.js` — outbound profile push path, unchanged-payload suppression, generation-safe dirty clearing, exact source-commit tracking, relay-storage refresh scheduling, in-flight watchdog, and Evolu profileData insert/update.
+- `sync-push.js` — outbound profile push path, missing-profile-data rejection, unchanged-payload suppression, generation-safe dirty clearing, exact source-commit tracking, relay-storage refresh scheduling, in-flight watchdog, and Evolu profileData insert/update.
 - `sync-push-deltas.js` — push-side per-row delta planning/application; walks DELTA_ARRAYS/MAPS/SCALARS before blob writes, advances snapshots after onComplete, and records delta telemetry.
 - `sync-pull.js` — inbound pull orchestration and row loop; flushes dirty local work, tracks source-tab commits, and delegates one-time cleanup, active-profile UI refresh, and rebroadcast scheduling to helper modules.
 - `sync-pull-merge.js` — pull row recovery/dedupe, importedData blob/per-row merge, wearable-token preservation, metadata-only genetics blob protection, and profile metadata merge helpers.
@@ -1744,11 +1831,11 @@ Not separately documented because their exports are best read from source — ke
 - `sync-delta-telemetry.js` — per-push delta telemetry storage, aggregation, reset, and latest pull-snapshot reporting.
 - `sync-delta-readiness.js` — Phase 2 cutover readiness checks across array/map/scalar delta surfaces.
 - `sync-apply.js` — inbound sync apply helpers for AI provider settings and display prefs, with compatibility re-exports for chat apply helpers.
-- `sync-chat-apply.js` — inbound chat thread/message application, chat delete tombstones, and local freshness locks that protect just-edited local chat from stale remote rows.
+- `sync-chat-apply.js` — inbound chat thread/message application, thread/persona delete tombstones, per-persona timestamp merge, and local freshness locks that protect just-edited local chat from stale remote rows.
 - `sync-tombstones.js` — remote profile delete propagation helpers, inbound tombstone application, batched-delete quarantine, and apply/reject pending tombstone actions for Settings.
 - `sync-messenger.js` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
 - `sync-environment.js` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
-- `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers for Evolu owner identity.
+- `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress Evolu's internal reload, persist enabled owner state, then perform one controlled reload.
 - `sync-dirty-state.js` — durable per-profile edit generations, captured-generation clearing, and dirty-state inspection for pull and compaction safety.
 - `sync-origin-state.js` — tab-local committed `syncedAt` tracking used to distinguish source-browser echoes from updates received elsewhere.
 - `sync-profile-fields.js` — deterministic shared profile metadata field list used by outbound payload collection and inbound profile merge.
@@ -1763,11 +1850,11 @@ Not separately documented because their exports are best read from source — ke
 - `sync-diagnose-relay-actions.js` — Sync Diagnose relay storage refresh and self-serve compaction handlers.
 - `sync-diagnose-identity-actions.js` — Sync Diagnose identity rotation modal, BIP-39 mnemonic generation, QR display, copy fallback, and local apply flow.
 - `sync-diagnose-cutover-actions.js` — Sync Diagnose telemetry reset plus lean-sync enable/backfill/disable handlers.
-- `sync-actions.js` — user-triggered sync actions, all-profile initial push, dirty-profile compaction preflight, relay snapshot rebuild, and compatibility re-exports for save hooks and storage cleanup.
-- `sync-save-hooks.js` — save/chat/profile-metadata debounce hooks, durable dirty marking, AI-setting push scheduling, per-profile timer cleanup, and active or stored profile reads for pushes.
+- `sync-actions.js` — user-triggered sync actions, all-profile initial push, dirty-profile compaction preflight, fail-closed unreadable-profile guard, relay snapshot rebuild, and compatibility re-exports for save hooks and storage cleanup.
+- `sync-save-hooks.js` — save/chat/profile-metadata debounce hooks, durable dirty marking, AI-setting push scheduling, per-profile timer cleanup, and canonical IndexedDB-backed profile reads that return `null` rather than an empty default on failure.
 - `sync-storage-cleanup.js` — emergency sync storage compaction; clears model-list caches, trims oversized `changeHistory`, saves the active profile, and reports freed bytes.
 - `sync-ui.js` — header sync badge, popover rendering, status subscription, and activity-log copy helpers.
-- `sync-payload-collectors.js` — Local AI/chat/display settings collection for sync payloads, including synced setting allowlists and chat thread tombstone keys.
+- `sync-payload-collectors.js` — Local AI/chat/display settings collection for sync payloads, including thread messages/tombstones, custom personas, persona tombstones, and synced setting allowlists.
 - `sync-payload.js` — Evolu wire-payload helpers; deterministic profile-field assembly, Phase 2 cutover payload shape, gzip envelope handling, inbound payload parsing, and local-only data stripping for wearable credentials and SNP map rows.
 - `sync-relay-health.js` — Evolu relay helper boundary; client-side quota estimate, signed `/self/owner-storage` and `/self/compact-owner` calls, and push-landed health verdict for the silent-reject detector.
 - `sync-state.js` — in-memory sync status pub-sub, header badge display-state derivation, recent sync activity ring buffer, and per-profile rebroadcast budget guard.

@@ -55,12 +55,12 @@ Everything the AI can know about the user comes from these sources:
 │                             ├─ Exercise             ├─ ref ranges   │
 │  PERSONA                    ├─ Sleep & Rest         ├─ optimal ranges│
 │  ├─ personality ID          ├─ Light & Circadian    ├─ phase ranges │
-│  ├─ promptText              ├─ Stress               ├─ custom markers│
-│  └─ evidenceBased flag      ├─ Love Life            └─ flagged results│
+│  ├─ built-in style prompt   ├─ Stress               ├─ custom markers│
+│  └─ custom promptText       ├─ Love Life            └─ flagged results│
 │                             └─ Environment                          │
 │  CHAT                                                               │
 │  ├─ user message            OTHER                                   │
-│  └─ last 10 history msgs    ├─ Interpretive Lens                   │
+│  └─ last 30 eligible msgs   ├─ Interpretive Lens                   │
 │                             ├─ Context Notes                        │
 │  MARKER SCHEMA              ├─ Menstrual Cycle                      │
 │  ├─ MARKER_SCHEMA           ├─ Supplements                          │
@@ -291,17 +291,20 @@ The most complex composition — layers 4 components. Lab context is placed befo
 │  │  • Default: (nothing added)                    │  │
 │  │  • Dr. House: personality.promptAddition       │  │
 │  │  • Custom: "Persona: {promptText}"             │  │
-│  │    + evidence-based disclaimer if opted in     │  │
+│  │  • Hosted agreement controls persona usability │  │
+│  │    but is not appended to the model prompt      │  │
 │  └────────────────────────────────────────────────┘  │
 │                       +                              │
 ├──────────────────────────────────────────────────────┤
 │                    MESSAGES                           │
 │                                                      │
-│  Last 10 chat history entries (role + content)       │
-│  + current user message                              │
+│  Up to last 30 eligible history entries              │
+│  (joined/error records removed; cross-persona        │
+│   assistant messages are tagged with their author)   │
 │                                                      │
 ├──────────────────────────────────────────────────────┤
-│  maxTokens: 4096  │  streaming: yes                  │
+│  maxTokens: 16384 │  streaming: yes                  │
+│  Automatic continuation: up to 2 follow-up calls     │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -374,6 +377,12 @@ The implementation lives in `context-card-health-dots.js`; `context-cards.js` ke
 
 The cache stores a fingerprint per card. A fingerprint includes lab entries, the card value, shared context notes and interpretive lens, sex, and date of birth; only changed cards are sent on the next live recalculation.
 
+### Context-card field presence
+
+`buildLabContext()` distinguishes unanswered values from explicit answers. Falsy/absent fields are omitted, but stored strings such as `none` and `normal` are meaningful evidence and must be serialized. In particular, the Diet & Digestion block includes explicit negative symptom answers and normal appetite, while Light & Circadian includes `skinType`.
+
+This formatter is shared by in-app AI and `sync-messenger.js`. The in-app path honors source toggles. Agent Access calls it with `ignoreContextToggles: true` because external sharing is controlled by the separate Agent Access permission; the plaintext output is then encrypted into the gateway envelope.
+
 ### 4. PDF Import (`parseLabPDFWithAI`)
 
 Completely different context — no user profile, just schema + raw PDF. Filename is included in the user message for multi-file disambiguation:
@@ -416,7 +425,10 @@ Standalone creative prompt — no lab data involved:
 │    5. Lifestyle & Optimization Lens                   │
 │    6. Character & Personality                         │
 │    7. Signature Recommendations                       │
-│  "400-500 words. No disclaimers."                     │
+│    8. Unconventional Views                            │
+│  "400-500 words; distinguish evidence, interpretation,│
+│   and speculation; do not invent credentials, quotes, │
+│   endorsements, biography, or precise positions."     │
 ├──────────────────────────────────────────────────────┤
 │  USER: "Create a comprehensive persona for: {name}"  │
 ├──────────────────────────────────────────────────────┤
@@ -453,19 +465,19 @@ Each AI feature has independent caching to avoid redundant API calls:
 |---|---|---|---|
 | Focus Card | `labcharts-{profile}-focusCard` | entries + sex + DOB + diagnoses + goals + lens + notes + supplements + marker notes | Any data change in the fingerprint |
 | Health Dots | `labcharts-{profile}-contextHealth` | Per-card: lab data + card data + sex + DOB | Only changed cards re-fetched |
-| Chat | `labcharts-{profile}-chat-t_{id}` | N/A (conversation history) | Never invalidated, 50-thread cap |
+| Chat | `labcharts-{profile}-chat-t_{id}` | N/A (conversation history) | Persists until the user deletes the conversation |
 | PDF Import | N/A | N/A | No caching |
 | Persona | N/A | N/A | No caching (user saves manually) |
 
 ## Token Budget
 
-| Feature | maxTokens | Typical Context Size |
+| Feature | `maxTokens` | Input context |
 |---|---|---|
-| Chat | 4096 | ~2,000–8,000 tokens (scales with data) |
-| Focus Card | 100 | ~200–400 tokens (lightweight context) |
-| Health Dots | 500 | ~2,000–8,000 tokens (full context) |
-| PDF Import | 8192 | ~1,000–3,000 tokens (marker schema) |
-| Persona Generator | 2048 | ~400 tokens (fixed) |
+| Chat | 16384 | Enabled profile context plus up to 30 eligible conversation messages |
+| Focus Card | 500 | Lightweight `buildFocusContext()` output |
+| Context-card assessment | 2048 | Lab/profile context plus the selected card prompt |
+| PDF import | 16384 | Marker schema plus document text or vision input |
+| Persona generator | 2048 | Fixed creative prompt plus the requested person, archetype, or style; no lab context |
 
 ## Key Design Decisions
 

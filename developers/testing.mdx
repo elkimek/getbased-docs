@@ -53,9 +53,9 @@ Browser-script fixture files define a local `assert` helper and collect results:
 
 The `detail` argument appears in the failure output — use it to print the actual value that caused the failure.
 
-## The test files
+## Notable test files
 
-All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; fixture scripts live as `tests/test-*.js`.
+All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; fixture scripts live as `tests/test-*.js`. The table calls out representative ownership areas rather than duplicating the complete file listing from the repository.
 
 A few tests run node-side (no browser) — pure-helper unit tests + node script guards. Marked **node** in the table; browser-driven coverage is owned by Playwright specs.
 
@@ -79,6 +79,9 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-chat-actions.js` | Chat message action buttons: regenerate, copy, context toggle |
 | `tests/test-chat-panel-ux.js` | Chat panel interactive-while-open + fullscreen layout (v1.3.29 surface) |
 | `tests/test-chat-threads.js` | Chat thread CRUD, auto-naming, migration, encryption patterns, backup inclusion |
+| `tests/chat-composer.test.js`, `tests/chat-render-window.test.js`, `tests/chat-scroll.test.js`, `tests/chat-mobile-viewport.test.js` | **Vitest** — per-thread drafts, growing composer, bounded transcript batches, user-owned streaming scroll, and mobile viewport behavior |
+| `tests/chat-personality-merge.test.js`, `tests/chat-recommendation-disclosure.test.js`, `tests/chat-storage-safety.test.js`, `tests/chat-discussion-pending.test.js` | **Vitest** — per-persona Sync merge/tombstones, collapsed suggestions, untrusted-record bounds, and targeted discussion retry state |
+| `tests/playwright/chat-composer.spec.js`, `tests/playwright/chat-message-edit.spec.js`, `tests/playwright/chat-accessibility-polish.spec.js`, `tests/playwright/custom-personality-dom.spec.js` | **Playwright** — composer recovery, latest-turn edits and forks, accessible streaming/scroll controls, and custom-persona UI policy |
 | `tests/test-correctness-phase2.js` | v1.5.1 correctness pass: per-profile sync debouncer, lab-context fingerprint, lens LRU |
 | `tests/test-crypto.js` | AES-256-GCM encryption, PBKDF2, passphrase validation (20+ sections) |
 | `tests/test-custom-api.js` | Custom API provider: 6th provider registration, endpoint config, model fetch |
@@ -150,6 +153,10 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-sun.js` | Sun session orchestration: lifecycle, hydration, rolling totals, vit-D IU accumulation, MED carry-over |
 | `tests/test-supplement-impact.js` | Supplement-biomarker impact analysis: batched computation, caching, health dots |
 | `tests/test-sync.js` | Cross-device sync: payload format, AI settings keys, encrypted keys, Evolu integration |
+| `tests/sync-save-hooks.test.js`, `tests/sync-runtime.test.js` | **Vitest** — canonical IndexedDB-backed profile reads, fail-closed missing/unreadable profiles, and rejection of invalid outbound payloads |
+| `tests/playwright/sync-identity-browser-coverage.spec.js` | **Playwright** — existing-mnemonic restore ordering and the single controlled reload contract |
+| `tests/playwright/settings-sync-panel-loader-browser-coverage.spec.js` | **Playwright** — cold Settings facade loading, in-place Sync/Agent placeholder replacement, and retry behavior |
+| `tests/playwright/sync-actions-browser-coverage.spec.js` | **Playwright** — compaction preflight and decrypted Agent Access payload coverage for the complete redesigned context, including explicit negative/normal answers and skin type |
 | `tests/test-table-heatmap-empty.js` | Table/Heatmap views skip all-null markers; empty category shows hint |
 | `tests/test-tour.js` | App tour: 7 steps, spotlight DOM, positioning, escape key, completion flag (154 assertions) |
 | `tests/test-trend-alerts.js` | Trend detection: sudden change alerts, linear regression, status logic |

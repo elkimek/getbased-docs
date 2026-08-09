@@ -3,7 +3,7 @@ title: "AI chat for lab result interpretation"
 description: "Ask questions about your labs without pasting results manually. getbased sends the AI the relevant profile context when you chat."
 ---
 
-The AI chat panel is a streaming conversation window built into getbased. It is also the main guided path for fresh profiles: after the first-visit tour, chat helps you decide what to add first and routes you to import, setup, or profile context only when needed. Every message you send automatically includes a snapshot of the current profile data.
+The AI chat panel is a streaming conversation window built into getbased. It is also the main guided path for fresh profiles: after the first-visit tour, chat helps you decide what to add first and routes you to import, setup, or profile context only when needed. Every message you send automatically includes a snapshot of the profile context you have enabled.
 
 ## Open the chat
 
@@ -18,6 +18,14 @@ Press **Escape** to close the panel.
 <Note>
 If no AI provider is configured, the chat panel shows a setup guide instead of the conversation view. Click **Connect with OpenRouter** for one-click OAuth setup — no API key needed.
 </Note>
+
+## Write and recover a draft
+
+The message box grows as you type, then becomes scrollable for very long prompts. Press **Enter** to send or **Shift+Enter** for a new line. On phones, the composer stays above the software keyboard and uses larger touch targets.
+
+getbased saves the unfinished text separately for each conversation. You can switch conversations, close chat, or reload the page and return to the same draft. Sending the message or deleting its conversation clears that draft.
+
+Drafts are device-local: they do not sync to another device and are not included in backups or exports. When [local encryption](/guides/encryption) is enabled, draft storage is encrypted with the rest of the sensitive profile data.
 
 ## Talk and listen in chat
 
@@ -34,7 +42,7 @@ Every message includes enabled context from your current profile. You never need
 | Context source | What it can send | Control |
 |---|---|---|
 | Lab results | Biomarker values, reference ranges, trends, Biology Score context, marker notes, and flagged-result summaries | **Labs → Blood marker results**. Imported specialty lab groups can be excluded one group at a time. |
-| Insight Context Cards | Goals, medical history, biometrics, cycle context, diet, exercise, sleep, stress, environment, EMF assessment, notes, and change timeline | **Profile → Insight Context Cards** |
+| Insight Context Cards | Goals, medical history, biometrics, cycle context, diet and explicit digestive answers, exercise, sleep, light and skin type, stress, relationships, environment, EMF assessment, notes, and change timeline | **Insight → Manage → Context → Insight Context Cards** |
 | Supplements & medications | Supplement/medication timeline, ingredients, timing, mitochondrial warnings, and supplement-impact context | **Profile → Supplements & Medications** |
 | Wearables | HRV, sleep, resting pulse, recovery, body metrics, trends, and recent anomaly summaries | **Body → Wearable recovery context** |
 | DNA context | APOE/mtDNA summary, priority SNP findings, and optional Other SNP lookup inventory | **Genome** switches for each tier |
@@ -56,33 +64,49 @@ Use Current Focus as a starting point. Click **Ask AI** next to a finding or ope
 The AI adapts its communication style based on the personality you choose. Switch personalities using the selector in the chat header.
 
 <AccordionGroup>
-  <Accordion title="Default">
+  <Accordion title="AI Lab Analyst">
     A clear, evidence-informed tone. Explains markers plainly, notes trends, and flags concerns without drama.
   </Accordion>
-  <Accordion title="House">
+  <Accordion title="Dr. Gregory House">
     A sharp, skeptical clinician who asks uncomfortable questions. Pushes back on assumptions and digs for root causes.
   </Accordion>
   <Accordion title="Custom">
-    Type a name in the custom personality field and click **Generate**. getbased creates a draft style prompt with tone, reasoning preferences, and any perspective you asked for. You can edit the generated text before saving.
+    Choose **+ New Personality** to open the custom persona editor. Enter a person, archetype, or communication style, then click **Generate draft** for an AI-written starting point—or write the persona instructions yourself. Review and edit the full instructions before you click **Save persona**.
 
-    Custom personalities are saved per profile and persist across sessions. You can create a persona based on a specific medical philosophy, a fictional doctor character, or any style that makes conversations more useful for you.
+    Custom personas are saved per profile. They persist across refreshes, full backups and profile JSON exports, and optional encrypted Sync. If local encryption is enabled, their instructions are encrypted at rest. Deletions also sync, so an older copy on another device does not silently recreate a persona you removed.
   </Accordion>
 </AccordionGroup>
 
-The **Enforce evidence-based accuracy** toggle (off by default) adds a strict instruction to the AI to keep responses grounded in published research rather than speculation.
+On the official hosted app, saving a custom persona requires you to acknowledge that it is an AI-generated interpretation, not the real person or an endorsement, and that you will not use it to impersonate someone. Self-hosted deployments show the same responsibility notice without requiring the hosted-site checkbox.
 
-## Conversation threads
+Each conversation remembers its selected personality. A new conversation starts with **AI Lab Analyst**.
 
-The chat panel has a **thread rail** listing past conversations. Each thread is named automatically from your first message, and you can rename any thread by clicking its name.
+## Discussion mode
 
-- Start a new conversation at any time with **New Chat**
+Once a conversation has an assistant reply, choose the discussion button to add another perspective. Your current personality stays selected and you choose one additional participant. The participants then answer in a predictable sequence and remain attached to that conversation; you can add another participant later.
+
+The picker tells you how many AI responses will run now and on future messages. Each participant is a separate provider request and can create a separate charge. During a round, chat shows whose turn it is and the current position. You can **Pause round**, **Resume** the remaining participants, or retry one failed participant without rerunning responses that already completed.
+
+## Conversations, search, edits, and forks
+
+The chat panel has a conversation rail listing past chats. Each conversation is named automatically from your first message, and you can rename or delete it from the rail.
+
+- Start a neutral conversation at any time with **New Chat**
 - Switch between threads without losing history
-- Up to **50 threads** per profile — oldest are pruned automatically
+- Search conversation names and message text; selecting a result opens the conversation, reveals older history when needed, and highlights the match
+- Use **Jump to latest** when you have scrolled away from new streaming content
+- Long conversations initially render the latest 120 stored messages; choose **Show earlier messages** to reveal the preceding batch without losing your scroll position
 
 On mobile, tap the hamburger icon in the chat header to open the thread list.
 
+Conversations are not automatically deleted when you create new ones. Delete conversations you no longer want from the rail.
+
+Every assistant reply has **Fork to new chat**. A fork copies the conversation through that reply, keeps the original unchanged, and shows a link back to the source conversation.
+
+Your latest text-only question has **Edit & retry**. Editing it replaces that question and its response in the current conversation, then sends the revised text again. Earlier questions should be forked instead, and messages with images cannot be edited because the original full-size attachments may no longer be available.
+
 <Tip>
-Starting a new thread is the single biggest way to reduce token costs. History grows with every exchange — a fresh thread resets the context to just your lab data.
+Starting a new conversation is the single biggest way to reduce history-related token costs. A fresh conversation still includes your enabled profile context, but it does not send messages from an older conversation.
 </Tip>
 
 ## Image attachments
@@ -137,11 +161,17 @@ Hover, focus, or tap a labeled badge to see what was checked and what the result
 
 See [Privacy and data handling](/guides/privacy#venice-encrypted-tee-mode) for what remains visible and [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the technical verification flow.
 
-## Stop and continue responses
+## Stop, retry, and continue responses
 
 While the AI is generating a response, a **Stop** button appears in the chat input area. Click it to halt generation mid-stream — useful when the AI is heading in the wrong direction and you want to rephrase your question.
 
-After stopping, a **Continue** button appears below the partial response. Click it to resume generation from where the AI left off.
+The partial response is saved and marked **[stopped]**. Choose **Retry** to replace that response by sending the same question again, or use **Edit & retry** on your question to change it first.
+
+When a provider ends an otherwise incomplete response at its output limit, getbased automatically asks it to continue up to two times and joins the parts into one message. If the result is still truncated, chat marks it **[output limit reached]** and you can send “continue” yourself.
+
+## Helpful suggestions
+
+When an answer has related recommendations, it shows a collapsed **See helpful suggestions** row. New or changed suggestion areas get a short **New** cue, but the row does not automatically reopen after every response. Expand it only when you want those options.
 
 ## Health context and AI features
 
@@ -151,7 +181,7 @@ Not everything you see in getbased is AI-generated. Understanding the distinctio
 
 - Chat responses and interpretations
 - Current Focus insights
-- Per-card health dots and tips
+- Per-card profile summaries, health dots, and tips
 - Biology Score explanation text when you click **Explain this score**
 - PDF lab import parsing
 - Custom personality profiles
@@ -175,13 +205,13 @@ See [Connect a custom knowledge base](/guides/knowledge-base) for setup instruct
 
 ## Token costs
 
-Every message sends your full lab context plus conversation history. The chat header shows the name of your active model, and each AI response includes a footnote with the estimated token cost for that exchange.
+Every message sends your enabled profile context plus recent eligible conversation history. The chat header shows the name of your active model, and each AI response includes a footnote with the estimated token cost for that exchange.
 
 | Component | Typical size |
 |---|---|
 | System prompt | ~1,300 tokens |
 | Lab context | 2,000–15,000 tokens (grows with draw dates and filled cards) |
-| Conversation history | 0–10,000+ tokens (last 30 messages) |
+| Conversation history | 0–10,000+ tokens (up to the last 30 eligible messages) |
 | Image (current message only) | 1,000–5,000 tokens per image |
 
 <Tip>
