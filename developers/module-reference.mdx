@@ -551,7 +551,7 @@ The Genome feature is a lazy-loaded 10-module family. `dna.js` is the public orc
 - `dna-evidence.js` — association/evidence/relevance labels, ranking, focused Ask AI prompts, publication labels, and privacy-safe catalog issue links.
 - `dna-file-detection.js` — provider, annotated-report, 23andMe MT/Y, and Living DNA motherline classification.
 - `dna-genotype.js` — allele/repeat normalization and strand-aware catalog matching.
-- `dna-mtdna.js` — mutation parsing, parent/subclade resolution, Wallace-lens context, preview, persistence, and manual haplogroup entry.
+- `dna-mtdna.js` — mutation parsing, parent/subclade resolution, mitochondrial climate-adaptation context, preview, persistence, and manual haplogroup entry.
 - `dna-parser.js` — Web Worker raw-file parser plus deterministic annotated/clinical report extraction.
 - `dna-runtime-bridge.js` — cold-safe function registry used before the Genome bundle is loaded.
 - `dna-runtime.js` — lazy stylesheet, pending-import, shell refresh, profile, and chat dependencies.
@@ -571,7 +571,7 @@ The Genome feature is a lazy-loaded 10-module family. `dna.js` is the public orc
 - `getRelevantSNPs(markerKey)` — marker-linked findings sorted by association, relevance, and evidence presentation rank.
 - `renderGeneticsSection()` — Genome content with evidence/source/correction controls and raw/report/manual entry actions.
 - `handleDNAFile(file)` / `handleSnpReportFile(file)` — preview and confirm flows for raw exports and report files.
-- `parseMtDNAMutations()` / `resolveHaplogroup()` / `detectMtDNAMismatch()` — maternal marker parsing, specific-subclade resolution, and Wallace-lens latitude context.
+- `parseMtDNAMutations()` / `resolveHaplogroup()` / `detectMtDNAMismatch()` — maternal marker parsing, specific-subclade resolution, and mitochondrial climate-adaptation latitude context.
 
 The lazy public surface is registered through `configureDnaModuleBridge()`. Shell and dashboard callers use `health-data-loader.js` or `dna-runtime-bridge.js`; Genome functions are no longer installed as a broad set of `window` globals.
 
