@@ -183,6 +183,7 @@
             "pages": [
               "developers/biology-scores",
               "developers/chat-internals",
+              "developers/genome-evidence-methodology",
               "developers/sun-spectrum-model",
               "developers/wearables-internals"
             ]

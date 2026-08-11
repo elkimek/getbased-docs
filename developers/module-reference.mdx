@@ -543,24 +543,37 @@ Specialized editors for Light & Circadian, prioritized Health Goals, Interpretiv
 
 ## Layer 5 — Feature Modules
 
-### `dna.js`
+### Genome modules
 
-DNA raw data import: client-side parser, storage, dashboard section, AI context assembly.
+The Genome feature is a lazy-loaded 10-module family. `dna.js` is the public orchestration barrel; parsing, evidence, UI, mtDNA, and shell integration remain separated by responsibility.
+
+- `dna-actions.js` — delegated Genome action handlers.
+- `dna-evidence.js` — association/evidence/relevance labels, ranking, focused Ask AI prompts, publication labels, and privacy-safe catalog issue links.
+- `dna-file-detection.js` — provider, annotated-report, 23andMe MT/Y, and Living DNA motherline classification.
+- `dna-genotype.js` — allele/repeat normalization and strand-aware catalog matching.
+- `dna-mtdna.js` — mutation parsing, parent/subclade resolution, Wallace-lens context, preview, persistence, and manual haplogroup entry.
+- `dna-parser.js` — Web Worker raw-file parser plus deterministic annotated/clinical report extraction.
+- `dna-runtime-bridge.js` — cold-safe function registry used before the Genome bundle is loaded.
+- `dna-runtime.js` — lazy stylesheet, pending-import, shell refresh, profile, and chat dependencies.
+- `dna-ui.js` — Genome section, raw/report/manual entry, association groups, evidence controls, and import previews.
+- `dna.js` — catalog loading, persistence, APOE resolution, re-import merge rules, AI context assembly, and public bridge registration.
 
 **Key exports:**
-- `detectDNAFile(text)` — detects format from file header: `'ancestry'` | `'23andme'` | `'livingdna'` | `'csv'` | `null`
-- `isDNAFile(file)` — checks filename patterns for known DNA providers
-- `isDNAFileByContent(file)` — async, reads first 500 bytes to detect DNA format by content
-- `parseDNAFile(file)` — async, runs Web Worker parser, matches against `data/snp-health.json` (41 SNPs), resolves APOE haplotype, returns enriched matches with effect/note per genotype
-- `saveGeneticsData(profileData, result)` — stores matched SNPs + APOE in `importedData.genetics`
-- `deleteGeneticsData(profileData)` — removes genetics data
-- `buildGeneticsContext(genetics, activeMarkerKeys)` — serializes genetics for AI context, filtered to SNPs relevant to active markers
-- `renderGeneticsSection()` — full genetics interpretation section for classic/mobile dashboard contexts; returns an in-context "Add your DNA data" empty-state stub (wired to `triggerDNAFilePicker`) when no SNPs/mtDNA exist
-- `handleDNAFile(file)` — full import flow: parse → preview modal → confirm → save
 
-Supports: AncestryDNA (2-column alleles), 23andMe, MyHeritage, FTDNA, Living DNA. Genotype reversal handles strand ambiguity (CT ↔ TC).
+- `detectDNAFile(text)` — detects AncestryDNA, 23andMe autosomal/MT/Y, MyHeritage/FTDNA CSV, Living DNA autosomal/motherline, Illumina GSGT, and annotated SNP report formats by content.
+- `parseDNAFile(file)` — scans a raw file in a Web Worker against the 60-entry `data/snp-health.json` catalog and returns normalized matches with association, evidence, and relevance metadata; preview/save resolve APOE from the two component calls.
+- `parseClinicalSnpReportText()` / `parseManualSnpRows()` — deterministic report and small-list entry paths, including allele calls and supported numeric repeats such as `6/7`.
+- `upsertGeneticsSnp(profileData, rsid, genotype, source)` — validates one catalog call and preserves source metadata for an explicit manual/report override.
+- `saveGeneticsData(profileData, result)` — refreshes raw-file calls while preserving mtDNA and manual/report overrides; an overlapping explicit override remains authoritative.
+- `buildGeneticsContext(genetics, activeMarkerKeys, options)` — serializes separately gated APOE/mtDNA, bounded priority findings, and optional all-call inventory. Full evidence scope/context is opt-in.
+- `buildFullGeneticsContext(genetics)` — explicit genetics-question path with inventory and evidence details.
+- `buildSnpAIInterpretationPrompt(rsid, stored, entry)` — focused, editable Ask AI baseline for one finding.
+- `getRelevantSNPs(markerKey)` — marker-linked findings sorted by association, relevance, and evidence presentation rank.
+- `renderGeneticsSection()` — Genome content with evidence/source/correction controls and raw/report/manual entry actions.
+- `handleDNAFile(file)` / `handleSnpReportFile(file)` — preview and confirm flows for raw exports and report files.
+- `parseMtDNAMutations()` / `resolveHaplogroup()` / `detectMtDNAMismatch()` — maternal marker parsing, specific-subclade resolution, and Wallace-lens latitude context.
 
-**Window exports:** `isDNAFile`, `isDNAFileByContent`, `handleDNAFile`, `confirmDNAImport`, `closeDNAImportPreview`, `deleteGeneticsData`, `_buildGeneticsContext`, `_getRelevantSNPs`
+The lazy public surface is registered through `configureDnaModuleBridge()`. Shell and dashboard callers use `health-data-loader.js` or `dna-runtime-bridge.js`; Genome functions are no longer installed as a broad set of `window` globals.
 
 ---
 

@@ -1,111 +1,164 @@
 ---
-title: "Import and analyze your raw DNA data with getbased"
-description: "Drop a raw DNA file from any major provider and getbased overlays 47 curated SNPs on your lab results — parsed entirely in your browser."
+title: "Import and interpret DNA data with getbased"
+description: "Import raw DNA, a SNP report, or selected catalog calls and review 60 curated associations without uploading your genome."
 ---
 
-getbased can overlay genetic context on your blood work. Drop a raw DNA file from AncestryDNA, 23andMe, MyHeritage, FTDNA, Living DNA, Illumina GenomeStudio, DNAEra, or another compatible provider and getbased scans it for 47 health-relevant SNPs. Those findings surface in the Genome lens, the Genetic Modifiers dashboard widget, marker details, and AI context. No account, no upload, no cloud processing.
+getbased can add genetic context to your labs, recommendations, Light & Sun model, and AI conversations. The public catalog contains **60 SNPs across 18 categories**. It includes health and lab context, context-dependent associations, and educational traits.
 
-## Supported providers
+Raw DNA and SNP reports are parsed in your browser. getbased keeps only catalog matches and optional mtDNA data, not your complete genome.
 
-You need a **raw DNA data file** from your testing service — not a PDF report or health summary, but the underlying data export.
+<Warning>
+Genome findings are wellness and educational context. They are not diagnoses, pathogenic-variant classifications, or polygenic risk scores. Association direction, evidence strength, and personal relevance are separate.
+</Warning>
+
+## Ways to add Genome data
+
+You can use any of these paths from the **Genome** lens or **Genetic Modifiers** dashboard widget:
+
+- **Raw DNA file** — scan a provider export against the complete 60-SNP catalog.
+- **Report PDF/text** — extract catalog SNP calls from a small clinical or wellness report without using AI.
+- **Add SNP manually** — paste one or more catalog rsID and genotype pairs, such as `rs1801133 CT` or `rs8175347 6/7`.
+- **mtDNA file or manual haplogroup** — resolve a maternal lineage from supported markers or enter a known haplogroup in the profile editor.
+
+Manual and report entry accept only SNPs already in the getbased catalog. To propose a new catalog entry, use **Suggest a catalog SNP** in the Genome view.
+
+## Supported raw-DNA providers
+
+You need the underlying raw data export, not a PDF health summary.
 
 | Provider | File format | How to download |
 |---|---|---|
 | **AncestryDNA** | Tab-separated text | Settings → DNA → Download Raw DNA Data |
 | **23andMe** | Tab-separated text | Settings → 23andMe Data → Download Raw Data |
-| **MyHeritage** | CSV | DNA → Manage DNA kits → Download Raw Data |
+| **MyHeritage** | CSV or tab-separated text | DNA → Manage DNA kits → Download Raw Data |
 | **FTDNA** (Family Tree DNA) | CSV | myFTDNA → Download Raw Data |
-| **Living DNA** | Tab-separated text | Dashboard → Download Raw DNA |
-| **Illumina GenomeStudio / DNAEra** | CSV with `[Header]`/`[Data]` blocks | Provided by your clinical lab |
+| **Living DNA** | Separate autosomal and motherline text exports | Dashboard → Download Raw DNA |
+| **Illumina GenomeStudio / DNAEra** | CSV with `[Header]` and `[Data]` blocks | Provided by your clinical lab |
 
 <Note>
-getbased identifies files by their content headers, not the filename. If your file isn't recognized, make sure you downloaded the raw data export and not a formatted health report.
+getbased identifies files by content, not only by filename. Living DNA motherline files are detected as mtDNA instead of being sent through the autosomal parser.
 </Note>
 
-## How to import
+## Import a raw DNA file
 
-Common entry points open the same file picker:
+Common entry points open the same local file picker:
 
-- **Genome lens** — open **Genome** and choose **Add your DNA data** when no DNA is loaded.
-- **Genetic Modifiers widget** — add the widget to your dashboard and use its empty state.
-- **Header import** — use the import button in the header.
-- **Drag and drop** — drag your raw DNA file onto the app.
+- Open **Genome** and choose **Add your DNA data**.
+- Add or open the **Genetic Modifiers** dashboard widget and use its empty state.
+- Use the import button in the header.
+- Drag the raw DNA file onto the app.
 
 <Steps>
-  <Step title="Open the file picker">
-    Click **Add your DNA data** in the Genome lens or Genetic Modifiers widget, use the header import button, or drag your raw DNA file onto the page.
+  <Step title="Choose the raw DNA file">
+    Select the provider's text or CSV export. The app detects the format from its headers and scans the file locally.
   </Step>
-  <Step title="Review the import preview">
-    getbased groups your findings by impact level before saving anything. Significant results appear first.
+  <Step title="Review the preview">
+    Findings are grouped into risk associations, protective associations, informational traits, and reference or neutral calls. Each interpreted finding shows separate evidence and relevance labels. If you already added report or manual calls, the preview also tells you how many curated overrides will be preserved.
   </Step>
-  <Step title="Click Import">
-    Confirm to save. The 47 matched SNP genotypes are stored in your browser. Everything else in the file is discarded.
+  <Step title="Confirm the import">
+    Save the matched calls for the current profile. All non-catalog rows from the raw file are discarded.
   </Step>
 </Steps>
 
 <Tip>
-No AI provider is needed for DNA import. The entire file is parsed locally using a Web Worker — your raw DNA data is never transmitted anywhere.
+No AI provider is needed. Raw DNA is parsed locally in a Web Worker, and report/manual calls use deterministic local parsing and catalog lookup.
 </Tip>
 
-## What gets extracted
+## Import a report or add calls manually
 
-getbased doesn't store your genome. It scans your file for **47 curated SNPs** across 13 categories and discards everything else. Each SNP was selected because it has a known biochemical mechanism, a large effect size, and directly helps interpret a biomarker you're already tracking.
+Choose **Report PDF/text** when a report contains rsIDs and genotype results but is not a full provider export. getbased can read PDF, text, and CSV reports, normalize allele order and supported repeat genotypes, and preview only calls that match the public catalog.
 
-| Category | SNPs | Example genes | Related markers |
-|---|---|---|---|
-| Methylation | 6 | MTHFR, MTR, MTRR, CBS | Homocysteine, folate, B12 |
-| Iron | 5 | HFE, TMPRSS6, TF | Ferritin, transferrin, iron |
-| Lipids | 6 | APOE, PCSK9, CETP, LIPC | LDL, HDL, cholesterol, Lp(a) |
-| Vitamin D | 4 | VDR, GC, CYP2R1 | Vitamin D |
-| Vitamin B12 | 4 | FUT2, TCN2, CUBN | B12, homocysteine |
-| Blood sugar | 5 | TCF7L2, PPARG, ADIPOQ, MTNR1B | Glucose, HbA1c, insulin |
-| Sex hormones | 5 | SHBG, CYP17A1, CYP19A1 | Testosterone, estradiol, SHBG |
-| Thyroid | 3 | DIO1, DIO2, TSHR | TSH, fT3, fT4 |
+Choose **Add SNP** to paste a short list directly:
+
+```text
+rs1801133 CT
+rs8175347 6/7
+rs429358 TT APOE report
+```
+
+You can add an optional source label. Invalid rows and rsIDs outside the catalog are skipped. Accepted calls merge into existing Genome data instead of removing the other calls.
+
+## What the catalog covers
+
+The catalog contains 60 SNPs across 18 categories. A catalog entry can provide biomarker context, a context-dependent association, or an educational trait; inclusion does not imply that every entry is highly actionable or strongly evidenced.
+
+| Category | SNPs | Example genes | Related context |
+|---|---:|---|---|
+| Methylation | 6 | MTHFR, MTR, MTRR, CBS, BHMT | Homocysteine, folate, vitamin B12 |
+| Iron | 5 | HFE, TMPRSS6, TF | Ferritin, transferrin, iron, hemoglobin |
+| Lipids | 8 | APOE, CETP, LIPC, PCSK9, LPA | LDL, HDL, cholesterol, triglycerides, Lp(a) |
+| Vitamin D | 6 | VDR, GC, CYP2R1, CYP27B1, CYP24A1, DHCR7 region | 25-OH vitamin D and modeled UV response context |
+| Vitamin B12 | 4 | FUT2, TCN1, TCN2, CUBN | Vitamin B12 and homocysteine |
 | Bilirubin | 2 | UGT1A1 | Total bilirubin |
-| Fatty acids | 4 | FADS1, FADS2, ELOVL2 | Omega-3, EPA, DHA |
-| Alcohol | 1 | ALDH2 | GGT, AST, ALT |
-| Caffeine | 1 | CYP1A2 | Cholesterol, hsCRP, glucose |
-| Body composition | 1 | FTO | Body fat %, BMI, HbA1c |
+| Thyroid | 3 | TSHR, DIO1, DIO2 | TSH, fT3, fT4 |
+| Fatty acids | 4 | FADS1, FADS2, ELOVL2 | Omega-3 index and fatty-acid metabolism |
+| Blood sugar | 5 | TCF7L2, PPARG, ADIPOQ, MTNR1B | Glucose, HbA1c, insulin, HOMA-IR |
+| Sex hormones | 5 | SHBG, CYP17A1, CYP19A1, CYP1B1 | Testosterone, estradiol, SHBG, DHEA-S |
+| Alcohol | 2 | ALDH2, ADH1B | Alcohol metabolism and liver-marker context |
+| Caffeine | 1 | CYP1A2 | Caffeine exposure context |
+| Body composition | 1 | FTO | Body composition and glycemic context |
+| Neurotransmitter metabolism | 1 | COMT | Educational biochemical trait context |
+| Exercise traits | 1 | ACTN3 | Muscle-performance trait context |
+| Digestion | 1 | MCM6 / LCT | Lactase-persistence context |
+| Vitamin A | 2 | BCO1 | Beta-carotene conversion context |
+| Skin & Sun | 3 | MC1R, HERC2 / OCA2 | Pigmentation and sun-sensitivity context |
 
 ### APOE haplotype
 
-The two APOE SNPs (rs429358 + rs7412) are automatically resolved into standard haplotype notation — ε2, ε3, or ε4 — rather than shown as raw genotypes. Your APOE status appears prominently in the Genome lens and in dashboard genetics summaries.
+The two APOE SNPs, `rs429358` and `rs7412`, are interpreted together as the standard ε2, ε3, or ε4 haplotype. The combined haplotype is shown instead of treating the two component calls as independent findings.
 
-## Effect tiers
+## How to read a finding
 
-Each genotype gets a colored dot indicating how much weight to give the finding when interpreting your labs.
+The Genome view deliberately avoids collapsing everything into one severity score.
 
-| Indicator | Meaning | Example |
-|---|---|---|
-| Red — significant risk | Meaningful functional impact worth factoring into health decisions | MTHFR C677T AA (~30% enzyme activity) |
-| Yellow — moderate risk | Mild effect, relevant when combined with other factors | HFE C282Y heterozygous |
-| Orange — mild risk | Small effect on its own, mainly relevant in combination | MTHFR A1298C heterozygous |
-| Green — beneficial | A variant that's actually good news | PCSK9 R46L (~15% lower lifetime LDL) |
-| Gray — informational | A lab-interpretation flag, neither risky nor protective | FUT2 W154X non-secretor (artificially high B12) |
+### Association direction
 
-Wild-type genotypes with no meaningful effect get no dot. The import preview groups findings by severity so you see significant results first.
+| Label | Meaning |
+|---|---|
+| **Risk association** | The imported genotype is associated with the catalog's narrowly stated risk or biomarker direction. It is not an absolute-risk estimate. |
+| **Protective association** | The studied association points in a protective direction. It is not universally beneficial. |
+| **Informational trait** | Educational phenotype or biochemical context, not a health warning. |
+| **Reference / neutral** | Reference, no-effect, or neutral catalog call. These are kept under **Other imported SNPs**. |
 
-## Where genetics appears
+### Evidence strength
 
-After import, your genetic context surfaces across the app.
+| Label | Meaning |
+|---|---|
+| **Strong / replicated** | Replicated human evidence, a large meta-analysis or GWAS, or a well-established functional variant supports the scoped claim. |
+| **Supported** | Credible human or functional evidence supports the claim, with meaningful limitations. |
+| **Mixed evidence** | Relevant studies disagree, or functional evidence has not produced a consistent human phenotype. |
+| **Preliminary** | The claim relies on a small, single, ancestry-specific, or otherwise limited study. |
+| **Mechanistic only** | Laboratory or molecular evidence supports a mechanism, but not a reliable personal health outcome. |
 
-**Genome lens** — the dedicated genetics workspace shows your APOE haplotype, mtDNA data, import details, and top SNP findings grouped by category and severity.
+### Personal relevance
 
-**Dashboard** — the **Genetic Modifiers** widget summarizes actionable SNP context alongside labs and goals. Add or remove it like any other dashboard widget.
+| Label | Meaning |
+|---|---|
+| **Health / lab context** | Interpret with measured biomarkers, symptoms, family history, medications, or professional guidance. |
+| **Context-dependent** | Diet, exposure, behavior, ancestry, or environment materially changes what the association means. |
+| **Trait only** | Educational trait or biochemical context; no health action follows from genotype alone. |
 
-**Biomarker detail modal** — when you open any biomarker's detail view, relevant SNPs appear inline with the gene, your genotype, and what it means for that specific marker. SNPs are sorted by severity.
+Open **Evidence & interpretation** on a finding to see the narrowly supported claim, interpretation limits, publication links, **Ask AI**, and **Suggest correction**. A strong evidence label supports that specific claim; it does not mean severe, diagnostic, highly penetrant, or clinically actionable.
 
-**AI chat** — genetic context is controlled in **Insight → Manage → Context → Data sources → Genome**. You can include or exclude the high-level **APOE & mtDNA summary**, compact **Priority SNP findings**, and the broader **Other SNP lookup inventory** separately.
+## Where Genome data appears
 
-**Context cards** — SNPs route to the relevant context cards (diet, supplements, sleep, and so on) so the AI can factor them into lifestyle recommendations.
+**Genome lens** — shows catalog coverage, APOE, mtDNA, association groups, evidence and relevance, publication links, and contribution links.
 
-## mtDNA haplogroup import
+**Dashboard** — the **Genetic Modifiers** widget summarizes risk, protective, and trait findings. Expand a row for evidence, interpretation boundaries, source links, **Ask AI**, and correction controls.
 
-In addition to autosomal SNPs, getbased can determine your maternal haplogroup from a mitochondrial DNA mutation file.
+**Biomarker details and Recommendations** — relevant findings appear next to affected markers and recommendation context. Genetic hints now retain the evidence and relevance labels instead of presenting genotype as a prescription.
 
-### Supported file format
+**Light & Sun** — four vitamin-D-pathway loci can apply conservative context weights to the modeled serum-response estimate: `GC rs2282679`, `CYP2R1 rs10741657`, `NADSYN1/DHCR7 rs12785878`, and the `CYP24A1`-region `rs6013897`. This is not a clinical dose calculation or a direct measurement of skin synthesis. VDR and CYP27B1 catalog entries remain informational and do not change the numeric estimate.
 
-Some labs (including Living DNA) export mtDNA results as a plain CSV with one mutation per line:
+**AI chat** — control the **APOE & mtDNA summary**, **Priority SNP findings**, and **Other SNP lookup inventory** separately in **Insight → Manage → Context → Data sources → Genome**. Routine context stays compact and omits long claim and interpretation prose. Choosing **Ask AI** on one finding opens a focused, editable prompt with that finding's evidence, relevance, scope, context, and sources; the selected model can add broader knowledge if it distinguishes established evidence from inference.
+
+## mtDNA maternal-line import
+
+getbased can resolve a maternal haplogroup from a supported mitochondrial marker file.
+
+### Supported file formats
+
+Living DNA motherline files can contain one positive mutation per line:
 
 ```text
 263G
@@ -115,73 +168,67 @@ Some labs (including Living DNA) export mtDNA results as a plain CSV with one mu
 13708A
 ```
 
-Drop this file onto the app and getbased will:
+The parser also accepts 23andMe tab-separated `MT` rows. It compares the observed mutations with diagnostic markers from PhyloTree Build 17 and MITOMAP, shows the matched-marker count, and asks you to confirm before saving.
 
-1. Match your mutations against diagnostic markers from PhyloTree Build 17
-2. Resolve your maternal haplogroup (for example, J, H, U, or K)
-3. Classify your mitochondrial coupling status using Doug Wallace's framework
-4. Compare your haplogroup against your profile's latitude to detect environment-haplotype mismatch
+The catalog covers 39 maternal lineages, including subclades such as A2, H1, H3, J1, J2, K1, T1, T2, U5a, U5b, and U6. When a parent and subclade both match, the resolver prefers the more specific supported match.
 
 ### Manual haplogroup entry
 
-If you already know your maternal haplogroup from 23andMe, FTDNA, or another service but don't have a mutation file, you can enter it directly without uploading anything:
+If you already know your maternal haplogroup, use **Profile editor → mtDNA Haplogroup (maternal lineage)**. Manual entry stores the lineage and available framework context without pretending that diagnostic mutations were imported.
 
-- **Profile editor** — select your haplogroup from the **mtDNA Haplogroup (maternal lineage)** dropdown
+### Wallace mitochondrial adaptation lens
 
-Both paths auto-resolve the coupling classification and environment mismatch detection.
-
-### Coupling classification
-
-Based on Wallace (2015, *Cell*), mtDNA haplogroups correlate with mitochondrial electron transport coupling efficiency:
-
-- **Coupled** (L lineages) — efficient ATP production, low heat generation. Evolved in equatorial climates.
-- **Uncoupled** (J, T) — more heat per calorie, less ATP. Evolved in cold northern climates.
-- **Intermediate** — most other haplogroups fall between these extremes.
-
-The AI uses this to contextualize your lab results, cold tolerance, light exposure, and environmental data.
+The Genome view places the maternal lineage on a seven-level continuum from coupled through intermediate to uncoupled and can compare the framework's climate bands with the latitude stored in your profile. It also exposes the framework's supporting, mixed, and null studies with model and limitation notes.
 
 <Warning>
-The coupling classification follows Wallace's mitochondrial paradigm — supported by cybrid studies and population data, but not universally accepted as clinical standard. Individual variation within haplogroups is significant.
+This is an evolutionary bioenergetics lens, not a measured personal coupling test. Population patterns and cell or observational studies cannot determine your preferred climate, prove that a climate causes symptoms, or predict a treatment response. Lineage, tissue, nuclear background, environment, and individual variation all matter.
 </Warning>
 
-## Privacy
+## Re-importing safely
 
-Your raw DNA file never leaves your device.
+A new raw file refreshes raw-file calls but preserves:
 
-- The file is parsed **entirely in your browser** using a Web Worker — it is never uploaded or transmitted to any server
-- Only the 47 matched SNP genotypes are stored, not your full genome
-- Stored data includes the rsID, genotype, gene name, variant name, and effect classification
-- DNA data is included in your JSON exports and covered by encryption if you have it enabled
-- You can delete your genetic data at any time from the Genome lens
+- mtDNA data;
+- SNPs added manually; and
+- SNPs imported from a report.
 
-## Re-importing
+If a new raw file contains the same rsID as a manual or report call, the explicit curated call remains authoritative. The preview and final summary use the preserved result, so a consumer-file call does not silently overwrite a result you intentionally added. Use **Delete** in Genome when you want to remove the complete genetics record rather than refresh it.
 
-Importing a new file replaces all existing genetic data for the current profile. Use the Genome lens controls or drop a new file onto the page. This is useful if you switch providers or download a newer export from your testing service.
+## Privacy and storage
+
+- Raw DNA and report files are processed locally and are not uploaded.
+- The complete raw file is not stored.
+- Raw-file imports store only matched catalog calls and interpretation metadata.
+- Manual/report calls also store their source label and can retain the filename and a bounded excerpt around the matched row; they do not store the entire report.
+- mtDNA import stores the matched mutation list, resolved lineage, match count, and framework context.
+- Genome data is included in profile JSON exports, backups, optional encrypted Sync, and encrypted profile sharing when those features are used.
+- Local encryption covers Genome data when encryption is enabled.
+- Public suggestion and correction links do not add your genotype, raw DNA, labs, location, or profile notes to the issue URL. Do not paste private health data into a public issue.
 
 ## FAQ
 
 <AccordionGroup>
-  <Accordion title="Why only 47 SNPs?">
-    Quality over quantity. Each SNP was selected because it has a well-understood biochemical mechanism, a large effect size, and directly helps interpret a biomarker you're already tracking. Adding hundreds of low-confidence GWAS associations would create noise rather than signal. Every SNP links to its primary research paper so you can verify the evidence yourself.
+  <Accordion title="Why only 60 SNPs?">
+    The catalog favors narrow, reviewable claims over a long list of weak or ambiguous associations. Evidence can still be strong, supported, mixed, preliminary, or mechanistic; every retained entry must disclose that grade, its personal-relevance level, its claim scope, and publication links. See the [Genome evidence methodology](/developers/genome-evidence-methodology).
   </Accordion>
 
-  <Accordion title="What if my file isn't recognized?">
-    getbased identifies files by their content headers, not the filename. Make sure you downloaded the raw data export — a text or CSV file — and not a PDF report or formatted health summary. If you're using Illumina GenomeStudio output from a clinical lab, confirm the file includes the `[Header]` and `[Data]` block structure.
+  <Accordion title="What if my file is not recognized?">
+    Make sure you downloaded the raw text or CSV export rather than a formatted report. For Illumina GenomeStudio output, confirm that the file contains `[Header]` and `[Data]` blocks. Use **Report PDF/text** for a small clinical SNP report instead of dropping it into the raw-file path.
   </Accordion>
 
-  <Accordion title="Can I add my own SNPs?">
-    Not directly through the app. The SNP list is curated and versioned — every entry must pass strict criteria: a known mechanism, large effect size, well-replicated findings, and clear actionability tied to a tracked biomarker. Community contributions are welcome via pull request on GitHub. Open an issue first with the rsID, which biomarker it maps to, the mechanism, effect size, replication evidence, and what concrete recommendation follows.
+  <Accordion title="Can I add my own SNP calls?">
+    Yes. Choose **Add SNP** and paste one or more rsID and genotype pairs. The rsID must already exist in the getbased catalog, and the genotype must match an allele or supported repeat form for that entry. These calls merge with existing Genome data and survive later raw-file imports.
   </Accordion>
 
-  <Accordion title="How does APOE haplotype resolution work?">
-    APOE status is determined by two SNPs — rs429358 and rs7412 — that must be read together. getbased combines them automatically into the standard notation (ε2/ε3/ε4) rather than showing raw genotypes. The most common result is ε3/ε3, which is considered the neutral baseline.
+  <Accordion title="Can I propose a new catalog SNP or correction?">
+    Yes. Use **Suggest a catalog SNP** or **Suggest correction** in the Genome view. Define a narrow claim and provide primary publication links, study population, effect direction, limitations, and why the entry belongs in a wellness catalog. Never include your genotype or other private profile data in the public issue.
+  </Accordion>
+
+  <Accordion title="How does APOE resolution work?">
+    APOE status requires both `rs429358` and `rs7412`. getbased combines the calls into standard ε2/ε3/ε4 notation and avoids listing the component SNPs as independent priority findings when the haplotype is available.
   </Accordion>
 
   <Accordion title="Is this a medical diagnosis?">
-    No. Genetic information provides context for interpreting your lab results — it does not diagnose conditions. Always discuss significant findings with your healthcare provider before making changes to supplements, medications, or treatment plans.
-  </Accordion>
-
-  <Accordion title="What data is stored after import?">
-    Only the 47 matched SNP genotypes: the rsID, genotype, gene name, variant name, and effect classification. Nothing else from your raw DNA file is retained. The full genome data is processed in memory and immediately discarded after the scan completes.
+    No. Genome data provides context for interpreting labs, traits, and exposures. It does not diagnose a condition or establish a treatment. Discuss consequential findings with a qualified clinician or genetic counselor.
   </Accordion>
 </AccordionGroup>

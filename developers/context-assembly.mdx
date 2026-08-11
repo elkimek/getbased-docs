@@ -187,6 +187,20 @@ Water: filtered. EMF: wifi router. Home lighting: mixed.
 Started cold plunges in January
 ```
 
+### Genome context tiers
+
+`lab-context.js` wraps enabled Genome output in `[section:genetics]`. The three source controls map to independent `buildGeneticsContext()` options:
+
+| Source control | Option | Output |
+|---|---|---|
+| **APOE & mtDNA summary** | `includeGenomeSummary` | Combined APOE haplotype, maternal lineage, Wallace-lens details, and available latitude-fit context |
+| **Priority SNP findings** | `includePriorityFindings` | Risk, protective, and trait findings relevant to markers that have data, bounded to 12 by default |
+| **Other SNP lookup inventory** | `includeSnpInventory` | Compact inventory of every imported catalog call, including reference and neutral calls |
+
+Each priority line carries association direction, evidence grade, and relevance grade. Routine context intentionally leaves out the longer `evidence.scope` and `relevance.context` prose. When more than 12 eligible findings exist, the serializer states how many were omitted and tells the model to use a focused gene/rsID question.
+
+`buildFullGeneticsContext()` enables the complete inventory, full evidence details, and an unbounded priority list for explicit Genome questions. **Ask AI** on one row uses the narrower `buildSnpAIInterpretationPrompt()` path: it includes only the selected call's supported claim, interpretation context, sources, and available profile context in an editable user prompt. Both paths state that the catalog is a grounded baseline rather than a limit on broader model knowledge and require the model to distinguish evidence from inference.
+
 ### Empty-Card Guards
 
 Cards with no meaningful content are omitted entirely (not sent as empty sections). This happens after the **Insight Context Cards** source gate. Each card checks for actual data:
@@ -222,6 +236,7 @@ importedData (localStorage)
          ├─── .notes ──────────────────────────────────────┤
          ├─── .diagnoses ──────────────────────────────────┤
          ├─── .supplements ────────────────────────────────┤  ← MEDICAL
+         ├─── .genetics ───── dna.js ──────────────────────┤
          ├─── .menstrualCycle ─── + helper functions ──────┤
          │     ├─ getCyclePhase()                          │
          │     ├─ getBloodDrawPhases()                     │

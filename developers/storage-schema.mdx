@@ -374,23 +374,78 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
 }
 ```
 
-### `genetics` — DNA raw data (null if not imported)
+### `genetics` — curated Genome data (null if not imported)
 
 ```js
 genetics: {
-  source: "AncestryDNA",       // provider name
-  importDate: "2026-03-14",    // ISO date
-  coverage: { found: 35, total: 41 },  // matched vs total curated SNPs
-  apoe: "ε3/ε4",              // resolved haplotype (null if incomplete)
+  source: "AncestryDNA",       // original raw provider or first explicit source
+  importDate: "2026-08-10",    // latest autosomal/manual/report update
+  coverage: { found: 47, total: 60 },
+  catalogVersion: { size: 60, hash: 123456789 },
+  apoe: "ε3/ε4",              // resolved from rs429358 + rs7412 when complete
+
+  // Legacy effect counts retained for compatibility, not evidence grades
+  effects: { significant: 3, moderate: 8, mild: 9, normal: 25 },
+
   snps: {
-    "rs1801133": { genotype: "GA", gene: "MTHFR", variant: "C677T" },
-    "rs1800562": { genotype: "GG", gene: "HFE", variant: "C282Y" },
-    // ... only matched SNPs stored, not the full 600k+ raw file
+    "rs1801133": {
+      genotype: "GA",          // imported/display call
+      normalizedGenotype: "AG",// catalog-matched allele/repeat key
+      gene: "MTHFR",
+      variant: "C677T",
+      category: "methylation",
+      markers: ["coagulation.homocysteine", "vitamins.folate"],
+      effect: "mild",          // legacy internal prioritization field
+      valence: "risk",         // association presentation direction
+      evidence: {
+        level: "strong",
+        claimTypes: ["functional", "biomarker_association"],
+        scope: "Narrow catalog claim supported by the linked studies.",
+        reviewedAt: "2026-08-10"
+      },
+      relevance: {
+        level: "health_context",
+        context: "Interpret with measured homocysteine and folate status."
+      },
+      note: "Catalog interpretation for this matched genotype.",
+
+      // Present only for explicit manual/report overrides
+      source: {
+        type: "manual",        // or "pdf-report" / "report-text"
+        label: "Example report",
+        fileName: "example-report.pdf",
+        rawText: "bounded matched-row excerpt",
+        addedAt: "2026-08-10T10:00:00.000Z"
+      }
+    }
+  },
+
+  mtdna: {
+    haplogroup: "U5a",
+    confidence: 1,
+    matchedMutations: 4,
+    totalDiagnostic: 4,
+    origin: "European",
+    details: "Catalog lineage context",
+    coupling: {
+      level: "moderately_uncoupled",
+      label: "Moderately uncoupled",
+      shortLabel: "moderately uncoupled",
+      climate: "Cold / Temperate",
+      description: "Wallace-lens context",
+      implications: "Interpretation boundary and self-observation context",
+      matchedLatBands: [2, 3, 4]
+    },
+    mutations: ["263G", "750G", "3197C"],
+    source: "mtDNA (Living DNA)",
+    importDate: "2026-08-10"
   }
 }
 ```
 
-Re-import replaces entirely (no merge). Raw file is never stored — only matched SNPs.
+The complete raw DNA or report file is never stored. Raw imports keep only matched catalog calls. Explicit manual/report calls can retain a source label, filename, and a bounded matched-row excerpt.
+
+Raw re-import refreshes raw-file calls but preserves mtDNA and SNP objects with structured `source` metadata. When a raw file and an explicit manual/report override contain the same rsID, the explicit override remains authoritative. `catalogVersion` is preserved when a manual call is added to an older raw import so the app can still prompt for a genuine catalog refresh.
 
 ## IndexedDB — auto-backup
 

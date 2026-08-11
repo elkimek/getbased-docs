@@ -118,6 +118,23 @@ Where `gain` is:
 
 Eye-channel doses go to zero when `eyeExposure` is null (no eye exposure logged). Skin channels are unaffected by eye-mode.
 
+## Genetic vitamin D context
+
+`geneticVitaminDMultiplier(genetics)` reads four catalog calls and returns a compound multiplier plus an auditable contributor list:
+
+| SNP | Catalog locus | Genotype multipliers |
+|---|---|---|
+| `rs2282679` | `GC` / VDBP marker | `TT: 1.00`, `GT: 0.95`, `GG: 0.85` |
+| `rs10741657` | `CYP2R1` | `AA: 1.00`, `AG: 0.95`, `GG: 0.88` |
+| `rs12785878` | `NADSYN1/DHCR7` region | `TT: 1.00`, `GT: 0.95`, `GG: 0.92` |
+| `rs6013897` | `CYP24A1` region | `TT: 1.00`, `AT: 0.97`, `AA: 0.92` |
+
+`vitaminDIURaw()` multiplies the channel result by this compound value before the per-session and daily caps are applied. Missing or reference calls contribute `1.0`.
+
+These are conservative heuristic weights for associations with circulating 25-OH vitamin D. They are not genotype-specific intervention responses and do not directly measure skin synthesis, transport, hydroxylation, or personal blood response. The UI therefore describes an **effective serum response per modeled UV dose**, not genetically calculated vitamin D production.
+
+`VDR rs2228570` and `CYP27B1 rs10877012` remain in the public Genome catalog as informational/mechanistic context but are intentionally excluded from the multiplier because their cited studies do not establish a change in circulating 25-OH vitamin D or UV response. Claim scopes and publication links live in `data/snp-health.json`.
+
 ## Safety counters
 
 Two safety counters are computed alongside the channel doses:
