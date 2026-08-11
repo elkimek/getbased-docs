@@ -97,10 +97,11 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-demo.js` | Demo data files: v2 structure, structured context cards, menstrual cycle for Sarah |
 | `tests/test-dev-server-helpers.js` | **node** — `dev-server.js` helper unit tests |
 | `tests/test-dev-server-origin.js` | **node** — `dev-server.js` `/api/*` same-origin guard rejects forged headers |
-| `tests/test-dna-illumina-and-valence.js` | Illumina GenomeStudio (DNAEra) + Valence formats; probe-name prefix strip |
-| `tests/test-dna-mtdna-subclades.js` | mtDNA sub-haplogroup resolution (v1.23.0) |
-| `tests/test-dna-recommendations.js` | DNA-aware supplement recommendations: snpHints, buildDNAHints, gene-keyword scanner |
-| `tests/test-dna.js` | DNA import: SNP parsing, APOE haplotype, format detection, dashboard rendering |
+| `tests/test-dna-genome-remediation.js` | 60-entry catalog contract, evidence/relevance grades, repeat and strand normalization, privacy-safe issue links, curated-override/mtDNA re-import preservation, Living DNA motherline routing, focused AI context, and Genome rendering |
+| `tests/test-dna-illumina-and-valence.js` | Illumina GenomeStudio/DNAEra and annotated-report formats, probe-prefix stripping, genotype normalization, and risk/protective/trait/neutral presentation |
+| `tests/test-dna-mtdna-subclades.js` | Parent/subclade mtDNA resolution with specific-match tie-breaking |
+| `tests/test-dna-recommendations.js` | DNA-aware recommendation hints, evidence/relevance labels, conservative APOE wording, and catalog-linked context |
+| `tests/test-dna.js`, `tests/test-dna-runtime.js` | DNA parsing, APOE, format detection, lazy runtime bridge, import summaries, and AI context bounds |
 | `tests/test-emf.js` | EMF assessment: SBM-2015 severity, room CRUD, source/mitigation tags |
 | `tests/test-emf-flow.js` | EMF module behavioral flow (CRUD + interpret + PDF-import path) — opens the full editor lifecycle that `test-emf.js` only schema-tests |
 | `tests/test-export-import.js` | Export/import roundtrip + encrypted-backup re-enumeration: JSON structure, date merge, context field handling |

@@ -1,0 +1,85 @@
+---
+title: "Genome evidence methodology"
+description: "How the public SNP catalog separates association direction, evidence strength, personal relevance, and claim scope."
+---
+
+The Genome catalog is a wellness-education feature. It can expose useful genotype context, but it is not a diagnostic report, a pathogenic-variant classifier, or a polygenic risk score.
+
+This page defines the review contract for `data/snp-health.json`. For the user-facing import and interpretation flow, see [Import and interpret DNA data](/guides/dna-import).
+
+## Three separate concepts
+
+A catalog entry must keep association direction, evidence strength, and personal relevance separate. The UI must not collapse them into one severity label.
+
+### Association direction
+
+The matched genotype can be displayed as a risk association, protective association, informational trait, neutral finding, or reference finding. These labels describe the direction and type of the narrowly scoped catalog claim.
+
+Risk does not mean absolute risk, diagnosis, or high penetrance. Protective does not mean universally beneficial. A reference call is not evidence that the user is free of disease.
+
+### Evidence strength
+
+- **Strong / replicated** — replicated human evidence, a large meta-analysis or GWAS, or a well-established functional variant supports the narrowly worded catalog claim.
+- **Supported** — credible human or functional evidence supports the claim, with meaningful population, design, replication, or effect-size limitations.
+- **Mixed evidence** — relevant studies disagree, or functional evidence has not produced a consistent human phenotype.
+- **Preliminary** — the claim relies on a small, single, ancestry-specific, or otherwise limited human study and needs replication.
+- **Mechanistic only** — laboratory or molecular work supports a mechanism but not a reliable personal health outcome.
+
+“Strong” applies only to the scoped claim. It does not mean clinically severe, diagnostic, actionable, or suitable for a genotype-specific intervention.
+
+### Personal relevance
+
+- **Health / lab context** — interpret with measured biomarkers, symptoms, family history, medications, or professional guidance. Genotype alone is not a diagnosis.
+- **Context-dependent** — diet, exposure, behavior, ancestry, or environment materially changes the practical meaning.
+- **Trait only** — educational phenotype or biochemical context; no health action follows from genotype alone.
+
+## Claim-level review
+
+One catalog entry must state what its references actually support. Reviewers should check:
+
+1. rsID, alleles, genome strand, and genotype direction;
+2. whether the SNP is functional, a tag marker in linkage disequilibrium, or one component of a haplotype;
+3. study design, sample size, ancestry, phenotype, effect size, confidence interval, and replication;
+4. whether a result is a biomarker association, health association, exposure interaction, trait, mechanism, or null/mixed finding;
+5. whether wording stays inside the studied population and outcome;
+6. whether relevant null or contradictory human evidence changes the grade;
+7. whether a measured biomarker is more informative than the genotype; and
+8. whether the source was reviewed from metadata/abstract only or from accessible full text and supporting tables.
+
+GWAS significance establishes an association in a study. It does not by itself establish causality, clinical importance, or genotype-specific actionability. Common wellness SNPs must not receive ACMG/AMP pathogenicity labels intended for Mendelian disease variants.
+
+## Catalog schema
+
+Each SNP in `data/snp-health.json` requires:
+
+- at least one publication URL in `references`;
+- `evidence.level`, `evidence.claimTypes`, `evidence.scope`, and `evidence.reviewedAt`;
+- `relevance.level` and `relevance.context`;
+- forward-strand interpretation or an explicit strand limitation; and
+- genotype notes that avoid diagnosis, deterministic predictions, and unsupported intervention claims.
+
+The legacy genotype `effect` field remains for recommendation compatibility and old stored imports. It is an internal prioritization field, not the displayed evidence grade or a substitute for effect size.
+
+`relevance.context` is deterministic catalog guidance about conditions that change interpretation. The UI labels it **Interpretation context**, not personal context, because it is not generated from the user's profile.
+
+Personalized synthesis belongs in an explicit AI interaction. `buildSnpAIInterpretationPrompt()` combines the selected finding's catalog baseline with available profile context and tells the model it may add broader knowledge when it clearly distinguishes evidence from inference. Routine automatic context stays compact and does not include every entry's full scope and interpretation prose.
+
+When an effect size is quoted, the note must identify what it represents and avoid converting a population average into a personal prediction. Exact odds ratios, beta values, confidence intervals, sample sizes, and ancestry should be added as structured fields only after checking the primary paper or its supplementary tables.
+
+## Runtime presentation
+
+`js/dna-evidence.js` owns the shared label, rank, prompt, publication-label, and privacy-safe issue-link helpers. The same evidence profile is reused by the raw-import preview, Genome lens, dashboard widget, biomarker details, and DNA-aware recommendation hints.
+
+The ranking function orders findings for presentation; it is not a clinical score. Association direction is ranked first, then relevance and evidence, so the most useful items appear before reference calls without implying disease severity.
+
+Correction and suggestion links concern the public catalog only. Their prefilled issue text must never include the user's genotype, raw DNA, labs, location, profile, or health notes.
+
+## Adding or changing a SNP
+
+1. Define one narrow claim before looking for a favorable citation.
+2. Prefer replicated human evidence, meta-analyses, large GWAS, functional primary studies, ClinGen, ClinVar expert review, or established pharmacogenetic guidance as appropriate to the claim.
+3. Read the abstract and inspect full text or supporting tables when allele direction, effect size, cohort, linkage, or interpretation is ambiguous.
+4. Record the strongest material limitation and retain relevant null or conflicting evidence.
+5. Grade evidence and personal relevance independently.
+6. Add or update focused catalog, parser, AI-context, recommendation, and browser-rendering tests.
+7. Re-review when a source is corrected or retracted, a stronger study changes the direction, or the catalog wording expands.

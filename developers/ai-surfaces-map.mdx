@@ -141,6 +141,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **Trend sparklines on context cards** | Direct plot of stored values. |
 | **Severity dots on light-environment rooms** | Heuristic tier from measured flicker / lux / CCT thresholds (`getRoomSeverity` in `light-env.js`). The AI verdict that *follows* the severity dot is AI, the dot itself is not. |
 | **Custom marker creation, sidebar edits, chip-picker changes, manual-value entry** | Local data writes. No AI call fires; the AI sees them on the next chat turn. |
+| **Genome import, association/evidence/relevance labels, APOE, and mtDNA resolution** | Raw/report/manual parsing and catalog lookup are deterministic and local. **Ask AI** on a finding is an explicit editable prompt that supplies the scoped catalog baseline; it is not part of import or classification. |
 
 ## What runs on-device vs cloud
 
