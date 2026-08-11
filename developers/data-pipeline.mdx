@@ -93,6 +93,10 @@ description: "How getbased turns stored profile data into active chart, scoring,
                     └────────┬────────┘
                              │
                              ▼
+                 Apply marker placements
+                 as the final view projection
+                             │
+                             ▼
                   ┌──────────────────────┐
                   │     Return data       │
                   └──────────────────────┘
@@ -105,9 +109,9 @@ const data = getActiveData();
 filterDatesByRange(data);   // mutates data.dates, data.dateLabels, marker.values in-place
 ```
 
-## Marker key convention
+## Marker identity and storage keys
 
-Markers are always referenced as `"category.markerKey"`:
+Persisted values and companion maps continue to use `"category.markerKey"` storage keys:
 
 ```
 biochemistry.glucose
@@ -116,13 +120,17 @@ lipids.triglycerides
 hematology.wbc
 ```
 
-This format is used in:
+This storage format is used in:
 - `UNIT_CONVERSIONS` keys
 - `OPTIMAL_RANGES` keys
 - `PHASE_RANGES` keys
 - `importedData.entries[].markers` — each entry stores its values keyed this way
 - `importedData.customMarkers` — custom marker definitions
 - AI prompt references in `buildMarkerReference()`
+
+It is not the marker's immutable identity or necessarily its rendered category. Built-in markers use stable `gb:marker:*` IDs, custom definitions carry `custom:*` IDs, and `importedData.markerPlacements` can select a different visual category. After the pipeline finishes its native calculations and unit conversion, `applyMarkerPlacements()` projects accepted placements and attaches `markerId`, `storageDotKey`, `nativeCategoryKey`, and `displayCategoryKey` to active markers.
+
+Mutation code must use `marker.storageDotKey`; it must not reconstruct a persisted key from `displayCategoryKey` or a rendered card ID. See [Marker model and category placement](/developers/marker-model).
 
 ## Entry storage format
 
@@ -170,6 +178,7 @@ Markers not in `MARKER_SCHEMA` are auto-imported from PDFs. The pipeline merges 
 // importedData.customMarkers:
 {
   "mylab.cortisol": {
+    markerId: "custom:opaque_id",
     name: "Cortisol (AM)",
     unit: "nmol/L",
     refMin: 170,
@@ -179,11 +188,11 @@ Markers not in `MARKER_SCHEMA` are auto-imported from PDFs. The pipeline merges 
 }
 ```
 
-If the category key does not exist in the schema, a new category is created with a bookmark icon. Custom markers have `marker.custom = true` and are treated identically to schema markers in all views.
+If the category key does not exist in the schema, a new category is created with a bookmark icon. Custom markers have `marker.custom = true` and are treated identically to schema markers in all views. Legacy custom definitions receive deterministic stable IDs without re-keying their stored values.
 
 ## Calculated markers
 
-These are computed in-pipeline and stored in the `calculatedRatios` category:
+These are computed in-pipeline in the native `calculatedRatios` category. A profile may then display a calculated marker in a compatible regular category, but calculation and storage resolution still happen at its native key:
 
 | Marker key | Formula |
 |---|---|

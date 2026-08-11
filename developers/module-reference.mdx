@@ -8,7 +8,7 @@ description: "Reference map for the getbased native ES modules and compatibility
 
 # Module Reference
 
-Modules live under `js/`. At the time of this docs move, the app tree has **332** top-level JavaScript modules. This page is a guided implementation map, not a promise that every small hook/delegate/helper file has its own long section. Grouped by layer — lower layers have no dependencies on higher ones.
+Modules live under `js/`. This page is a guided implementation map, not a promise that every small hook/delegate/helper file has its own long section. It is grouped by layer — lower layers have no dependencies on higher ones.
 
 ---
 
@@ -16,7 +16,7 @@ Modules live under `js/`. At the time of this docs move, the app tree has **332*
 
 ### `schema.js`
 
-The single source of truth for all biomarker definitions. No runtime logic — pure data.
+Stable compatibility facade for marker schema consumers plus unit conversions, optimal ranges, pricing, and environment thresholds. Marker definitions are authored in category modules under `marker-schema/`, composed by `marker-schema/index.js`, and generated into `marker-schema.js`.
 
 **Key exports:**
 - `MARKER_SCHEMA` — nested object: `{ categoryKey: { label, icon, markers: { markerKey: { name, unit, refMin, refMax, refMin_f, refMax_f, desc } } } }`. Categories include `biochemistry`, `hormones`, `electrolytes`, `lipids`, `hematology`, `differential`, `thyroid`, `proteins`, `vitamins`, `diabetes`, `inflammation`, `fattyAcids`, `calculatedRatios`, and others
@@ -24,10 +24,47 @@ The single source of truth for all biomarker definitions. No runtime logic — p
 - `OPTIMAL_RANGES` — keyed by `"category.markerKey"`: `{ optimalMin, optimalMax, optimalMin_f?, optimalMax_f? }`
 - `PHASE_RANGES` — keyed by `"category.markerKey"`: `{ menstrual: { min, max }, follicular: {...}, ovulatory: {...}, luteal: {...} }` — covers `hormones.estradiol`, `hormones.progesterone`, `hormones.lh`, and `hormones.fsh`
 - `SPECIALTY_MARKER_DEFS` — re-exported from `adapters.js` as `ADAPTER_MARKERS`. Used by `migrateProfileData()` and `buildMarkerReference()`
+- `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, `resolveBuiltinMarkerDotKey()` — stable identity and legacy-location compatibility exports from the generated catalog
 - `CHIP_COLORS` — status → CSS color string
 - `MODEL_PRICING` — AI model pricing metadata, keyed by provider/model
 
 **Window exports:** none
+
+---
+
+### `marker-schema/index.js` and `marker-schema.js`
+
+`marker-schema/index.js` is the authoring composition root. It imports the category source modules in stable order and exports the catalog inputs. `scripts/build-marker-schema.mjs` turns those inputs into the generated runtime module `marker-schema.js`; contributors must not edit the generated file directly.
+
+**Key generated exports:** `MARKER_SCHEMA`, `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, `resolveBuiltinMarkerDotKey()`, `CUSTOM_MARKER_ID_PREFIX`, and `isCustomMarkerId()`.
+
+See [Marker model and category placement](/developers/marker-model) for the authoring and migration contract.
+
+---
+
+### `custom-marker-identity.js`
+
+Creates and migrates category-independent `custom:*` IDs while preserving existing custom-marker dot keys. Legacy IDs are deterministic and migration is idempotent so offline devices converge.
+
+**Key exports:** `createCustomMarkerId()`, `deriveLegacyCustomMarkerId()`, `ensureCustomMarkerIdentity()`, `migrateCustomMarkerIdentities()`, `getCustomMarkerId()`, `getCustomMarkerDotKey()`, and `resolveCustomMarkerDotKey()`.
+
+---
+
+### `marker-placement.js`
+
+Pure marker placement engine and storage/display boundary. It validates visual category assignments, keeps unknown metadata forward-compatible, applies placement as the final active-data projection, and resolves mutation keys back to immutable storage locations.
+
+**Key exports:** `migrateMarkerPlacements()`, `resolveMarkerIdentity()`, `getMarkerPlacementPlan()`, `setMarkerPlacement()`, `clearMarkerPlacement()`, `applyMarkerPlacements()`, `getMarkerStorageDotKey()`, and active-marker lookup helpers.
+
+---
+
+### `marker-terminology.js`
+
+Generated, optional mapping registry for LOINC, NPU, NČLP, and UCUM metadata. It is not part of application startup, profile persistence, import/export, backup, sharing, or sync.
+
+**Key exports:** `TERMINOLOGY_CATALOGS`, `MARKER_TERMINOLOGY_REGISTRY`, `getMarkerTerminologyMappings()`, and `findMarkerTerminologyMapping()`.
+
+See [Laboratory terminology registry](/developers/marker-terminology) for the mapping and verification contract.
 
 ---
 
@@ -36,7 +73,7 @@ The single source of truth for all biomarker definitions. No runtime logic — p
 Parser adapter registry for specialty lab detection and normalization. Single source of truth for all specialty marker definitions (OAT, fatty acids, Metabolomix+, BioStarks).
 
 **Key exports:**
-- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (217 entries). Re-exported from `schema.js` as `SPECIALTY_MARKER_DEFS`
+- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (220 entries). Re-exported from `schema.js` as `SPECIALTY_MARKER_DEFS`
 - `getAllAdapterMarkers()` — returns merged marker map from all registered adapters
 - `detectProduct(fileName, pdfText)` — runs all adapter `detect()` functions, returns `{ adapter, product: { prefix, label } }` or `null`
 - `normalizeWithAdapter(adapter, markers, fileName, pdfText, product)` — dispatches to `adapter.normalize()` for post-AI marker key/category rewriting
@@ -93,7 +130,8 @@ Single shared mutable state object. Import `state` to read or write. No logic.
       interpretiveLens: '',    // freetext string
       contextNotes: '',        // freetext string
       menstrualCycle: null,    // { cycleLength, periodLength, regularity, flow, periods[] }
-      customMarkers: {}        // { "cat.key": { name, unit, refMin, refMax, categoryLabel } }
+      customMarkers: {},       // { "cat.key": { markerId, name, unit, refMin, refMax, categoryLabel } }
+      markerPlacements: {}     // { "gb:marker:*" | "custom:*": { categoryKey } }
     },
     unitSystem: 'EU',          // 'EU' | 'US'
     currentProfile: 'default', // active profile id
@@ -683,7 +721,7 @@ Lazy file-picker import binding for the hidden `#pdf-input`. It shares `loadPdfI
 Data export, import, and reset.
 
 **Key exports:**
-- `exportToJSON()` — exports v2 JSON for the current profile: `{ version: 2, exportedAt, entries, notes, diagnoses, diet, exercise, sleepRest, lightCircadian, stress, loveLife, environment, interpretiveLens, healthGoals, contextNotes, menstrualCycle, customMarkers, supplements }`
+- `exportToJSON()` — exports v2 JSON for the current profile, including entries, context, custom marker identities, `markerPlacements`, notes, supplements, biometrics, genetics, Light/Sun data, and supported chat state
 - `buildClientExportObject(profileId, includeChat?)` — module-only helper that returns the reusable v2 single-profile export object used by JSON export and encrypted profile sharing. It includes profile metadata, labs, context, supplements, genetics, biometrics, marker notes, wearables summaries/preferences, and Light/Sun data, while excluding OAuth/wearable connection credentials and raw per-device wearable rows
 - `exportClientJSON(profileId)` — exports a single client's data (used from Client List ⋮ menu)
 - `exportAllDataJSON()` — exports a full database bundle with all profiles, chat threads, custom personalities, and settings
@@ -1302,6 +1340,20 @@ Category and marker display override helpers. The module owns category rename, m
 - `renameCategory(categoryKey)` / `renameMarker(id)` / `revertMarkerName(id)` — persist display-name overrides into `importedData.categoryLabels` and `importedData.markerLabels`
 - `showEmojiPicker(anchorEl, callback, opts?)` — shared category/custom-marker emoji picker used by category views and the marker creation modal
 - `changeCategoryIcon(categoryKey)` — persists `importedData.categoryIcons` overrides and mirrors custom marker category icon metadata
+
+---
+
+### `category-order.js`
+
+Shared, DOM-independent ordering for lab navigation and category controls. `getLabCategoryEntriesInSidebarOrder()` keeps regular categories first and preserves schema order within specialty groups so the placement picker and sidebar agree.
+
+---
+
+### `marker-detail-placement.js`
+
+Marker-detail category picker and persistence controller. It lists only destinations accepted by `marker-placement.js`, groups categories present in the profile before other compatible categories, preserves sidebar order, serializes per-profile mutations, and provides restore-to-native behavior.
+
+**Key exports:** `configureMarkerDetailPlacement()`, `getMarkerPlacementChoices()`, `renderMarkerPlacementSummary()`, `openMarkerPlacementModal()`, `saveMarkerPlacement()`, and `restoreMarkerPlacement()`.
 
 ---
 

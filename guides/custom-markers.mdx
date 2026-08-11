@@ -4,7 +4,7 @@ sidebarTitle: "Custom biomarkers"
 description: "Track any lab result not in the built-in schema — create, edit, and group custom biomarkers manually or let PDF import do it automatically."
 ---
 
-getbased ships with a built-in schema of 287+ biomarkers across standard categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
+getbased ships with hundreds of built-in and specialty biomarkers across standard categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
 
 ## How custom markers are created during PDF import
 
@@ -56,10 +56,13 @@ Custom marker definitions are set when first created and are not overwritten by 
 Custom markers follow the same category system as built-in markers:
 
 - **Category** — assigned when you create the marker manually or during import. Markers in the same category appear together in Labs and chart views.
+- **Moving a marker** — open its detail modal, choose **Change category**, and select a compatible destination. This changes where it appears for the current profile without changing its values, history, notes, import mapping, or identity. Choose **Restore original category** to undo the placement.
 - **Renaming categories** — click the category name in the category view header to rename it. The display label changes; the underlying key and all your data are unaffected.
 - **Category icons** — click the icon next to any category name to open the emoji picker. The picker includes categorized tabs (Science, Health, Nature, Food, Objects), a search field, and a Reset button to revert to the default.
 
 If a custom marker belongs to a category that does not yet exist, a new category is created automatically with an auto-inferred icon.
+
+The category picker follows the Labs sidebar order and shows categories already present in your profile first. It hides incompatible single-point/time-series destinations, the calculated-only category, and destinations that would create an internal key collision. Marker placements are included in export, backup, profile sharing, and sync, so reorganizing a profile does not require migration or re-import.
 
 ## Where custom markers appear
 

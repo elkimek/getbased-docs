@@ -50,6 +50,8 @@ The preview table shows each result the AI found, the value, the lab's reference
 
 If something looks wrong, dismiss the import and try again. Nothing is saved until you click **Confirm**.
 
+The AI-suggested category for a new custom marker is an import-time suggestion that you review before saving. It does not reorganize existing markers. After import, you can use **Change category** in any marker's detail modal to change only where that marker appears in the current profile; the saved result, import provenance, and future import mapping stay attached to the same marker.
+
 ### Reference range adoption
 
 When the reference ranges on your report differ from getbased's stored ranges, a toggle appears below the preview table: **"Update reference ranges from this report (N markers)"**. This is checked by default. Accepting it saves the lab's own ranges as per-marker overrides.
@@ -114,7 +116,7 @@ Your file is processed in the browser first. Extracted text goes through regex o
 
 ## What gets extracted
 
-getbased tracks 287+ built-in biomarkers across standard categories, plus unlimited custom markers. Common areas include:
+getbased tracks hundreds of built-in and specialty biomarkers across standard categories, plus unlimited custom markers. Common areas include:
 
 - **Biochemistry** — glucose, liver enzymes, kidney markers, electrolytes
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, insulin

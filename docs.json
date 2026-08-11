@@ -161,6 +161,8 @@
           {
             "group": "Data model & sync",
             "pages": [
+              "developers/marker-model",
+              "developers/marker-terminology",
               "developers/data-pipeline",
               "developers/storage-schema",
               "developers/sync-delta-internals",

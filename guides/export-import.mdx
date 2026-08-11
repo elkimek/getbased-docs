@@ -7,7 +7,7 @@ getbased gives you full control over your data. You can export everything as JSO
 
 ## Export your data as JSON
 
-A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, supplements, biometrics, genetics, cycle data, custom markers, and chat history.
+A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, supplements, biometrics, genetics, cycle data, custom markers, marker category placements, and chat history.
 
 ### Single-profile export
 
@@ -30,6 +30,7 @@ A JSON export contains your complete health record for the current profile: all 
 - Menstrual cycle data (if entered)
 - Genetics data — SNP results from DNA raw data import (if imported)
 - Custom marker definitions
+- Per-profile marker category placements and display customizations
 - Chat history, conversation threads, custom personas, and persona deletion records
 - Interpretive lens settings
 
@@ -82,12 +83,15 @@ You import a JSON file the same way you import a lab PDF: use the header import 
     - **Health goals** are merged and deduplicated by text content.
     - **Sent conversations** with new IDs are added without deleting existing ones, up to 50 conversations in the destination profile. Use **Export All** and import the database bundle when migrating a larger chat archive.
     - **Custom personas** are restored when the destination does not already have custom-persona state.
+    - **Marker category placements** are merged with the profile and continue to point to the same markers; no lab values are re-keyed or moved.
   </Step>
 </Steps>
 
 <Warning>
 If you import a JSON file from a different profile or device, the lifestyle context cards in your current profile will be overwritten by the imported values. Your lab entry data is safe — it merges rather than overwrites.
 </Warning>
+
+Older exports that do not contain marker placements remain compatible. Their markers simply appear in their original categories until you organize them in the current profile; no migration or re-import is required.
 
 ### Import a database bundle
 

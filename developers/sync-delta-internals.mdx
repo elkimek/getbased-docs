@@ -28,10 +28,12 @@ This page is the contributor contract for adding or changing a synced profile su
 |---|---|---|
 | dated item arrays | `entries`, `changeHistory` | stable date/item fields plus surface-specific tombstones |
 | stable-id arrays | `importSnapshots`, `supplements`, `healthGoals`, `notes`, `chatSummaries` | item `id` or configured key |
-| maps | `manualValues`, `markerValueNotes` | key transform, not array identity |
+| maps | `manualValues`, `markerValueNotes`, `markerPlacements` | key transform, not array identity |
 | scalar/profile state | `agentAccess`, `agentAccessWearableSeriesDays` | profile-level last-write-wins |
 
 `importSnapshots` are user-visible because Settings → Data can reopen a saved import review. They must keep stable IDs and tombstones so deleting one source file does not delete unrelated same-day marker values.
+
+`markerPlacements` uses immutable `gb:marker:*` or `custom:*` IDs as map keys. A row carries only the visual destination metadata; lab entries and dot-keyed companion maps are never re-keyed. Unknown marker IDs or destination categories remain in the profile for forward compatibility while the current runtime falls back to native display.
 
 ## Device-local profile fields
 

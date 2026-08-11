@@ -70,7 +70,12 @@ js/
   startup-maintenance.js — Wearable startup services and post-profile maintenance jobs
   startup-ui.js    — First-render UI bootstrap after profile/OAuth startup
   emf-facade.js    — Lazy window facade for the EMF assessment module
-  schema.js         — MARKER_SCHEMA, UNIT_CONVERSIONS, OPTIMAL_RANGES, PHASE_RANGES
+  marker-schema/    — Category source modules, stable order, and built-in identity authoring
+  marker-schema.js  — Generated runtime marker catalog; do not edit directly
+  schema.js         — Stable marker-schema facade plus conversions, ranges, and thresholds
+  custom-marker-identity.js — Stable custom:* identity creation and legacy migration
+  marker-placement.js — Storage-independent visual category placement engine
+  marker-terminology/ / marker-terminology.js — Optional terminology sources and generated registry
   constants.js      — Option arrays, CHAT_PERSONALITIES, fake data, COUNTRY_LATITUDES
   state.js          — Single shared mutable state object
   utils.js          — escapeHTML, hashString, getStatus, formatValue, showNotification, linearRegression
@@ -198,6 +203,14 @@ That is the development entry point. The hosted artifact rewrites it to the hash
 
 `main.js` imports startup-loaded feature modules from `app-feature-modules.js` and starts `startup-orchestrator.js`. Foundation/privacy imports are grouped behind `app-foundation-modules.js`; Health & Data startup feature imports are grouped behind `app-health-data-modules.js`; Light & Sun startup feature imports are grouped behind `app-light-sun-modules.js`; import/export startup feature imports are grouped behind `app-data-io-modules.js`; AI/chat/settings startup feature imports are grouped behind `app-ai-interaction-modules.js`; UI shell startup feature imports are grouped behind `app-ui-shell-modules.js`. The orchestrator installs startup globals, the lazy EMF facade, app-wide event listeners, and the refresh callback, then registers the `DOMContentLoaded` sequence. Encryption unlock, meteo cache hydration, cross-tab broadcast, and folder backup setup are delegated to `startup-foundation.js`; profile migration, cache warmup, and active-profile data loading are delegated to `startup-profile.js`; wearable/OpenRouter callback routing lives in `startup-oauth-callbacks.js`; wearable runtime config/scheduler boot and non-blocking post-profile maintenance live in `startup-maintenance.js`; initial theme/sidebar/navigation/sync/changelog/header/chat/file-input UI bootstrap lives in `startup-ui.js`.
 
+## Marker catalog and placement boundary
+
+The marker catalog uses an authoring → generated runtime → compatibility facade chain. Category modules under `js/marker-schema/` are the source of truth, `scripts/build-marker-schema.mjs` generates `js/marker-schema.js`, and long-lived consumers continue to import from `js/schema.js`. This keeps a large catalog maintainable without forcing a broad import-graph refactor.
+
+Marker storage and display are separate boundaries. Profile values and companion metadata remain keyed by native `category.markerKey`; immutable `gb:marker:*` and `custom:*` IDs let `marker-placement.js` apply a per-profile visual category only after `getActiveData()` completes calculations and unit conversion. Renderers may use `displayCategoryKey`, but mutations must resolve through `storageDotKey`.
+
+The terminology registry follows a separate authoring and generation path. It is optional metadata and is intentionally outside startup, persistence, import/export, backup, sharing, and sync. See [Marker model and category placement](/developers/marker-model) and [Laboratory terminology registry](/developers/marker-terminology).
+
 ## Navigation and dashboard IA
 
 The sidebar has three conceptual groups:
@@ -217,7 +230,7 @@ Modules in a higher layer may import from lower layers. Modules in the same laye
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  L1 — Foundation                                                    │
-│  schema.js   constants.js   state.js   utils.js                    │
+│  marker-schema.js   schema.js   constants.js   state.js   utils.js │
 └────────────────────────────────┬────────────────────────────────────┘
                                  │
                                  ▼

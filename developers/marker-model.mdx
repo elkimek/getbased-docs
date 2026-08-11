@@ -1,0 +1,135 @@
+---
+title: "Marker model and category placement"
+description: "Stable marker identity, generated schema authoring, visual category placement, persistence compatibility, and contributor checks."
+---
+
+# Marker model and category placement
+
+getbased separates three concerns that used to look like one identifier:
+
+| Concern | Example | Contract |
+|---|---|---|
+| Immutable built-in identity | `gb:marker:glucose` | Stable across schema moves and renames |
+| Persisted storage location | `biochemistry.glucose` | Continues to key values and companion metadata |
+| Profile display placement | `lipids` | Optional visual override; never a storage key |
+
+This separation lets a user organize markers without rewriting health data. It also lets contributors split and evolve the schema without forcing existing profiles to migrate or re-import results.
+
+## Schema authoring and generation
+
+The marker catalog is authored as category modules under `js/marker-schema/`. `js/marker-schema/index.js` composes those modules in stable category order. `scripts/build-marker-schema.mjs` generates `js/marker-schema.js`, and `js/schema.js` remains the stable compatibility facade used by the rest of the application.
+
+```text
+js/marker-schema/<category>.js
+js/marker-schema/identities.js
+             │
+             ▼
+js/marker-schema/index.js
+             │ npm run marker-schema:build
+             ▼
+js/marker-schema.js        generated runtime catalog
+             │
+             ▼
+js/schema.js               stable public facade
+```
+
+Do not edit `js/marker-schema.js` directly. Make changes in the authoring modules, preserve the intentional category order in `index.js`, then regenerate the artifact.
+
+## Built-in marker identity
+
+Every built-in marker has an immutable `gb:marker:*` ID authored in `js/marker-schema/identities.js`. The generated catalog provides both forward and reverse resolution:
+
+- `getBuiltinMarkerId(dotKey)` resolves a current or legacy storage location to its stable ID.
+- `getBuiltinMarkerDotKey(markerId)` returns the current storage location.
+- `resolveBuiltinMarkerDotKey(dotKey)` resolves a current or legacy location to the current one.
+
+When moving or renaming a built-in marker in the schema:
+
+1. Keep its `gb:marker:*` ID unchanged.
+2. Update `currentDotKey`.
+3. Add the previous location to `legacyDotKeys`.
+4. Add focused round-trip tests for every affected dot-keyed surface.
+
+The identity checksum test protects the built-in ID set from accidental renaming. Reordering or moving a marker should not require changing that checksum.
+
+## Custom marker identity
+
+Custom marker definitions remain keyed by their existing `category.markerKey`, but each definition also carries a `markerId` in the `custom:*` namespace:
+
+```js
+customMarkers: {
+  "mylab.cortisol": {
+    markerId: "custom:opaque_id",
+    name: "Cortisol (AM)",
+    unit: "nmol/L"
+  }
+}
+```
+
+New custom IDs are independent of category and display name. Legacy definitions receive deterministic IDs so offline devices upgrading the same profile converge without coordination. The migration is additive and idempotent: unique valid IDs survive, invalid or duplicated IDs are repaired deterministically, and no value or companion map is re-keyed.
+
+## Profile category placement
+
+`importedData.markerPlacements` stores optional display categories by immutable marker identity:
+
+```js
+markerPlacements: {
+  "gb:marker:glucose": { categoryKey: "energyMetabolism" },
+  "custom:opaque_id": { categoryKey: "biochemistry" }
+}
+```
+
+`js/marker-placement.js` owns migration, validation, resolution, and final projection. Moving a marker back to its native category removes the redundant assignment.
+
+The placement engine accepts a destination only when:
+
+- the destination category exists;
+- the destination is not a calculated category;
+- source and destination use the same time-series or `singlePoint` mode; and
+- the destination does not already reserve the same marker key for another identity.
+
+Calculated markers may be displayed in a compatible regular category after calculation. Regular measured markers cannot move into a calculated category.
+
+Unknown marker IDs, unknown categories, and extra placement fields are preserved for forward-compatible import and sync ordering. The current runtime simply falls back to the native category until an assignment can be resolved.
+
+## Storage and display boundary
+
+`getActiveData()` performs calculations, range application, and unit conversion at native storage locations. `applyMarkerPlacements()` is the final view projection. Each active marker then carries:
+
+| Field | Meaning |
+|---|---|
+| `markerId` | Immutable built-in or custom identity |
+| `storageDotKey` | Canonical `category.markerKey` used for persistence and mutation |
+| `nativeCategoryKey` | Category defined by the schema or custom definition |
+| `displayCategoryKey` | Category used by the rendered active-data view |
+
+Any mutation must use `storageDotKey`. Never reconstruct a persisted key from the category in which a marker is currently rendered. UI state that still uses underscore IDs must resolve through the marker-placement helpers before editing data.
+
+## Persistence and compatibility
+
+Marker placement is additive profile metadata:
+
+| Surface | Behavior |
+|---|---|
+| Existing profiles | Missing `markerPlacements` becomes `{}`; no value migration |
+| Single-profile JSON | Placements and custom marker IDs are exported and imported |
+| Full database and folder backup | The complete profile blob is preserved |
+| Automatic snapshots | Placements restore with the profile |
+| Encrypted profile sharing | The receiving copy preserves placements |
+| Cross-device sync | Placements sync as per-item map entries keyed by marker ID |
+
+Values, reference overrides, marker notes, per-value notes, manual-value provenance, import snapshots, dashboard references, and historical entries continue to use their original storage locations. A category change therefore requires neither migration nor re-import.
+
+## Contributor workflow
+
+For schema or identity changes:
+
+```bash
+npm run marker-schema:build
+npm run marker-schema:check
+npm test -- tests/marker-schema-contract.test.js tests/marker-identity.test.js
+```
+
+For placement changes, run the focused identity, data, persistence, sync, and UI tests that match the diff. The principal suites are `tests/marker-placement.test.js`, `tests/marker-placement-data.test.js`, `tests/marker-placement-editing.test.js`, `tests/custom-marker-identity.test.js`, `tests/custom-marker-export-boundaries.test.js`, and `tests/playwright/marker-placement-ui.spec.js`.
+
+See [Data pipeline](/developers/data-pipeline), [Storage schema](/developers/storage-schema), and [Sync and delta internals](/developers/sync-delta-internals) for the surrounding contracts.

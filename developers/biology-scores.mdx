@@ -49,6 +49,8 @@ Use this guide when changing score definitions, marker wiring, specialty adapter
 
 Most inputs come from `getActiveData()` categories and canonical schema keys in `js/schema.js`.
 
+Score definitions stay keyed by canonical storage paths even when a profile displays a marker in another category. `resolveActiveMarkerPath()` finds the projected active marker and `getMarkerStorageDotKey()` restores its immutable mutation/scoring path, so visual placement cannot change score inputs or create a second observation.
+
 Examples:
 
 - `lipids.triglycerides`

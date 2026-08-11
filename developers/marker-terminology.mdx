@@ -1,0 +1,88 @@
+---
+title: "Laboratory terminology registry"
+description: "How getbased models LOINC, NPU, NČLP, and UCUM mappings without coupling external codes to marker identity or profile storage."
+---
+
+# Laboratory terminology registry
+
+getbased keeps external laboratory terminology in an optional generated registry keyed by immutable `gb:marker:*` IDs. External codes are mappings, not getbased identities.
+
+That distinction matters because one conceptual marker can require different codes for different specimens, properties, timing, scales, or methods. A name such as “glucose” is not enough to choose a safe laboratory observation code.
+
+## Standards and practical coverage
+
+| System | Role | Practical scope |
+|---|---|---|
+| LOINC | Identifies health observations, measurements, and documents | International standard with global users and translations; it originated in the United States but is not US-only |
+| NPU | Identifies properties and units in laboratory medicine | International clinical-laboratory terminology with especially established European and Nordic use; local adoption varies |
+| NČLP | Czech national laboratory procedure catalog | Czech healthcare and laboratory interoperability |
+| UCUM | Machine-readable units of measure | International unit syntax used alongside a terminology mapping; it does not identify the observation itself |
+
+Together these systems provide useful interoperability coverage, but they do not mean every laboratory in a country exposes codes on a patient-facing report or API. Adoption is organization- and interface-specific. The registry is groundwork for future integrations such as structured imports, laboratory APIs, and ordering workflows—not a claim of direct connectivity today.
+
+Primary references are the [LOINC international overview](https://loinc.org/international/), the [NPU terminology overview](https://npu-terminology.org/npu-laboratory-terminology/) and [IFCC NPU database](https://cms.ifcc.org/wp-content/uploads/npu-codes-latest.csv), the [NČLP reduced catalog](https://ciselniky.dasta.mzcr.cz/hypertext/202630/nclp_data/ds_NCLP/all/nclppolr.xml), and the [UCUM specification](https://ucum.org/ucum).
+
+## Runtime isolation
+
+Mappings are authored under `js/marker-terminology/` and generated into `js/marker-terminology.js`. The registry is deliberately not imported by:
+
+- the marker schema or application startup;
+- PDF or JSON import;
+- persistence or export;
+- automatic or folder backup;
+- encrypted profile sharing; or
+- cross-device sync.
+
+Existing profiles therefore need no migration and continue to exchange the same `category.markerKey` values. Adding or updating terminology metadata cannot change marker placement or user data.
+
+## Mapping model
+
+Each mapping records:
+
+- stable getbased marker ID;
+- terminology, code, display, and active or deprecated status;
+- the source terminology's component, system or specimen, property, time aspect, scale, and method;
+- one or more case-sensitive UCUM expressions; and
+- official source URL, source release, and verification date.
+
+Native context values remain in the terminology's own vocabulary. `null` means the source record does not specify that axis. Codes remain strings so leading zeroes, including those in NČLP identifiers, cannot be lost.
+
+UCUM belongs on an individual mapping because the acceptable unit can depend on the specific observation context. It is not part of the immutable marker ID.
+
+## Initial reviewed pilot
+
+The current pilot covers glucose and sodium with eight reviewed mappings:
+
+| Marker ID | LOINC | NPU | NČLP |
+|---|---|---|---|
+| `gb:marker:glucose` | `14749-6` serum/plasma | `NPU02192` plasma | `01896` plasma; `01898` serum |
+| `gb:marker:sodium` | `2951-2` serum/plasma | `NPU03429` plasma | `02500` plasma; `02503` serum |
+
+All pilot mappings use UCUM `mmol/L`. LOINC preserves its complete term context, NPU preserves property and scale, and NČLP keeps plasma and serum as distinct codes.
+
+This is intentionally a small quality-first registry. Do not treat the presence of a code system as complete marker coverage.
+
+## Selection and reverse lookup
+
+The generated module exposes:
+
+- `getMarkerTerminologyMappings(markerId)` for marker-first selection; and
+- `findMarkerTerminologyMapping(terminology, code)` for exact reverse lookup.
+
+Reverse lookup returns metadata only. A future structured import must still verify specimen, method, property, timing, scale, and unit compatibility before mapping a result. It must also perform an explicit unit conversion where needed.
+
+## Update contract
+
+Every mapping must be checked against an official record. Never infer a code from an analyte name, broaden a specimen silently, or place a local laboratory code in a standard namespace. When an upstream concept is retired, keep the mapping as deprecated and add its reviewed replacement separately.
+
+After editing a terminology source module, run:
+
+```bash
+npm run marker-terminology:build
+npm run marker-terminology:check
+npm test -- tests/marker-terminology.test.js
+```
+
+The build rejects unknown marker IDs, unsupported or malformed codes, duplicate terminology/code pairs, incomplete context, missing UCUM units, non-HTTPS sources, and invalid verification dates.
+
+See [Marker model and category placement](/developers/marker-model) for the identity layer that terminology mappings reference.

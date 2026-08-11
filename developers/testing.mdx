@@ -17,6 +17,15 @@ Routstr/Cashu wallet work has an extra release gate because it touches bearer mo
 
 Some browser fixtures are still self-executing IIFEs with local `assert()` helpers; Playwright executes those through `tests/playwright/browser-script-runner.js` so they run in the same browser suite as native Playwright specs.
 
+Generated marker catalogs have dedicated drift gates:
+
+```bash
+npm run marker-schema:check
+npm run marker-terminology:check
+```
+
+Use the matching `:build` command after editing authoring modules, then run the focused identity, placement, persistence, or terminology tests relevant to the diff. GitHub Actions owns the exhaustive Chromium and combined-coverage run.
+
 ## The assert pattern
 
 Browser-script fixture files define a local `assert` helper and collect results:
@@ -129,6 +138,13 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-marker-key-safety.js` | **node** — `safeMarkerId` + `sanitizeMarkerKey` allowlist + proto-pollution rejection (38 assertions) |
 | `tests/test-marker-detail-store.js` | Marker detail mutation boundary: manual values, mirrored insulin notes, ref overrides, marker notes |
 | `tests/test-marker-value-notes.js` | Per-value notes on lab markers: schema defaults, profile migration, sync DELTA_MAPS wiring |
+| `tests/marker-schema-contract.test.js` | **Vitest** — category-module composition, generated schema parity, and stable facade exports |
+| `tests/marker-identity.test.js` | **Vitest** — built-in identity uniqueness, aliases, checksum, and legacy-location resolution |
+| `tests/custom-marker-identity.test.js`, `tests/custom-marker-export-boundaries.test.js` | **Vitest** — deterministic custom identity migration and export/backup/share compatibility |
+| `tests/marker-placement.test.js`, `tests/marker-placement-data.test.js`, `tests/marker-placement-editing.test.js` | **Vitest** — placement validation, final data projection, and immutable mutation paths |
+| `tests/marker-placement-ui.test.js`, `tests/playwright/marker-placement-ui.spec.js` | Picker compatibility filtering, sidebar order, restore flow, and calculated-marker placement |
+| `tests/category-order.test.js` | Shared regular/specialty category order used by navigation and placement controls |
+| `tests/marker-terminology.test.js` | **Vitest** — terminology registry shape, reviewed pilot mappings, isolation, and generated-file parity |
 | `tests/test-mobile.js` | Responsive layout: breakpoints, grid overflow, touch tap targets, safe grid sizing |
 | `tests/test-no-native-dialogs.js` | **node** — guard against `window.prompt/confirm/alert` regressions across `js/` |
 | `tests/test-normalize-units.js` | Unit normalization: SI conversion in the PDF import pipeline |

@@ -70,6 +70,8 @@ Everything the AI can know about the user comes from these sources:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+Lab context consumes the projected `getActiveData()` view, so user-selected category organization can affect section grouping and display labels. Marker resolution still follows `storageDotKey`; changing a visual category does not duplicate a value, change its history, or alter the canonical references used by prompts and scoring.
+
 ## buildLabContext() — The Central Serializer
 
 `buildLabContext()` in `lab-context.js` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead.

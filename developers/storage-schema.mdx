@@ -315,9 +315,17 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
     "mylab": "🧪"             // categoryKey → emoji
   },
 
+  // Optional visual category overrides keyed by immutable marker identity.
+  // Values and companion metadata remain at their original category.markerKey.
+  markerPlacements: {
+    "gb:marker:glucose": { categoryKey: "energyMetabolism" },
+    "custom:opaque_id": { categoryKey: "biochemistry" }
+  },
+
   // Custom markers from PDF import — keyed by "category.markerKey"
   customMarkers: {
     "mylab.cortisol": {
+      markerId: "custom:opaque_id",
       name: "Cortisol (AM)",
       unit: "nmol/L",
       refMin: 170,
@@ -373,6 +381,14 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
   agentAccessWearableSeriesDays: 30
 }
 ```
+
+### Marker identity and placement compatibility
+
+`markerPlacements` is an additive display map keyed by immutable marker ID. It does not replace the dot keys in `entries`, `refOverrides`, `markerNotes`, `markerValueNotes`, `manualValues`, import snapshots, or provenance maps. Missing or invalid assignments fall back to the marker's native category, while unknown assignments remain stored so a newer runtime can resolve them later.
+
+Custom marker `markerId` is also additive. New definitions receive an opaque ID independent of category and name; legacy profiles receive deterministic IDs during normal profile migration. Profiles without either field remain valid and require no value migration or re-import.
+
+Curated single-profile exports, full database bundles, folder backups, automatic snapshots, encrypted shares, and cross-device sync preserve these fields. See [Marker model and category placement](/developers/marker-model) for placement validation and the mutation boundary.
 
 ### `genetics` — curated Genome data (null if not imported)
 
