@@ -87,6 +87,7 @@
               "guides/manual-entry",
               "guides/specialty-labs",
               "guides/biomarker-charts",
+              "guides/lab-ranges-calculated-markers",
               "guides/trend-alerts",
               "guides/custom-markers"
             ]
@@ -100,6 +101,7 @@
           {
             "group": "Body & Wearables",
             "pages": [
+              "guides/supplements-medications",
               "guides/wearables",
               "guides/menstrual-cycle"
             ]
@@ -164,6 +166,7 @@
               "developers/marker-model",
               "developers/marker-terminology",
               "developers/data-pipeline",
+              "developers/lab-markers-ranges-internals",
               "developers/storage-schema",
               "developers/sync-delta-internals",
               "developers/context-assembly"
@@ -186,6 +189,7 @@
               "developers/biology-scores",
               "developers/chat-internals",
               "developers/genome-evidence-methodology",
+              "developers/supplements-medications-internals",
               "developers/sun-spectrum-model",
               "developers/wearables-internals"
             ]

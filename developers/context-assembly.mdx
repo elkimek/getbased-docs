@@ -56,8 +56,8 @@ Everything the AI can know about the user comes from these sources:
 │  PERSONA                    ├─ Sleep & Rest         ├─ optimal ranges│
 │  ├─ personality ID          ├─ Light & Circadian    ├─ phase ranges │
 │  ├─ built-in style prompt   ├─ Stress               ├─ custom markers│
-│  └─ custom promptText       ├─ Love Life            └─ flagged results│
-│                             └─ Environment                          │
+│  └─ custom promptText       ├─ Love Life            ├─ collection context│
+│                             └─ Environment           └─ flagged results│
 │  CHAT                                                               │
 │  ├─ user message            OTHER                                   │
 │  └─ last 30 eligible msgs   ├─ Interpretive Lens                   │
@@ -99,8 +99,14 @@ Lab data for current profile (sex: female, age: 34, unit system: SI, today: 2026
 Quantum biology, functional medicine paradigm
 [/section:interpretiveLens]
 
+[section:labCollectionContext]             ←── DRAW METADATA (explicit fields only)
+## Lab Collection Context
+Explicitly reported metadata by draw. Omitted fields were not reported; do not infer them from the clock time, tests ordered, or marker values.
+- 2026-01-15: collection time 07:35; fasting; cycle day 13; late follicular phase (recorded)
+[/section:labCollectionContext]
+
 [index]                                    ←── category index for selective parsing
-Available sections: biochemistry, hormones, lipidPanel
+Available sections: biochemistry, hormones, lipids
 [/index]
 
 Note: status labels below use reference ranges.
@@ -113,8 +119,8 @@ Note: status labels below use reference ranges.
 
 [section:hormones updated:2026-02-20]
 ## Hormones
-- Estradiol: Jan 15: 180 [follicular, ref 77–921], Feb 20: 95 [luteal, ref 65–380] pmol/L
-  ↑ phase-aware: each value shows its cycle phase + phase-specific ref range
+- Estradiol: Jan 15: 180 [late follicular, recorded, ref 77–921], Feb 20: 95 [luteal, predicted, ref 65–380] pmol/L
+  ↑ phase-aware: each eligible value shows its draw phase, source, and dated range
 [/section:hormones]
 
 [critical]                                 ←── 4. FLAGS (quick-scan summary)
@@ -140,8 +146,14 @@ Notes: On levothyroxine 50mcg
 
 [section:supplements]                      ←── 7. SUPPLEMENTS
 ## Supplements & Medications
-- Vitamin D3 (5000 IU) [supplement]: Jan 1 → ongoing
-- Magnesium glycinate (400mg) [supplement]: Jan 15 → ongoing
+Source-reported product and lot data below are not personal clinical laboratory results.
+Safety boundary: keep ND/NQ distinct from zero. Do not call an exposure high or unsafe unless its basis converts to personal daily intake and an applicable route- and jurisdiction-specific reference is available.
+- Magnesium complex [supplement, oral; active; 2026-01-01→ongoing] | personal regimen: with food; daily, 1×/day
+  active ingredients: Magnesium bisglycinate 200 mg × 1/day = 200 mg/day
+  other label ingredients (excipients/fillers/coatings/capsule materials): Hypromellose capsule, Rice flour
+  source quality evidence included in AI context: 1 result; user confirmed the report matches their bottle lot; 1 contaminant
+Source-reported contaminant overview:
+- Lead — Magnesium complex: < 0.5 mcg per serving; scheduled daily mass from 1/1 compatible result(s): up to 0.5 mcg/day from upper-bound results
 [/section:supplements]
 
 [section:menstrualCycle]                   ←── 8. CYCLE (female only)
@@ -231,13 +243,17 @@ importedData (localStorage)
                     │     ├─ values[] (per date)            │
                     │     ├─ refMin/refMax                  │
                     │     ├─ phaseRefRanges[] (female)      │
-                    │     └─ phaseLabels[] (female)         │
+                    │     ├─ contextRefRanges[]             │
+                    │     └─ contextOptimalRanges[]         │
+                    ├─── entryContextByDate                 │
+                    │     ├─ sampleTime / fasting           │
+                    │     └─ recorded cycle context         │
                     │                                      │
                     └─── getAllFlaggedMarkers() ────────────┤
                                                            │
          ├─── .notes ──────────────────────────────────────┤
          ├─── .diagnoses ──────────────────────────────────┤
-         ├─── .supplements ────────────────────────────────┤  ← MEDICAL
+         ├─── .supplements ── supplement-context.js ───────┤  ← MEDICAL
          ├─── .genetics ───── dna.js ──────────────────────┤
          ├─── .menstrualCycle ─── + helper functions ──────┤
          │     ├─ getCyclePhase()                          │
@@ -508,13 +524,17 @@ Each AI feature has independent caching to avoid redundant API calls:
 
 5. **Empty-card guards**: Cards with no meaningful content are completely omitted rather than sent as empty sections. Each card has a specific content check (not just truthiness).
 
-6. **Phase-aware values**: For female profiles with active cycle data, estradiol, progesterone, LH, and FSH values include per-date phase labels and phase-specific reference ranges inline. Disabled for hormonal contraception and non-cycling statuses (postmenopause, pregnant, breastfeeding).
+6. **Phase-aware values**: Estradiol, progesterone, LH, and FSH can include per-date phase labels and phase-specific reference ranges inline. Explicit recorded draw context wins. Prediction requires a female profile with an active natural regular cycle, period history, and no hormonal contraception; uncertain and non-cycling contexts are omitted.
 
-7. **Effective ranges**: `askAIAboutMarker()` uses effective (phase-aware) reference ranges, not the static schema ranges. Also includes trend direction with percentage change.
+7. **Effective ranges**: `askAIAboutMarker()` uses the dated effective range—phase, collection-context, personal/lab, or static fallback—not blindly the static schema range. It also includes trend direction with percentage change.
 
 8. **Robust JSON parsing**: `loadContextHealthDots()` wraps the AI response JSON.parse in try-catch. On malformed responses, stale cards get gray dots while cached good data is preserved.
 
 9. **Context source gates**: In-app Chat, Biology Score context, and source-driven warnings respect `contextSourceSettings`. Current Focus uses its own compact serializer and currently honors the lab, insight-card, supplements, and specialty-lab group gates it imports directly. Agent Access does not reuse the in-app gates; it has a separate Settings permission and pushes an encrypted full-profile summary only when enabled.
+
+10. **Bounded therapy projection**: `supplement-context.js` owns therapy selection and formatting. Compact context has a 6,500-character ceiling, detail mode has 12,000, and Biology Score records have 4,500. Compact mode selects current records or periods overlapping the lab range; a therapy-specific query can select bounded history. Quality-result AI toggles are respected in every projection, passing duplicate potency rows default out, and detailed methods/limits appear only in detail mode.
+
+11. **Explicit collection context only**: `[section:labCollectionContext]` includes known sample time, fasting state, cycle day, and recorded phase by lab date. Missing fields stay omitted. The serializer does not reinterpret processing/report time as collection time or infer fasting from the clock, ordered tests, or marker values.
 
 ## Prompt Improvement Methodology
 
@@ -654,11 +674,17 @@ Each entry documents:
 | `js/context-card-health-dots.js` | Card summaries/dots/tips, per-card fingerprints and cache, demo live-AI policy |
 | `js/context-cards.js` | Card rendering facade, save/refresh lifecycle, demo AI confirmation controls |
 | `js/lab-context.js` | `buildLabContext()` — central serializer (full context) |
+| `js/lab-context-collection.js` | Date-scoped collection-time, fasting, cycle-day, and recorded-phase context section |
 | `js/lab-context-change-timeline.js` | Context-card and profile-context history section |
 | `js/lab-context-wearables.js` | Wearable summary sections and structured sleep-context mismatch warnings |
+| `js/supplement-context.js` | Period-aware compact/detail therapy context, quality-evidence boundaries, and hard character limits |
+| `js/supplement-medication-domain.js` | Status, period overlap, schedule exposure, stable IDs, and compatibility migration |
+| `js/supplement-quality.js` | Per-result AI inclusion and conservative source-quality aggregation |
+| `js/supplement-warnings.js` | Claim-level mitochondrial primary-study context |
 | `js/sync-messenger.js` | Agent Access context push, encrypted gateway envelope, `ignoreContextToggles` external-sharing path |
 | `js/chat-send.js` | `sendChatMessage()` — chat prompt composition |
 | `js/chat-marker-prompts.js` | `askAIAboutMarker()` — per-marker prompt (effective ranges + trend) |
+| `js/marker-context-ranges.js` | Age-, sex-, and collection-time-aware range resolvers |
 | `js/chat-personalities.js` | `generateCustomPersonality()` — persona generator prompt |
 | `js/views.js` | `buildFocusContext()` — lightweight focus card context (~200-400 tokens) |
 | `js/views.js` | `loadFocusCard()` — focus card prompt (health-goals-aware) |

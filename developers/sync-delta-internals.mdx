@@ -17,6 +17,9 @@ This page is the contributor contract for adding or changing a synced profile su
 | `sync-apply.js` / `sync-chat-apply.js` | Applies inbound profile and chat changes safely |
 | `sync-tombstones.js` | Profile and item-delete propagation, including batched-delete quarantine |
 | `sync-dirty-state.js` | Durable per-profile edit generations used to protect pending local work |
+| `sync-settings-state.js` | Separates configured, active, and paused state for the current browser |
+| `sync-lifecycle.js` | Starts, pauses, resumes, and disconnects the browser runtime without conflating those operations |
+| `sync-backup-restore-state.js` | Marks restored profiles dirty and carries a durable publish-before-pull recovery list across reload |
 | `sync-profile-fields.js` | Shared deterministic profile-field allowlist for push and pull |
 | `sync-origin-state.js` | Tab-local committed timestamps used to suppress source-browser update notices |
 | `sync-relay-health.js` | Authoritative storage checks, quota warnings, and owner-signed relay maintenance |
@@ -34,6 +37,22 @@ This page is the contributor contract for adding or changing a synced profile su
 `importSnapshots` are user-visible because Settings → Data can reopen a saved import review. They must keep stable IDs and tombstones so deleting one source file does not delete unrelated same-day marker values.
 
 `markerPlacements` uses immutable `gb:marker:*` or `custom:*` IDs as map keys. A row carries only the visual destination metadata; lab entries and dot-keyed companion maps are never re-keyed. Unknown marker IDs or destination categories remain in the profile for forward compatibility while the current runtime falls back to native display.
+
+New supplement and medication records have `sm_...` IDs. The supplements delta config uses that stable ID when present and retains the legacy `name|startDate|type` hash only for unmigrated compatibility records. Period changes, structured product facts, and quality evidence must stay attached to the same item identity.
+
+## Configured, active, and paused
+
+Sync has three distinct browser states:
+
+| State | Persisted meaning | Runtime behavior |
+|---|---|---|
+| Not configured | `labcharts-sync-enabled` is absent or not `'true'` | No local Sync identity is expected |
+| Active | Configured and `labcharts-sync-paused` is absent | Timers, subscriptions, pushes, and pulls can run |
+| Paused | Configured and `labcharts-sync-paused` is `'true'` | Identity/runtime storage and dirty markers remain, but relay traffic and inbound application stop |
+
+Turning the user-facing switch off pauses; it must not run disconnect cleanup. Local saves still call the normal dirty hook while paused, including saves to inactive profiles. Resume rebinds subscriptions and flushes the durable pending work before any inbound merge. If that flush fails or is skipped, the pull fails closed.
+
+Disconnect/reset is the explicit destructive operation for local Sync state. It forgets the Evolu owner and local planner/history keys, then reloads. It does not delete profile data or ciphertext already held by the relay.
 
 ## Device-local profile fields
 
@@ -87,6 +106,17 @@ await evolu.restoreAppOwner(normalizedMnemonic, { reload: false });
 
 It then enables/persists Sync and completes getbased's join-finalization path before issuing the single controlled reload. The local seeding/recovery path remains separate. Tests for this contract must assert call ordering, not only that `restoreAppOwner()` was invoked.
 
+## Backup-restore preflight
+
+A full backup can restore data that the current relay history previously deleted. Before reload, `prepareRestoredProfilesForSync()`:
+
+1. records the safe restored profile IDs under `labcharts-sync-backup-restore-pending`;
+2. clears their per-surface delta snapshots;
+3. clears delta cutover and the previous Sync timestamp; and
+4. gives each restored profile a new durable dirty generation.
+
+On the next active start—or after joining an existing identity—the inbound callback first force-pushes every pending restored profile, then flushes all remaining dirty profiles. Only after both phases succeed may remote tombstones or scalar state apply. The pending restore list is cleared only after a successful preflight, so a reload or failed relay write can retry safely.
+
 ## Relay storage and compaction
 
 Relay quota measures append-only encrypted message history. The client gets authoritative `storedBytes` and `quotaBytes` from the owner-signed `/self/owner-storage` endpoint when the relay supports it; a local estimate is only a temporary fallback.
@@ -128,8 +158,11 @@ Before shipping sync changes:
 - verify snapshot advancement after simulated failed pushes;
 - verify equivalent saves and unchanged payloads do not create new pushes;
 - verify pulls and compaction flush dirty active and inactive profiles;
+- verify paused saves remain dirty, no subscription merge runs while paused, and resume pushes them before pulling;
+- verify disconnect/reset clears local Sync identity/history while pause preserves them;
 - verify an unreadable active or inactive profile cannot produce an empty push and stops compaction preflight;
 - verify existing-mnemonic restore persists the joined owner before the controlled reload;
+- verify restored profiles clear stale planner state and are force-pushed before inbound tombstones;
 - verify source-tab notifications are suppressed without suppressing receiving devices;
 - check Settings → Data diagnostics for a useful label and no plaintext secrets;
 - verify owner storage refresh and compaction/rebuild failure recovery when relay maintenance changes;

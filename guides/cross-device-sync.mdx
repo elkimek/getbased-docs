@@ -56,24 +56,37 @@ Anyone who has your mnemonic can access your synced data. Treat it like a passwo
 After the reload, keep the app open until the header dot turns green. If the device still has no profiles, open **Settings → Data → Cross-device sync**, confirm that its **Sync identity** matches your other device, and choose **Sync now**.
 
 <Warning>
-Joining or switching to another Sync identity replaces this browser's local synced profile data. Export a backup first if this browser contains changes that are not present on your other devices.
+Joining or switching to another Sync identity can merge or replace local synced values in this browser. Export a backup first if it contains changes that are not present on your other devices.
 </Warning>
+
+If you restored a full getbased backup immediately before joining, the restored profiles are queued for recovery. getbased publishes those local profiles before it accepts older remote deletions or values. Keep the tab open until sync finishes, then check the affected profiles on both devices.
+
+## Pause and resume on this device
+
+Turn off **Cross-device sync** or choose **Pause on this device** when you want this browser to stop exchanging data temporarily. Pausing keeps the Sync identity, mnemonic, local Sync history, and profile data on the device.
+
+You can keep editing while paused. Those changes remain local and queued. When you choose **Resume**, getbased publishes pending local changes before it applies incoming relay updates, so an older remote value cannot overwrite an edit that was waiting on this device.
+
+<Note>
+Pause applies only to the current browser. Your other connected devices continue syncing with the same identity.
+</Note>
 
 ## Manage a connected device
 
 Open **Settings → Data → Cross-device sync** to manage the current browser:
 
 - **Sync identity** shows a short, safe comparison code. Matching codes mean two devices use the same 24-word identity. The code does not grant access to your data.
+- **Pause on this device** stops relay traffic without forgetting the identity or local Sync history. **Resume** reconnects the same identity.
 - **Restore / switch identity** connects this browser to a different mnemonic and reloads its synced data.
-- **Disable on this device** stops sync and clears the Sync identity from this browser. It does not delete relay data or disable your other devices.
+- **Advanced → Disconnect & reset sync on this device** deliberately forgets the Sync identity and local Sync history in this browser. It does not delete profile data, relay data, or disable your other devices.
 
-To reconnect a disabled browser to the same identity, choose **Join existing device** and restore the saved mnemonic. Choose **Set up new sync** only when you intend to create a separate identity and reconnect your other devices to it.
+Use disconnect/reset only when you intend to remove the identity from this browser or troubleshoot by starting its Sync state again. To reconnect it to the same identity, choose **Join existing device** and restore the saved mnemonic. Choose **Set up new sync** only when you intend to create a separate identity and reconnect your other devices to it.
 
 ## What syncs
 
 The following data flows across all paired devices:
 
-- All profile data — lab entries, per-file import history, context cards, notes, supplements, cycle data, custom markers, marker category placements, EMF assessments
+- All profile data — lab entries, per-file import history, context cards, notes, complete supplement and medication records, cycle data, custom markers, marker category placements, EMF assessments
 - Profile metadata — name, sex, date of birth, location, tags
 - AI settings — provider, API keys, model selections, Venice Encrypted TEE Mode toggle, PPQ private-mode preference
 - Agent Access state — enabled flag, relay profile metadata, read token, Agent Context key, and the selected wearable daily-series window
@@ -135,7 +148,7 @@ If a profile is temporarily missing, locked, corrupt, or otherwise unreadable, g
 
 ## Conflict resolution
 
-Sync uses **last-write-wins per item**, based on timestamps. Supported profile surfaces send small per-item CRDT deltas — one lab entry, one marker note, or one sun session — while compatibility and recovery paths can send a complete encrypted snapshot. If two devices edit the same item before they sync, the most recent update wins. Edits to different items merge independently, and unchanged data is not sent again.
+Sync uses **last-write-wins per item**, based on timestamps. Supported profile surfaces send small per-item CRDT deltas — one lab entry, marker note, supplement or medication, or sun session — while compatibility and recovery paths can send a complete encrypted snapshot. Supplement and medication records use stable IDs, so lifecycle periods and structured product data remain attached to the same item. If two devices edit the same item before they sync, the most recent update wins. Edits to different items merge independently, and unchanged data is not sent again.
 
 ## Mnemonic security
 
@@ -147,7 +160,7 @@ Your mnemonic is your encryption key. getbased takes several precautions to prot
 
 ### Changing your mnemonic
 
-**Disable on this device** affects only the current browser. Relay data and devices already using the old mnemonic remain active. Restoring the old mnemonic reconnects this browser to that identity.
+**Pause on this device** affects only the current browser and retains its identity. **Advanced → Disconnect & reset sync on this device** forgets that identity locally; relay data and devices already using the old mnemonic remain active. Restoring the old mnemonic reconnects this browser to that identity.
 
 Creating a **New setup** generates a separate identity and mnemonic. To move completely, save the new mnemonic and join that identity from each other device.
 

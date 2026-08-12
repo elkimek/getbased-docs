@@ -99,6 +99,12 @@ Folder backup files are standard getbased JSON exports. Restore one the same way
 
 For full database bundles that contain multiple profiles, getbased handles profile merging automatically — new profiles are created and existing ones are merged.
 
+### Restore a backup before rejoining Sync
+
+When a full backup is restored, getbased marks every restored profile for recovery. If you then join an existing Sync identity, it publishes those profiles before accepting remote tombstones or older relay state. This protects restored history—including supplement and medication periods—from briefly appearing and then disappearing after the first pull.
+
+Keep the tab open until Sync reports that it has finished, then verify the restored profiles on another connected device. A backup is still the recovery source of last resort: the relay is an encrypted synchronization service, not a substitute for independent backups.
+
 ## Backup reminder
 
 If you have not configured folder backup and have not manually exported in over 30 days, getbased shows a gentle reminder. You can snooze it for 30 days or set up folder backup to dismiss it permanently.
@@ -107,6 +113,6 @@ If you have not configured folder backup and have not manually exported in over 
 
 In addition to automatic backups, you can download a plaintext JSON copy of your data at any time from **Settings → Data → Export**. This is your most portable backup — it is a plain file you can store anywhere: a password manager, an encrypted USB drive, or an offline backup.
 
-An **Export All** database bundle contains each profile's complete stored data, including local AI model-test records. A curated single-profile JSON export does not include model-test diagnostics. Model-test history is also excluded from cross-device sync, so use a full database or folder backup if you want to preserve it.
+An **Export All** database bundle contains each profile's complete stored data, including local AI model-test records. A curated single-profile JSON export does not include model-test diagnostics, and its compatibility import path does not restore every structured supplement/medication product and quality field. Model-test history is also excluded from cross-device sync, so use a full database or folder backup when you want a full-fidelity restore.
 
 See [Export and import your data](/guides/export-import) for the full export and import workflow.

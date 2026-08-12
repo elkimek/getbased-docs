@@ -38,7 +38,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 
 ## Local AI adapter contract
 
-`LOCAL_AI_PROVIDER_ADAPTERS` registers three adapters with a stable `id`, user-facing `label`, normalized `capabilities`, and `discover()` method. Adapters can also implement `infer()`, `prepareNativeRequest()`, and `unload()`.
+`LOCAL_AI_PROVIDER_ADAPTERS` registers three adapters with a stable `id`, user-facing `label`, normalized `capabilities`, and `discover()` method. Adapters can also implement `infer()`, `prepareNativeRequest()`, `loadWithContext()`, and `unload()`.
 
 | Capability | Ollama | LM Studio | Generic compatible endpoint |
 |---|---|---|---|
@@ -80,7 +80,11 @@ Use the exact browser origin in CORS help. Do not recommend wildcard origins. Mi
 
 `api-local.js` estimates prompt tokens, adds a safety reserve, and clamps requested output to the loaded context. If the remaining context cannot satisfy the minimum output, it fails with the current and maximum context sizes instead of sending a predictably truncated request.
 
-Imports opt into discovery and native context planning because a full report can exceed a default loaded context. Routine chat avoids an extra discovery probe before the first token. Ollama can pass `num_ctx`; LM Studio can use its native chat endpoint when the request contains compatible input. Requests with assistant history that cannot use the LM Studio native override must ask the user to reload the model with a larger context.
+Imports opt into discovery and native context planning because a full report can exceed a default loaded context. Dense lab tables use a conservative three-characters-per-token estimate; routine chat avoids an extra discovery probe before the first token.
+
+Ollama can pass `num_ctx`. For a current LM Studio server, `prepareNativeRequest()` selects a target context and `loadWithContext()` unloads the previous instance, loads the model through `/api/v1/models/load`, forces discovery, and returns the context LM Studio actually fitted. `api-local.js` replans output against that verified context, then generates through streaming `/v1/chat/completions`. A missing load route falls back to native non-streaming inference with a 15-minute ceiling. An unload failure may proceed only after forced discovery proves the old instance is gone; otherwise it fails before allocating a duplicate.
+
+Local streaming gets a 15-minute allowance only for the first reader result because prompt prefill can be silent. Every later read keeps the shared 30-second stall guard. Provider finish reasons and native LM Studio token accounting normalize to `truncated`; PDF text and image imports reject that result before JSON review so a partial marker list cannot be confirmed.
 
 All adapters return the common text/usage result plus optional diagnostics. Generic compatible endpoints use direct browser requests to `/v1/chat/completions`; they do not go through the Custom API proxy.
 
@@ -137,6 +141,7 @@ Before shipping provider changes:
 - verify Local AI connection copy for loopback, LAN, remote, cloud, CORS, and mixed-content cases;
 - verify capability-optional fields render safely for a generic compatible endpoint;
 - verify switching same-machine Ollama/LM Studio runtimes unloads only when supported;
+- verify Local AI imports distinguish first-token prefill from mid-stream stalls and reject truncated marker lists;
 - verify web search visibility for public vs private modes;
 - verify wrong/missing API key errors are clear and do not erase saved keys;
 - verify private/E2EE attestation status is visible and fail-closed;

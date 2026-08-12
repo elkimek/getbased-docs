@@ -8,105 +8,40 @@ description: "How getbased turns stored profile data into active chart, scoring,
 
 # Data Pipeline
 
-`getActiveData()` in `js/data.js` is the central data pipeline. Every view — dashboard, category charts, compare, correlations, AI context — calls it to get processed data. It is a pure function with no side effects; it reads from `state` and returns a fresh `data` object each time.
+`getActiveData()` in `js/data.js` is the central active-data projection. Dashboard, category charts, compare, correlations, scoring, and AI context consume its output. It reads `state`, caches by relevant input identities and profile context, and returns a derived dataset without persisting changes.
 
 ## Pipeline flowchart
 
 ```
-                      ┌──────────────────────┐
-                      │   getActiveData()     │
-                      └──────────┬───────────┘
-                                 │
-                                 ▼
-                  Deep-clone MARKER_SCHEMA
-                  into data.categories
-                                 │
-                                 ▼
-                  Merge custom markers
-                  from importedData.customMarkers
-                                 │
-                                 ▼
-                  Apply sex-specific ranges
-                  (replace refMin/refMax with _f if female)
-                                 │
-                                 ▼
-                  Merge OPTIMAL_RANGES
-                  into marker objects
-                                 │
-                                 ▼
-                  Apply refOverrides
-                  (ref + optimal range overrides per marker)
-                                 │
-                                 ▼
-                  Collect dates from entries
-                  (excluding singlePoint categories)
-                                 │
-                                 ▼
-                  Build sorted data.dates[]
-                  and data.dateLabels[]
-                                 │
-                                 ▼
-                  Populate marker.values[]
-                  aligned with dates, null = no data
-                                 │
-                                 ▼
-                        ◇ singlePoint? ◇
-                       ╱               ╲
-                     yes                no
-                      │                  │
-                      ▼                  │
-              Set cat.singleDate         │
-              marker.singlePoint = true  │
-                      │                  │
-                      └───────┬──────────┘
-                              │
-                              ▼
-                  Compute cycle phase labels
-                  (active cycle, no hormonal BC)
-                              │
-                              ▼
-                  Compute phase-specific ref ranges
-                  (estradiol, progesterone, LH, FSH)
-                              │
-                              ▼
-                  Calculate ratios
-                  TG/HDL, LDL/HDL, ApoB/ApoAI,
-                  NLR, PLR, De Ritis, Cu/Zn
-                              │
-                              ▼
-                  Calculate Free Water Deficit
-                  TBW × (Na / 140 − 1)
-                              │
-                              ▼
-                  Calculate PhenoAge
-                  Levine 2018, 9 biomarkers + DOB
-                              │
-                              ▼
-                      ◇ US units? ◇
-                     ╱              ╲
-                   yes               no
-                    │                 │
-                    ▼                 │
-            Apply unit conversions    │
-            from UNIT_CONVERSIONS     │
-                    │                 │
-                    └────────┬────────┘
-                             │
-                             ▼
-                 Apply marker placements
-                 as the final view projection
-                             │
-                             ▼
-                  ┌──────────────────────┐
-                  │     Return data       │
-                  └──────────────────────┘
+MARKER_SCHEMA + customMarkers
+              │
+              ▼
+sex-specific defaults + OPTIMAL_RANGES + refOverrides
+              │
+              ▼
+entries[] → sorted dates + merged same-date values + entryContextByDate
+              │
+              ▼
+values[] projection and single-point category projection
+              │
+              ▼
+recorded/eligible predicted cycle phases → phaseRefRanges[]
+              │
+              ▼
+age/sex/time/fasting context → contextRefRanges[] / contextOptimalRanges[]
+              │
+              ▼
+direct lab calculations or deterministic calculated fallbacks
+              │
+              ▼
+optional display-unit conversion → marker placement projection → cached data
 ```
 
 The caller is responsible for applying date range filtering after receiving `data`:
 
 ```js
 const data = getActiveData();
-filterDatesByRange(data);   // mutates data.dates, data.dateLabels, marker.values in-place
+const filtered = filterDatesByRange(data); // returns a filtered projection
 ```
 
 ## Marker identity and storage keys
@@ -114,13 +49,14 @@ filterDatesByRange(data);   // mutates data.dates, data.dateLabels, marker.value
 Persisted values and companion maps continue to use `"category.markerKey"` storage keys:
 
 ```
-biochemistry.glucose
+diabetes.insulin
 hormones.testosterone
 lipids.triglycerides
 hematology.wbc
 ```
 
 This storage format is used in:
+
 - `UNIT_CONVERSIONS` keys
 - `OPTIMAL_RANGES` keys
 - `PHASE_RANGES` keys
@@ -132,13 +68,27 @@ It is not the marker's immutable identity or necessarily its rendered category. 
 
 Mutation code must use `marker.storageDotKey`; it must not reconstruct a persisted key from `displayCategoryKey` or a rendered card ID. See [Marker model and category placement](/developers/marker-model).
 
+Alias migration resolves historical dotKeys before projection. See [Lab markers and range internals](/developers/lab-markers-ranges-internals#schema-ownership) for the range and migration contracts.
+
 ## Entry storage format
 
-`importedData.entries` is an array of lab snapshots. Each entry has a date and a flat markers object:
+`importedData.entries` is the live per-date lab dataset. Per-file provenance lives separately in `importSnapshots[]`. Each entry has a date, a flat markers object, and optional per-draw context:
 
 ```js
 {
   date: "2025-03-15",
+  context: {
+    sampleTime: "07:35",
+    fasting: true,
+    cycleDay: 21,
+    cyclePhase: "luteal",
+    cyclePhaseDetail: "mid_luteal",
+    cyclePhaseSource: "recorded"
+  },
+  collectionContextSources: {
+    sampleTime: "snap_...",
+    fasting: "snap_..."
+  },
   markers: {
     "biochemistry.glucose": 5.2,
     "hormones.testosterone": 18.4,
@@ -148,7 +98,7 @@ Mutation code must use `marker.storageDotKey`; it must not reconstruct a persist
 }
 ```
 
-Multiple entries on the same date are merged (via `Object.assign`) into a single lookup slot. The pipeline builds `entryLookup: { "2025-03-15": { "biochemistry.glucose": 5.2, ... } }` before populating values arrays.
+Multiple entries on the same date are merged into one value lookup and one normalized `entryContextByDate` record. Snapshot-aware commit helpers own conflict and restoration behavior; do not bypass them when mutating imported data.
 
 ## Values arrays — aligned with dates
 
@@ -190,35 +140,28 @@ Markers not in `MARKER_SCHEMA` are auto-imported from PDFs. The pipeline merges 
 
 If the category key does not exist in the schema, a new category is created with a bookmark icon. Custom markers have `marker.custom = true` and are treated identically to schema markers in all views. Legacy custom definitions receive deterministic stable IDs without re-keying their stored values.
 
-## Calculated markers
+## Contextual ranges and calculated markers
 
-These are computed in-pipeline in the native `calculatedRatios` category. A profile may then display a calculated marker in a compatible regular category, but calculation and storage resolution still happen at its native key:
+The projection attaches date-aligned phase, reference, and optimal range arrays after values are populated. Imported or manual reference overrides block generic context fallbacks, while eligible phase-specific hormone ranges remain per-date. Unknown required context yields no range or an explicit unrated label.
 
-| Marker key | Formula |
-|---|---|
-| `tgHdlRatio` | Triglycerides / HDL |
-| `ldlHdlRatio` | LDL / HDL |
-| `apoBapoAIRatio` | ApoB / ApoAI |
-| `nlr` | Neutrophils / Lymphocytes |
-| `plr` | Platelets / Lymphocytes |
-| `deRitisRatio` | AST / ALT |
-| `copperZincRatio` | Copper / Zinc |
-| `bunCreatinineRatio` | `(urea × 2.801) / (creatinine × 0.01131)` — computed in US units from SI-stored values, ref 10–20 |
-| `freeWaterDeficit` | `TBW × (Na / 140 − 1)` — assumes 70 kg body weight |
-| `phenoAge` | Levine 2018 — 9 biomarkers + chronological age from DOB |
+Calculated values are computed in-pipeline in the native `calculatedRatios` category. A profile may then display a calculated marker in a compatible regular category, but calculation and storage resolution still happen at its native key.
 
-PhenoAge returns `null` if any of its 9 required inputs is missing or if DOB is not set.
+`populateCalculatedMarkers()` prefers a direct supported lab result already present in `calculatedRatios` for that date and computes only missing destinations. This is required for FIB-4, anion gap, and lab-reported ratios whose rounding or method can differ from the fallback formula.
+
+PhenoAge and Bortz Age are hidden calculated components. Biological Age combines both when available and falls back to either one. Explicit creatinine-unreliable low-muscle context gates the calculation.
+
+See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for range precedence, all calculation formulas, collection-context ownership, phase gates, and alias migration requirements.
 
 ## The `data` parameter pattern
 
-`getActiveData()` deep-clones the full schema on every call — it is not free. Views accept an optional `data` parameter so a single pipeline run can feed multiple renders:
+The first `getActiveData()` call for a changed input set clones and processes the schema; matching calls reuse the active-data cache. Views should still accept an optional `data` parameter so one projection can feed a complete render and so dependencies remain explicit:
 
 ```js
 // Good: one pipeline call, passed to all sub-renders
 function refreshAll() {
   const data = getActiveData();
-  filterDatesByRange(data);
-  showDashboard(data);
+  const filtered = filterDatesByRange(data);
+  showDashboard(filtered);
 }
 
 // Bad: each sub-render calls getActiveData() independently
@@ -228,4 +171,4 @@ function refreshAll() {
 }
 ```
 
-When writing a new rendering function, always accept `data` as an optional parameter and call `getActiveData()` only when it is not provided.
+When writing a rendering function, accept `data` when its caller already owns the projection. Call `invalidateActiveDataCache()` from mutation paths that change a tracked input; storage save paths already do this.

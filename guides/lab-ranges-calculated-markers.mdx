@@ -1,0 +1,120 @@
+---
+title: "Understand lab ranges and calculated markers"
+description: "Learn which range getbased shows, how collection context changes interpretation, and how calculated ratios and biological age avoid duplicate results."
+---
+
+getbased keeps the measured value separate from the range used to interpret it. A range printed by the laboratory is usually the best default for that report. Built-in ranges keep older, manually entered, and calculated results usable when the source did not provide one.
+
+<Warning>
+Reference, guidance, target, and optimal ranges are interpretation aids. They do not diagnose a condition, and a result inside a band is not a guarantee that it is appropriate for every person.
+</Warning>
+
+## Which range is used
+
+For most markers, getbased uses this order:
+
+1. A phase-specific range for an estradiol, progesterone, LH, or FSH result when the draw has reliable menstrual-cycle context.
+2. A personal range you entered, or a laboratory range you chose to adopt during import.
+3. A context-aware built-in range when its required context is known, such as sex, age, fasting status, or collection time.
+4. The marker's general built-in range.
+
+An adopted laboratory interval takes priority over general built-in reference guidance. A manually edited range takes priority over that adopted interval. Use **Revert** once to return from a manual range to the laboratory interval, and again to return to the built-in default.
+
+When several imported reports contain ranges for the same marker, the active laboratory range comes from the latest collection date, with import time used only to break a tie. Uploading an older report later therefore does not silently make its range current. Each report and its original range remains reviewable under **Settings → Data**.
+
+Only the active range is shown across normal chart and table views. getbased does not add historical range bands to every chart.
+
+## What the range label means
+
+The label next to a range explains what kind of boundary you are seeing:
+
+| Label | Meaning |
+|---|---|
+| **Lab reference** | The interval came from an imported laboratory report. |
+| **Reference** | A built-in or manually entered reference interval. |
+| **Population range** or **Assay range** | Published guidance that depends on the population or measurement method and is not a universal clinical cutoff. |
+| **Target** | A directional target, such as zero for free water deficit, rather than a conventional two-sided interval. |
+| **Requires fasting** | The app cannot honestly rate that result without known fasting context. |
+| **Optimal** | A narrower clinical-wellness target included only where there is a defensible source and applicability. |
+
+Unknown or strongly context-dependent markers can remain unrated instead of receiving a made-up range. getbased intentionally does not aim for 100% optimal-range coverage.
+
+## Collection and profile context
+
+Age and sex come from the active profile. Collection time, fasting status, and cycle phase belong to an individual blood draw because they can differ between reports.
+
+- During PDF import, review **Collection time** and **Fasting status** before confirming.
+- During manual entry, use the same two fields when you know them.
+- Enter the time the sample was collected, not the time the laboratory processed or reported it.
+- Leave either field unknown when the report does not say. getbased does not infer fasting from the clock, marker name, or result.
+
+The marker detail view shows context such as **Collected 07:35 · fasting** beside the affected value. The same known context is available to AI explanations when **Blood marker results** is enabled in **Insight → Manage → Context → Data sources**.
+
+For menstrual-cycle handling, see [Track your menstrual cycle](/guides/menstrual-cycle).
+
+## Reference and optimal bands
+
+Reference ranges generally describe the interval used by a laboratory or source population. Optimal ranges are an optional clinical-wellness layer. They can be useful for orientation, but they are not interchangeable and may be based on different evidence.
+
+A value may therefore be:
+
+- inside both the active reference and optimal ranges;
+- inside the reference range but outside the optimal range;
+- below or above the active range; or
+- unrated because a trustworthy applicable range is unavailable.
+
+The chart status and detail text identify the active layer. Open-ended ranges use a threshold rather than pretending both bounds are known.
+
+## If a chart scale looks implausible
+
+The vertical scale includes the active range, so an incorrect unit or imported bound can make an ordinary result look compressed. Open the marker detail and check the range label, unit, and bounds. For an imported result, use **Settings → Data → Review & Edit** to verify that the value and range were mapped to the same marker and unit. Changing a recognized unit in review converts the numeric value and its range together.
+
+If the label says **Lab reference**, getbased is showing the interval accepted from the report, not substituting a built-in female, male, or age band. Correct it as personal data when the report was mapped incorrectly; the public suggestion action is intentionally unavailable for a lab-owned range.
+
+## Suggest a better built-in range
+
+For a built-in range, the marker menu can offer **Suggest a better range**. It opens a prefilled public GitHub issue containing only catalog details needed to review the proposal. It does not include your value, profile, age, sex, laboratory, or collection date.
+
+The option is hidden for custom markers and after you adopt or manually edit a personal range. A personal or laboratory interval is your data, not a proposal to change the built-in catalog.
+
+## Calculated markers
+
+Calculated markers are deterministic formulas, not AI estimates. They appear in **Calculated Ratios** when the required values exist on the same date.
+
+| Group | Calculated markers |
+|---|---|
+| Lipid and metabolic | TG/HDL, LDL/HDL, Total Cholesterol/HDL, ApoB/ApoA-I, Atherogenic Index of Plasma (AIP), Triglyceride-Glucose Index (TyG) |
+| Immune and inflammatory | Neutrophil-Lymphocyte Ratio (NLR), Platelet-Lymphocyte Ratio (PLR), Monocyte-Lymphocyte Ratio (MLR), Systemic Immune-Inflammation Index (SII), hs-CRP/HDL-C |
+| Liver, kidney, and chemistry | De Ritis Ratio, BUN/Creatinine Ratio, Albumin/Globulin Ratio, FIB-4, Anion Gap, Free Water Deficit |
+| Minerals and hormones | Copper/Zinc Ratio, Free T3/Free T4 Ratio |
+| Age estimates | PhenoAge, Bortz Age, combined Biological Age |
+
+If a report already contains FIB-4, anion gap, a ratio, or another supported calculated result, that reported value is mapped into **Calculated Ratios** and used for that date. getbased calculates a fallback only when no direct result exists. This avoids duplicate cards and preserves legitimate rounding or method differences from the source report.
+
+HOMA-IR is also deterministic but remains beside glucose and insulin in **Glucose & Insulin Metabolism**. It is recalculated for the lab date when both glucose and insulin are present.
+
+Some calculations have extra gates:
+
+- A known non-fasting sample suppresses TyG ranges and leaves the result unrated; record fasting status when the report provides it.
+- FIB-4 uses age-aware guidance and is left unrated where the formula is not considered applicable, including under age 35 or when acute illness context is active.
+- hs-CRP/HDL-C requires high-sensitivity CRP; standard CRP is not substituted.
+- Free water deficit uses the latest recorded body weight, or a 70 kg fallback when weight is unavailable.
+
+## Free water deficit
+
+Free water deficit is calculated as estimated total body water multiplied by `(sodium / 140 − 1)`. Its target is zero:
+
+- A positive result estimates missing free water relative to the sodium target and is mainly intended for hypernatremia context.
+- A negative result is the formula's water-excess or low-sodium direction. It does **not** mean dehydration and is not, by itself, a diagnosis of overhydration.
+
+Because total body water is estimated and weight can fall back to 70 kg, treat this as a rough decision-support calculation rather than a measured fluid volume.
+
+## Biological age
+
+PhenoAge and Bortz Age each require date of birth and their own complete biomarker input set. **Biological Age** averages both when both are available and falls back to the one that can be calculated.
+
+The chart compares the estimate with chronological age. If **Low muscle mass / creatinine unreliable** is explicitly enabled in Medical History, creatinine-dependent age estimates are suppressed. Turning that setting off allows them to calculate again when all inputs are present.
+
+<Note>
+The female demo profile includes recorded draw context so you can inspect phase labels, phase-specific hormone ranges, collection time, and fasting behavior. It is a product walkthrough, not a clinical template for another person.
+</Note>

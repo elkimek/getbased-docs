@@ -8,23 +8,24 @@ description: "Reference map for the getbased native ES modules and compatibility
 
 # Module Reference
 
-Modules live under `js/`. This page is a guided implementation map, not a promise that every small hook/delegate/helper file has its own long section. It is grouped by layer — lower layers have no dependencies on higher ones.
+Modules live under `js/`. The app has hundreds of focused top-level JavaScript modules. This page is a guided implementation map, not a promise that every small hook, delegate, or helper file has its own long section. It is grouped by layer; lower layers have no dependencies on higher ones.
 
 ---
 
 ## Layer 1 — Foundation
 
-### `schema.js`
+### `schema.js` and `marker-schema/`
 
-Stable compatibility facade for marker schema consumers plus unit conversions, optimal ranges, pricing, and environment thresholds. Marker definitions are authored in category modules under `marker-schema/`, composed by `marker-schema/index.js`, and generated into `marker-schema.js`.
+`schema.js` is the stable compatibility facade for the modular biomarker catalog, range registries, unit conversions, pricing, and environment thresholds. Category definitions and immutable marker identities are authored in category modules under `marker-schema/`, composed by `marker-schema/index.js`, and generated into `marker-schema.js`; contributors must not edit the generated file directly.
 
 **Key exports:**
-- `MARKER_SCHEMA` — nested object: `{ categoryKey: { label, icon, markers: { markerKey: { name, unit, refMin, refMax, refMin_f, refMax_f, desc } } } }`. Categories include `biochemistry`, `hormones`, `electrolytes`, `lipids`, `hematology`, `differential`, `thyroid`, `proteins`, `vitamins`, `diabetes`, `inflammation`, `fattyAcids`, `calculatedRatios`, and others
+- `MARKER_SCHEMA` — 196 core entries across 19 categories, including the 22-entry `calculatedRatios` category
 - `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for EU→US conversions
 - `OPTIMAL_RANGES` — keyed by `"category.markerKey"`: `{ optimalMin, optimalMax, optimalMin_f?, optimalMax_f? }`
 - `PHASE_RANGES` — keyed by `"category.markerKey"`: `{ menstrual: { min, max }, follicular: {...}, ovulatory: {...}, luteal: {...} }` — covers `hormones.estradiol`, `hormones.progesterone`, `hormones.lh`, and `hormones.fsh`
+- `CONTEXT_REFERENCE_RANGES` / `CONTEXT_OPTIMAL_RANGES` — age-, sex-, and date-resolved guidance consumed by the active-data pipeline
 - `SPECIALTY_MARKER_DEFS` — re-exported from `adapters.js` as `ADAPTER_MARKERS`. Used by `migrateProfileData()` and `buildMarkerReference()`
-- `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, `resolveBuiltinMarkerDotKey()` — stable identity and legacy-location compatibility exports from the generated catalog
+- `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, and `resolveBuiltinMarkerDotKey()` — immutable `gb:marker:*` IDs plus current and legacy location compatibility exports
 - `CHIP_COLORS` — status → CSS color string
 - `MODEL_PRICING` — AI model pricing metadata, keyed by provider/model
 
@@ -252,8 +253,8 @@ Shared AI API transport helpers used by `api.js`.
 **Key exports:**
 - `fetchWithRetry(url, options, config)` — wraps fetch with request timeout, transient network retry, and 429 backoff
 - `createProxyFetch(shouldUseProxy)` — builds the Custom API proxy fetch wrapper
-- `readWithStallTimeout(reader, label)` — guards streaming readers from hanging between chunks
-- `STREAM_STALL_TIMEOUT_MS`, `FETCH_REQUEST_TIMEOUT_MS`, `AI_IMPORT_REQUEST_TIMEOUT_MS` — public timeout constants re-exported by `api.js`
+- `readWithStallTimeout(reader, label, timeoutMs?)` — guards one streaming read; Local AI uses the extended allowance only before its first token
+- `STREAM_STALL_TIMEOUT_MS`, `LOCAL_AI_FIRST_TOKEN_STALL_MS`, `FETCH_REQUEST_TIMEOUT_MS`, `AI_IMPORT_REQUEST_TIMEOUT_MS` — transport timeout constants
 
 **Window exports:** none
 
@@ -267,11 +268,11 @@ Local AI uses a normalized adapter layer so compatible endpoints work without hi
 
 - `local-ai-provider-registry.js` — `LOCAL_AI_PROVIDER_ADAPTERS`, `getLocalAiProviderAdapter()`, capability lookup, and detection precedence
 - `local-ai-provider-ollama.js` — native discovery, streaming inference, context override, performance diagnostics, and unload
-- `local-ai-provider-lmstudio.js` — native discovery/model enrichment, context-aware inference, performance diagnostics, and unload
+- `local-ai-provider-lmstudio.js` — native discovery/model enrichment, guarded unload/load-at-context, streaming compatible generation, native fallback, and truncation diagnostics
 - `local-ai-provider-openai-compatible.js` — generic `/v1/models` discovery and `/v1/chat/completions` inference
 - `local-ai-provider-shared.js` — base URL normalization, execution-location classification, compatible-model normalization, and secret redaction
 - `local-ai-discovery.js` — short-lived discovery cache and loaded-model metadata updates
-- `api-local.js` — prompt-token estimation, context/output planning, adapter selection, and normalized inference diagnostics
+- `api-local.js` — prompt-token estimation, context/output replanning after a native load, adapter selection, and normalized inference diagnostics
 - `local-ai-lifecycle.js` — memory-only runtime handoff and best-effort model release across same-machine endpoints
 
 See [AI provider internals](/developers/ai-provider-internals#local-ai-adapter-contract) for the capability and lifecycle contract.
@@ -348,15 +349,27 @@ Profile lifecycle and settings persistence.
 The central data pipeline. Every view gets its data from `getActiveData()`.
 
 **Key exports:**
-- `getActiveData()` — deep-clones `MARKER_SCHEMA`, merges custom markers, applies sex-specific ranges, populates `values[]` arrays from `importedData.entries`, computes ratios + PhenoAge + cycle phases, applies unit conversion. Returns `data` object with `{ dates[], dateLabels[], categories, phaseLabels? }`
+- `getActiveData()` — builds or reuses the active projection: schema and custom markers, personal ranges, date-aligned values and entry context, phase/context ranges, deterministic calculated markers, unit conversion, and final display placements
+- `invalidateActiveDataCache()` — clears the projection cache after a tracked mutation
 - `saveImportedData()` — persists `state.importedData` to localStorage (or encrypted store), triggers backup
-- `buildMarkerReference()` — compact JSON of all known markers for AI system prompts (PDF import)
-- `filterDatesByRange(data)` — applies `state.dateRangeFilter` to dates + values arrays in-place
+- `filterDatesByRange(data, options?)` — returns a date-filtered projection without mutating the cached active dataset
 - `registerRefreshCallback(fn)` — registers the refresh function from `app-event-listeners.js`
-- `getFocusCardFingerprint()` — djb2 hash of all entries + all 9 context cards + sex + DOB
+- `getFocusCardFingerprint()` — hash of lab/profile inputs relevant to the Focus card
 - Compatibility re-exports from `marker-analysis.js` keep existing `window.*` helper access stable.
 
 **Window exports:** `saveImportedData`, `clearAllData` (via export.js), `filterDatesByRange`
+
+---
+
+### Lab marker projection helpers
+
+- `data-calculated-markers.js` — direct-result-first calculated ratios, indices, free water deficit, PhenoAge, Bortz Age, combined Biological Age, and dated calculation guidance.
+- `marker-context-ranges.js` — whole-age-at-draw, sex/age band selection, collection-time parsing, and cortisol range resolution.
+- `cycle-draw-phases.js` — normalization of explicit recorded phase, phase detail, cycle day, and recorded/predicted source.
+- `marker-range-suggestions.js` — privacy-safe public issue payload and gating to untouched built-in ranges.
+- `profile-marker-alias-migrations.js` — canonical dotKey migrations across values, snapshots, custom markers, ranges, notes, labels, and date-scoped manual metadata.
+
+See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for precedence and invariants.
 
 ---
 
@@ -366,8 +379,10 @@ Read-only marker range, status, and trend helpers. This module owns pure marker 
 
 **Key exports:**
 - `getEffectiveRange(marker)` — returns `{ min, max }` respecting `state.rangeMode`
-- `getEffectiveRangeForDate(marker, dateIndex)` — phase-aware range lookup; falls back to `getEffectiveRange()`
+- `getEffectiveRangeForDate(marker, dateIndex)` — dated phase, contextual optimal/reference, and static/personal range lookup
+- `getEffectiveRangeLabelForDate(marker, dateIndex)` — matching user-facing source/policy label such as **Lab reference**, **Target**, or a phase label
 - `getPhaseRefEnvelope(marker)` — widest span across all cycle phases for chart ref bands
+- `getContextRefEnvelope(marker)` / `getContextOptimalEnvelope(marker)` — chart envelopes across dated context ranges
 - `getLatestValueIndex(values)` — index of the latest non-null marker value
 - `countFlagged(markers)` / `getAllFlaggedMarkers(data)` — out-of-range marker helpers
 - `statusIcon(status)` — status-to-symbol mapping used by category cards
@@ -426,7 +441,7 @@ Chart.js configuration and all custom plugins.
   - `optimalBandPlugin` — green dashed optimal range band
   - `noteAnnotationPlugin` — yellow dot annotations at note dates with hover tooltips
   - `supplementBarPlugin` — colored timeline bars for supplements
-  - `phaseBandPlugin` — cycle phase vertical shading (menstrual=red, follicular=blue, ovulatory=purple, luteal=yellow, 8% opacity)
+  - `phaseBandPlugin` — compact phase pills at observed points, with optional cycle day and recorded/predicted tooltip context
 
 **Window exports:** none
 
@@ -445,23 +460,27 @@ Standalone note management (independent of lab entries).
 
 ---
 
-### `supplements.js`
+### Supplement and medication modules
 
-Supplement and medication timeline, editor, ingredient tracking, and AI impact analysis.
+The feature is split by responsibility. `supplements.js` orchestrates the editor and persistence; `supplement-medication-domain.js` owns identity, lifecycle, periods, schedules, quantities, units, and additive migration; `supplement-form-ui.js` and `supplement-import-controller.js` own the structured form and reviewed import workflow; `supplement-dashboard.js` and `supplement-impact.js` own current display and historical analysis; `supplement-quality.js`, `supplement-context.js`, and `supplement-warnings.js` own evidence and bounded projections.
 
 **Key exports:**
 - `openSupplementsEditor(index?)` — opens the supplement editor modal
 - `saveSupplement(idx)` — persists current form state to `importedData.supplements`
+- `pauseSupplement(idx)` / `endSupplement(idx)` — close the current period while preserving history
+- `restartSupplement(idx)` / `beginSupplementDoseChange(idx)` — append or edit period-based lifecycle state
 - `deleteSupplement(idx)` — removes by index
-- `renderSupplementsSection()` — dashboard timeline bars
+- `renderSupplementsSection()` — renders current records and claim-grouped mitochondrial evidence
 - `renderSupplementImpact(supp, editIdx)` — per-supp impact card (shimmer → cached AI summary)
 - `computeSupplementImpact(supp, markerKey, ...)` — before/after mean comparison for one marker
 - `computeAllImpacts(supp, data)` — impact vectors across all markers, sorted by |pctChange|
-- `parseAmount(str)` — extract `{value, unit}` from "890mg" / "5,4 mg" / "500 IU" (handles comma decimals)
+- `getSupplementStatus()` / `getSupplementsOverlappingRange()` — period-derived current/history selection
+- `buildSupplementAIContext()` — compact/detail source-quality context with hard character limits
+- `parseSupplementQuantity(str)` — structured quantity parser; `parseAmount()` remains the impact compatibility wrapper
 - `effectiveTimesPerDay(ing, supp)` — row override wins, else supp-level default
 - `ingredientDailyTotal(ing, supp)` — computed `amount × effectiveTimesPerDay`
 
-**Ingredient data model:** each supp has an optional outer `timesPerDay` (default multiplier); each `ingredient` row has `{name, amount, timesPerDay?}` where `timesPerDay` is an optional per-row override. Daily total = `amount × (row.timesPerDay ?? supp.timesPerDay)`.
+**Record model:** schema-v2 rows have stable IDs and explicit use periods. Product-label directions, active ingredients, other label materials, personal regimen, and source laboratory evidence remain separate. Legacy fields and unknown keys are retained for compatibility.
 
 **Impact cache:** per-supp cache in `labcharts-{profileId}-suppImpact` keyed by supp name with a fingerprint that includes dosage, outer `timesPerDay`, per-ingredient fields, periods, and lab dates — any edit auto-invalidates only that supp's cache entry. Concurrent renders are coalesced via a 50ms debounced queue (`scheduleAnalyze` → `flushAnalyses`).
 
@@ -621,7 +640,7 @@ PDF/image/text-to-lab-data import pipeline and confirm/save merge logic.
 
 **Key exports:**
 - `extractPDFText(file)` — pdf.js text extraction with x/y coordinates, returns page-aware formatted text
-- `parseLabPDFWithAI(pdfText)` — sends text + `buildMarkerReference()` to AI; maps lab results to marker keys
+- `parseLabPDFWithAI(pdfText, fileName, onProgress)` — sends text + `buildMarkerReference()` to AI, extracts explicit collection time and fasting status, reports reading/writing phases, rejects truncated output, and maps complete results to marker keys
 - `handleImageFile(file)` — imports lab reports from JPG/PNG/WebP images via AI image pipeline
 - `handleBatchPDFs(files)` — sequential multi-file import with per-file confirm/skip
 - `showImportPreview(parsed)` — re-export from `pdf-import-review.js`
@@ -651,10 +670,23 @@ Import progress bar, header import-button status, and batch progress rendering.
 **Key exports:**
 - `showImportProgress(step, fileName)` / `hideImportProgress(reason)` — render and clear the import progress UI
 - `showBatchImportProgress(step, fileName, current, total)` — render per-file batch progress
-- `updateImportProgressPct(pct)` — streaming AI progress update hook
+- `updateImportProgressPct(pct, stageLabel?)` — streaming AI progress and reading/writing phase-label hook
 - `syncImportStatusFab()` / `handleImportStatusClick()` / `isImportRunning()` — status bridge used by `pdf-import.js` window exports; the legacy function name now syncs the header import button
 
 **Window exports:** via `pdf-import.js`
+
+---
+
+### `pdf-import-ai-utils.js`
+
+Shared AI-import transport helpers.
+
+**Key exports:**
+- `callImportAIWithStreamFallback(request, label)` — retries browser-aborted import streams once without streaming
+- `createImportAIProgress(options)` — estimates prefill from prior per-model performance, then switches from **Reading report** to **Writing results** on the first generated text
+- `saveImportAIPerf(key, result)` — persists bounded per-model timing used by later progress estimates
+- `tryParseJSON(text)` / `formatImportError(error)` — tolerant parse and user-facing error helpers; caller-side truncation checks run before review
+- `IMPORT_COLLECTION_CONTEXT_PROMPT` / `normalizeImportedCollectionContext()` — accept only explicit specimen collection time and fasting state; reject processing/report-time substitution and clock-based fasting inference
 
 ---
 
@@ -666,6 +698,17 @@ Shared AI marker normalization for PDF text import and image import.
 - `normalizeParsedImportMarkers(parsed, options)` — sanitizes AI marker keys, runs product/test-type adapters, applies specialty guard rules, reconciles marker mappings, and returns `{ testType, markers }`
 
 **Window exports:** none directly; `pdf-import.js` calls this after AI JSON parsing.
+
+---
+
+### PDF import marker and unit helpers
+
+- `pdf-import-marker-mapping.js` — canonical schema/custom/specialty matching, alias resolution, allowed calculated destinations, and the `buildMarkerReference()` prompt catalog.
+- `pdf-import-ratio-units.js` — importable calculated-marker allowlist and SI-versus-conventional convention metadata for unitless report ratios.
+- `pdf-import-unit-conversions.js` — valid-unit lists plus round-trip display/SI conversion for recognized and custom markers.
+- `pdf-import-review-formatting.js` — responsive unit controls, viewport-safe picker positioning, and range formatting used by the review modal.
+
+These helpers keep the modal presentation separate from normalization and commit semantics. A unit change must convert the value and range together; it must not relabel unchanged numeric data.
 
 ---
 
@@ -689,11 +732,26 @@ Import review modal rendering and interaction state.
 **Key exports:**
 - `showImportPreview(parsed)` — modal with matched, new custom, unmatched, and excluded marker rows
 - `applyManualImportDate(date)` — updates pending review date and confirm button state
+- `applyManualImportCollectionContext(patch)` — updates review-time `sampleTime` or tri-state `fasting`
 - `mapUnmatchedMarkerInput(input)` / `toggleImportRow(button)` — review-row mapping and exclusion controls
 - `getPendingImport()` / `getExcludedImportIndices()` — narrow state access used by `confirmImport()`
 - `showImportPreviewAsync(result, current, total)` — batch import preview promise bridge
 
 **Window exports:** via `pdf-import.js`
+
+---
+
+### `pdf-import-commit.js`
+
+Snapshot-aware import commit, re-review, deletion, range adoption, and collection-context ownership.
+
+**Key contracts:**
+- direct lab-reported ratios and indices normalize to their canonical **Calculated Ratios** destination; computed fallbacks fill only missing dates;
+- active adopted ranges are recomputed by collection date and then import time, while manual overrides preserve a stashed lab fallback;
+- `collectionContextSources` tracks `sampleTime` and `fasting` independently so same-date snapshot removal restores the newest remaining owner;
+- mutation paths maintain marker/snapshot tombstones and roll back on durable-save failure.
+
+**Window exports:** via `pdf-import.js` and import-history controls.
 
 ---
 
@@ -1688,9 +1746,19 @@ IndexedDB auto-backup, folder backup via File System Access API, manual database
 Central AI context serializer. Extracted from `chat.js`.
 
 **Key exports:**
-- `buildLabContext()` — serializes all lab entries + all 9 context cards + interpretiveLens + contextNotes + cycle data + notes into a structured AI context string
+- `buildLabContext()` — serializes enabled lab groups, effective dated ranges, explicit collection context, profile/context cards, cycle data, notes, and other enabled sources into tagged AI context
 
 **Window exports:** none; callers import it directly or use a configured module facade.
+
+---
+
+### `lab-context-collection.js`
+
+Builds `[section:labCollectionContext]` from explicit per-draw metadata. It emits collection time, tri-state fasting when known, cycle day, and recorded phase; missing fields are omitted with an instruction not to infer them.
+
+**Key export:** `buildLabCollectionContextSection(entries)`.
+
+**Window exports:** none.
 
 ---
 
@@ -1860,13 +1928,13 @@ Not separately documented because their exports are best read from source — ke
 - `light-env-audits.js` — saved Light Environment snapshots, audit comparison renderer, and audit-specific window handlers. Dependency-injected from `light-env.js` so rooms/screens remain owned by the environment module.
 - `light-env-evening.js` — canonical room after-sunset exposure helpers; normalizes legacy boolean room rows to numeric `eveningHoursAfterSunset` while leaving screen `eveningUseAfterSunset` numeric.
 - `light-tool-camera.js` / `light-tool-camera-modals.js` — shared camera lock, row-banding, aiming guides, lux calibration, and the camera-backed Light tool modal flows. Dependency-injected from `light-tools.js` so measurement persistence stays in the owning module.
-- `supplement-warnings.js` / `food-contaminants.js` — keyword scanners that build "harm flag" lists for the AI context.
+- `supplement-warnings.js` — claim-level, primary-study mitochondrial evidence matching and bounded context; `food-contaminants.js` separately owns deterministic diet-source warnings.
 - `emf.js` — Baubiologie SBM-2015 EMF assessment as a sub-module of the Environment context card.
 - `sync.js` — Public sync entry/barrel; exports sync lifecycle, actions, diagnostics, relay, identity, and cutover APIs while delegating dependency wiring to `sync-configure.js`.
 - `sync-configure.js` — Sync subsystem dependency wiring; configures relay health, push/pull/subscription/tombstone/diagnostic/UI/action/recovery/reconcile modules and browser window bindings.
 - `sync-push.js` — outbound profile push path, missing-profile-data rejection, unchanged-payload suppression, generation-safe dirty clearing, exact source-commit tracking, relay-storage refresh scheduling, in-flight watchdog, and Evolu profileData insert/update.
 - `sync-push-deltas.js` — push-side per-row delta planning/application; walks DELTA_ARRAYS/MAPS/SCALARS before blob writes, advances snapshots after onComplete, and records delta telemetry.
-- `sync-pull.js` — inbound pull orchestration and row loop; flushes dirty local work, tracks source-tab commits, and delegates one-time cleanup, active-profile UI refresh, and rebroadcast scheduling to helper modules.
+- `sync-pull.js` — inbound pull orchestration and row loop; force-publishes pending backup restores, flushes dirty local work, tracks source-tab commits, and delegates one-time cleanup, active-profile UI refresh, and rebroadcast scheduling to helper modules.
 - `sync-pull-merge.js` — pull row recovery/dedupe, importedData blob/per-row merge, wearable-token preservation, metadata-only genetics blob protection, and profile metadata merge helpers.
 - `sync-pull-maintenance.js` — pull-path one-time migrations such as stale `-sync-hash` localStorage cleanup.
 - `sync-pull-active-refresh.js` — active-profile in-memory update, migration, chat reload, sidebar rebuild, current-view refresh, origin-aware toast, and sync-applied event after a pull.
@@ -1901,6 +1969,10 @@ Not separately documented because their exports are best read from source — ke
 - `sync-messenger.js` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
 - `sync-environment.js` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
 - `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress Evolu's internal reload, persist enabled owner state, then perform one controlled reload.
+- `sync-settings-state.js` — persisted configured/active/paused state. `labcharts-sync-enabled` means an identity is configured; `labcharts-sync-paused` suppresses traffic without forgetting it.
+- `sync-lifecycle.js` — runtime start, identity-preserving pause/resume, explicit disconnect/reset, and backup-restore push preflight.
+- `sync-backup-restore-state.js` — durable restored-profile handoff; clears stale delta/cutover state, marks profiles dirty, and retains the retry list until a recovery push succeeds.
+- `sync-subscriptions.js` — Evolu profile/settings subscriptions and debounce timers; paused state clears and blocks inbound delivery until resume rebinds them.
 - `sync-dirty-state.js` — durable per-profile edit generations, captured-generation clearing, and dirty-state inspection for pull and compaction safety.
 - `sync-origin-state.js` — tab-local committed `syncedAt` tracking used to distinguish source-browser echoes from updates received elsewhere.
 - `sync-profile-fields.js` — deterministic shared profile metadata field list used by outbound payload collection and inbound profile merge.

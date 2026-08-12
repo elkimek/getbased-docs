@@ -1,0 +1,144 @@
+---
+title: "Track supplements and medications"
+description: "Record current and past therapies, schedules, ingredients, product quality evidence, and dose changes without losing history."
+---
+
+getbased keeps supplements and medications in one therapy history. A record can be current, scheduled, paused, ended, restarted, or used in cycles. Current items stay on the dashboard; earlier periods remain available for charts, reports, and questions about past lab results.
+
+<Warning>
+This feature organizes your own records and research context. It is not a comprehensive interaction checker, medication-safety database, prescribing tool, or substitute for a pharmacist or clinician. Do not start, stop, or change prescription medication based only on an AI response or a mitochondrial evidence card.
+</Warning>
+
+## Open the manager
+
+Find **Current supplements & medications** on the dashboard and choose **Manage**. If you previously hid the widget, choose **Add widget** and restore **Supplements & Meds**.
+
+The manager groups saved records into:
+
+| Group | Meaning |
+|---|---|
+| **Current** | An open use period includes today |
+| **Upcoming** | The first valid period starts in the future |
+| **Paused / between cycles** | Earlier use is preserved, but no period is open today |
+| **History** | A completed course or intentionally ended item |
+| **Planned** | The record does not yet have a valid dated period |
+
+Only current records appear in the compact dashboard timeline. The history count tells you when additional saved records are available in **Manage**.
+
+## Add an item manually
+
+Choose **+ Add New**, then fill only the details you know.
+
+1. Under **Identity**, enter a name and choose **Supplement** or **Medication**. Brand, generic or active name, dosage form, and route are optional.
+2. Under **Product label**, keep the printed serving size and label directions separate from how you personally use the product.
+3. Under **Your regimen**, record personal directions, schedule, uses per day, and one or more use periods.
+4. Add formulated substances under **Active ingredients**. Enter the amount per serving and choose a unit. A row-specific `×/day` value overrides the record-level **Uses/day** value for that ingredient.
+5. Put fillers, coatings, capsule shells, flavors, sweeteners, and similar materials under **Other label ingredients** instead of treating them as active doses.
+6. Add an indication, clinician, notes, or an end/pause reason if they will help you interpret the history later.
+7. Choose **Add**. Nothing is saved before this confirmation.
+
+Common units have structured choices, including `mg`, `mcg`, `g`, `mL`, `IU`, `CFU`, `%`, `mmol`, `mEq`, units, capsules, tablets, drops, scoops, sprays, and patches. Choose **Other…** for a unit not in the list. Imports can normalize common unit spellings and several non-Latin unit labels while preserving the original product wording.
+
+## Describe the schedule
+
+Choose the closest schedule and add plain-language details when needed.
+
+| Schedule | Use it for |
+|---|---|
+| **Daily** | One regular use each day |
+| **Multiple times daily** | Two or more regular uses per day |
+| **Selected weekdays** | A weekday pattern such as Mon/Wed/Fri |
+| **Every N days** | A fixed interval such as every 3 days |
+| **As needed (PRN)** | Use that is not expected on every day; optionally record a maximum per day |
+| **Finite course** | A treatment with a defined end |
+| **Cycle on/off** | Repeating treatment windows and breaks |
+| **Phased / taper** | A regimen whose dose changes across periods |
+| **Other** | A schedule better explained in your own words |
+
+PRN records are never assumed to be an exposure on a particular day because the schedule describes permission to use a therapy, not proof that it was used.
+
+## Preserve pauses, endings, and dose changes
+
+Each use period has a start date, optional end date, and optional period-specific dose or strength. A blank end date means the period is open.
+
+- **Pause** closes the open period today and moves the record out of Current while keeping it ready to restart.
+- **End** closes the open period today and moves the record to History.
+- **Restart** opens a period beginning today. If you paused or ended earlier today, it reopens that period instead of creating an overlapping duplicate.
+- **Change dose** prepares the current period to close yesterday and adds a new period today. Enter the new dose, then choose **Update** to save both changes. If the current period already began today, it focuses that period’s dose field instead.
+- **Delete** permanently removes the record and its complete usage history. Ending is usually preferable when the past exposure matters.
+
+Use periods cannot overlap or share the same date. This keeps chart overlays and before/after lab comparisons unambiguous.
+
+## Import from a product link or label photos
+
+Imports create a draft for review; they never silently save or replace a record.
+
+### Review a product link
+
+Paste an `http` or `https` product page into **Import product facts**, then choose **Review link**. getbased first reads structured page facts and relevant label, ingredient, and quality tables. When an AI provider is configured, it can classify ambiguous content into active ingredients, other ingredients, and laboratory results. If a site blocks automated reading, use label photos for the missing facts.
+
+### Review label photos
+
+With a vision-capable AI model selected, choose **Review photos** and add up to four JPG, PNG, or WebP images. For best results, include:
+
+- the front label;
+- Supplement Facts or Drug Facts;
+- directions; and
+- a certificate of analysis or quality table, if relevant.
+
+getbased resizes the images for extraction and does not save them in the therapy record. The image pixels are sent to your configured vision provider. The extraction prompt tells the provider to ignore patient names, prescription numbers, pharmacy details, addresses, and similar identifiers, but you should still crop sensitive details when practical.
+
+You can review a link and photos for the same item. Missing fields and distinct rows are combined. When two sources disagree, the earlier value is kept and the conflict is called out for manual correction.
+
+### Select and edit the draft
+
+The review separates active ingredients, other label ingredients, laboratory/quality results, label directions, and warnings.
+
+1. Uncheck facts you do not want to import. **Select only contaminants + microbiology** is a quick quality-result filter.
+2. Choose **Continue to editable form**.
+3. Correct every imported field, enter your personal regimen and dates, and verify that a report applies to your bottle.
+4. Choose **Add** or **Update** to save.
+
+Imported product directions never become your personal dose automatically. Source and review provenance are retained with the saved record.
+
+## Record laboratory and quality evidence
+
+Quality rows stay separate from active ingredients. Supported categories are contaminants/heavy metals, potency/label claim, microbiology, identity/purity, and other laboratory results.
+
+For each report, set **Report relationship to your bottle** to one of:
+
+- **I confirmed the same lot**;
+- **Different lot**;
+- **General specification, not a bottle result**; or
+- **Not verified / unknown**.
+
+getbased preserves source wording such as `ND`, `NQ`, `< 0.5`, units, and measurement basis. It does not treat `ND` or `NQ` as zero. It also does not convert concentrations such as `mg/kg` into a personal intake.
+
+The **Current contaminant overview** combines a reported daily mass only when all of the following are true:
+
+- you confirmed that the report matches your bottle lot;
+- the result is a compatible mass per serving or per unit;
+- the serving size and personal uses per day are known; and
+- the schedule is not PRN.
+
+The overview applies no safety threshold or regulatory conclusion. A result can be mathematically summable without being clinically interpretable.
+
+Each quality row has an **AI** checkbox. Turning it off keeps the source result in your record but excludes it from AI health context. Passing potency checks that repeat an active ingredient are treated as informational and default off for AI so the label dose is not duplicated. Explicit failures remain eligible for context.
+
+## How therapy records affect the rest of getbased
+
+- **Charts** can show every saved period that overlaps the visible lab range, including completed courses.
+- **Impact Analysis** compares lab results before and after a therapy period when at least two lab dates are available. Its short AI summary is a correlation aid, not proof that the item caused the change.
+- **AI context** normally includes current items or records overlapping the selected lab range. A supplement- or medication-specific question can unlock a larger, bounded view of saved history. Detailed quality methods stay out of ordinary prompts, and paused/ended inventory is summarized when it is not directly relevant.
+- **Biology Scores and Current Focus** use bounded therapy context so a large product or COA record cannot crowd out your primary health data.
+- **Reports, exports, backups, and encrypted sync** preserve the structured record and its periods.
+
+Control whether stored therapy records can influence in-app AI under **Insight → Manage → Context → Data sources → Supplements & medications**. Turning the source off does not delete anything.
+
+## Read mitochondrial evidence cards carefully
+
+The dashboard can match current active ingredients to a deliberately limited catalog of verified primary studies. Evidence is grouped by compound, but each study retains its own model, exposure, direction, scope, limitation, and PubMed ID.
+
+Labels such as **Potential benefit**, **Human caution signal**, **Adverse lab signal**, and **Mechanism, not harm** describe the cited study—not a personalized conclusion. Cell, animal, tissue, and isolated-mitochondria findings do not prove benefit or harm at your dose. No match means only that the deliberately incomplete catalog has no qualifying match.
+
+Choose **ask AI for context** to open a carefully constrained question, or follow the PMID to read the primary study. **Report evidence issue** creates a public GitHub issue containing only the public catalog claim and citation; it excludes your product name, dose, schedule, notes, and other health data.

@@ -42,6 +42,9 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-time-format` | string | `'24h'` \| `'12h'` — time display preference |
 | `labcharts-debug` | string | Debug mode flag — enables console output and diff viewer |
 | `labcharts-pii-choice` | sessionStorage | One-time PII warning flag (sessionStorage, not localStorage) |
+| `labcharts-sync-enabled` | string | `'true'` means this browser has a configured Sync identity; it does not by itself mean relay traffic is active |
+| `labcharts-sync-paused` | string | `'true'` pauses a configured identity on this browser without deleting its Evolu owner or local Sync history |
+| `labcharts-sync-backup-restore-pending` | JSON array | Durable profile-ID handoff that makes restored profiles publish before the first inbound merge |
 | `getbased-profile-shares-v1` | JSON array | Active profile share links created on this browser: share id, profile id/name, share URL, management token, createdAt, expiresAt. Does not include the share password or plaintext profile data |
 
 ### Per-profile keys
@@ -50,10 +53,10 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 |---|---|---|
 | `labcharts-{profileId}-imported` | JSON (may be encrypted) | Main data store — see importedData structure below |
 | `labcharts-{profileId}-units` | string | `'EU'` \| `'US'` unit preference |
-| `labcharts-{profileId}-rangeMode` | string | `'optimal'` \| `'reference'` chart range mode |
+| `labcharts-{profileId}-rangeMode` | string | `'optimal'` \| `'reference'` \| `'both'` chart range mode |
 | `labcharts-{profileId}-noteOverlay` | string | `'off'` \| `'on'` — note dots on charts |
 | `labcharts-{profileId}-suppOverlay` | string | `'off'` \| `'on'` — supplement bars on charts |
-| `labcharts-{profileId}-phaseOverlay` | string | `'off'` \| `'on'` — cycle phase bands on charts |
+| `labcharts-{profileId}-phaseOverlay` | string | `'off'` \| `'on'` — cycle phase pills at observed chart points |
 | `labcharts-{profileId}-chatPersonality` | string | Active personality ID: `'default'`, `'house'`, or a stable `custom_...` ID |
 | `labcharts-{profileId}-chatPersonalityCustom` | JSON array (may be encrypted) | Custom personas with stable ID, name/icon, editable prompt, timestamps, and optional hosted-use agreement |
 | `labcharts-{profileId}-chatPersonalityDeleted` | JSON map (may be encrypted) | Persona deletion tombstones: `{ [customPersonaId]: deletedAtMs }` |
@@ -67,6 +70,10 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-{profileId}-tour` | string | `'completed'` — app tour completion flag |
 | `labcharts-{profileId}-cycleTour` | string | `'completed'` — cycle tour completion flag |
 | `labcharts-{profileId}-onboarded` | string | `'profile-set'` \| `'dismissed'` — onboarding state |
+| `labcharts-{profileId}-sync-dirty` | generation token | Durable local-edit marker. Pulls flush this generation before applying remote state |
+| `labcharts-{profileId}-delta-{surface}` | JSON map | Last successfully pushed item hashes for one delta surface; related `-meta` keys prevent stale completion races |
+| `labcharts-{profileId}-sync-cutover-v2` | string | Delta-cutover gate. Backup restore clears it so the first recovery push also includes a complete compatibility payload |
+| `labcharts-{profileId}-sync-ts` | string | Last profile Sync timestamp. Backup restore clears it before recovery |
 | `labcharts-{profileId}-sex` | string | `'male'` \| `'female'` — profile sex |
 | `labcharts-{profileId}-dob` | string | `'YYYY-MM-DD'` — date of birth |
 | `labcharts-{profileId}-country` | string | ISO country code |
@@ -80,14 +87,30 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
 
 ```js
 {
-  // Lab results — array of dated snapshots
+  // Live lab results — one active value per marker/date. Per-file history is
+  // stored separately in importSnapshots[].
   entries: [
     {
       date: "2025-03-15",            // ISO date string
+      context: {
+        sampleTime: "07:35",          // specimen collection/draw time
+        fasting: true,                // true | false; absent means unknown
+        cycleDay: 21,
+        cyclePhase: "luteal",
+        cyclePhaseDetail: "mid_luteal",
+        cyclePhaseSource: "recorded"
+      },
+      collectionContextSources: {
+        sampleTime: "snap_1782290000000_abcd",
+        fasting: "snap_1782290000000_abcd"
+      },
       markers: {
         "biochemistry.glucose": 5.2, // category.markerKey → numeric value
         "hormones.testosterone": 18.4,
         // ... all measured markers for this date
+      },
+      markerSources: {
+        "biochemistry.glucose": "snap_1782290000000_abcd"
       }
     }
     // ... more entries
@@ -103,9 +126,21 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
       testType: "blood",
       importedAt: 1782290000000,
       importHash: "sha256-or-parser-hash",
+      sampleTime: "07:35",
+      fasting: true,
+      collectionContextApplied: ["sampleTime", "fasting"],
+      adoptReferenceRanges: true,
       costInfo: { provider: "openrouter", modelId: "..." },
       markers: [
-        { rawName: "Glucose", mappedKey: "biochemistry.glucose", value: 5.2, unit: "mmol/L" }
+        {
+          rawName: "Glucose",
+          mappedKey: "biochemistry.glucose",
+          value: 5.2,
+          unit: "mmol/L",
+          refMin: 3.9,
+          refMax: 5.6,
+          matched: true
+        }
       ],
       excludedIndices: []
     }
@@ -136,32 +171,75 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
   ],
   deletedImportBenchmarkIds: [],
 
-  // entries[].markerSources links current live marker values back to snapshots.
-  // Snapshot delete/re-review must mutate through data-merge/lab-entry helpers
-  // so marker tombstones and importSnapshots tombstones sync correctly.
+  // entries[].markerSources and collectionContextSources link current live
+  // fields back to snapshots. Snapshot delete/re-review must mutate through
+  // data-merge/lab-entry helpers so owners, fallbacks, and tombstones remain
+  // consistent across same-date reports and Sync.
 
   // Standalone notes (independent of lab dates)
   notes: [
     { date: "2025-03-10", text: "Started vitamin D protocol" }
   ],
 
-  // Supplement timeline
+  // Supplements and medications: compatibility-first v2 therapy records
   supplements: [
     {
-      name: "Magnesium",
-      dosage: "morning + evening",   // free-text note (display only)
-      type: "supplement",             // or "medication"
+      id: "sm_1786000000000_abcd",   // stable delta/sync identity
+      schemaVersion: 2,
+      name: "Magnesium complex",
+      type: "supplement",            // or "medication"
+      brand: "Example brand",
+      genericName: "Magnesium",
+      dosageForm: "capsule",
+      route: "oral",
+
+      // Printed product facts, separate from the user's regimen
+      servingSize: { value: 2, unit: "capsule" },
+      labelDirections: "Take two capsules daily",
+      ingredients: [
+        {
+          name: "Magnesium bisglycinate",
+          amount: "200 mg",
+          amountValue: 200,
+          amountUnit: "mg",
+          basis: "per serving",
+          timesPerDay: 2              // optional row override
+        }
+      ],
+      inactiveIngredients: ["Hypromellose capsule", "Rice flour"],
+
+      // Personal regimen and lifecycle
+      dosage: "With food before bed",
+      timesPerDay: 1,
+      schedule: { mode: "daily", timesPerDay: 1 },
+      periods: [
+        { start: "2025-01-01", end: "2025-03-31", dose: "1 capsule" },
+        { start: "2025-05-01", end: null, dose: "2 capsules" }
+      ],
       startDate: "2025-01-01",
-      endDate: null,                  // null = ongoing
-      periods: [                      // optional; for cycling. If absent, uses startDate/endDate
-        { start: "2025-01-01", end: null }
+      endDate: null,                  // legacy compatibility mirrors
+      currentDose: "2 capsules",
+      lifecycle: { state: "active", changedAt: 1786000000000 },
+
+      // Source-reported laboratory evidence, never folded into ingredients
+      qualityEvidenceScope: "matching-lot",
+      qualityTests: [
+        {
+          category: "contaminant",
+          analyte: "Lead",
+          canonicalAnalyte: "lead",
+          resultText: "< 0.5 mcg",
+          comparator: "<",
+          value: 0.5,
+          unit: "mcg",
+          basis: "per serving",
+          status: "reported",
+          includeInAIContext: true,
+          sourceKinds: ["product URL"]
+        }
       ],
-      timesPerDay: 2,                 // optional outer default multiplier — applied to each ingredient unless overridden
-      ingredients: [                  // optional; per-serving amounts
-        { name: "Bisglycinate", amount: "890mg", timesPerDay: 1 },  // row override: takes precedence over outer
-        { name: "Taurate", amount: "890mg", timesPerDay: 2 }        // "" (inherits outer timesPerDay when blank)
-      ],
-      note: ""
+      reason: "Low magnesium intake",
+      updatedAt: 1786000000000
     }
   ],
 
@@ -294,13 +372,15 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
   // Per-marker reference range overrides
   refOverrides: {
     "biochemistry.glucose": {
-      refMin: 3.9,
-      refMax: 5.6,
+      refMin: 4.0,
+      refMax: 5.5,
       optimalMin: 4.0,
       optimalMax: 5.0,
       labRefMin: 3.9,   // stashed lab-stated range from PDF import (for two-step revert)
-      labRefMax: 5.6,    // preserved when user manually edits — revert goes lab → schema default
-      refSource: "import" // "import" | "manual" — tracks who set the current refMin/refMax
+      labRefMax: 5.6,   // preserved when user manually edits — revert goes lab → schema default
+      labRefDate: "2025-03-15",
+      labRefSnapshotId: "snap_1782290000000_abcd",
+      refSource: "manual" // "import" | "manual" — tracks who set the current refMin/refMax
     }
     // ... user-customized ranges from detail modal editing or import-time range adoption
   },
@@ -320,6 +400,12 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
   markerPlacements: {
     "gb:marker:glucose": { categoryKey: "energyMetabolism" },
     "custom:opaque_id": { categoryKey: "biochemistry" }
+  },
+
+  // Display-name overrides. Most keys are marker dotKeys; import-scoped
+  // metadata can use "category.markerKey:YYYY-MM-DD".
+  markerLabels: {
+    "biochemistry.glucose": "Fasting glucose"
   },
 
   // Custom markers from PDF import — keyed by "category.markerKey"
@@ -389,6 +475,12 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
 Custom marker `markerId` is also additive. New definitions receive an opaque ID independent of category and name; legacy profiles receive deterministic IDs during normal profile migration. Profiles without either field remain valid and require no value migration or re-import.
 
 Curated single-profile exports, full database bundles, folder backups, automatic snapshots, encrypted shares, and cross-device sync preserve these fields. See [Marker model and category placement](/developers/marker-model) for placement validation and the mutation boundary.
+
+### Lab import and range compatibility
+
+`importSnapshots[]` is the historical per-file source of truth; `entries[]` is the current live projection. Active adopted lab ranges are chosen by collection date and then import time. Collection-context ownership is tracked per field so deleting or re-reviewing one same-date report can restore another report's value instead of clearing unrelated context.
+
+Marker moves must migrate both plain dotKeys and date-scoped keys in `manualValues`, `markerValueNotes`, `markerLabels`, and `refOverrides`. See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for precedence, revert, and migration contracts.
 
 ### `genetics` — curated Genome data (null if not imported)
 

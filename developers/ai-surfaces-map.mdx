@@ -111,7 +111,7 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | **Custom-marker description** | Marker detail modal, when AI is configured | One-sentence (≤30 words) explanation of what the marker measures + why it matters clinically. Cached per-marker so it only fires the first time. |
 | **EMF assessment interpretation** | EMF assessment editor → Interpret | Synthesizes a room-by-room read of your EMF measurements with severity, source attribution, and mitigation recommendations. Manual trigger. |
 | **EMF comparison interpretation** | EMF editor → Compare two snapshots | Side-by-side delta read between two saved assessments — what got better, what got worse. Manual trigger. |
-| **Recommendations / supplement context** | Supplement detail | "Mito context" button on a supplement opens an AI synthesis of how the ingredient interacts with the user's mitochondrial / energy biomarkers. Manual trigger. |
+| **Supplement mitochondrial context** | Current supplements and medications | **ask AI for context** opens a constrained question based on matched claim-level primary studies and the user's mitochondrial/energy biomarkers. Manual trigger. |
 
 ### Vision-AI surfaces (image-in)
 
@@ -121,7 +121,7 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | **Built-in model test** | Settings → Data → Test models on lab reports | Runs the production PDF parser against a synthetic 68-result reference report, preserving raw model output so deterministic scoring can compare it with the verified answer key. |
 | **Photo lab import** | Same drop-zone, accepts JPG / PNG / HEIC | Vision-extract path — same downstream as PDF, but starts from a phone snap of a printed lab report. |
 | **Custom-marker suggestion (from PDF)** | Inside the PDF import flow | When a parsed value can't be matched to a known marker, AI suggests a key + name + unit + reference range based on the surrounding PDF context. |
-| **Supplement label scan** | Supplements → "📷 Scan label" | Vision-extract product name + active ingredients (with dosage per serving) from a photo of a supplement bottle. Skips fillers + excipients. |
+| **Supplement/medication product review** | **Supplements & Meds → Review photos** | Reviews up to four product, Facts, directions, or COA images. Separates active ingredients, excipients/capsule materials, laboratory results, and warnings into a draft that the user must review and then save. |
 | **Spectrum Classifier** | Light Tools → "What is this light?" | Camera-based light-source classifier (LED cool / LED warm / fluorescent / incandescent / daylight). Uses RGB ratios + flicker variance — the deterministic part is the classifier itself; the AI only kicks in for the verdict on the saved measurement (covered in Light & Sun above). |
 
 ## What is NOT AI (so you can trust the numbers)
@@ -141,6 +141,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **Trend sparklines on context cards** | Direct plot of stored values. |
 | **Severity dots on light-environment rooms** | Heuristic tier from measured flicker / lux / CCT thresholds (`getRoomSeverity` in `light-env.js`). The AI verdict that *follows* the severity dot is AI, the dot itself is not. |
 | **Custom marker creation, sidebar edits, chip-picker changes, manual-value entry** | Local data writes. No AI call fires; the AI sees them on the next chat turn. |
+| **Supplement/medication lifecycle, daily quantity math, contaminant grouping, and mitochondrial evidence matching** | Period/status rules, compatible-unit arithmetic, and claim-catalog lookup are deterministic. AI is used only for reviewed product extraction, requested context, or impact summaries. |
 | **Genome import, association/evidence/relevance labels, APOE, and mtDNA resolution** | Raw/report/manual parsing and catalog lookup are deterministic and local. **Ask AI** on a finding is an explicit editable prompt that supplies the scoped catalog baseline; it is not part of import or classification. |
 
 ## What runs on-device vs cloud
@@ -170,3 +171,4 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 - [Light Tools](https://docs.getbased.health/guides/light-tools) — the measurement tool ecosystem
 - [AI Providers](https://docs.getbased.health/ai-providers) — how to configure a provider
 - [AI Chat](https://docs.getbased.health/guides/ai-chat) — the chat panel that complements the per-row verdicts
+- [Supplements and medications](/guides/supplements-medications) — therapy lifecycle, reviewed product import, quality evidence, and AI boundaries

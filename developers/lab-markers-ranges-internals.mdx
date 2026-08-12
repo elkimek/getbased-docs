@@ -1,0 +1,169 @@
+---
+title: "Lab markers and range internals"
+description: "Marker identity, effective-range precedence, import-owned collection context, calculated markers, migrations, and focused test ownership."
+---
+
+# Lab markers and range internals
+
+This page owns the contracts that connect the marker schema, imported laboratory metadata, contextual ranges, calculated markers, and chart status. Read it with [Data pipeline](/developers/data-pipeline) and [Storage schema](/developers/storage-schema).
+
+## Schema ownership
+
+The core schema currently contains 196 markers across 19 categories, including 22 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
+
+The schema is split under `js/marker-schema/`. `schema.js` is the public composition layer; category files own marker metadata, and `schema-environment.js` owns reference, optimal, guidance, and source metadata. Keep category placement clinically legible: insulin, for example, is `diabetes.insulin` under **Glucose & Insulin Metabolism**, not Hormones or Biochemistry.
+
+Every built-in marker has two identifiers:
+
+- `markerId`: immutable namespaced catalog identity, such as `gb:marker:insulin`;
+- `dotKey`: current storage and location key, such as `diabetes.insulin`.
+
+Renames and category moves must preserve the stable identity and add an alias migration. Never treat the current category path as permanent identity.
+
+## Effective-range data layers
+
+Marker objects begin with schema fields and gain runtime fields as `getActiveData()` builds the active dataset.
+
+| Layer | Examples | Ownership |
+|---|---|---|
+| Static reference | `refMin`, `refMax`, sex-specific bounds | Marker schema |
+| Static optimal | `optimalMin`, `optimalMax` | `OPTIMAL_RANGES` / schema environment |
+| Personal override | imported lab or manual reference/optimal bounds | `importedData.refOverrides` |
+| Collection context | `sampleTime`, `fasting` for a dated entry | `entries[].context` |
+| Cycle context | recorded or eligible predicted phase, cycle day | cycle draw-phase helpers |
+| Per-date range | `phaseRefRanges`, `contextRefRanges`, `contextOptimalRanges` | active data pipeline |
+| Policy metadata | reference, guidance, target, contextual; source labels | schema environment and range UI |
+
+For ordinary markers, an adopted laboratory interval suppresses generic contextual fallback guidance. A manual range wins over the adopted interval. For estradiol, progesterone, LH, and FSH, a trustworthy per-draw phase range is deliberately date-specific and is the effective reference for that point instead of a flat interval.
+
+`getEffectiveRangeForDate()` resolves the plotted/status range in this order:
+
+1. phase-specific reference for that date;
+2. context-specific optimal range when optimal display is active;
+3. static optimal range when optimal display is active;
+4. context-specific reference range;
+5. static effective reference, including personal overrides.
+
+Do not attach a context range when its required inputs are missing. The UI should render an explicit state such as **Requires fasting** or leave the point unrated rather than synthesizing a cutoff.
+
+## Range policies and labels
+
+Range metadata distinguishes four semantics:
+
+- `reference`: a conventional reference interval;
+- `guidance`: population-, risk-, or assay-dependent orientation;
+- `target`: a directional target, such as zero;
+- `contextual`: no honest universal static interval.
+
+User-facing labels must state the applicable basis, for example **Lab reference**, **Morning assay range**, **Population range**, **Target**, or **Requires fasting**. Do not reintroduce an unexplained **Guide** pill.
+
+Optimal-range additions require a defensible source and applicability. Coverage alone is not a quality goal; unsupported sex-, age-, assay-, or timing-independent values should remain absent.
+
+The **Suggest a better range** action is gated to an untouched built-in range. `marker-range-suggestions.js` excludes custom markers and any marker with personal reference or optimal overrides. Its public GitHub issue payload contains catalog metadata only and must never include result values, profile attributes, laboratory names, dates, or filenames.
+
+## Laboratory range lifecycle
+
+The import review adopts report ranges by default when valid bounds were extracted. Each `importSnapshots[]` record retains its own interval data and adoption choice.
+
+For a marker with ranges from multiple snapshots, selection uses:
+
+1. latest collection date;
+2. latest import time as the same-date tiebreaker.
+
+Upload order therefore cannot make an older report's range current. Snapshot deletion, exclusion, or re-review recomputes the owner and effective interval.
+
+`refOverrides[dotKey]` separates the current source from the stashed laboratory fallback. A manual edit preserves `labRefMin`, `labRefMax`, `labRefDate`, and `labRefSnapshotId`. Revert follows manual → adopted lab → schema default. Keep optimal overrides independent from reference overrides.
+
+Normal chart surfaces show only the current effective interval. Historical per-file intervals remain available through import review rather than becoming date-varying chart bands.
+
+## Collection context
+
+PDF text and image import ask the model for report-level `sampleTime` and `fasting`. The review modal exposes both values before commit. Manual entry exposes the same fields.
+
+The contract is intentionally strict:
+
+- `sampleTime` means specimen collection or blood-draw time, not processing, receipt, result, or report time;
+- `fasting` is `true`, `false`, or absent/unknown;
+- neither value is inferred from time of day, ordered tests, or result values;
+- known values are stored at `entries[].context` and projected as `[section:labCollectionContext]` in AI context;
+- `collectionContextSources` records snapshot ownership so re-review or deletion can restore the newest remaining same-date source or clear the field.
+
+The detail UI formats the metadata per value, for example **Collected 07:35 · fasting**. Context-aware ranges consume the normalized values, not display strings.
+
+## Menstrual draw context
+
+`cycle-draw-phases.js` resolves draw context separately for every laboratory date. An explicit recorded phase wins. Calendar prediction is allowed only for a female profile with an active natural cycle, regularity marked regular, period history, and no hormonal contraception. Non-cycling states and uncertain predictions produce no phase range.
+
+Built-in phase ranges currently apply to estradiol, progesterone, LH, and FSH and carry assay/source metadata. The chart layer renders compact pills only at measured points:
+
+- `M`, `F`, `O`, or `L` for the phase;
+- optional `· D<n>` when cycle day is known;
+- tooltip text that identifies recorded versus predicted context and the dated range.
+
+Broad background bands were removed because they implied continuous certainty between observations.
+
+## Calculated marker contract
+
+`data-calculated-markers.js` owns deterministic calculations. For each date, a directly reported supported calculation wins; the pipeline computes a value only when the canonical destination is empty. Normalization and alias migrations move imported historical variants into **Calculated Ratios**, preventing duplicate cards and preserving a laboratory's rounding or method.
+
+HOMA-IR is the intentional exception to category placement: `lab-entry.js` recalculates `diabetes.homaIR` from same-date glucose and canonical insulin and keeps it under **Glucose & Insulin Metabolism**.
+
+| Key | Formula or rule |
+|---|---|
+| `tgHdlRatio`, `ldlHdlRatio`, `cholHdlRatio`, `apoBapoAIRatio` | Named numerator divided by denominator |
+| `nlr`, `plr`, `mlr` | Neutrophils, platelets, or monocytes divided by lymphocytes |
+| `deRitisRatio`, `copperZincRatio`, `ft3ft4Ratio` | Named numerator divided by denominator |
+| `bunCreatRatio` | `(urea × 2.801) / (creatinine × 0.01131)` from SI-stored inputs |
+| `freeWaterDeficit` | `TBW × (sodium / 140 − 1)`; sex factor 0.5 for female and 0.6 otherwise; latest weight or 70 kg fallback |
+| `crpHdlRatio` | hs-CRP in mg/L divided by HDL-C in mg/dL; standard CRP is not accepted |
+| `atherogenicIndexPlasma` | `log10(molar triglycerides / HDL-C)` |
+| `tygIndex` | `ln((triglycerides mg/dL × glucose mg/dL) / 2)` |
+| `albuminGlobulinRatio` | Albumin divided by measured globulin, or by total protein minus albumin |
+| `fib4Index` | `(age × AST) / (platelets × sqrt(ALT))`, with enzyme unit normalization |
+| `systemicImmuneInflammationIndex` | `platelets × neutrophils / lymphocytes` |
+| `anionGap` | `sodium − chloride − bicarbonate`, without potassium |
+
+NLR, PLR, and SII have age-aware guidance from age 45 plus sex-aware defaults. TyG is unrated when a sample is known to be non-fasting. FIB-4 is unrated under age 35 or with acute-illness context; its guidance threshold is 1.3 for ages 35–64 and 2.0 from age 65.
+
+Free water deficit uses zero as a target. Positive values estimate missing free water relative to the sodium target. Negative values are the algebraic water-excess/low-sodium direction, not dehydration and not a standalone overhydration diagnosis.
+
+## Biological age
+
+PhenoAge requires date of birth and its nine biomarkers, including hs-CRP rather than standard CRP. Bortz Age requires date of birth and its 22 inputs. The visible Biological Age marker averages the two when both exist and falls back to either available component; component charts remain hidden.
+
+The explicit Medical History flag `lowMuscleMass === true` suppresses creatinine-dependent calculations. Text-derived or inferred low-muscle context is kept separate and must not override a user's explicit disabled setting.
+
+## Precision boundary
+
+Chart-axis formatting is presentation-only. Y-axis labels use at most one decimal for magnitudes of 10 or more, two decimals from 1 to under 10, and three below 1. Stored values, detail cards, tooltips, exports, formulas, and AI context keep their underlying precision.
+
+Range/status rows must remain usable in narrow marker cards. The label pill, current value, and percentage/status text need shrinkable flex children or wrapping; long guidance labels must never push the trailing value beyond the card. Import-review unit controls likewise use a constrained schema picker or a custom-unit text/picker combination, with a viewport-positioned desktop menu and mobile-safe layout.
+
+## Migration rules
+
+`profile-marker-alias-migrations.js` remaps marker identity across:
+
+- `entries[].markers` and snapshot mappings;
+- `customMarkers`;
+- `refOverrides`;
+- date-scoped `manualValues`, `markerValueNotes`, and `markerLabels`.
+
+When both the alias and canonical key exist, the canonical destination wins. Migrations must be additive, idempotent, and covered by fixtures that include date-scoped metadata—not only current marker values.
+
+## Demo-data contract
+
+The bundled demo fixtures are product walkthroughs, not normative clinical datasets. Lab entries include coherent `sampleTime` and `fasting` metadata. The female fixture also records per-draw cycle day, broad/detail phase, and source so its late-follicular and luteal hormone examples agree with the UI labels and dated ranges. Keep `scripts/upgrade-demos.mjs`, demo fixtures, and `tests/test-demo.js` aligned when the entry schema changes.
+
+## Owner modules and focused verification
+
+| Concern | Primary modules |
+|---|---|
+| Schema and range metadata | `js/marker-schema/`, `js/schema.js`, `js/schema-environment.js` |
+| Active data and calculations | `js/data.js`, `js/data-calculated-markers.js`, `js/marker-context-ranges.js` |
+| Cycle draw context | `js/cycle-draw-phases.js`, `js/data.js`, `js/schema-environment.js` |
+| Import extraction and review | `js/pdf-import.js`, `js/pdf-import-review.js`, `js/pdf-import-commit.js` |
+| Collection metadata ownership | `js/lab-context-collection.js` |
+| Effective range UI | `js/marker-analysis.js`, chart and marker-detail modules |
+| Suggestions and migrations | `js/marker-range-suggestions.js`, `js/profile-marker-alias-migrations.js` |
+
+Use change-scoped tests for the touched owner. At minimum, cover direct-versus-computed precedence, same-date inputs, unit conversion, missing/context-gated inputs, import ownership/re-review/delete, range revert order, alias metadata migration, and recorded-versus-predicted phase behavior. GitHub Actions owns the exhaustive browser and combined-coverage runs.

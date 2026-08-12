@@ -7,7 +7,7 @@ getbased gives you full control over your data. You can export everything as JSO
 
 ## Export your data as JSON
 
-A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, supplements, biometrics, genetics, cycle data, custom markers, marker category placements, and chat history.
+A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, structured supplement and medication records, biometrics, genetics, cycle data, custom markers, marker category placements, and chat history.
 
 ### Single-profile export
 
@@ -25,7 +25,7 @@ A JSON export contains your complete health record for the current profile: all 
 - All lab entries — every date, every marker, every value
 - All 9 lifestyle context cards (diet, sleep, exercise, environment, and more)
 - Notes, health goals, and context card change history
-- Supplements
+- Complete supplement and medication records, including lifecycle periods, schedules, product ingredients, quality evidence, and reviewed-import provenance
 - Biometrics — height, weight history, blood pressure history, pulse history
 - Menstrual cycle data (if entered)
 - Genetics data — SNP results from DNA raw data import (if imported)
@@ -81,6 +81,7 @@ You import a JSON file the same way you import a lab PDF: use the header import 
     - **Notes** are deduplicated — the same note will not appear twice.
     - **Context cards** are overwritten by the imported values.
     - **Health goals** are merged and deduplicated by text content.
+    - **Supplements and medications** are deduplicated by name and first start date.
     - **Sent conversations** with new IDs are added without deleting existing ones, up to 50 conversations in the destination profile. Use **Export All** and import the database bundle when migrating a larger chat archive.
     - **Custom personas** are restored when the destination does not already have custom-persona state.
     - **Marker category placements** are merged with the profile and continue to point to the same markers; no lab values are re-keyed or moved.
@@ -93,12 +94,17 @@ If you import a JSON file from a different profile or device, the lifestyle cont
 
 Older exports that do not contain marker placements remain compatible. Their markers simply appear in their original categories until you organize them in the current profile; no migration or re-import is required.
 
+<Note>
+For a full-fidelity restore of structured supplement and medication product facts, schedules, quality evidence, and import provenance, use an **Export All** database bundle or folder backup. The curated single-profile compatibility importer deduplicates therapies by name and first start date but currently restores only the legacy core fields, ingredients, multi-period history, note, and safe source URL.
+</Note>
+
 ### Import a database bundle
 
 Drop a database bundle exported with **Export All** onto the app, or select it with the header import button. getbased detects it automatically and handles multi-profile merging:
 
 - New profiles are created
 - Existing profiles are merged (lab entries by date, notes deduplicated)
+- Structured supplement and medication records are carried over without flattening product facts, quality evidence, or lifecycle periods
 - Chat threads, custom personas, and their deletion records are carried over
 
 ## Export a PDF health report
@@ -118,7 +124,7 @@ Drop a database bundle exported with **Export All** onto the app, or select it w
   </Step>
 </Steps>
 
-The PDF report includes biomarker results, trends, a readable patient header, selected lab categories, context card summaries, supplement dosing context, notes, and the optional Practitioner Overview — formatted for sharing with a healthcare provider.
+The PDF report includes biomarker results, trends, a readable patient header, selected lab categories, context card summaries, therapy status and periods, active ingredients, separate other-ingredient and source-quality sections, notes, and the optional Practitioner Overview — formatted for sharing with a healthcare provider.
 
 ## Common use cases
 

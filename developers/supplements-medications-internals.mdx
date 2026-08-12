@@ -1,0 +1,259 @@
+---
+title: "Supplements and medications internals"
+description: "Lifecycle modeling, reviewed imports, quality evidence, AI context, migration, and sync contracts for therapy records."
+---
+
+The supplements and medications feature is a compatibility-first therapy-history model. It preserves legacy records while adding stable identity, explicit periods, structured product facts, personal schedules, source quality evidence, and bounded AI projections.
+
+## Module ownership
+
+| Module | Responsibility |
+|---|---|
+| `supplement-medication-domain.js` | Stable IDs, lifecycle/status derivation, periods, schedules, quantities, unit normalization, and additive migration |
+| `supplements.js` | Editor orchestration, persistence, pause/end/restart/dose-change actions, and modal refresh |
+| `supplement-form-ui.js` | Structured form rendering and collection for periods, ingredients, other ingredients, and quality rows |
+| `supplement-import-controller.js` | Link/photo import progress, provider calls, selective review, and applying a reviewed draft to editable fields |
+| `supplement-import-draft.js` | Strict extraction schema, normalization, deterministic page facts, evidence merge, conflict reporting, and tolerant JSON parsing |
+| `supplement-dashboard.js` | Current-only timeline and grouped mitochondrial evidence display |
+| `supplement-quality.js` | Quality-result formatting, AI inclusion defaults, report applicability, and conservative contaminant aggregation |
+| `supplement-context.js` | Compact/detail prompt projections and hard character budgets |
+| `supplement-impact.js` | Period-aware lab comparisons, daily ingredient math, fingerprints, caching, and AI summaries |
+| `supplement-warnings.js` | Claim-level primary-study catalog loading, matching, grouping, display labels, and bounded AI evidence context |
+
+Keep domain, import, quality, and context logic outside `supplements.js`. The editor is a workflow layer, not the canonical home for lifecycle or evidence rules.
+
+## Record shape
+
+New records use `schemaVersion: 2` and a collision-resistant `sm_...` ID. Fields are optional unless the editor explicitly validates them.
+
+```js
+{
+  id: "sm_...",
+  schemaVersion: 2,
+  name: "Magnesium complex",
+  type: "supplement", // or "medication"
+  brand: "Example brand",
+  genericName: "Magnesium",
+  dosageForm: "capsule",
+  route: "oral",
+
+  // Product facts
+  servingSize: { value: 2, unit: "capsule" },
+  labelDirections: "Take two capsules daily",
+  ingredients: [
+    {
+      name: "Magnesium bisglycinate",
+      amount: "200 mg",
+      amountValue: 200,
+      amountUnit: "mg",
+      timesPerDay: 2 // optional row override
+    }
+  ],
+  inactiveIngredients: ["Hypromellose capsule", "Rice flour"],
+
+  // Personal regimen
+  dosage: "With food before bed",
+  timesPerDay: 1,
+  schedule: {
+    mode: "daily",
+    timesPerDay: 1
+  },
+  periods: [
+    { start: "2026-01-01", end: "2026-03-31", dose: "1 capsule" },
+    { start: "2026-05-01", end: null, dose: "2 capsules" }
+  ],
+  startDate: "2026-01-01", // legacy compatibility mirror
+  endDate: null,            // legacy compatibility mirror
+  currentDose: "2 capsules",
+  lifecycle: {
+    state: "active",
+    changedAt: 1786000000000,
+    reason: ""
+  },
+
+  // Source-reported product quality evidence
+  qualityEvidenceScope: "matching-lot",
+  qualityTests: [
+    {
+      category: "contaminant",
+      analyte: "Lead",
+      canonicalAnalyte: "lead",
+      resultText: "< 0.5 mcg",
+      comparator: "<",
+      value: 0.5,
+      unit: "mcg",
+      basis: "per serving",
+      status: "reported",
+      includeInAIContext: true,
+      sourceKinds: ["product URL"]
+    }
+  ],
+  reason: "Low magnesium intake",
+  updatedAt: 1786000000000
+}
+```
+
+Mode-specific schedule keys include `daysOfWeek` for `selected-days`, `intervalDays` for `interval`, and the PRN-oriented `maxPerDay`. Empty optional keys are omitted; `schedule.timesPerDay` can be `null` when no deterministic daily frequency applies. Reviewed imports can also add `sourceUrl`, `importProvenance`, `labelWarnings`, per-row source metadata, and optional clinical notes.
+
+Unknown fields are intentionally retained when a record is edited or migrated. Do not replace a record with a narrowed reconstruction.
+
+## Lifecycle is derived from periods
+
+`getSupplementStatus(record, asOf)` returns `active`, `scheduled`, `paused`, `ended`, or `planned`.
+
+The period data is authoritative:
+
+1. an open period whose start is today or earlier is `active`;
+2. only future periods are `scheduled`;
+3. no valid period is `planned`;
+4. after all open periods close, `lifecycle.state` distinguishes a deliberate `paused` state from `ended`; and
+5. a gap before a later period is treated as paused/between cycles.
+
+`startDate` and `endDate` remain compatibility mirrors. `getSupplementPeriods()` falls back to them when `periods` is absent, but migrations do not manufacture or rewrite periods.
+
+Use `getCurrentSupplements()` for present-day deterministic modifiers and the current dashboard. Use `getSupplementsOverlappingRange()` when historical lab dates matter. Do not filter every consumer to `endDate === null`; that loses cycling and completed-period context.
+
+### Mutation rules
+
+- **Pause** and **End** close every applicable open period on the local calendar date, set the explicit lifecycle state, and preserve the record.
+- **Restart** reopens a period closed today or appends a new period starting today.
+- **Change dose** closes the prior period yesterday and adds a new period today. Same-day changes edit the existing period.
+- Periods must have valid starts, end no earlier than start, and never overlap or share a date.
+- **Delete** uses the imported-array deletion helper so the supplement tombstone propagates through sync.
+
+Always mutate through `appendImportedArrayItem()`, `replaceImportedArrayItem()`, or `deleteImportedArrayItem()`, then call `saveImportedData()`.
+
+## Schedule semantics
+
+`schedule.mode` can be `daily`, `multiple`, `selected-days`, `interval`, `prn`, `course`, `cycle`, `phased`, or `other`.
+
+`isSupplementExpectedOnDate()` implements only deterministic exposure:
+
+- daily and regular modes are expected while the record is active;
+- selected weekdays use `daysOfWeek` values `0..6`;
+- interval schedules use the active period start as the anchor; and
+- PRN always returns `false` because a schedule is not an actual-use log.
+
+Ingredient daily totals use the ingredient’s `timesPerDay` first, then the record-level default. Preserve the structured `amountValue`/`amountUnit` pair and the display `amount` string. Unknown units are valid data and must not be discarded.
+
+## Reviewed import pipeline
+
+Import is a two-confirmation workflow:
+
+```text
+link or up to four photos
+        ↓
+deterministic page extraction and/or vision/text model
+        ↓
+normalizeSupplementImportDraft()
+        ↓
+mergeSupplementImportDrafts()
+        ↓
+selective review (nothing persisted)
+        ↓
+editable therapy form (still nothing persisted)
+        ↓
+Add / Update
+```
+
+`SUPPLEMENT_EXTRACTION_SCHEMA_PROMPT` requires the provider to separate:
+
+- formulated active ingredients;
+- inactive ingredients/excipients/capsule materials;
+- laboratory and certificate-of-analysis rows; and
+- product warnings.
+
+It also requires original-language wording, forbids invention of a personal regimen, and tells the model to ignore patient/prescription identifiers.
+
+The URL path extracts high-confidence page facts before asking a model. Those deterministic fields win over the model response. When AI is unavailable, verified page facts can still become a review draft. Photo import requires a vision-capable provider; image bytes are resized and never stored in the record.
+
+Merged evidence follows these rules:
+
+- missing scalar fields are filled;
+- an existing reviewed value wins a scalar conflict;
+- ingredient identity is Unicode-safe and folds Latin accents without stripping meaningful marks in other scripts;
+- distinct active ingredients, inactive ingredients, and quality rows are unioned;
+- quality identity includes category, canonical analyte, and measurement basis, so results such as per-serving and concentration rows do not collapse into one;
+- conflicting amounts or quality results remain visible as review issues; and
+- applying the draft fills blank/editable fields but does not save.
+
+Do not bypass `normalizeSupplementImportDraft()` or persist raw model JSON.
+
+## Quality evidence is not an ingredient list
+
+`qualityTests` accepts `contaminant`, `potency`, `microbiology`, `identity`, and `other` categories. Source-result semantics such as ND, NQ, comparators, measurement basis, declared claims, limits, methods, and status are preserved.
+
+`qualityEvidenceScope` is one of:
+
+- `matching-lot`;
+- `different-lot`;
+- `general-specification`; or
+- `unknown`.
+
+Daily contaminant mass is returned only for a `matching-lot` record with a numeric mass per serving or compatible unit, known serving size when required, a positive personal daily frequency, and a non-PRN schedule. ND/NQ/negative/unknown results and concentrations remain non-summable. Upper-bound comparators remain upper bounds after aggregation.
+
+The current overview groups `canonicalAnalyte` values across active products. It performs arithmetic only; it intentionally has no regulatory threshold or safety conclusion.
+
+Form edits must not retain stale imported semantics. Existing or pending-import metadata is copied only when category and analyte identity still match; a changed result recomputes its comparator and status instead of inheriting the old values. Imported rows applied by position also require an identity match, and replacement must be atomic so provenance from a previous quality result cannot attach to a different analyte.
+
+### AI inclusion
+
+`includeInAIContext` is per result. If it is absent, a passing active-ingredient potency row defaults to excluded because the ingredient dose already provides the health exposure. Failed potency rows and non-duplicate evidence default to included. Exclusion never deletes the source result.
+
+## AI context projection
+
+`supplement-context.js` has three hard budgets:
+
+| Projection | Default maximum |
+|---|---:|
+| Compact chat/lab context | 6,500 characters |
+| Detailed therapy query | 12,000 characters |
+| Biology Score JSON records | 4,500 characters |
+
+`resolveSupplementContextMode()` selects detail for generic therapy/evidence terms and for a query containing a stored product, active ingredient, other ingredient, or included analyte in any script.
+
+Compact mode prioritizes regimen, active doses, capsule/allergen-like other ingredients, quality counts, explicit failures, and conservative contaminant aggregation. Detailed mode can include more products, methods, limits, and rows. Truncation is explicit and never mutates stored records.
+
+`buildLabContext()` chooses records that overlap the lab range, or current records when there are no lab dates. A detailed therapy query can use the complete inventory. `buildCompactSupplementContextRecords()` supplies bounded Biology Score context. The source-level **Supplements & medications** toggle remains the permission boundary for in-app AI; Agent Access can deliberately bypass in-app source toggles under its separate external-sharing permission.
+
+## Primary mitochondrial evidence
+
+`data/mito-compounds.json` is a schema-v2 claim-level catalog. Runtime rejects stale schema-v1 data and any entry without complete evidence metadata. Matching considers structured generic names, product names, and active ingredients, not the free-form brand field. Every matched study retains its own direction, scope, model, exposure, limitation, title, and PMID.
+
+The dashboard scans only current records. AI evidence context is capped separately from therapy context and includes explicit constraints against treating preclinical findings as personalized benefit/harm or recommending that prescription medication be stopped.
+
+See the public [mitochondrial evidence methodology](https://github.com/elkimek/get-based/blob/main/docs/mitochondrial-evidence-methodology.md) before changing the catalog or matching rules.
+
+## Compatibility, backup, and sync
+
+`migrateSupplementMedicationRecords()` is deliberately additive and idempotent:
+
+- legacy records receive only `id` and `schemaVersion` when possible;
+- no periods, quantities, timestamps, quality data, or unknown fields are rewritten; and
+- the legacy ID remains `s_${hash(name|startDate|type)}`.
+
+The supplements delta surface uses a valid v2 `id` when present and the same legacy natural key otherwise. This lets old and new clients address one sync row during a mixed-version rollout. Edits are last-write-wins per stable therapy record; deletion uses item tombstones.
+
+Full profile storage, backups, curated exports, reports, and encrypted sync retain the structured fields. Report renderers must keep active ingredients, other label ingredients, and source laboratory results visibly distinct.
+
+Backup restore has an additional sync preflight. Restored profile IDs clear stale supplement delta snapshots, become dirty, and are force-published before relay tombstones can merge. Do not remove this handoff when changing backup or identity-join flows.
+
+## Focused verification
+
+Use change-scoped checks:
+
+```bash
+npm test -- \
+  tests/supplement-medication-domain.test.js \
+  tests/supplement-form-ui.test.js \
+  tests/supplement-import-draft.test.js \
+  tests/supplement-quality.test.js \
+  tests/supplement-context.test.js \
+  tests/supplement-warnings.test.js
+
+node tests/test-supplement-impact.js
+npx playwright test tests/playwright/supplements-browser-coverage.spec.js
+npx playwright test tests/playwright/supplement-warnings-browser-coverage.spec.js
+```
+
+Also run the relevant sync and backup tests when changing IDs, migration, delete behavior, or restore handling. GitHub Actions owns the exhaustive browser and combined-coverage matrix.

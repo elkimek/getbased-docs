@@ -1,9 +1,9 @@
 ---
 title: "Track your menstrual cycle in getbased"
-description: "Log periods, get phase-aware reference ranges for hormones and iron, and overlay cycle phase bands directly on your biomarker charts."
+description: "Log periods, understand recorded and predicted blood-draw phases, use phase-aware hormone ranges, and read cycle labels on biomarker charts."
 ---
 
-Hormones, iron, and inflammatory markers all shift across the menstrual cycle — sometimes dramatically. Knowing which phase you were in when blood was drawn makes your results far more meaningful. getbased tracks your cycle and automatically applies phase-specific reference ranges, overlays cycle bands on charts, and alerts you when iron levels look low during a heavy-flow period.
+Knowing which phase you were in when blood was drawn can make hormone results easier to interpret. getbased can attach reliable draw-phase context, apply phase-specific ranges to selected hormones, show phase labels at measured chart points, and flag low iron markers alongside heavy-flow history.
 
 <Warning>
 Cycle tracking is only available when your profile sex is set to **Female**. You can change this from the profile editor.
@@ -44,7 +44,7 @@ Regularity is classified as **regular** (low variation), **irregular** (moderate
 
 ## Cycle phases and phase-aware reference ranges
 
-getbased maps each blood draw date to one of four cycle phases based on your period log:
+getbased resolves each blood draw independently. Explicit phase context saved with that draw is used first. When there is no recorded context, getbased can estimate a phase from the period log only for an active, natural, regular cycle without hormonal contraception.
 
 | Phase | Approximate timing |
 |---|---|
@@ -53,24 +53,26 @@ getbased maps each blood draw date to one of four cycle phases based on your per
 | **Ovulatory** | Around day 14 (± 1 day) |
 | **Luteal** | From ovulation to the next period |
 
-For **estradiol**, **progesterone**, **LH**, and **FSH**, getbased replaces the single flat reference range with ranges specific to the phase at the time of that draw. The status color of each data point — normal, high, or low — reflects the phase-appropriate range throughout the app: charts, the detail modal, the data table, trend alerts, and AI chat.
+For **estradiol**, **progesterone**, **LH**, and **FSH**, getbased replaces the single flat built-in range with an assay-sourced range for the phase at the time of that draw. Each affected point is labeled as a recorded or predicted phase range. Its status throughout charts, marker details, tables, alerts, and AI context uses that dated range.
 
 <Note>
-Phase-aware ranges are automatically disabled if you are on hormonal contraception or have a non-cycling status set.
+Predicted phase ranges are omitted for hormonal contraception, non-cycling states, and irregular or uncertain cycle context. getbased leaves the result unrated against phase rather than presenting a guess as a known range.
 </Note>
 
-## Chart overlay: cycle phase bands
+## Chart layer: draw-phase labels
 
-Open the **Layers** dropdown in the chart area and enable **Cycle Phases** to overlay color-coded bands on any biomarker chart:
+Open the **Layers** dropdown in the chart area and enable **Cycle Phases**. A compact pill appears only above a measured data point that has reliable phase context:
 
-| Phase | Band color |
+| Pill | Phase |
 |---|---|
-| Menstrual | Red |
-| Follicular | Blue |
-| Ovulatory | Purple |
-| Luteal | Yellow |
+| `M` | Menstrual |
+| `F` | Follicular |
+| `O` | Ovulatory |
+| `L` | Luteal |
 
-Each band displays a single-letter label at the top of the band. This makes it easy to visually correlate hormone and iron readings with where you were in your cycle.
+When cycle day is known, the label also includes it, such as `L · D21`. Hover over the pill to see the detailed phase, cycle day, whether it was recorded or predicted, and the range used for that date.
+
+The labels are deliberately attached to observations rather than drawn as broad background bands. Empty time between blood draws does not imply that getbased knows your exact phase throughout that whole interval.
 
 ## Next best blood draw date
 
@@ -103,7 +105,11 @@ If you have logged recent heavy flow, getbased cross-references your ferritin, h
 
 ## AI context
 
-The AI chat and per-marker explanations always consider your cycle phase. When you ask about a hormone result, the AI knows which phase that draw was in, applies the appropriate reference range, and flags if the draw timing was suboptimal for interpretation. Perimenopause pattern alerts and iron or flow alerts are also included in the AI's context automatically.
+AI chat and per-marker explanations receive cycle context only when the relevant context source is enabled and the draw has a recorded or eligible predicted phase. Hormone result lines include the phase, cycle day when known, source confidence, and dated range. Perimenopause patterns and iron or flow alerts can also be included.
+
+## Explore the female demo
+
+The female demo profile includes coherent per-draw context and hormone values so the phase layer is understandable without adding personal data. Compare points with different pills and hover them to see how a recorded follicular or luteal draw changes the range for that date. The demo is illustrative and is not a target cycle or laboratory template.
 
 ## Guided tour
 

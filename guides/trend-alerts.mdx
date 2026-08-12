@@ -11,7 +11,7 @@ getbased uses two independent methods to detect problems:
 
 ### Sudden change
 
-Compares your most recent result to the one before it. If the jump is larger than 25% of the reference range width **and** the latest value is outside the normal range, getbased raises a sudden change alert. This catches acute shifts — a result that moved significantly from the previous draw.
+Compares your most recent result to the one before it. If the jump is larger than 25% of the reference range width **and** the latest value is outside its effective range, getbased raises a sudden change alert. That latest range can be laboratory, personal, phase-specific, context-aware, or built-in.
 
 ### Linear regression (trend)
 
@@ -46,3 +46,5 @@ All trend detection respects the date range filter set in the header. If you nar
 <Warning>
   Trend alerts and critical flags are informational tools to help you spot patterns in your own data. They are not medical diagnoses. Always discuss significant changes with a qualified healthcare provider.
 </Warning>
+
+See [Understand lab ranges and calculated markers](/guides/lab-ranges-calculated-markers) for how the effective range is selected and why some results remain unrated.

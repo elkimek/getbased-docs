@@ -70,9 +70,9 @@ js/
   startup-maintenance.js — Wearable startup services and post-profile maintenance jobs
   startup-ui.js    — First-render UI bootstrap after profile/OAuth startup
   emf-facade.js    — Lazy window facade for the EMF assessment module
-  marker-schema/    — Category source modules, stable order, and built-in identity authoring
-  marker-schema.js  — Generated runtime marker catalog; do not edit directly
-  schema.js         — Stable marker-schema facade plus conversions, ranges, and thresholds
+  marker-schema/    — Authored core category definitions, stable order, and immutable built-in marker identities
+  marker-schema.js  — Generated runtime marker catalog; never edit directly
+  schema.js         — Compatibility facade for the marker catalog, ranges, conversions, identities, and thresholds
   custom-marker-identity.js — Stable custom:* identity creation and legacy migration
   marker-placement.js — Storage-independent visual category placement engine
   marker-terminology/ / marker-terminology.js — Optional terminology sources and generated registry
@@ -86,11 +86,19 @@ js/
   local-ai-provider-registry.js — normalized Ollama, LM Studio, and compatible-endpoint adapter registry
   local-ai-discovery.js / local-ai-lifecycle.js — cached capability discovery and same-machine model handoff
   profile.js        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
-  data.js           — getActiveData() pipeline, unit conversion, date range, saveImportedData
+  data.js           — Cached getActiveData() projection, unit conversion, date range, and persistence
+  data-calculated-markers.js — Direct-result-first ratios, indices, fluid balance, and biological-age calculations
+  marker-analysis.js / marker-context-ranges.js — Effective dated ranges, statuses, trends, and context resolvers
+  cycle-draw-phases.js — Recorded per-draw cycle phase normalization
   pii.js            — PII obfuscation: local AI (OpenAI-compatible) + regex fallback, diff viewer
   charts.js         — Chart.js plugins (5), createLineChart, destroyAllCharts
   notes.js          — Note editor: open/save/delete
-  supplements.js    — Supplement editor and rendering
+  supplements.js    — Supplement/medication editor orchestration, persistence, and lifecycle actions
+  supplement-medication-domain.js — Stable identity, period/status rules, schedule exposure, units, compatibility migration
+  supplement-form-ui.js / supplement-import-controller.js — Structured editor and reviewed link/photo import workflow
+  supplement-import-draft.js / supplement-quality.js — Strict source normalization, evidence merging, and quality-result semantics
+  supplement-context.js / supplement-warnings.js — Bounded AI projections and claim-level mitochondrial evidence
+  supplement-dashboard.js / supplement-impact.js — Current dashboard, historical overlays, and lab-impact analysis
   wearables.js      — Wearable dashboard strip, source picker, inline manual log forms, window facade
   wearables-detail-modal.js — Wearable metric detail modal, chart, manual entries, focus trap
   wearables-formatters.js / wearables-manual-form-ui.js — Shared wearable UI helpers
@@ -106,7 +114,11 @@ js/
   context-card-lifestyle-special-editors.js — light, goals, interpretive lens, and diet contaminant modal
   pdf-import.js     — PDF/image/text import pipeline, AI analysis, confirm/save merge
   pdf-import-preflight.js / pdf-import-progress.js — import preflight prompts and progress/status UI
+  pdf-import-ai-utils.js — import stream fallback, reading/writing progress estimates, performance persistence, and truncation-safe parsing helpers
   pdf-import-marker-normalization.js — shared AI marker sanitization, adapter normalization, specialty guards
+  pdf-import-marker-mapping.js / pdf-import-ratio-units.js — canonical alias matching, importable calculations, and ratio convention metadata
+  pdf-import-unit-conversions.js / pdf-import-review-formatting.js — review-safe unit conversion and responsive unit/range controls
+  pdf-import-commit.js — Snapshot-aware live values, direct calculations, adopted ranges, and collection-context ownership
   pdf-import-persistence.js — imported-data snapshot, rollback, refresh, remove, and rename save flows
   pdf-import-review.js — import review modal rendering, row filtering/mapping UI state
   import-benchmarks.js / import-reference-benchmark.js — device-local import diagnostics and verified sample scoring
@@ -157,6 +169,8 @@ js/
   settings-import-benchmark-controller.js — model-test modal lifecycle, selection, comparison, and deletion
   settings-sync-panel.js — cold Settings Sync/Agent facade and in-place placeholder hydration
   settings-sync-panel-impl.js — Cross-device Sync setup, mnemonic, relay status, and recovery UI
+  sync-settings-state.js / sync-lifecycle.js — Configured/active/paused state and identity-preserving pause/resume orchestration
+  sync-backup-restore-state.js — Restore-safe dirty/snapshot reset and publish-before-pull handoff
   settings-agent-access-panel.js — Agent Access state, setup payload, token/key, and wearable-series controls
   feedback.js       — Feedback modal (bug reports, feature requests)
   tour.js           — Guided tour spotlight engine (app tour + cycle tour)
@@ -184,6 +198,7 @@ js/
   backup.js          — IndexedDB auto-backup, folder backup (File System Access API), backup restore
   backup-chat-storage.js — raw thread index/message collection for complete locked backups
   lab-context.js     — buildLabContext() central AI context serializer
+  lab-context-collection.js — explicit per-draw time, fasting, cycle-day, and recorded-phase section
   lab-context-change-timeline.js — profile-context history serializer
   lab-context-wearables.js — wearable summaries and sleep-context mismatch flags
   markdown.js        — renderMarkdown() block-aware parser (extracted from chat.js)

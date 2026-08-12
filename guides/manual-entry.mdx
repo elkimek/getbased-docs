@@ -20,14 +20,18 @@ Open any marker from Labs, a dashboard marker widget, a chart card, a table row,
 The form includes:
 
 - **Date** — defaults to today on first use, then remembers the date from your last save for the rest of the browser session.
+- **Collection time** — optional time the specimen was drawn or collected. Do not use the laboratory's processing or report time.
+- **Fasting status** — choose **Fasting**, **Not fasting**, or leave it **Unknown**.
 - **Value** — accepts the current display unit, with an alternate unit picker when the marker has a known conversion.
-- **Note** — optional context for that specific reading, such as "fasted 14h" or "different lab than usual".
+- **Note** — optional additional context for that specific reading, such as "different lab than usual" or "blood draw 30 minutes after training".
 
 Press **Enter** to save or **Esc** to cancel.
 
 The same marker detail modal also includes **Change category**. This is a visual, per-profile placement: it does not change manually entered values or their dates, notes, units, ranges, or source. See [Organize a marker in another category](/guides/biomarker-charts#organize-a-marker-in-another-category).
 
 Use **Save & Add Another** when entering a paper report. It saves the current value, keeps the date pre-filled, and clears the value field so you can work through another marker without re-picking the draw date.
+
+Known collection time and fasting status are stored once for the lab date, displayed beside its results, and used by applicable context-aware ranges and AI interpretation. Leave them unknown when the source does not say; getbased does not infer them from the clock, marker, or value.
 
 ## Add a value from Compare dates
 
@@ -70,3 +74,5 @@ If a value for this marker already exists on the date you chose, getbased shows 
 Click any value in the marker detail modal to edit it inline. Edited imported values show an **edited ×** badge; click the **×** to revert to the original imported value. Values you added manually show a **manual** badge.
 
 Each value card also supports per-value notes. Notes are included with lab-marker AI context when **Insight → Manage → Context → Data sources → Blood marker results** is enabled, which can change how a reading should be interpreted.
+
+See [Understand lab ranges and calculated markers](/guides/lab-ranges-calculated-markers) for how laboratory, built-in, and context-aware ranges are selected.

@@ -4,7 +4,7 @@ sidebarTitle: "Custom biomarkers"
 description: "Track any lab result not in the built-in schema — create, edit, and group custom biomarkers manually or let PDF import do it automatically."
 ---
 
-getbased ships with hundreds of built-in and specialty biomarkers across standard categories. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
+getbased ships with a core schema of 196 markers across 19 categories, plus specialty-panel adapters. When you import a lab report that contains a result the app doesn't recognize — a specialty marker, a newer test, or one with an unusual name — it is automatically created as a **custom marker** rather than discarded. You can also create custom markers by hand at any time.
 
 ## How custom markers are created during PDF import
 
@@ -13,7 +13,7 @@ When you import a PDF, the AI identifies any results that don't match a known bi
 - A **category** to place it in (e.g. biochemistry, hormones)
 - A **name** for the marker in plain English
 - The **unit** it is measured in
-- A **reference range** (minimum and maximum) drawn from the lab report or general medical knowledge
+- A **reference range** (minimum and maximum) when the source report provides one
 
 These suggestions appear in the import preview with a blue **New** badge. You can review each one before confirming — accept, adjust, or exclude any suggested marker before it is saved.
 
@@ -50,6 +50,8 @@ Custom marker definitions are set when first created and are not overwritten by 
 - **Reference and optimal ranges** — click the range values in the marker's detail modal to edit them inline. If no ranges are set, a clickable "Reference: – – –" placeholder appears.
 - **Open-ended ranges** — clear one side of a range using the × button to create a bound like ">59" with no upper limit.
 - **Name and unit** — editable in the marker's detail modal.
+
+The public **Suggest a better range** action is for untouched built-in catalog ranges only. It is hidden for custom markers and personal or laboratory overrides.
 
 ## Grouping custom markers
 

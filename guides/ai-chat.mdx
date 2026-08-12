@@ -43,7 +43,7 @@ Every message includes enabled context from your current profile. You never need
 |---|---|---|
 | Lab results | Biomarker values, reference ranges, trends, Biology Score context, marker notes, and flagged-result summaries | **Labs → Blood marker results**. Imported specialty lab groups can be excluded one group at a time. |
 | Insight Context Cards | Goals, medical history, biometrics, cycle context, diet and explicit digestive answers, exercise, sleep, light and skin type, stress, relationships, environment, EMF assessment, notes, and change timeline | **Insight → Manage → Context → Insight Context Cards** |
-| Supplements & medications | Supplement/medication timeline, ingredients, timing, mitochondrial warnings, and supplement-impact context | **Profile → Supplements & Medications** |
+| Supplements & medications | Current and relevant historical periods, personal regimen, active ingredients, separate excipient/capsule details, scoped quality evidence, mitochondrial evidence, and supplement-impact context | **Insight → Manage → Context → Data sources** |
 | Wearables | HRV, sleep, resting pulse, recovery, body metrics, trends, and recent anomaly summaries | **Body → Wearable recovery context** |
 | DNA context | APOE/mtDNA summary, compact priority findings with association/evidence/relevance labels, and optional Other SNP lookup inventory | **Genome** switches for each tier |
 | Light & Sun | Sun sessions, device sessions, indoor light environment, light-tool warnings, and light-related score modifiers | **Light & Sun → Light & Sun context** |
@@ -52,6 +52,10 @@ Every message includes enabled context from your current profile. You never need
 Turning a source off does not delete the data. It stops that source from influencing in-app AI chat, Biology Score context, and source-driven warnings until you turn it back on.
 
 Routine Genome context is intentionally compact. It can include up to 12 ranked priority findings, while long per-SNP claim scope and interpretation text stays out of ordinary requests. Choosing **Ask AI** on a Genome finding opens a focused, editable prompt with that SNP's evidence grade, relevance, supported claim, interpretation context, and publication links. The selected model can use broader knowledge, but the prompt asks it to distinguish established evidence from inference.
+
+Supplement and medication context is deliberately bounded. Normal questions prioritize current items and history that overlaps the visible lab range; a therapy-specific question can include additional matching history within the context limit. Compact context keeps high-signal quality findings, while detailed context may also include methods and reporting limits. Each imported quality result has its own **Include in AI** control. Passing duplicate potency checks default off, while failures remain visible by default.
+
+See [Track supplements and medications](/guides/supplements-medications) for lifecycle, import, and laboratory-evidence details.
 
 ## Current Focus
 

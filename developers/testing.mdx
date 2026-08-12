@@ -71,6 +71,8 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | File | What it covers |
 |---|---|
 | `tests/api-provider-contracts.test.js` | **Vitest** — provider adapter inference, Local AI context planning, native capability fallbacks, transport diagnostics, and secret redaction |
+| `tests/api-transport.test.js` | **Vitest** — Local AI first-token allowance, normal mid-stream stall timeout, cancellation, and transport timeout cleanup |
+| `tests/pdf-import-progress-phases.test.js` | **Vitest** — reading/writing phase labels, learned prefill estimates, stream transition, and progress cleanup |
 | `tests/test-a11y-axe.js` | Runtime axe-core 4.10 scan across every lens + 6 Settings tabs + EMF editor (14 stops). Baseline-locked CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
 | `tests/test-a11y-phase3.js` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
 | `tests/test-ai-verdict-engine-instance.js` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
@@ -169,8 +171,16 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-sun-uvdata-flow.js` | Behavioral flow for `sun-uvdata.js`: cache, provider chain (auto / open-meteo / selfhost / noaa), interpolateAtmosphere bracketing, readStaleCache fallback |
 | `tests/test-sun.js` | Sun session orchestration: lifecycle, hydration, rolling totals, vit-D IU accumulation, MED carry-over |
 | `tests/test-supplement-impact.js` | Supplement-biomarker impact analysis: batched computation, caching, health dots |
+| `tests/supplement-medication-domain.test.js` | **Vitest** — stable IDs, status derivation, periods, schedule exposure, quantities, unit normalization, and additive migration |
+| `tests/supplement-form-ui.test.js`, `tests/supplement-import-draft.test.js` | **Vitest** — structured form rows, strict link/photo draft normalization, multilingual identity, source merging, and conflict review |
+| `tests/supplement-quality.test.js`, `tests/supplement-context.test.js` | **Vitest** — lot scope, ND/NQ and comparator handling, contaminant aggregation, per-result AI inclusion, and prompt budgets |
+| `tests/supplement-warnings.test.js` | **Vitest** — claim-level mitochondrial evidence matching, grouping, scope, and AI projection |
+| `tests/playwright/supplements-browser-coverage.spec.js` | **Playwright** — manager groups, add/edit, lifecycle actions, reviewed imports, and structured quality UI |
+| `tests/playwright/supplement-impact-browser-coverage.spec.js`, `tests/playwright/supplement-warnings-browser-coverage.spec.js` | **Playwright** — historical impact rendering and mitochondrial evidence interactions |
 | `tests/test-sync.js` | Cross-device sync: payload format, AI settings keys, encrypted keys, Evolu integration |
 | `tests/sync-save-hooks.test.js`, `tests/sync-runtime.test.js` | **Vitest** — canonical IndexedDB-backed profile reads, fail-closed missing/unreadable profiles, and rejection of invalid outbound payloads |
+| `tests/sync-settings-state.test.js`, `tests/sync-lifecycle-runtime.test.js`, `tests/sync-subscriptions-pause.test.js` | **Vitest** — configured/active/paused state, runtime teardown/rebind, and subscription suppression while paused |
+| `tests/backup-sync-restore.test.js` | **Vitest** — full-backup profile handoff, dirty marking, stale delta/cutover reset, and restore-safe preflight |
 | `tests/playwright/sync-identity-browser-coverage.spec.js` | **Playwright** — existing-mnemonic restore ordering and the single controlled reload contract |
 | `tests/playwright/settings-sync-panel-loader-browser-coverage.spec.js` | **Playwright** — cold Settings facade loading, in-place Sync/Agent placeholder replacement, and retry behavior |
 | `tests/playwright/sync-actions-browser-coverage.spec.js` | **Playwright** — compaction preflight and decrypted Agent Access payload coverage for the complete redesigned context, including explicit negative/normal answers and skin type |

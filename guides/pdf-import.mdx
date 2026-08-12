@@ -19,10 +19,10 @@ You need an AI provider configured in **Settings → AI**. Manual lab entry, JSO
     Click the header import button or drag files onto the page. Supported report formats include PDF, JPG, PNG, and WebP.
   </Step>
   <Step title="Wait for AI analysis">
-    getbased processes the file locally, strips personal information from extracted text, then sends the prepared text or page images to your AI provider. Time varies with the report, provider, model, network, and local hardware; large local models can take several minutes.
+    getbased processes the file locally, strips personal information from extracted text, then sends the prepared text or page images to your AI provider. During AI analysis, **Reading report** covers prompt processing and **Writing results** begins with generated output. Time varies with the report, provider, model, network, and local hardware; large local models can spend several minutes reading before their first result. Repeat local imports use saved performance to improve the reading estimate.
   </Step>
   <Step title="Review the import preview">
-    Before anything is saved, you see exactly what the AI found. Review each row and exclude anything you do not want by clicking the **×** button. The button toggles to **+** so you can re-include rows.
+    Before anything is saved, you see exactly what the AI found. Review each row and exclude anything you do not want by clicking the **×** button. Also verify the report date, collection time, fasting status, and reference-range adoption. The button toggles to **+** so you can re-include rows.
   </Step>
   <Step title="Confirm">
     Click **Confirm** to save the results. Your values appear in Labs, dashboard widgets, marker details, comparisons, correlations, and AI context while **Blood marker results** are enabled in Manage → Context. getbased also saves a device-local model-test record with timing, model, and review-quality information.
@@ -52,9 +52,26 @@ If something looks wrong, dismiss the import and try again. Nothing is saved unt
 
 The AI-suggested category for a new custom marker is an import-time suggestion that you review before saving. It does not reorganize existing markers. After import, you can use **Change category** in any marker's detail modal to change only where that marker appears in the current profile; the saved result, import provenance, and future import mapping stay attached to the same marker.
 
+getbased refuses an AI response that ended at its output limit or filled the model's context before the marker list completed. If this happens with Local AI, increase the model's context length or split the report into smaller imports. The incomplete marker list is not offered for confirmation.
+
 ### Reference range adoption
 
-When the reference ranges on your report differ from getbased's stored ranges, a toggle appears below the preview table: **"Update reference ranges from this report (N markers)"**. This is checked by default. Accepting it saves the lab's own ranges as per-marker overrides.
+When the reference ranges on your report differ from getbased's stored ranges, a toggle appears below the preview table: **"Update reference ranges from this report (N markers)"**. This is checked by default. Accepting it makes the lab's own interval the active per-marker reference instead of the general built-in fallback.
+
+If you later import an older report, its range is preserved with that file but does not replace a range from a newer collection date. A manual range edit wins over an adopted lab range; reverting the edit returns to the lab interval first, then to the built-in default.
+
+See [Understand lab ranges and calculated markers](/guides/lab-ranges-calculated-markers) for the full range order and labels.
+
+### Collection time and fasting status
+
+When present on the report, the importer extracts:
+
+- **Collection time** — the time the specimen was drawn or collected;
+- **Fasting status** — fasting, not fasting, or unknown.
+
+Both fields are editable in the review modal. Use the collection or draw time, not a processing, receipt, result, or report timestamp. Leave the value unknown when the source does not distinguish them; getbased does not infer fasting from the time of day, test panel, or result.
+
+After confirmation, this context stays attached to that lab date, appears beside affected results, and is available to applicable context-aware ranges and AI interpretation. Re-reviewing or deleting a report restores context supplied by another remaining report for the same date, or clears it when no source remains.
 
 ### Unit normalization
 
@@ -75,6 +92,8 @@ From **Settings → Data** you can:
 - click **Review & Edit** to reopen the saved import preview without paying for another AI parse;
 - edit values, units, mappings, or excluded rows, then re-import the corrected snapshot;
 - click **Delete** to remove only the markers owned by that import snapshot while preserving unrelated same-day data.
+
+The saved snapshot also preserves the file's extracted reference intervals, whether you adopted them, and its collection-time and fasting metadata. Normal charts show only the current effective interval rather than layering every historical lab range.
 
 Reports imported before per-file storage existed were saved only as date-based lab entries. To make an old report individually reviewable, import that report again.
 
@@ -116,17 +135,21 @@ Your file is processed in the browser first. Extracted text goes through regex o
 
 ## What gets extracted
 
-getbased tracks hundreds of built-in and specialty biomarkers across standard categories, plus unlimited custom markers. Common areas include:
+The core schema contains 196 markers across 19 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
 
 - **Biochemistry** — glucose, liver enzymes, kidney markers, electrolytes
-- **Hormones** — testosterone, estradiol, cortisol, DHEA, insulin
+- **Hormones** — testosterone, estradiol, cortisol, DHEA, progesterone, LH, and FSH
+- **Glucose & Insulin Metabolism** — glucose-control markers including insulin, C-peptide, HbA1c, and fructosamine
 - **Lipids** — cholesterol, triglycerides, LDL, HDL, ratios
 - **Hematology** — CBC, red and white cell indices
 - **Thyroid** — TSH, T3, T4, antibodies
+- **Electrolytes, coagulation, cardiac, bone, urine, vitamins, minerals, inflammation, and commonly reported tumor markers**
 - **Body Composition** — body fat percentage, lean mass, visceral fat from DEXA scans
 - **Bone Density** — BMD, T-scores, Z-scores from DEXA scans
 
 Markers not in the built-in schema are created automatically as custom markers and tracked alongside built-in markers.
+
+Supported lab-reported ratios and indices are normalized into **Calculated Ratios**. The app uses the report's direct value for that date and computes a fallback only when the direct value is absent, avoiding duplicate FIB-4, anion-gap, or ratio cards.
 
 ## Common questions
 
@@ -141,6 +164,10 @@ These are imported at the detection limit value itself (`<0.5` becomes `0.5`). T
 **Can I undo an import?**
 
 Yes, for imports saved with per-file history. Open **Settings → Data**, find the imported report, then use **Review & Edit** to correct it or **Delete** to remove that report's imported markers. For older date-only imports, restore from an automatic snapshot or JSON backup if the import created bad data.
+
+**Why can Local AI stay on Reading report for several minutes?**
+
+Large models must process the complete report before generating the first streamed token. getbased allows a longer first-token wait for Local AI, then uses a shorter stall guard once generation has started. You can still stop the import. If it repeatedly fails before writing begins, try a smaller model, a larger/faster context setup, fewer pages, or another provider.
 
 <Warning>
 If you see unexpected results after a large batch import, start with the per-file **Review & Edit** / **Delete** controls in Settings → Data. If the problem came from older date-only imports or broad accidental changes, restore from a pre-import snapshot instead of manually deleting many marker values.

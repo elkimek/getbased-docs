@@ -228,10 +228,12 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
 
     Ollama and LM Studio expose extra information beyond the compatible API. When detected, getbased can show loaded state, context length, quantization, model size, and VRAM use. It can also request a larger context for complex imports and release a loaded model when switching between supported servers on the same machine.
 
+    On a current LM Studio server, a large import can reload the selected model at the planned context, verify the context LM Studio actually fitted into memory, and generate through the streaming compatible endpoint. If the previous instance cannot be unloaded, getbased checks whether it is really gone and otherwise stops with manual-unload guidance instead of loading a duplicate model into memory.
+
     Generic compatible servers continue to work through `/v1/models` and `/v1/chat/completions`, but they may not expose loaded state, context controls, native performance metrics, or model unloading.
 
     <Note>
-      If getbased says the loaded context is too small, reload the model with a larger context or use a smaller or chunked input. Imports can request a larger native context from supported Ollama and LM Studio servers; a long LM Studio chat with assistant history may still require a manual reload.
+      If getbased says the loaded context is too small, reload the model with a larger context or use a smaller or chunked input. Imports can request a larger native context from supported Ollama and LM Studio servers. getbased also rejects marker output cut off by the output or context limit instead of accepting a partial report.
     </Note>
 
     ### CORS setup
