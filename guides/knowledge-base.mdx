@@ -27,17 +27,17 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
         Open **Knowledge Base** from the Manage section of the sidebar.
       </Step>
       <Step title="Choose In-browser">
-        Select **On this device** and click **Create new library**.
+        Select **On this device** and click **New library**.
       </Step>
-      <Step title="Pick an embedding model">
-        A dialog shows four models side by side. getbased benchmarks your device on first load and pre-selects the strongest model that runs smoothly on your hardware.
+      <Step title="Choose a search profile">
+        getbased measures the local search engine and recommends a profile that balances retrieval quality with import speed. CPU-based browsers normally start with **Balanced**; the largest English model is selected automatically only when fast WebGPU acceleration is available. You can always choose another profile yourself.
 
-        | Model | Size | Notes |
-        |---|---|---|
-        | MiniLM | 22 MB | Fast, good general retrieval |
-        | BGE-small-en | 33 MB | Better English retrieval |
-        | Multilingual-E5 | 40 MB | 100+ languages |
-        | BGE-base-en | 110 MB | Highest English quality |
+        | Profile | Model | Size | Notes |
+        |---|---|---|---|
+        | Fast | MiniLM | 22 MB | Quickest imports for compact English collections |
+        | Balanced | BGE-small | 33 MB | Recommended CPU balance for stronger English matching |
+        | Multilingual | Multilingual-E5 | 40 MB | Documents in 100+ languages |
+        | Best recall | BGE-base | 110 MB | Highest English quality; slower on CPU |
 
         The model is **locked at library creation** — switching later would require re-indexing all documents, so the choice is made upfront. Libraries created before v1.21.4 continue to use MiniLM with no forced migration.
       </Step>
@@ -45,7 +45,7 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
         Drop your files into the panel. Supported formats: **PDF**, **DOCX** (Word), **Markdown**, **plain text**, and **ZIP archives** containing any of the above.
       </Step>
       <Step title="Wait for indexing">
-        A progress pill appears in the bottom-right corner. You can close the panel and keep using the app — indexing runs in the background. Click **Cancel** on the pill to stop at the next excerpt; anything already indexed stays in the library.
+        A progress pill shows reading, model loading, indexing speed, estimated time remaining, and saving. You can close the panel and keep using the app. **Stop indexing** safely discards the pending import and leaves the existing library unchanged.
       </Step>
     </Steps>
 
@@ -55,7 +55,9 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
 
     ### Switch between libraries
 
-    Open the knowledge base panel and click any library name in the list to activate it. Only one library is active at a time. The active library name appears as a badge in the chat header whenever it is being used.
+    Open the knowledge base panel and choose a library from the **Active library** menu. Only one library is active at a time. The active library name appears as a badge in the chat header whenever it is being used.
+
+    Re-importing an unchanged document is skipped. Re-importing changed content with the same filename replaces that document's previous excerpts instead of creating duplicates.
 
     ### Query rewriting (recall booster)
 

@@ -15,6 +15,7 @@ This page covers the local in-browser path.
 | Module | Role |
 |---|---|
 | `lens-local-worker.js` | Worker runtime, library CRUD, chunking, embedding, search, abort handling |
+| `lens-local-ingest.js` | Transactional document deduplication, bounded embedding batches, replacement planning |
 | `lens-local.js` / Lens UI modules | Browser-facing library setup, file ingest, active-library selection |
 | parser helpers | PDF/text/markdown/document extraction before chunking |
 | chat/context modules | Query rewriting and passage injection before AI calls |
@@ -36,18 +37,20 @@ Because this is browser storage, clearing site data removes the local library un
 
 The worker supports a small model catalog, including MiniLM/BGE/E5-style options. The active library's model controls how new chunks are embedded. Changing a model may require re-embedding the library because vector dimensions and embedding spaces are not interchangeable.
 
-WebGPU is preferred when available. WASM/CPU fallback should remain functional, slower, and visibly cancellable.
+WebGPU is preferred when available. WASM/CPU fallback remains functional and visibly cancellable. Model recommendation is intentionally conservative: a fast MiniLM benchmark on CPU recommends the balanced BGE-small profile, not BGE-base. BGE-base is automatically recommended only for a fast WebGPU path because MiniLM timing does not predict the larger model's CPU cost.
 
 ## Chunking and retrieval
 
-The local worker chunks source text, embeds each chunk, then retrieves relevant passages for chat. Query rewriting and MMR-style diversity logic prevent every result from coming from the same paragraph when a document repeats the same phrase.
+The local worker chunks source text, embeds each chunk in small bounded batches, then retrieves relevant passages for chat. Query rewriting and MMR-style diversity logic prevent every result from coming from the same paragraph when a document repeats the same phrase.
+
+Imports are transactional. A content fingerprint skips unchanged files, while changed content with the same source name replaces the previous excerpts. Stopping during embedding discards the pending vectors and leaves the current library intact. Persisted manifests created before fingerprints were added remain compatible; the next re-import indexes that document once and records its fingerprint.
 
 When implementing retrieval changes, preserve:
 
 - source title and filename attribution;
 - chunk offsets or enough metadata to reopen the source context;
 - abortability during long imports;
-- partial-ingest safety if the user closes the modal or cancels.
+- transactional safety if the user closes the modal or stops indexing;
 
 ## Difference from external Lens
 
