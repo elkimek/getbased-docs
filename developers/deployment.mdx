@@ -8,7 +8,7 @@ description: "Vercel, service worker, CSP, PWA, and release checks."
 
 # Deployment
 
-getbased is deployed on Vercel. The browser app is shipped as static files, and Vercel also runs small same-origin API routes from `api/` for features that need hosted infrastructure. Vercel serves the app files directly, executes those API routes, and injects security headers.
+The browser app is shipped as static files on Vercel, which also runs small same-origin API routes from `api/` for features that need hosted infrastructure. Encrypted profile-share storage is a separate getbased-operated VPS service; Vercel's share route remains only as a bounded compatibility bridge for older links and clients.
 
 ## Vercel configuration
 
@@ -40,7 +40,7 @@ getbased is deployed on Vercel. The browser app is shipped as static files, and 
 | Route | Destination |
 |---|---|
 | `/` | `index.html` — the application (served by Vercel filesystem default) |
-| `/api/share` | `api/share.js` — encrypted profile share envelope storage |
+| `/api/share` | `api/share.js` — bounded legacy-share compatibility and redirect adapter |
 | `/api/proxy` | `api/proxy.js` — same-origin helper for wearable runtime config, CAMS/light data, and allowlisted external API calls |
 | `/api/commit` | `api/commit.js` — deployed commit/version helper used by diagnostics and smoke checks |
 | `/guide/*` | 301 redirect to the equivalent old `/docs/guide/*` compatibility path |
@@ -62,7 +62,7 @@ Vercel functions live in `api/`. They must stay same-origin, minimal, and avoid 
 
 ### `/api/share`
 
-`api/share.js` stores password-protected profile share links. The browser builds a single-profile export, encrypts it locally with AES-GCM using a key derived from the user-provided password, and uploads only the encrypted envelope. The password is never sent to the route and is not embedded in the link.
+The browser builds a single-profile export, encrypts it locally with AES-GCM using a key derived from the user-provided password, and uploads only the encrypted envelope. The password is never sent to the route and is not embedded in the link. New official-app ids use the `vps1_` namespace and go directly to `https://shares.getbased.health/api/share`.
 
 | Method | Purpose |
 |---|---|
@@ -71,9 +71,23 @@ Vercel functions live in `api/`. They must stay same-origin, minimal, and avoid 
 | `DELETE /api/share?id=...` | Delete the hosted envelope when the creating browser supplies the management token |
 | `OPTIONS /api/share` | CORS preflight for allowed same-origin/app origins |
 
-Production requires a Vercel Blob write token configured as a sensitive environment variable. The route uses a private Blob store namespace, caps payload size, rejects shares longer than 30 days, rejects weak PBKDF2 iteration counts, rate-limits anonymous share creation, and returns `no-store` JSON responses. The route never has the password or plaintext profile JSON.
+The standalone service binds only to loopback behind the exact HTTPS route and stores opaque envelopes plus minimal TTL/deletion/abuse metadata in a dedicated SQLite database. The shared handler caps payload size, rejects shares longer than 30 days, rejects weak PBKDF2 iteration counts, rate-limits anonymous creation, and returns `no-store` JSON responses. The service never has the password or plaintext profile JSON.
+
+For a cutover without record migration, configure the Vercel adapter with:
+
+- `GETBASED_PROFILE_SHARE_UPSTREAM_URL` — the exact HTTPS VPS route;
+- `GETBASED_PROFILE_SHARE_TRANSITION_STARTED_AT` — the cutover instant;
+- `GETBASED_PROFILE_SHARE_LEGACY_BLOB_UNTIL` — a deadline no more than 31 days later.
+
+Before the start, `/api/share` retains its old Blob behavior. During the window, new writes redirect to the VPS, existing Blob reads/deletions continue, and Blob misses redirect to the VPS for older cached clients. After the deadline, every supported request redirects and the adapter no longer reads Blob. Remove `BLOB_READ_WRITE_TOKEN` only after that deadline and an aggregate-only expiry check.
 
 Local development mirrors the endpoint in `dev-server.js` with an in-memory store so the modal and deep-link flow can be smoke-tested without Blob credentials. That local store is process-local and disappears when the dev server restarts.
+
+### Standalone profile-share service
+
+`server/profile-share-server.js` adapts the runtime-neutral share handler to Node's HTTP server and `lib/profile-share-sqlite-store.js`. The container runs unprivileged with a read-only root filesystem, one dedicated writable data mount, dropped capabilities, resource limits, and a health check. Its loopback listener is exposed only through the dedicated `shares.getbased.health` origin and exact `/api/share` Caddy handler.
+
+The initial production policy is no retained database backup. Confirm that provider snapshots do not retain this volume before cutover. If the policy changes, deletion tombstones and a transactionally consistent SQLite backup/restore drill are required before enabling retention.
 
 ### `/api/proxy`
 

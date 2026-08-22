@@ -126,7 +126,13 @@ Cross-device sync is entirely opt-in. When you enable it, an Evolu CRDT engine e
 
 Profile sharing is opt-in. When you create a share link, getbased locks a copy of the selected profile in your browser with the password you choose or generate, then uploads only that locked copy. The password is not added to the link and is not stored by getbased.
 
-Anyone who has both the link and the password can import the shared profile until the link expires or you stop sharing it. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
+On the official app, new locked copies go to a dedicated getbased-operated Czech VPS service hosted through Hukot (SecurityNet.cz). That service and its network provider can see connection metadata such as IP address, request timing, and approximate size. The application service stores the opaque encrypted envelope, random share id, creation/expiry timestamps, a hash of the creator's deletion token, and bounded keyed abuse-control state. It does not receive the password or decrypted profile, and request bodies and identifiers are not intentionally logged.
+
+The operated share database has no retained backup. This prevents a restore from resurrecting a link that its creator stopped or that expired, but it also means a service or disk failure can invalidate outstanding temporary links. The source profile remains in the sender's browser and can be shared again.
+
+During the initial cutover, still-live Vercel Blob links continue to resolve through the old same-origin endpoint for a fixed window of at most 31 days. New records are not copied to Blob, old records are not migrated to the VPS, and the fallback stops reading Blob after the fixed deadline.
+
+Anyone who has both the link and the password can import the shared profile until the link expires, you stop sharing it, or the temporary service copy is lost. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
 
 ## Agent Access
 
