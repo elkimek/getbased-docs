@@ -62,7 +62,7 @@ Vercel functions live in `api/`. They must stay same-origin, minimal, and avoid 
 
 ### `/api/share`
 
-The browser builds a single-profile export, encrypts it locally with AES-GCM using a key derived from the user-provided password, and uploads only the encrypted envelope. The password is never sent to the route and is not embedded in the link. New official-app ids use the `vps1_` namespace and go directly to `https://sync.getbased.health/profile-share`.
+The browser builds a single-profile export, encrypts it locally with AES-GCM using a key derived from the user-provided password, and uploads only the encrypted envelope. The password is never sent to the route and is not embedded in the link. New official-app ids use the `vps1_` namespace and go directly to `https://shares.getbased.health/api/share`.
 
 | Method | Purpose |
 |---|---|
@@ -85,7 +85,7 @@ Local development mirrors the endpoint in `dev-server.js` with an in-memory stor
 
 ### Standalone profile-share service
 
-`server/profile-share-server.js` adapts the runtime-neutral share handler to Node's HTTP server and `lib/profile-share-sqlite-store.js`. The container runs unprivileged with a read-only root filesystem, one dedicated writable data mount, dropped capabilities, resource limits, and a health check. Its loopback listener is exposed only through the exact `/profile-share` Caddy handler.
+`server/profile-share-server.js` adapts the runtime-neutral share handler to Node's HTTP server and `lib/profile-share-sqlite-store.js`. The container runs unprivileged with a read-only root filesystem, one dedicated writable data mount, dropped capabilities, resource limits, and a health check. Its loopback listener is exposed only through the dedicated `shares.getbased.health` origin and exact `/api/share` Caddy handler.
 
 The initial production policy is no retained database backup. Confirm that provider snapshots do not retain this volume before cutover. If the policy changes, deletion tombstones and a transactionally consistent SQLite backup/restore drill are required before enabling retention.
 
