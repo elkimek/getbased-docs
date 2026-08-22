@@ -39,7 +39,7 @@ index.html          — HTML structure only; script/CSS includes; SEO meta tags
 styles.css          — Core CSS: tokens, base resets, shared components, responsive/touch rules
 css/app-shell.css   — App chrome: header, sidebar navigation, footer, mobile shell, profile and sync controls
 css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
-api/share.js        — Vercel function for encrypted profile share envelope storage
+api/share.js        — bounded legacy-share compatibility and VPS redirect adapter
 api/proxy.js        — same-origin proxy for wearable runtime config, CAMS/light data, and allowed API helpers
 api/commit.js       — current deployed commit/version helper
 manifest.json       — PWA manifest (installable as a native app)
@@ -319,4 +319,4 @@ Bundled locally under `vendor/`:
 | pdf.js | 4.10.38 (legacy ESM) | PDF text extraction; loaded lazily via `js/pdfjs-loader.js` with `isEvalSupported: false` pinned for defense-in-depth |
 | Inter, Outfit, JetBrains Mono, VT323 | latest | Google Fonts (body, headings, data, Neuromancer display accents) |
 
-AI providers (OpenRouter, Routstr, PPQ, Venice, Local AI) are called directly from the browser for normal chat/import flows. Same-origin API helpers under `api/` cover hosted infrastructure such as OAuth/runtime proxying and encrypted profile share envelope storage, but they must not receive AI prompts or plaintext profile data unless explicitly documented for a new feature.
+AI providers (OpenRouter, Routstr, PPQ, Venice, Local AI) are called directly from the browser for normal chat/import flows. Same-origin API helpers under `api/` cover hosted infrastructure such as OAuth/runtime proxying and bounded compatibility for legacy encrypted profile shares, but they must not receive AI prompts or plaintext profile data unless explicitly documented for a new feature. New encrypted share envelopes go directly to the isolated VPS service.

@@ -43,6 +43,12 @@ Marker placements affect only presentation. The shared copy keeps the same under
 The password is the only way to unlock the shared profile. It is not added to the link and is not stored by getbased.
 </Note>
 
+The official app stores new locked copies in an isolated getbased-operated Czech VPS service hosted through Hukot (SecurityNet.cz). The service sees the caller's network metadata, the opaque encrypted envelope, and minimal expiry, deletion, and abuse-control metadata. It does not receive the password or decrypted profile.
+
+<Warning>
+Temporary share copies are not backed up. A service or disk failure can make an outstanding link stop working before its selected expiry. The original profile remains in the sender's browser and a new link can be created.
+</Warning>
+
 ## Open a shared profile
 
 <Steps>
@@ -75,6 +81,8 @@ Stopping a link prevents future loads from that link. It does not remove copies 
 - The password is never sent with the link and is never stored by getbased.
 - The link only finds the locked copy; the password unlocks it.
 - If the password is lost, getbased cannot recover the shared copy.
+- The operated share service does not keep retained database backups, so a stopped or expired link cannot be resurrected by restoring an old share database.
+- The hosting service can see ordinary connection metadata such as IP address and timing even though it cannot read the encrypted profile.
 - If someone has both the link and password, they can import the shared profile until it expires or you stop sharing it.
 
 For your regular backup and migration options, see [Export and import](/guides/export-import), [Backup](/guides/backup), and [Sync across devices](/guides/cross-device-sync).
