@@ -45,7 +45,7 @@ Every message includes enabled context from your current profile. You never need
 
 | Context source | What it can send | Control |
 |---|---|---|
-| Lab results | Biomarker values, reference ranges, trends, Biology Score context, marker notes, and flagged-result summaries | **Labs → Blood marker results**. Imported specialty lab groups can be excluded one group at a time. |
+| Lab results | Biomarker values, supplied comparison ranges and statuses, trends, Biology Score context, marker notes, and flagged-result summaries | **Labs → Blood marker results**. Imported specialty lab groups can be excluded one group at a time. |
 | Insight Context Cards | Goals, medical history, biometrics, cycle context, diet and explicit digestive answers, exercise, sleep, light and skin type, stress, relationships, environment, EMF assessment, notes, and change timeline | **Insight → Manage → Context → Insight Context Cards** |
 | Supplements & medications | Current and relevant historical periods, personal regimen, active ingredients, separate excipient/capsule details, scoped quality evidence, mitochondrial evidence, and supplement-impact context | **Insight → Manage → Context → Data sources** |
 | Wearables | HRV, sleep, resting pulse, recovery, body metrics, trends, and recent anomaly summaries | **Body → Wearable recovery context** |
@@ -54,6 +54,14 @@ Every message includes enabled context from your current profile. You never need
 | Interpretive lens and Knowledge Base | Your preferred reasoning lens and optional document retrieval | **Answer grounding** cards in **Manage → Context** |
 
 Turning a source off does not delete the data. It stops that source from influencing in-app AI chat, Biology Score context, and source-driven warnings until you turn it back on.
+
+### How chat handles marker ranges
+
+For an ordinary marker question, chat is instructed to lead with the main takeaway instead of listing every possible range. It starts from the range and status supplied by getbased, but it must not present that frame as universal medical truth.
+
+If a laboratory reference interval and a supplied optimal band lead to different conclusions, the answer should normally compress the distinction into one sentence—for example, “within the lab range but above getbased optimal guidance.” Other published thresholds should appear only when you ask about alternatives or when they materially change a safety-relevant interpretation. When Web or Knowledge Base evidence is available, chat should identify the outside source rather than describe an uncited number as a “model range.”
+
+You can ask for more detail at any time: “Compare the supplied ranges,” “Why is this optimal band narrower?” or “Show me published thresholds and their sources.”
 
 Routine Genome context is intentionally compact. It can include up to 12 ranked priority findings, while long per-SNP claim scope and interpretation text stays out of ordinary requests. Choosing **Ask AI** on a Genome finding opens a focused, editable prompt with that SNP's evidence grade, relevance, supported claim, interpretation context, and publication links. The selected model can use broader knowledge, but the prompt asks it to distinguish established evidence from inference.
 

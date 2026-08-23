@@ -136,7 +136,8 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-light-tools-flow.js` | Drives `saveMeasurement` across all 8 tool types + every camera-bound opener (handles missing getUserMedia cleanly) |
 | `tests/test-lighting-hardware-caveats.js` | Guard the load-bearing PWM/TRIAC caveat block against silent removal from any AI-analysis prompt |
 | `tests/test-manual-entry-flow.js` | Manual-entry quality-of-life: range sanity check, duplicate-date confirm, Save & Add Another |
-| `tests/test-markdown.js` | Markdown rendering + XSS surface assertions for streamed AI responses |
+| `tests/test-markdown.js`, `tests/markdown-security-runtime.test.js` | Markdown formatting, comparison entities, URL policy, DOM tag/attribute allowlisting, attack corpus, dense-input robustness, and shared AI-output rendering paths |
+| `tests/playwright/chat-markdown-security.spec.js` | **Playwright** — browser-DOM verification for formatted model output, blocked tags/events/schemes, safe external links, and bounded quote nesting |
 | `tests/test-marker-key-safety.js` | **node** — `safeMarkerId` + `sanitizeMarkerKey` allowlist + proto-pollution rejection (38 assertions) |
 | `tests/test-marker-detail-store.js` | Marker detail mutation boundary: manual values, mirrored insulin notes, ref overrides, marker notes |
 | `tests/test-marker-value-notes.js` | Per-value notes on lab markers: schema defaults, profile migration, sync DELTA_MAPS wiring |

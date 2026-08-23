@@ -55,6 +55,16 @@ For a normal turn, `chat-send.js`:
 
 Stopping aborts the active request and keeps a non-empty partial response with `stopped: true`. The regular action bar then offers **Retry**. Recommendations always persist collapsed; `recNew` supplies a finite attention cue only for the first or materially changed set of recommendation slots.
 
+## Markdown and model-output safety
+
+`markdown.js` is the shared rendering boundary for ordinary chat, restored messages, discussion responses, streamed and saved summaries, Biology Score explanations, and EMF interpretations. Streaming chat text is assigned with `textContent`; only completed output is converted to HTML. Reopening or restoring a message runs its stored text through the same renderer again.
+
+The renderer supports headings, paragraphs, emphasis, inline code, web and email links, blockquotes, lists, tables, horizontal rules, fenced code blocks, and untagged callouts. It does not accept raw HTML. Model-supplied tags and attributes are escaped before the renderer introduces its fixed tags and classes.
+
+Markdown links allow only explicit `http://`, `https://`, and `mailto:` destinations. Generated external anchors receive `noopener noreferrer`; other schemes and whitespace-bearing destinations are neutralized. Inline code and completed anchors are protected from later auto-link processing, preventing links inside code and nested anchors.
+
+Common encoded comparison signs such as `&lt;`, `&gt;`, `&le;`, and `&ge;` are normalized once before escaping so medical thresholds display as `<`, `>`, `≤`, and `≥` without decoding arbitrary HTML. Quote nesting is capped before deeper prefixes are flattened, preventing pathological model output from exhausting the JavaScript call stack.
+
 ## Bounded rendering and scroll ownership
 
 Stored history is not truncated for rendering. `chat-render-range.js` initially exposes the last 120 records and expands backward in 120-record batches. Search can call `revealChatRenderIndex()` to expose a result outside the current window.
@@ -120,7 +130,10 @@ Choose the checks that cover the changed ownership area. Useful focused commands
 
 ```bash
 npm test -- tests/chat-composer.test.js tests/chat-scroll.test.js tests/chat-render-window.test.js
+npm test -- tests/markdown-security-runtime.test.js
+node tests/test-markdown.js
 npm test -- tests/chat-personality-merge.test.js tests/chat-storage-safety.test.js
+npx playwright test tests/playwright/chat-markdown-security.spec.js --workers=1
 npx playwright test tests/playwright/chat-composer.spec.js tests/playwright/chat-message-edit.spec.js
 npx playwright test tests/playwright/chat-accessibility-polish.spec.js tests/playwright/custom-personality-dom.spec.js
 npm run typecheck:checkjs

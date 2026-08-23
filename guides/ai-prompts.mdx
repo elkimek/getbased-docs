@@ -107,8 +107,13 @@ For example, a marker action starts with a message shaped like:
 Tell me about my {marker name} results.
 Values: {dated values and units}.
 Current status: {status}.
-What does this mean and should I be concerned about anything?
+What matters most, what does this mean, and should I be concerned?
+Lead with the main takeaway and keep range comparisons brief.
 ~~~
+
+The AI is asked to begin with one useful interpretation, not a list of every possible range. The range paired with the current status is its starting frame. If a supplied reference interval and optimal band lead to meaningfully different conclusions, it can summarize that difference in one sentence. It should bring in another published threshold only when you ask about alternatives or when the difference materially changes a safety-relevant interpretation.
+
+An outside number is not treated as a special “model range.” With Web or a Knowledge Base source available, the AI is asked to identify the source and relevant population or purpose. Without a verifiable source, it should keep remembered thresholds secondary and make the uncertainty clear.
 
 Other app-written messages cover correlations, Genome findings, recommendations, Biology Score coverage, supplement evidence, Light Audit comparisons, and EMF follow-up.
 
@@ -238,7 +243,7 @@ AI has different responsibilities in different features:
 - **Chat and interpretations** return model-written explanations. They are not independently fact-checked.
 - **Imports** return structured candidates that getbased parses, normalizes, and shows for review before saving.
 - **Short dots and verdicts** accept only known display values and limit output length, but their wording is still AI-generated.
-- **Biology Scores, calculated markers, reference ranges, and Light dose calculations** come from fixed calculations or stored source data. AI can explain them, but it does not calculate or redefine them.
+- **Biology Scores, calculated markers, displayed ranges and statuses, and Light dose calculations** come from fixed calculations or stored source data. AI can explain them and may compare them with clearly labeled external guidance, but it does not change what the app calculated or displayed.
 
 If an import or verdict response is missing the fields getbased expects, it normally fails, falls back to a neutral state, or stays out of saved data. A valid-looking answer can still be factually wrong, so review important results.
 
@@ -253,6 +258,9 @@ If an import or verdict response is missing the fields getbased expects, it norm
   </Accordion>
   <Accordion title="Does Ask AI use a hidden extra prompt?">
     It uses the normal chat instruction plus an app-written user message for that action. Most of those messages are visible and editable in the composer. All current templates are listed under [app-written chat messages](/developers/system-prompts-chat#prompt-chat-prefills).
+  </Accordion>
+  <Accordion title="Which marker range does chat use?">
+    Chat starts with the range paired with the status supplied by getbased. It is told to treat that range as a comparison frame rather than universal medical truth. Routine answers should not list every available range. When a lab interval, optimal band, or relevant published threshold changes the takeaway, chat should state the difference briefly and label which frame produced each conclusion. You can always ask for a deeper range or source comparison.
   </Accordion>
   <Accordion title="Can I change the main instruction?">
     The main extraction and analysis instructions are maintained with the app because changes can affect safety, parsing, and compatibility. You can change your message, enabled context, personality, Knowledge Base, web-search setting, provider, and model.
