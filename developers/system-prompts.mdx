@@ -7,8 +7,12 @@ description: "Public inventory, ownership, trust boundaries, and review workflow
 
 This catalog is the public map of developer-controlled AI instructions in getbased. It covers literal system prompts, runtime system fragments, and app-authored task prompts that are deliberately sent in the user role for multimodal or local-model compatibility.
 
+<Info>
+  To start with a button or action in the application, use [Find the request by action](/guides/ai-prompts#find-the-request-by-action). It shows what getbased adds, what data accompanies the request, and links directly to the readable prompt text below.
+</Info>
+
 <Warning>
-  Application source is authoritative. Prompt text shown in this catalog is normalized for readability: runtime values are replaced with `{placeholders}` and shared fragments are named once. A prompt change is incomplete until the source, this catalog, and directly related tests agree.
+  Application source is authoritative. The detail pages distinguish literal prompts from normalized templates. Normalized text preserves the maintained wording and order while replacing runtime values with `{placeholders}` and naming shared fragments once. A prompt change is incomplete until the source, this catalog, and directly related tests agree.
 </Warning>
 
 ## Browse the catalog
@@ -35,19 +39,20 @@ Included:
 - every non-empty `system` value supplied to the shared AI router;
 - system-prompt fragments appended at runtime;
 - developer-authored task instructions sent as user-role content;
+- app-authored chat-message templates that an explicit UI action prefills or sends;
 - automatic continuation and discussion messages that the app inserts;
 - dynamic prompt contracts whose rendered text depends on schemas, marker catalogs, allowlists, or selected context.
 
 Excluded:
 
 - a user's own chat message;
-- visible, editable suggestion buttons and prefilled questions;
+- the user's own text, including edits they make to an app-authored starting message;
 - provider capability probes such as the one-token `hi` request;
 - voice transcription and speech-synthesis payloads, which send audio or text plus model, language, and voice settings but no developer prompt;
 - transport formatting that only maps the same instruction to a provider API;
 - deterministic scoring formulas, schemas, and context data that do not instruct a model.
 
-Visible **Ask AI** templates for markers, correlations, recommendations, Genome findings, and Biology Score coverage inherit the normal chat system prompt. They are user messages rather than separate privileged instructions.
+Visible **Ask AI** and chat-shortcut templates inherit the normal chat system prompt. They are cataloged under `chat.prefills` as user messages rather than separate privileged instructions.
 
 ## Complete registry
 
@@ -59,6 +64,7 @@ Visible **Ask AI** templates for markers, correlations, recommendations, Genome 
 | `chat.discussion` | Initial, rebuttal, and joining-persona turns | Automatic user messages | [`js/chat-discussion-round-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-prompts.js) |
 | `chat.persona-generator` | Custom personality draft | System + narrow user request | [`js/chat-personalities.js`](https://github.com/elkimek/get-based/blob/main/js/chat-personalities.js) |
 | `chat.summary` | Saved consultation summary | System | [`js/chat-summaries.js`](https://github.com/elkimek/get-based/blob/main/js/chat-summaries.js) |
+| `chat.prefills` | Explicit Ask AI actions and chat shortcuts | Editable or explicitly triggered user message | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js), [`js/dna-evidence.js`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.js), and linked callers in the detail page |
 | `lens.rewrite` | Knowledge Base multi-query expansion | System | [`js/lens.js`](https://github.com/elkimek/get-based/blob/main/js/lens.js) |
 | `import.classify` | Lab-report preflight classification | System + task template | [`js/pdf-import-preflight.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.js) |
 | `import.lab-text` | Text report extraction | Dynamic system + report text | [`js/pdf-import.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.js) |

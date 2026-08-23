@@ -11,6 +11,102 @@ getbased does not send every AI feature the same generic instruction. Chat, repo
   The public [system prompt catalog](/developers/system-prompts) lists every developer-controlled instruction family, including prompts that are sent as user-role task instructions for multimodal or local-model compatibility.
 </Info>
 
+## Find the request by action
+
+Use this section to answer: “When I do this in the application, what instruction does getbased send on my behalf?” Each prompt link opens the readable application-authored text. Runtime profile values, report contents, measurements, and user-written text appear as `{placeholders}` rather than exposing anyone's data.
+
+<Tip>
+  **Exact** means the displayed sentences are literal source text. **Normalized** means the instruction is assembled at runtime; the documentation preserves its wording and order while replacing dynamic values or a named shared block with placeholders.
+</Tip>
+
+### When you send a chat message
+
+getbased does not silently rewrite the message you typed. It builds this request around it:
+
+~~~text
+SYSTEM
+{chat.base — the maintained base system prompt}
+{one applicable web/private-mode hint}
+
+Current lab data:
+{profile context enabled under Insight → Manage → Context}
+{optional Knowledge Base passages selected for this question}
+{optional personality instruction}
+{optional attribution rule for earlier responses from other personalities}
+
+MESSAGES
+{up to the last 30 conversation messages}
+user: {the exact message you sent}
+~~~
+
+If you attach images, the last user message becomes a provider-compatible multimodal message containing those images and the same typed text. If a response reaches its output limit, the app may add the separately documented continuation message.
+
+<AccordionGroup>
+  <Accordion title="Chat, personalities, and Knowledge Base">
+
+| What you do | Application-authored instruction | Data added |
+|---|---|---|
+| Send a message you wrote | [`chat.base`](/developers/system-prompts-chat#prompt-chat-base) plus [`chat.context`](/developers/system-prompts-chat#prompt-chat-context) | Enabled profile context, optional Knowledge Base passages, recent thread, attachments, and your exact message |
+| Choose **Ask AI** or an in-app chat shortcut | [`chat.prefills`](/developers/system-prompts-chat#prompt-chat-prefills), followed by normal chat | The exact or parameterized app-authored user message shown in the catalog, plus normal chat context |
+| Let a cut-off answer continue | [`chat.continue`](/developers/system-prompts-chat#prompt-chat-continue) | The existing request plus one automatic continuation message |
+| Run a multi-persona discussion | [`chat.discussion`](/developers/system-prompts-chat#prompt-chat-discussion) | The same chat system/context plus automatic initial, rebuttal, or joining-persona task text |
+| Generate a custom personality draft | [`chat.persona-generator`](/developers/system-prompts-chat#prompt-chat-persona-generator) | The person, character, archetype, or style you entered; no profile context |
+| Create a saved consultation summary | [`chat.summary`](/developers/system-prompts-chat#prompt-chat-summary) | The bounded conversation transcript |
+| Use the Knowledge Base / Interpretive Lens | [`lens.rewrite`](/developers/system-prompts-chat#prompt-lens-rewrite), followed by normal chat | Your question is expanded into retrieval queries; selected passages are then attached to chat context |
+
+Most feature **Ask AI** actions fill the composer so you can inspect or edit the message before sending. A small set of explicit chat shortcuts sends its documented question immediately after the click. Neither path introduces another hidden system prompt; both use the normal chat request above.
+  </Accordion>
+
+  <Accordion title="Reports, photos, products, and privacy">
+
+| What you do | Application-authored instruction | Data added |
+|---|---|---|
+| Drop a PDF lab report | [`import.classify`](/developers/system-prompts-imports#prompt-import-classify), then [`import.lab-text`](/developers/system-prompts-imports#prompt-import-lab-text) | A bounded report snippet for classification, then prepared report text, marker catalog, date rules, and reused custom keys |
+| Import photographed report pages | [`import.lab-image`](/developers/system-prompts-imports#prompt-import-lab-image) | Bounded page images, filename when present, marker catalog, and extraction rules |
+| Let import infer collection time or fasting | [`import.collection-context`](/developers/system-prompts-imports#prompt-import-collection-context) | Only statements found in the report; this fragment is part of lab extraction |
+| Use compatible local-model PII rewriting | [`privacy.local-pii`](/developers/system-prompts-imports#prompt-privacy-local-pii) | Prepared report text sent only to the configured compatible endpoint for this step |
+| Review supplement/medication photos or a product page | [`import.supplement`](/developers/system-prompts-imports#prompt-import-supplement) | Up to four selected images or bounded product-page text; the result opens as a review draft |
+| Review a light-device photo or product page | [`import.light-device`](/developers/system-prompts-imports#prompt-import-light-device) | Selected image or bounded product text; extracted specifications require review |
+| Import an EMF assessment PDF | [`import.emf`](/developers/system-prompts-imports#prompt-import-emf) | Prepared PDF text and the EMF output schema |
+  </Accordion>
+
+  <Accordion title="Dashboard, reports, Biology Scores, supplements, and EMF">
+
+| What happens | Application-authored instruction | Data added |
+|---|---|---|
+| Generate the practitioner report overview | [`insight.report-summary`](/developers/system-prompts-insights#prompt-insight-report-summary) | Only sections and profile sources selected in the report builder |
+| Generate or refresh the dashboard Focus Card | [`insight.focus-card`](/developers/system-prompts-insights#prompt-insight-focus-card) | Bounded goals, conditions, flagged markers, changes, supplements, and optional Knowledge Base passages |
+| Refresh stale context-card summaries and dots | [`insight.context-dots`](/developers/system-prompts-insights#prompt-insight-context-dots) | Only the requested stale profile areas and their bounded context |
+| Open an uncached custom marker description | [`insight.marker-description`](/developers/system-prompts-insights#prompt-insight-marker-description) | Marker name and unit only; no profile context |
+| Ask for a Biology Score explanation | [`insight.biology-score`](/developers/system-prompts-insights#prompt-insight-biology-score) | The score already calculated by code, its ranges, coverage, flags, dates, and missing markers |
+| Ask AI to suggest Biology Score context flags | [`insight.biology-context`](/developers/system-prompts-insights#prompt-insight-biology-context) | Bounded profile context; suggestions are allowlisted and require your review |
+| Generate supplement-impact dots | [`insight.supplement-impact`](/developers/system-prompts-insights#prompt-insight-supplement-impact) | Supplement periods and computed before/after marker summaries |
+| Interpret or compare EMF assessments | [`insight.emf`](/developers/system-prompts-insights#prompt-insight-emf) | One assessment or a selected before/after pair |
+  </Accordion>
+
+  <Accordion title="Light & Sun">
+
+| What happens | Application-authored instruction | Data added |
+|---|---|---|
+| Save a supported Light Tool measurement | [`light.measurement`](/developers/system-prompts-light#prompt-light-measurement) | That measurement and its source/quality metadata |
+| Open the daily Light & Sun view with logged data | [`light.today`](/developers/system-prompts-light#prompt-light-today) | Today's sessions, tools, environment, explicit deterministic warnings, trends, and relevant goals |
+| View a room with enough entered data | [`light.room`](/developers/system-prompts-light#prompt-light-room) | That room, associated measurements, timing, source, and quality |
+| Request a completed device-session verdict | [`light.device-session`](/developers/system-prompts-light#prompt-light-device-session) | That session, active mode/firing peaks, modeled doses, distance quality, and safety flags |
+| View a configured screen record | [`light.screen`](/developers/system-prompts-light#prompt-light-screen) | Device type, room, after-sunset hours, tint/blocker settings, and entered habits |
+| Open the seven-day channel review with logged activity | [`light.weekly-pattern`](/developers/system-prompts-light#prompt-light-weekly-pattern) | Current and previous seven-day logged Sun/device patterns |
+| Save a frozen multi-room Light Audit | [`light.audit`](/developers/system-prompts-light#prompt-light-audit) | Snapshot rooms, screens, and measurements within the documented date window |
+| Request a completed Sun-session verdict | [`light.sun-session`](/developers/system-prompts-light#prompt-light-sun-session) | That session's modeled signals, solar phase, MED state, weather/body/eye context, and supplied cautions |
+| Complete Light & Sun setup | [`light.onboarding`](/developers/system-prompts-light#prompt-light-onboarding) | Saved setup answers such as skin-model reference, location, eyewear, and lighting environment |
+| View the indoor-burden summary with mapped rooms/screens | [`light.indoor-burden`](/developers/system-prompts-light#prompt-light-indoor-burden) | Current room/screen screening signals and evidence quality |
+
+Seven of these instructions also insert the exact shared [`light.hardware-guardrails`](/developers/system-prompts-light#prompt-light-hardware-guardrails) block.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Documentation can show the maintained template, but not a future request containing your live private data. The app builds that request at send time. Review the template here and control attached profile sources under **Insight → Manage → Context** before sending.
+</Warning>
+
 ## What makes up an AI request
 
 <Tabs>

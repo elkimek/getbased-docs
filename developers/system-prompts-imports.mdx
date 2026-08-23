@@ -23,6 +23,8 @@ local file classification
   → explicit save
 ~~~
 
+<span id="prompt-import-classify"></span>
+
 ### `import.classify`
 
 | Property | Current behavior |
@@ -34,69 +36,180 @@ local file classification
 | Failure | Returns no classification and lets the existing preflight path continue |
 
 <AccordionGroup>
-  <Accordion title="Classifier instructions">
+  <Accordion title="Exact classifier instructions with runtime report placeholder">
     System:
 
     ~~~text
     You classify lab reports. Respond with ONLY a JSON object, no other text.
     ~~~
 
-    Parameterized user task:
+    User task:
 
     ~~~text
     What type of lab test is this PDF? Look at the header, lab name, and test names.
 
     Respond with ONE of:
-    - {"testType":"blood"} for standard blood panels
-    - {"testType":"OAT"} for organic-acids urine tests
-    - {"testType":"fattyAcids"} for fatty-acid profiles
-    - {"testType":"Metabolomix+"}
-    - {"testType":"DUTCH"}
-    - {"testType":"HTMA"}
-    - {"testType":"GI"}
-    - {"testType":"biostarks","labName":"BioStarks"}
-    - {"testType":"comprehensive","labName":"{identified lab}"}
-    - {"testType":"{descriptive specialty type}"} for other specialty tests
+    - {"testType": "blood"} — standard blood panels: CBC, CMP, BMP, lipid panel, thyroid, hormones, iron studies, liver/kidney panels, vitamins, tumor markers, coagulation, A1C, insulin, PSA. Typically 10–80 markers from a single specimen type.
+    - {"testType": "OAT"} — Organic Acids Tests (urine)
+    - {"testType": "fattyAcids"} — fatty acid profiles
+    - {"testType": "Metabolomix+"} — Genova Metabolomix+
+    - {"testType": "DUTCH"} — dried urine hormone panels
+    - {"testType": "HTMA"} — Hair Tissue Mineral Analysis
+    - {"testType": "GI"} — stool/GI tests
+    - {"testType": "biostarks", "labName": "BioStarks"} — BioStarks laboratory panels (amino acids + fatty acids + minerals + vitamins + hormones + metabolism from dried blood spot)
+    - {"testType": "comprehensive", "labName": "HealthierOne"} — comprehensive or functional medicine panels that combine 100+ markers across multiple test types (blood + urine + other), or reports from labs like HealthierOne, Vibrant Wellness, etc. that go far beyond a standard blood panel. Include the lab/product name if identifiable.
+    - {"testType": "<descriptive name>"} — other specialty tests not listed above
 
-    Include labName when the lab or product is identifiable.
+    Always include "labName" if you can identify the lab or product name from the text (e.g. "HealthierOne", "Vibrant Wellness", "Diagnostic Solutions", "Genova"). Omit if unclear.
 
-    First approximately 2,000 characters:
+    First ~2000 characters of the PDF:
     {report snippet}
     ~~~
   </Accordion>
 </AccordionGroup>
 
+<span id="prompt-import-lab-text"></span>
+<span id="prompt-import-lab-image"></span>
+
 ### `import.lab-text` and `import.lab-image`
 
-Both variants use a dynamic system instruction. The exact marker catalog is rendered at request time, so no static document can reproduce the complete request byte-for-byte.
+Both variants use a dynamic system instruction. The templates below preserve the application wording and replace only runtime-generated material with named `{placeholders}`. The exact marker catalog, regional date branch, and previously used custom keys are rendered at request time, so no static document can reproduce a future request byte-for-byte.
 
 <Tabs>
-  <Tab title="Shared instruction">
+  <Tab title="Text system template">
     ~~~text
-    You are a lab report data extraction assistant. Extract biomarker results and map them to the supplied key|English name|expected unit catalog.
+    You are a lab report data extraction assistant. You extract biomarker results from lab report text and map them to a known set of marker keys.
 
+    Known markers are listed as key|English name|expected unit. Reference ranges must come from the report, never this list:
     {current compact marker catalog}
 
-    - Translate non-English test names to their English medical equivalent for matching.
-    - Return standard English unit abbreviations.
-    - Take reference ranges only from the report, never the marker catalog.
-    - Return the sample-collection date as YYYY-MM-DD.
-    - Apply {regional ambiguous-date guidance}.
-    - Apply {IMPORT_COLLECTION_CONTEXT_PROMPT}.
-    - Parse decimal commas.
-    - Preserve the detection-limit number for "< X" or "> X".
-    - Keep rawName exactly as shown.
-    - Match by medical/biochemical equivalence, units, reference range, assay, and specimen type.
-    - Keep hs-CRP separate from ordinary CRP and separate distinct testosterone assays.
-    - Never map a urine-prefixed row to a serum/plasma/blood marker.
-    - Include every numeric result. Unknown results use mappedKey:null plus a proposed custom key/name/category.
-    - Put each fatty-acid product in one product-specific category.
-    - Keep specialty-test markers out of standard blood categories, except the documented BioStarks hybrid fields.
-    - Return only the expected JSON object.
+    IMPORTANT — The lab report may contain test names in Bulgarian, Czech, German, Russian, Ukrainian, or other languages. Before matching, translate every non-English test name into its English medical equivalent. For example: "Креатинин" → "Creatinine", "Урея" → "Urea", "Мочевая кислота" → "Uric Acid", "АСТ" → "AST", "Glukóza" → "Glucose". Use the English name when searching the known markers list.
+    IMPORTANT — Use English unit abbreviations only. Do not use Cyrillic or localized unit names, replace them with English instead.
+    Examples:
+    - Enzyme activity: U/L (not Ед/л)
+    - Micromoles per liter: µmol/l (not мкмоль/л)
+    - Millimoles per liter: mmol/l (not ммоль/л)
+    - Milligrams per deciliter: mg/dl
+    - Grams per liter: g/l
+    - Microkatals per liter: µkat/l
+
+    Don't limit yourself just to the examples and languages provided. Always translate the unit names into the English equivalent.
+
+    Your task:
+    1. Find the sample collection date in the text. Return it as YYYY-MM-DD. Look for dates near keywords like "collection", "collected", "date", "odběr", "datum", or similar in any language.
+    {one regional ambiguous-date instruction}
+    {import.collection-context — the exact shared fragment below}
+    2. For each biomarker result found in the text, extract:
+       - rawName: the test name exactly as it appears in the PDF
+       - value: the numeric result (parse comma as decimal point). For "< X" or "> X" results, use X as the value (the detection limit) — these are still clinically meaningful for trend tracking
+       - mappedKey: the matching key from the known markers list (e.g. "biochemistry.glucose"), or null if no match
+       - unit: standard English unit abbreviation (e.g., "µg/l", "nmol/l", "U/l", "mg/dl"). Translate all localized or Cyrillic units (like "мкг/л", "нмоль/л", "МЕ/л") to their English equivalents. Never use localized units.
+       - refMin: the lower reference range bound EXACTLY as printed on the PDF (number or null). Do NOT copy from the known markers list above — extract from the actual PDF text
+       - refMax: the upper reference range bound EXACTLY as printed on the PDF (number or null). Do NOT copy from the known markers list above — extract from the actual PDF text
+    3. Match based on medical/biochemical equivalence, not just string similarity. For example:
+       - "Glukóza" → "biochemistry.glucose" (Czech for glucose)
+       - "BUN" or "Blood Urea Nitrogen" → "biochemistry.urea"
+       - "Triacylglyceroly" → "lipids.triglycerides"
+       - "Trombokrit" / "Plateletcrit" / "PCT" (hematology) → "hematology.pct"
+       - CRP: "hs-CRP" / "hsCRP" / "high-sensitivity CRP" / "vysoce senzitivní CRP" → "proteins.hsCRP". Plain "CRP" / "S-CRP" / "C-reaktívny proteín" → "proteins.crp". These are different assays — do not merge them
+       - Testosterone: "Testosterone", "Free Testosterone" and "Bioactive Testosterone" are also different assays — do not merge them either.
+       - Some similar assays might come in both quantitative and percentage measurement (e.g. Bioactive Testosterone and Bioactive Testosterone Percentage). If they do appear in pair, treat them as separated assays, do not skip any.
+       - Use the units and reference ranges to help disambiguate
+       - IMPORTANT: Many labs prefix marker names with specimen type codes: S- (serum), P- (plasma), B- (blood), U- (urine), fS- (fasting serum), USED- (urine sediment), F- (fecal), FW (sedimentation). Strip these prefixes when matching to known markers. Keep them in rawName for reference
+       - Do NOT map urine-prefixed rows to serum/plasma/blood markers. Example: "S Celk.bílkovina" is serum Total Protein → "proteins.totalProtein", but "U Celková bílkovina" is urine total protein and must be a separate urine marker, not "proteins.totalProtein"
+    4. Only map to a marker if you're confident it's the correct match
+    5. For differential WBC: only map absolute count values (marked with # or abs.) to the # markers; percentage values go to the Pct markers
+    6. Skip non-numeric results (text-only findings, interpretive notes). But EVERY numeric result MUST be included — if it doesn't match a known key, set mappedKey to null and provide suggestedKey/suggestedName/suggestedCategoryLabel. Never silently drop a numeric marker
+    7. Identify the type of lab test this PDF represents. Return as "testType" field:
+       - "blood" for standard blood panels (CBC, metabolic, lipids, hormones, etc.)
+       - "OAT" for Organic Acids Tests (Mosaic, Genova, Great Plains)
+       - "Metabolomix+" for Genova Metabolomix+ profiles (combo: organic acids + amino acids + fatty acids)
+       - "fattyAcids" for standalone fatty acid profile tests. Identify the specific product/lab:
+         * Spadia Lab → ALL markers use category prefix "spadiaFA" (e.g., "spadiaFA.epaC20_5"), suggestedCategoryLabel "Spadia", suggestedGroup "Fatty Acids"
+         * ZinZino BalanceTest → ALL markers use category prefix "zinzinoFA" (e.g., "zinzinoFA.epaC20_5"), suggestedCategoryLabel "ZinZino", suggestedGroup "Fatty Acids"
+         * OmegaQuant (Basic/Plus/Complete) → ALL markers use category prefix "omegaquantFA" (e.g., "omegaquantFA.epaC20_5"), suggestedCategoryLabel "OmegaQuant", suggestedGroup "Fatty Acids"
+         * Other fatty acid labs → ALL markers use labNameFA prefix, suggestedCategoryLabel = lab name, suggestedGroup "Fatty Acids"
+         IMPORTANT: Put ALL markers from one test into ONE category (the product prefix). Do NOT split by fatty acid type (omega-3, omega-6, saturated, etc.) — those are subsections in the report, not separate categories. Do NOT use the generic "fattyAcids" prefix
+       - "DUTCH" for dried urine hormone panels
+       - "HTMA" for Hair Tissue Mineral Analysis
+       - "GI" for stool tests (GI-MAP, Gut Zoomer)
+       - "biostarks" for BioStarks laboratory panels (dried blood spot: amino acids, fatty acids, intracellular minerals, vitamins, hormones, metabolism). BioStarks is a HYBRID test — map standard blood markers (glucose, lipids, testosterone, creatinine, ferritin, vitamin D, B12, vitamin A, copper, HbA1c) to their normal standard keys. Map amino acids to biostarksAmino.* keys, BioStarks fatty acids to biostarksFA.* keys, intracellular minerals (µg/gHb) to biostarksMineral.* keys, cortisol/T:C ratio to biostarksHormone.* keys, and vitamin E to biostarksVitamin.* keys — all from the known markers list
+       - Or a descriptive name for other specialty tests
+    8. CRITICAL for specialty tests (testType ≠ "blood"): You MUST NOT set mappedKey to any standard blood work category key (biochemistry, hormones, electrolytes, lipids, iron, proteins, thyroid, vitamins, diabetes, tumorMarkers, coagulation, hematology, differential, boneMetabolism) or "fattyAcids". Even if a marker name matches (e.g., "Creatinine" in a urine OAT test is NOT "biochemistry.creatinine" which is serum). Even if "fattyAcids.*" keys exist in the known markers list, do NOT match to them — always create new product-specific keys. Always use test-type-prefixed keys from the reference list (oatMicrobial, oatMetabolic, etc.) or set mappedKey to null so it becomes a new custom marker. Different specimen types = different markers.
+       EXCEPTION — BioStarks (testType "biostarks"): This is a hybrid test containing both standard blood markers AND specialty markers. DO map its standard blood markers (glucose, lipids, testosterone, creatinine, ferritin, vitamin D, B12, vitamin A, copper, HbA1c) to standard category keys. Only use biostarks-prefixed keys for amino acids, BioStarks fatty acids, intracellular minerals (µg/gHb), cortisol, T/C ratio, and vitamin E.
+    9. For markers that do NOT match any known key (mappedKey is null), also return:
+       - suggestedKey: a "category.camelCaseKey" string. For specialty tests (testType ≠ "blood"), ALWAYS use a test-type-prefixed category (e.g., "oatNutritional", "dutchHormones"). Never use standard blood work categories for specialty test markers. The key part should be a concise camelCase identifier. NEVER use a suggestedKey that already exists in the known markers list above.
+       - suggestedName: a clean English display name for the marker
+       - suggestedCategoryLabel: short category label (e.g., "Microbial Overgrowth")
+       - suggestedGroup: test type group (e.g., "OAT", "DUTCH", "HTMA", "Fatty Acids") — omit for standard blood work
+    10. FATTY ACID TESTS: ALL markers from one test go into ONE category using the product prefix. Example for OmegaQuant: every marker (EPA, DHA, Palmitic, Oleic, Trans Fat Index, AA:EPA ratio — everything) uses suggestedKey "omegaquantFA.markerName", suggestedCategoryLabel "OmegaQuant", suggestedGroup "Fatty Acids". Do NOT create subcategories like "Omega-3 Fatty Acids" or "Saturated Fatty Acids" — those are report sections, not categories.
+
+    Return ONLY valid JSON in this exact format, no other text:
+    {
+      "testType": "blood",
+      "date": "YYYY-MM-DD",
+      "sampleTime": "08:30",
+      "fasting": true,
+      "markers": [
+        {"rawName": "Test Name", "value": 5.23, "mappedKey": "category.marker", "unit": "mg/dL", "refMin": 70, "refMax": 100},
+        {"rawName": "Unknown Test", "value": 1.0, "mappedKey": null, "suggestedKey": "oatMicrobial.someMarker", "suggestedName": "Some Marker", "suggestedCategoryLabel": "Microbial Overgrowth", "suggestedGroup": "OAT", "unit": "mg/l", "refMin": 0.5, "refMax": 3.0},
+        {"rawName": "EPA C20:5", "value": 0.46, "mappedKey": null, "suggestedKey": "omegaquantFA.epaC20_5", "suggestedName": "EPA C20:5", "suggestedCategoryLabel": "OmegaQuant", "suggestedGroup": "Fatty Acids", "unit": "%", "refMin": null, "refMax": null}
+      ]
+    }
+
+    {when applicable: the exact previously used marker-key reuse instruction and key list}
     ~~~
   </Tab>
-  <Tab title="Text variant">
-    The text variant receives extracted, de-identified report text in one user message:
+  <Tab title="Image system template">
+    ~~~text
+    You are a lab report data extraction assistant. You extract biomarker results from lab report images and map them to a known set of marker keys.
+
+    Known markers are listed as key|English name|expected unit. Reference ranges must come from the report, never this list:
+    {current compact marker catalog}
+
+    IMPORTANT — The lab report may contain test names in Bulgarian, Czech, German, Russian, Ukrainian, or other languages. Before matching, translate every non-English test name into its English medical equivalent. For example: "Креатинин" → "Creatinine", "Урея" → "Urea", "Мочевая кислота" → "Uric Acid", "АСТ" → "AST", "Glukóza" → "Glucose". Use the English name when searching the known markers list.
+    IMPORTANT — Use English unit abbreviations only. Do not use Cyrillic or localized unit names, replace them with English instead.
+    Examples:
+    - Enzyme activity: U/L (not Ед/л)
+    - Micromoles per liter: µmol/l (not мкмоль/л)
+    - Millimoles per liter: mmol/l (not ммоль/л)
+    - Milligrams per deciliter: mg/dl
+    - Grams per liter: g/l
+    - Microkatals per liter: µkat/l
+
+    Don't limit yourself just to the examples and languages provided. Always translate the unit names into the English equivalent.
+
+    Your task:
+    1. Read the lab report page images carefully. Find the sample collection date. Return it as YYYY-MM-DD.
+    {one regional ambiguous-date instruction}
+    {import.collection-context — the exact shared fragment below}
+    2. For each biomarker result found, extract:
+       - rawName: the test name exactly as it appears
+       - value: the numeric result (parse comma as decimal point). For "< X" or "> X" results, use X as the value (the detection limit) — these are still clinically meaningful for trend tracking
+       - mappedKey: the matching key from the known markers list (e.g. "biochemistry.glucose"), or null if no match
+       - unit: standard English unit abbreviation (e.g., "µg/l", "nmol/l", "U/l", "mg/dl"). Translate all localized or Cyrillic units (like "мкг/л", "нмоль/л", "МЕ/л") to their English equivalents. Never use localized units.
+       - refMin: the lower reference range bound EXACTLY as printed on the report (number or null). Do NOT copy from the known markers list above
+       - refMax: the upper reference range bound EXACTLY as printed on the report (number or null). Do NOT copy from the known markers list above
+    3. Match based on medical/biochemical equivalence, not just string similarity. "hs-CRP"/"hsCRP" → "proteins.hsCRP", plain "CRP" → "proteins.crp" (different assays). Strip specimen-type prefixes (S-, P-, B-, U-, fS-, USED-, F-, FW) when matching — keep in rawName. Do NOT map urine-prefixed rows to serum/plasma/blood markers; "U Celková bílkovina" is urine total protein, not serum Total Protein.
+    4. Only map to a marker if you're confident it's the correct match
+    5. Identify the type of lab test. Return as "testType" field: "blood", "OAT", "fattyAcids", "biostarks", "DUTCH", "HTMA", "GI", or a descriptive name. For fatty acid tests: put ALL markers into ONE product-specific category — spadiaFA (Spadia), zinzinoFA (ZinZino), omegaquantFA (OmegaQuant), or labNameFA. Use suggestedCategoryLabel = product name, suggestedGroup = "Fatty Acids". Do NOT split by fatty acid type (omega-3/omega-6/saturated/trans). For BioStarks: map standard blood markers to standard keys, amino acids to biostarksAmino.*, fatty acids to biostarksFA.*, intracellular minerals (µg/gHb) to biostarksMineral.*, cortisol/T:C ratio to biostarksHormone.*, vitamin E to biostarksVitamin.*
+    6. CRITICAL for specialty tests (testType ≠ "blood"): Do NOT use standard blood work category keys. Use test-type-prefixed keys or set mappedKey to null. EXCEPTION: BioStarks (testType "biostarks") is hybrid — DO map its standard blood markers to standard keys
+    7. EVERY numeric result MUST be included — never silently drop a marker. If it doesn't match a known key, set mappedKey to null and provide suggestedKey, suggestedName, suggestedCategoryLabel, suggestedGroup
+
+    Return ONLY valid JSON in this exact format:
+    {
+      "testType": "blood",
+      "date": "YYYY-MM-DD",
+      "sampleTime": null,
+      "fasting": null,
+      "markers": [
+        {"rawName": "Test Name", "value": 5.23, "mappedKey": "category.marker", "unit": "mg/dL", "refMin": 70, "refMax": 100}
+      ]
+    }
+    ~~~
+  </Tab>
+  <Tab title="Task messages">
+    Text report:
 
     ~~~text
     Extract all biomarker results from this lab report (file: {optional filename}):
@@ -104,40 +217,37 @@ Both variants use a dynamic system instruction. The exact marker catalog is rend
     {report text}
     ~~~
 
-    It also appends previously used profile marker keys when available so repeated imports can reuse the same custom mapping.
-  </Tab>
-  <Tab title="Image variant">
-    The image variant receives bounded page images followed by:
+    Image report, after the bounded page images:
 
     ~~~text
     Extract all biomarker results from this lab report (file: {optional filename}). Read every page carefully.
     ~~~
-
-    Its system prompt is shorter than the text variant but retains the same date, unit, reference-range, specimen, specialty-test, and “include every numeric result” invariants.
   </Tab>
-  <Tab title="Output contract">
-    ~~~json
-    {
-      "testType": "blood",
-      "date": "YYYY-MM-DD",
-      "sampleTime": "08:30",
-      "fasting": true,
-      "markers": [
-        {
-          "rawName": "Test Name",
-          "value": 5.23,
-          "mappedKey": "category.marker",
-          "unit": "mg/dL",
-          "refMin": 4.0,
-          "refMax": 6.0
-        }
-      ]
-    }
+  <Tab title="Runtime fragments">
+    When a profile country is available:
+
+    ~~~text
+    IMPORTANT — the user's region is {country}. Disambiguate ambiguous numeric dates like "12/7/2025" using the format common to that region (US, Philippines = MM/DD/YYYY; UK, EU, India, Australia, most of Canada = DD/MM/YYYY). Do not assume MM/DD by default.
+    ~~~
+
+    Without a profile country:
+
+    ~~~text
+    IMPORTANT — for ambiguous numeric dates like "12/7/2025", look for context (other dates, a printed format like "DD/MM/YYYY" in the report header, or month names elsewhere) before deciding. Do not assume MM/DD by default — most of the world uses DD/MM/YYYY.
+    ~~~
+
+    When the profile has marker keys from earlier imports, the text prompt appends:
+
+    ~~~text
+    IMPORTANT — These marker keys were used in previous imports for this profile. Reuse them for the same biomarkers to ensure consistency:
+    {previously used marker keys}
     ~~~
   </Tab>
 </Tabs>
 
 The router requests JSON mode/schema where supported, disables reasoning output for this task, uses zero temperature, detects truncation, normalizes fields, and opens an import preview. See [`IMPORT_JSON_SCHEMA`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.js) and the [marker mapping pipeline](https://github.com/elkimek/get-based/blob/main/js/pdf-import-marker-mapping.js).
+
+<span id="prompt-import-collection-context"></span>
 
 ### `import.collection-context`
 
@@ -156,27 +266,29 @@ This shared system fragment is inserted into text and image extraction:
 - Mapping rules include named languages, products, and assay examples; evaluations should cover unlisted languages and labs without treating the examples as exhaustive.
 - A filename is included when available and must not be treated as clinical evidence.
 
+<span id="prompt-privacy-local-pii"></span>
+
 ## `privacy.local-pii`
 
 This task runs only against the configured eligible local model. It is sent entirely as a user message rather than a system message.
 
 <AccordionGroup>
-  <Accordion title="Current local PII task prompt">
+  <Accordion title="Exact local PII task with runtime report placeholder">
     ~~~text
     TASK: Replace ONLY personal identifiers in this lab report. Output the FULL text with minimal changes.
 
     REPLACE these with fake data:
     - Patient names → fictional names
     - Dates of birth → fictional dates in the same format
-    - Birth numbers → random numbers in the same format
+    - Birth numbers (e.g. 850115/1234) → random numbers in same format
     - Addresses → fictional addresses
     - Phone numbers → random phone numbers
     - Emails → fictional emails
     - Doctor names → fictional doctor names
     - Patient IDs → random numbers
 
-    DO NOT CHANGE:
-    - Collection dates, sample dates, and report dates
+    DO NOT CHANGE (copy exactly as-is):
+    - Collection dates, sample dates, and report dates — these are critical. Only dates of birth should change
     - ALL "=== Page N ===" headers
     - ALL lab test names, numeric values, units, reference ranges
     - ALL line structure and formatting
@@ -195,6 +307,8 @@ The app compares the returned text with the original, checks sensitive values an
   “Replace” is not the same as guaranteed anonymization. Unusual identifiers can survive, and fabricated replacements can still be identifying by coincidence. This feature remains a review aid.
 </Note>
 
+<span id="prompt-import-supplement"></span>
+
 ## `import.supplement`
 
 One shared schema prompt is used in two positions:
@@ -205,106 +319,125 @@ One shared schema prompt is used in two positions:
 | Product page | System | Fetched, stripped, bounded page text plus deterministic page facts |
 
 <AccordionGroup>
-  <Accordion title="Normalized supplement extraction contract">
+  <Accordion title="Exact image and product-page wrappers">
+    Label photos place the following sentence before the shared extraction prompt in the multimodal user message:
+
     ~~~text
-    Return ONLY one JSON object:
-    {
-      product, genericName, brand,
-      type: "supplement|medication|null",
-      dosageForm, route, servingSize, labelDirections,
-      ingredients: [{name, amountValue, amountUnit, basis, confidence}],
-      inactiveIngredients: [...],
-      qualityTests: [{
-        category, analyte, canonicalAnalyte, resultText, comparator,
-        value, unit, basis, declaredText, limitText, method, status, confidence
-      }],
-      warnings: [...],
-      confidence
-    }
+    These images may show a front label, Supplement Facts, OTC Drug Facts, prescription label, or directions. Reconcile facts across all images.
+    ~~~
 
-    Understand the source in its original language and script. Preserve names and source wording; do not translate names. Extract only visible facts. Never invent a personal dose or schedule. Keep label directions separate from personal use.
+    Product-page extraction places the following sentence before the shared extraction prompt in the system position:
 
-    Classification is mandatory:
-    - ingredients contains only deliberately formulated active dietary or medicinal ingredients;
-    - inactiveIngredients contains excipients and non-active formulation substances;
-    - every certificate-of-analysis or laboratory result belongs only in qualityTests;
-    - a tested analyte is not evidence that it was intentionally added;
-    - exclude barcodes, package count, price, stock, and expiry metadata;
-    - ignore patient-identifying text;
-    - use null when a fact is absent.
+    ~~~text
+    Extract supplement or medication label facts from the supplied product page.
+    ~~~
+  </Accordion>
+  <Accordion title="Exact shared supplement extraction prompt">
+    ~~~text
+    Return ONLY one JSON object using this schema:
+    {"product":"","genericName":"","brand":"","type":"supplement|medication|null","dosageForm":"capsule/tablet/liquid/etc or null","route":"oral/topical/inhaled/injection/etc or null","servingSize":{"value":null,"unit":"capsule/tablet/mL/etc"},"labelDirections":"verbatim label meaning, concise","ingredients":[{"name":"formulated active ingredient only","amountValue":null,"amountUnit":"mg/mcg/g/mL/IU/CFU/%/mmol/mEq/units or source unit","basis":"per serving","confidence":0.0}],"inactiveIngredients":["excipient, filler, coating, capsule material, flavor, color, sweetener, or other non-active ingredient"],"qualityTests":[{"category":"contaminant|potency|microbiology|identity|other","analyte":"tested substance or organism exactly as shown","canonicalAnalyte":"language-independent canonical name for grouping, e.g. lead, cadmium, mercury, arsenic, or the original name if unknown","resultText":"exact reported result such as ND, NQ, < 0.01, 98 mg, negative, or pass","comparator":"<|<=|>|>=|=|ND|NQ or empty","value":null,"unit":"reported measurement unit or empty","basis":"per capsule, per serving, mg/kg, CFU/g, matrix, or empty","declaredText":"label claim if this is a potency comparison","limitText":"specification or regulatory limit if explicitly shown","method":"test method if shown","status":"pass|fail|not-detected|not-quantified|negative|reported|unknown","confidence":0.0}],"warnings":[],"confidence":0.0}
+    Understand the source in its original language and script. Preserve product, brand, ingredient, direction, warning, analyte, and result wording in that script; do not translate names. Extract only facts visible in the supplied source. Never invent a personal dose or schedule. Keep product label directions separate from personal use.
+    Classification is mandatory: ingredients contains only substances deliberately formulated as active dietary or medicinal ingredients. Put excipients and other non-active formulation substances in inactiveIngredients. Put every certificate-of-analysis or laboratory result—including potency verification, heavy metals, contaminants, microbes, allergens, identity/purity tests, ND/NQ values, and pass/fail results—only in qualityTests, never in ingredients. A tested analyte is not evidence that it was intentionally added. Exclude product metadata such as barcodes/EAN/GTIN/SKU, package count, price, stock, and expiry dates from all three lists. Ignore names, prescription numbers, pharmacy details, addresses and other patient-identifying text. Use null when a fact is not present.
     ~~~
   </Accordion>
 </AccordionGroup>
 
 The review draft separates deterministic page facts from AI-inferred fields and requires user confirmation before save.
 
+<span id="prompt-import-light-device"></span>
+
 ## `import.light-device`
 
 The same instruction is a system prompt for fetched product-page text and a multimodal user task for a device-label photo.
 
 <AccordionGroup>
-  <Accordion title="Normalized light-device extraction contract">
+  <Accordion title="Exact light-device extraction prompt">
     ~~~text
-    Extract light therapy device specs. Reply with ONLY JSON:
+    Extract light therapy device specs from this product page. Reply with ONLY JSON:
     {
-      brand, model,
-      type: "uvb|uva|combined|pbm-targeted|sad|dawn-sim|full-spectrum",
-      peakWavelengths,
-      mwPerCm2At15cm,
-      recommendedDistanceCm,
-      irradianceBasis,
-      irradianceByDistanceCm,
-      distanceModel,
-      peakShares,
-      peakShareBasis,
-      melanopicDER,
-      melanopicEdiLux,
-      melanopicBasis,
-      lux,
-      channelGroups,
-      modes,
-      coupling,
-      notes
+      "brand": "manufacturer name",
+      "model": "model name",
+      "type": "uvb|uva|combined|pbm-targeted|sad|dawn-sim|full-spectrum",
+      "peakWavelengths": [numbers in nm e.g. 660, 850],
+      "mwPerCm2At15cm": number or null (the irradiance value; field is legacy-named — store the vendor's reading at whatever distance they publish),
+      "recommendedDistanceCm": number or null (the distance at which the manufacturer measured the irradiance above — typically 15-30 cm; some COB devices recommend 50+ cm. Convert inches to cm: 6 in ≈ 15 cm, 12 in ≈ 30 cm, 20 in ≈ 50 cm),
+      "irradianceBasis": "vendor-claim|measured-radiometer|measured-spectrometer|unknown",
+      "irradianceByDistanceCm": null OR [{"distanceCm": number, "mwPerCm2": number}, ...] (only readings explicitly stated by the source),
+      "distanceModel": "point-source" only if the source explicitly describes point-source/inverse-square behavior, otherwise "reference-only",
+      "peakShares": null OR [fractions matching peakWavelengths] (only when the source gives a per-band power split; never infer a UV share from total panel irradiance),
+      "peakShareBasis": "vendor-band-split|measured-band-split" or null,
+      "melanopicDER": number or null (only when explicitly stated),
+      "melanopicEdiLux": number or null (direct eye-level melanopic EDI in lux, only when explicitly stated),
+      "melanopicBasis": "vendor-claim|measured-spectrum" or null,
+      "lux": number or null (only for SAD / dawn lamps),
+      "channelGroups": null OR [{"id": "kebab-case-id", "label": "human label", "peaks": [subset of peakWavelengths]}, ...],
+      "modes": null OR [{"id": "kebab-case-id", "label": "human label", "groups": [groupIds], "default": true on the most common preset}, ...],
+      "coupling": null OR [{"if": "groupId", "requires": ["otherGroupId"], "reason": "vendor-stated reason — quote if possible"}],
+      "notes": "short description"
     }
 
-    Use only explicitly stated measurements, modes, group wiring, coupling, and spectral shares. A hybrid panel's total irradiance is not UV irradiance. Use inverse-square behavior only when the source explicitly describes a point source. Use null for fields not found. Do not invent an all-on mode, coupling, measurements, or spectral shares.
+    Type guide:
+    - uvb: emits UVB (270-320 nm) — vitamin D capable, may also have other bands
+    - uva: emits UVA (320-400 nm) but no UVB
+    - combined: red + near-IR panel (660 + 850 nm typical), no UV
+    - pbm-targeted: handheld / spot PBM device
+    - sad: SAD light box (10000 lux therapy lamp)
+    - dawn-sim: dawn simulator / wake-up light
+    - full-spectrum: full-spectrum bulb
+
+    channelGroups / modes / coupling guide (set ALL THREE to null if the product page describes a single-channel device with no mode-selector):
+    - channelGroups: only fill in when the panel has independently-controllable LED groups (e.g. a touchscreen toggle for "UV" vs "red/NIR", or named modes like "Ironforge / Lux Vital / D-Light"). Each group lists which peakWavelengths are wired to its dimmer/switch.
+    - modes: only fill in modes the source actually describes. Each mode lists which channelGroup ids fire. Mark default:true only when the source identifies a default or always-on base. Do not invent an all-on mode.
+    - coupling: only fill in when the vendor explicitly states an LED group cannot run without another (e.g. "UV must run with red/NIR" — common safety design on hybrid UVB+red panels). Quote the rationale in "reason". Don't infer coupling from omission.
+
+    Use null for fields not found. A total irradiance for a hybrid UV + visible/red/NIR panel is NOT a UV irradiance: leave peakShares null unless a band split is stated. Do NOT invent modes, coupling, measurements, or spectral shares. No other text.
     ~~~
   </Accordion>
 </AccordionGroup>
 
 Extracted advanced fields are shown in a review disclosure. The source URL is retained as provenance when the input was a page.
 
+<span id="prompt-import-emf"></span>
+
 ## `import.emf`
 
 <AccordionGroup>
-  <Accordion title="Current EMF report parser contract">
+  <Accordion title="Exact EMF parser template with runtime measurement map">
     ~~~text
     You are an EMF assessment report parser. Extract room-by-room electromagnetic field measurements from Building Biology (Baubiologie) assessment reports.
 
-    Reference measurement types and standard units:
+    Reference measurement types and their standard units:
     {runtime SBM-2015 measurement type map}
 
-    Unit conversions:
-    - AC Magnetic: 1 mG = 100 nT
-    - RF: 1 mW/m² = 1000 µW/m²
+    Unit conversions to apply when needed:
+    - AC Magnetic: 1 mG = 100 nT (always return nT)
+    - RF: 1 mW/m² = 1000 µW/m² (always return µW/m²)
     - RF: convert from V/m using P = E²/377 if needed
 
-    Find the assessment date and consultant. For each room, extract readings, map them to acElectric/acMagnetic/rfMicrowave/dirtyElectricity/dcMagnetic, and list identified sources and recommended or completed mitigations.
+    Your task:
+    1. Find the assessment date (YYYY-MM-DD)
+    2. Identify the consultant name if present
+    3. For each room/location measured, extract all available readings
+    4. Map measurements to the types above (acElectric, acMagnetic, rfMicrowave, dirtyElectricity, dcMagnetic)
+    5. List identified EMF sources per room
+    6. List recommended or completed mitigations per room
 
     Return ONLY valid JSON:
     {
       "date": "YYYY-MM-DD",
       "consultant": "Name or null",
-      "rooms": [{
-        "name": "Bedroom",
-        "location": "bed pillow area",
-        "measurements": {
-          "acElectric": {"value": 28, "unit": "V/m", "meter": "NFA1000"}
-        },
-        "sources": ["..."],
-        "mitigations": ["..."]
-      }],
-      "note": "..."
+      "rooms": [
+        {
+          "name": "Bedroom",
+          "location": "bed pillow area",
+          "measurements": {
+            "acElectric": { "value": 28, "unit": "V/m", "meter": "NFA1000" }
+          },
+          "sources": ["WiFi router in adjacent room"],
+          "mitigations": ["demand switch installed"]
+        }
+      ],
+      "note": "General notes from the report"
     }
     ~~~
   </Accordion>

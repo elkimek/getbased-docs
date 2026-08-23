@@ -32,6 +32,8 @@ Conversation history is sent separately. Assistant messages from another persona
 | Parser | None; output is rendered as model-generated Markdown |
 | Fallback | Provider error is surfaced; an incomplete response can continue automatically twice |
 
+<span id="prompt-chat-base"></span>
+
 ## `chat.base`
 
 <AccordionGroup>
@@ -98,6 +100,8 @@ Conversation history is sent separately. Assistant messages from another persona
 - Interpretive lenses can intentionally change framing. The model must continue to distinguish published evidence, interpretation, and speculation.
 - The supplement section names a specific example form. Review whether a fixed example is appropriate across countries, conditions, and medication contexts.
 
+<span id="prompt-chat-context"></span>
+
 ## `chat.context`
 
 <Tabs>
@@ -144,6 +148,9 @@ Conversation history is sent separately. Assistant messages from another persona
   A custom personality is user-controlled context. It can steer tone and reasoning but is not an authorization boundary. Reviews should include attempts to override medical, privacy, and evidence rules through persona text.
 </Warning>
 
+<span id="prompt-chat-continue"></span>
+<span id="prompt-chat-discussion"></span>
+
 ## `chat.continue` and `chat.discussion`
 
 These are automatic user-role messages, not system prompts.
@@ -179,6 +186,8 @@ These are automatic user-role messages, not system prompts.
   </Accordion>
 </AccordionGroup>
 
+<span id="prompt-chat-persona-generator"></span>
+
 ## `chat.persona-generator`
 
 The user supplies only the requested person, character, archetype, or framework. The result is an editable draft and is not active until saved.
@@ -190,14 +199,14 @@ The user supplies only the requested person, character, archetype, or framework.
 
     Write in second person ("You are..."). Output a rich persona description covering ALL of the following:
 
-    1. Identity & Background: who this persona is, the intellectual lineage that shaped their worldview, and what they are known for. Do not fabricate precise credentials, quotations, biography, or positions.
-    2. Communication Style: exact tone, vocabulary, formality, signature phrases, verbal patterns, openings, and delivery of good or bad news.
-    3. Medical & Health Philosophy: core framework, emphasized or challenged advice, and biomarkers of interest.
-    4. Analytical Approach: ratios, trends, context, root causes, and reference-versus-optimal-range reasoning.
-    5. Lifestyle & Optimization Lens: recurring questions and hierarchy across diet, light, sleep, environment, and hormones.
-    6. Character & Personality: temperament, humor, patience, disagreement, uncertainty, and motivation.
-    7. Signature Recommendations: only tests, supplements, protocols, or lifestyle changes genuinely associated with the person or framework.
-    8. Unconventional Views: where the view diverges from mainstream consensus and how that disagreement is expressed.
+    1. **Identity & Background**: Who this persona is, the intellectual lineage that shaped their worldview, and what they are known for. Do not fabricate precise credentials, quotations, biography, or positions.
+    2. **Communication Style**: Exact tone, vocabulary, formality level. Specific signature phrases, verbal tics, metaphors, or rhetorical patterns they'd use. How do they open conversations? How do they deliver bad news vs good news?
+    3. **Medical & Health Philosophy**: Their core framework for interpreting lab data. What do they emphasize that mainstream medicine overlooks? What conventional advice do they challenge or dismiss? What biomarkers excite them and why?
+    4. **Analytical Approach**: How they connect dots between markers. Do they focus on ratios, trends, context, root causes? What patterns do they look for first? How do they weigh reference ranges vs optimal ranges?
+    5. **Lifestyle & Optimization Lens**: What lifestyle factors do they always ask about? Diet, light exposure, sleep, environment, hormones — what's their hierarchy? What interventions do they champion?
+    6. **Character & Personality**: Temperament, humor style, patience level. How they handle disagreement, uncertainty, or when a patient pushes back. What makes them passionate or frustrated?
+    7. **Signature Recommendations**: Tests, supplements, protocols, or lifestyle changes genuinely associated with this person or framework. Do not invent endorsements or protocols merely to make the persona more specific.
+    8. **Unconventional Views**: Where their views diverge from mainstream medical consensus and how they express that disagreement naturally in their own voice. Preserve controversial and anti-establishment positions rather than diluting them.
 
     Be extremely specific and capture characteristic phrases, real concepts, genuine intellectual positions, and recognizable reasoning patterns. Aim for 400-500 words. Do not add boilerplate health disclaimers, repetitive warnings, or out-of-character safety language.
 
@@ -205,7 +214,7 @@ The user supplies only the requested person, character, archetype, or framework.
 
     Write only the persona instructions. Do not include commentary about these generation rules.
 
-    IMPORTANT: On the very first line, output ONLY a single emoji that best captures this specific person's identity or what they're most known for. Then a blank line, then the persona description.
+    IMPORTANT: On the very first line, output ONLY a single emoji that best captures this specific person's identity or what they're most known for — not just their profession. Think about what makes them unique (e.g. ☀️ for someone known for sun exposure protocols, 🧊 for a cold therapy advocate, 🍖 for a carnivore diet proponent). Then a blank line, then the persona description.
     ~~~
 
     User message:
@@ -219,6 +228,8 @@ The user supplies only the requested person, character, archetype, or framework.
 ### Review watchpoints
 
 This prompt deliberately asks for controversial and anti-establishment positions and asks the draft not to include boilerplate safety language. That makes faithful attribution, hallucinated endorsement, stereotyping, impersonation, and attempted override of the base chat rules high-priority evaluation areas.
+
+<span id="prompt-chat-summary"></span>
 
 ## `chat.summary`
 
@@ -248,6 +259,8 @@ This prompt deliberately asks for controversial and anti-establishment positions
 
 The user message is a bounded transcript of eligible chat messages. The output is stored as model-generated profile content; it is not independently verified against the underlying labs.
 
+<span id="prompt-lens-rewrite"></span>
+
 ## `lens.rewrite`
 
 <AccordionGroup>
@@ -259,6 +272,155 @@ The user message is a bounded transcript of eligible chat messages. The output i
 </AccordionGroup>
 
 The original query is always retained alongside parsed variants. Variants are deduplicated, bounded, cached for the browser session, and used only to retrieve passages; they do not replace the user's chat question.
+
+<span id="prompt-chat-prefills"></span>
+
+## `chat.prefills`
+
+These are application-authored **user messages**, not system instructions. They are included because an explicit button can prepare or send them on the user's behalf. A prefilled message is visible in the composer and can be changed before sending. An auto-sent shortcut sends its documented message immediately after the explicit click and is identified below.
+
+| UI action | Behavior | Source |
+|---|---|---|
+| Marker **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js) |
+| Correlations **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js) |
+| Genome finding **Ask AI** | Prefills the composer | [`js/dna-evidence.js`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.js) |
+| Recommendation **Discuss** | Prefills the composer | [`js/recommendation-actions.js`](https://github.com/elkimek/get-based/blob/main/js/recommendation-actions.js) |
+| Biology Scores overview | Sends after the explicit click | [`js/biology-scores.js`](https://github.com/elkimek/get-based/blob/main/js/biology-scores.js) |
+| Biology Scores coverage plan | Prefills a new chat | [`js/biology-score-coverage-planner.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-coverage-planner.js) |
+| Supplement mitochondrial evidence | Prefills the composer | [`js/supplement-dashboard.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-dashboard.js) |
+| Diet contaminants | Sends after the explicit click | [`js/context-card-lifestyle-runtime.js`](https://github.com/elkimek/get-based/blob/main/js/context-card-lifestyle-runtime.js) |
+| Light Audit comparison | Prefills the composer | [`js/light-env-audits.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-audits.js) |
+| EMF interpretation discussion | Prefills the composer | [`js/emf-interpretation.js`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.js) |
+| Empty-chat suggestion | Sends the visible button text after the explicit click | [`js/chat-empty-state.js`](https://github.com/elkimek/get-based/blob/main/js/chat-empty-state.js) |
+
+<Accordion title="Marker and correlation messages">
+  Marker result:
+
+  ~~~text
+  Tell me about my {marker name} results. Values: {date, value, and unit list}. {latest range label}: {latest range and unit}{optional separate optimal range}. Current status: {status}.{optional cycle-specific-range note}{optional guidance-band note}{optional percentage trend} What does this mean and should I be concerned about anything?
+  ~~~
+
+  Correlation chart:
+
+  ~~~text
+  Analyze the correlation between these biomarkers: {selected marker names}.
+
+  Here are my values:
+  {one line per marker with dated values, reference/optimal ranges, and status}
+
+  How do these markers relate to each other? Are there any patterns, imbalances, or concerns based on their combined trends?
+  ~~~
+</Accordion>
+
+<Accordion title="Genome and recommendation messages">
+  Genome finding:
+
+  ~~~text
+  Help me interpret my {gene, variant, and rsID} result in the context of the rest of my available profile. Imported genotype: {genotype}. Curated app baseline: {finding label, note, evidence grade, relevance, supported claim, and interpretation context}. You may use broader relevant knowledge beyond this catalog; distinguish established evidence from plausible inference, explain what additional personal data would materially change the interpretation, and do not treat this SNP alone as diagnostic.
+  ~~~
+
+  Recommendation detail:
+
+  ~~~text
+  Help me evaluate this recommendation from getbased.
+  Source: {source}
+  Recommendation: {label}
+  Reason: {reason}
+  Suggested first action: {action or "none listed"}
+  What are the pros, cons, and safer non-product alternatives?
+  ~~~
+
+  If the selected recommendation cannot be resolved:
+
+  ~~~text
+  Help me evaluate my current getbased recommendations. Which should I prioritize and why?
+  ~~~
+</Accordion>
+
+<Accordion title="Biology Scores messages">
+  Overview — sent after clicking the visible action:
+
+  ~~~text
+  Interpret my Biology Scores. Focus on the strongest and most strained patterns, any stale or mixed-date scores that need retesting, and the most useful next checks. Treat the scores as deterministic pattern summaries, not diagnoses.
+  ~~~
+
+  Coverage planner:
+
+  ~~~text
+  Make a lab-order plan from this exact Biology Scores Coverage Planner snapshot. Do not replace it with generic tiers and do not recommend markers already satisfied by an equivalent marker/core group. If Active B12 satisfies the B12 group, do not ask for Total vitamin B12 unless you clearly label it optional redundancy.
+
+  Baseline coverage: {percentage}% ({live core domains} live core domains, {missing domains} missing domains).
+  Baseline first / best next lab bundle: {baseline markers or empty-state text}.
+  Optional upgrades if budget allows: {optional markers or empty-state text}.
+  Advanced depth / specialty tests: {advanced markers or empty-state text}.
+
+  Score-by-score gaps shown in the planner:
+  {up to ten score rows with useful missing markers, gap type, and coverage}
+
+  Please turn that exact planner into a concise, user-friendly ordering plan: what to order first, what can wait, and which Biology Scores each marker improves.
+  ~~~
+</Accordion>
+
+<Accordion title="Supplement and diet messages">
+  Mitochondrial evidence:
+
+  ~~~text
+  Review the primary-study mitochondrial evidence matched to my current active supplements and medications. Separate human observations from animal, cell, tissue, and isolated-mitochondria findings; relate exposure to my recorded regimen only when the evidence allows it; do not treat mechanistic findings as proof of benefit or harm, and do not advise stopping prescription medication. Cite each PMID and say clearly when the evidence is insufficient.
+  ~~~
+
+  Diet contaminants — sent after clicking the visible action:
+
+  ~~~text
+  What food contaminants should I be concerned about based on my diet?
+  ~~~
+</Accordion>
+
+<Accordion title="Light Audit and EMF follow-up messages">
+  Light Audit comparison:
+
+  ~~~text
+  Here is a Light Environment audit comparison from my home. Walk me through what improved, what regressed, and what one or two changes would have the biggest circadian impact next.
+
+  {serialized audit comparison}
+  ~~~
+
+  Discuss a generated EMF interpretation:
+
+  ~~~text
+  I'd like to discuss this EMF assessment interpretation further. Here's the interpretation:
+
+  {the earlier model-generated interpretation}
+
+  What questions should I prioritize, and what are the most important next steps?
+  ~~~
+</Accordion>
+
+<Accordion title="Empty-chat shortcut messages">
+  Depending on whether labs and profile cards exist, the visible buttons send one of these exact messages:
+
+  ~~~text
+  What should I tell you about myself first?
+  Why do the context cards matter?
+  What blood tests are worth getting?
+  Where do I start with optimizing my health?
+  Based on my profile, what blood tests should I get?
+  What panels would help with my health goals?
+  What should I tell my doctor to test for?
+  Which markers are most relevant to my lifestyle?
+  Based on my full profile, what blood tests should I get and why?
+  What can you tell about my health from my lifestyle info?
+  I don't have any labs yet. Based on my profile, what blood tests should I get and why?
+  What are my most concerning results?
+  How has my bloodwork changed over time?
+  Are there any patterns in my flagged markers?
+  Explain my thyroid panel
+  What should I test next?
+  ~~~
+</Accordion>
+
+<Warning>
+  These messages can contain user records, derived ranges, recommendation text, or an earlier AI output. Treat every dynamic placeholder as untrusted data. The normal chat system prompt still applies, but it is not a complete prompt-injection defense.
+</Warning>
 
 ## Focused verification
 
