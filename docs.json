@@ -25,8 +25,8 @@
     ]
   },
   "logo": {
-    "light": "https://media.brand.dev/df183b52-f1df-40e4-8c7b-979f7d14b4e3.svg",
-    "dark": "https://media.brand.dev/df183b52-f1df-40e4-8c7b-979f7d14b4e3.svg"
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [
