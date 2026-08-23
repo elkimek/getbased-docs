@@ -88,7 +88,7 @@ Conversation history is sent separately. Assistant messages from another persona
 
     ## Supplement Recommendations
     When recommending supplements: free actions first (sunlight, food, habits), then supplements.
-    Name the specific form (e.g. "D3 + K2, not D2"). Do not recommend one solely because an optional target is missed.
+    Name the specific form and why it fits the user's context and evidence. Do not recommend one solely because an optional target is missed.
     Note medication interactions. Stick to evidence-based dose ranges.
 
     ## Style
@@ -104,7 +104,7 @@ Conversation history is sent separately. Assistant messages from another persona
 - “Always recommend consulting a physician” can become repetitive boilerplate, while still being too weak for a high-risk answer.
 - Range comparisons are intentionally concise. Reviewers should check that a model does not silently promote getbased guidance, a lab interval, or an outside threshold into universal medical truth.
 - Interpretive lenses can intentionally change framing. The model must continue to distinguish published evidence, interpretation, and speculation.
-- The supplement section names a specific example form. Review whether a fixed example is appropriate across countries, conditions, and medication contexts.
+- Supplement forms must follow the user's context and available evidence rather than a fixed default. Review whether the rationale and interaction cautions remain specific enough.
 
 <span id="prompt-chat-context"></span>
 
