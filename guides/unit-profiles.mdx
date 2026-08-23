@@ -1,0 +1,57 @@
+---
+title: "Choose units for your region"
+description: "Use International, Australia and New Zealand, or US units without changing your original stored lab results."
+---
+
+getbased can show the same laboratory result in the units you normally see at home. The preference applies to the whole profile, so values and ranges stay aligned across charts, marker details, Compare dates, reports, and AI explanations.
+
+## Choose a unit profile
+
+Open **Settings → Display → Unit System**, then choose:
+
+- **International (SI)** — the international units used by getbased's core marker catalog.
+- **Australia / NZ** — common pathology-reporting units used in Australia and New Zealand.
+- **US** — US conventional units.
+
+The choice is saved separately for each profile. Australia / NZ remains metric for body measurements such as weight and distance; only the US profile uses imperial body-measurement displays where supported.
+
+<Info>
+Changing the unit profile changes presentation only. getbased does not rewrite your original imported or manually entered result history.
+</Info>
+
+## What changes
+
+The selected profile is applied consistently to:
+
+- marker values and units;
+- reference, optimal, phase-specific, and collection-specific ranges;
+- chart and table status calculations;
+- marker detail history and optional alternate units;
+- Compare dates;
+- PDF reports; and
+- the lab context sent to your selected AI provider when **Blood marker results** is enabled.
+
+For example, the Australia / NZ profile commonly shows enzyme activity in **U/L**, eGFR in **mL/min/1.73m²**, C-peptide and IGF-1 in **nmol/L**, prolactin in **mIU/L**, P1NP in **ng/L**, and urine total protein in **mg/L**. Markers whose common regional unit is already numerically equivalent keep the same number with a clearer local unit label.
+
+All 196 built-in markers resolve through each profile. A marker does not need a special conversion to be covered: markers with the same regional convention use an identity mapping. Custom markers keep the unit you supplied rather than receiving a guessed conversion.
+
+## Import or enter a result in another unit
+
+You do not need to switch the whole profile before importing a report. The PDF review recognizes supported report units and converts the value and its range together into the app's canonical storage unit.
+
+For manual entry, the unit selector starts with your current display unit and includes other compatible clinical units when a safe conversion is known. Choose the unit printed on the report and enter the printed number. getbased converts it for storage and shows it through your selected profile afterward.
+
+Turn on **Settings → Display → Alternate Units → Show both** to see a useful second unit in marker details without changing the profile.
+
+<Warning>
+Laboratories can use different methods and conventions even within one region. Unit conversion does not make reference ranges interchangeable. Keep the range printed by the laboratory with the result when available. Prolactin mass-to-IU conversion is assay-standard dependent; verify the laboratory's method if its converted value or interval does not match the report.
+</Warning>
+
+## Where the Australia / NZ conventions come from
+
+The profile follows common RCPA SPIA terminology and preferred-display guidance, supplemented by RCPA endocrine harmonisation guidance where a marker uses a different reporting convention. RCPA describes these as guidance rather than a rule for every laboratory, which is why getbased still preserves and accepts the unit on the source report.
+
+- [RCPA SPIA Guidelines V4.1](https://www.rcpa.edu.au/Library/Practising-Pathology/PTIS/SPIA-Guidelines-and-Tools/Standards-and-Guidelines/RCPA-SPIA-Guidelines-V4-1)
+- [RCPA Harmonisation of Endocrine Dynamic Testing](https://www.rcpa.edu.au/getattachment/fc0f1dc9-dd9e-428b-a2bb-0caff0f9a70b/Harmonisation-of-Endocrine-Dynamic-Testing-Adult-%28.aspx)
+
+If a unit mapping looks wrong, first check the marker, source unit, and laboratory interval in **Settings → Data → Review & Edit**. A catalog-level correction should include the marker name, source and target units, conversion basis, and a public source—but never your personal result.

@@ -22,7 +22,7 @@ The form includes:
 - **Date** — defaults to today on first use, then remembers the date from your last save for the rest of the browser session.
 - **Collection time** — optional time the specimen was drawn or collected. Do not use the laboratory's processing or report time.
 - **Fasting status** — choose **Fasting**, **Not fasting**, or leave it **Unknown**.
-- **Value** — accepts the current display unit, with an alternate unit picker when the marker has a known conversion.
+- **Value** — starts with the current display unit and offers compatible International, Australia/NZ, US, and secondary clinical units when a safe conversion is known. Choose the unit printed on the report; getbased converts it back to canonical storage when you save.
 - **Note** — optional additional context for that specific reading, such as "different lab than usual" or "blood draw 30 minutes after training".
 
 Press **Enter** to save or **Esc** to cancel.
@@ -76,3 +76,4 @@ Click any value in the marker detail modal to edit it inline. Edited imported va
 Each value card also supports per-value notes. Notes are included with lab-marker AI context when **Insight → Manage → Context → Data sources → Blood marker results** is enabled, which can change how a reading should be interpreted.
 
 See [Understand lab ranges and calculated markers](/guides/lab-ranges-calculated-markers) for how laboratory, built-in, and context-aware ranges are selected.
+See [Choose units for your region](/guides/unit-profiles) for display profiles, alternate units, and what remains unchanged in storage.

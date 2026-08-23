@@ -22,7 +22,7 @@ An adopted laboratory interval takes priority over general built-in reference gu
 
 When several imported reports contain ranges for the same marker, the active laboratory range comes from the latest collection date, with import time used only to break a tie. Uploading an older report later therefore does not silently make its range current. Each report and its original range remains reviewable under **Settings → Data**.
 
-Only the active range is shown across normal chart and table views. getbased does not add historical range bands to every chart.
+Only the active range is shown across normal chart and table views. getbased does not add historical range bands to every chart. Compare dates is the deliberate exception: it can show Reference and Optimal together and can label different date-specific ranges side by side.
 
 ## What the range label means
 
@@ -64,6 +64,16 @@ A value may therefore be:
 - unrated because a trustworthy applicable range is unavailable.
 
 The chart status and detail text identify the active layer. Open-ended ranges use a threshold rather than pretending both bounds are known.
+
+### Reading ranges in Compare dates
+
+The **Ranges** column follows the same range mode and date-aware rules used for status colors:
+
+- **Reference** shows the applicable laboratory, personal, contextual, or built-in reference.
+- **Optimal** shows applicable optimal guidance, falling back to Reference when no optimal range exists.
+- **Both** lists Reference and Optimal and marks the range **used** for the status.
+
+When two dates use different age-, assay-, collection-, fasting-, or phase-specific ranges, the column labels each date separately. This keeps the numeric range, status color, and improved/worsened indicator from silently using different rules.
 
 ## If a chart scale looks implausible
 

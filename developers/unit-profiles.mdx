@@ -1,0 +1,113 @@
+---
+title: "Unit profile internals"
+description: "Canonical marker storage, full-schema regional projections, ANZ provenance, manual-entry conversion, and coverage tests."
+---
+
+# Unit profile internals
+
+`js/unit-profiles.js` owns regional marker presentation. The core invariant is:
+
+> Marker values and ranges are stored in the schema's canonical unit. A unit profile is a reversible active-data projection, never a storage migration.
+
+Read this page with [Data pipeline](/developers/data-pipeline), [Lab markers and range internals](/developers/lab-markers-ranges-internals), and [Marker terminology](/developers/marker-terminology).
+
+## Profile contract
+
+The supported persisted IDs are:
+
+| ID | User label | Behavior |
+|---|---|---|
+| `EU` | International (SI) | Canonical schema projection; the legacy ID remains for storage compatibility. |
+| `ANZ` | Australia / New Zealand | Common RCPA/Australasian pathology display conventions. |
+| `US` | US conventional | Existing US conversion registry. |
+
+`normalizeUnitProfile()` accepts `ANZ` and `US` and safely falls back to `EU`. Settings, startup, and profile switching all use this resolver so an invalid persisted value cannot create a fourth behavior.
+
+Every one of the 196 built-in schema markers resolves in all three profiles. `ANZ_UNIT_OVERRIDES` contains only numeric or meaningful label differences; every other built-in marker receives an explicit identity projection. Unknown/custom dotKeys preserve the supplied canonical unit and value.
+
+## ANZ sources and factors
+
+ANZ overrides record provenance beside the conversion. The primary sources are RCPA SPIA Chemical Pathology terminology/preferred-unit guidance and RCPA endocrine harmonisation guidance.
+
+The factor convention is:
+
+```text
+display value = canonical value × factor
+```
+
+Representative projections include:
+
+| Marker group | Canonical → ANZ |
+|---|---|
+| AST, ALT, ALP, GGT, LDH, CK, amylase, lipase | `µkat/L × 60 → U/L` |
+| eGFR | `mL/s/1.73m² × 60 → mL/min/1.73m²` |
+| Urate | `µmol/L × 0.001 → mmol/L` |
+| Prolactin | `µg/L × 21.2 → mIU/L`, with WHO-calibrated-assay provenance |
+| IGF-1 | `µg/L × 0.1307 → nmol/L` |
+| C-peptide | `µg/L × 0.331 → nmol/L` |
+| P1NP | `µg/L × 1000 → ng/L` |
+| Urine total protein | `g/L × 1000 → mg/L` |
+
+Label-only definitions such as TSH `mIU/L`, LH/FSH/hCG `IU/L`, and AFP `kIU/L` use factor `1`. Conversion helpers return the original numeric value for factor-1 definitions so changing capitalization or a semantically equivalent label cannot round the result.
+
+## Active-data order
+
+`getActiveData()` performs calculations before display conversion:
+
+```text
+canonical stored entries
+  → schema/personal ranges
+  → dated phase and context ranges
+  → deterministic calculated markers
+  → selected unit profile
+  → marker placement
+  → charts, tables, reports, AI context
+```
+
+`applyUnitConversion()` resolves each native dotKey and projects together:
+
+- `values[]`;
+- `refMin` / `refMax`;
+- `optimalMin` / `optimalMax`;
+- `phaseRefRanges[]`;
+- `contextRefRanges[]`; and
+- `contextOptimalRanges[]`.
+
+Range objects are spread before numeric replacement so labels, assay source, and phase metadata survive. Marker placement remains last because a rendered category must never change which conversion key is used.
+
+Do not convert again in a renderer. Reports and AI context consume `getActiveData()` and only add the readable profile label.
+
+## Input and import boundary
+
+Manual marker entry calls `getMarkerInputUnits()` to offer the active profile unit, canonical unit, US/ANZ alternatives, and registered secondary units without duplicates. `convertUnitInputToCanonical()` converts the selected unit before `saveManualMarkerValue()` persists it. Range sanity checks round-trip the displayed range through canonical storage into the selected input unit before comparing.
+
+PDF import continues through `normalizeToSI()`. ANZ-only source units that are not already primary conversions also live in `SECONDARY_UNIT_CONVERSIONS`, including P1NP `ng/L`, urine total protein `mg/L`, C-peptide `nmol/L`, osmolality `mmol/kg`, and regional IU labels.
+
+Custom markers are deliberately different: the app does not infer a chemistry conversion from their name. Their supplied unit remains canonical and display-identical until a user explicitly maps the result to a built-in marker.
+
+## Consumers
+
+| Concern | Owner |
+|---|---|
+| Profile resolution and reversible math | `js/unit-profiles.js` |
+| Active values and every range shape | `js/data.js` |
+| Import aliases | `js/secondary-unit-conversions.js`, `js/schema.js` |
+| Settings and persistence | `js/settings-display-panel.js`, `js/data-view-controls.js`, `js/startup-profile.js`, `js/profile.js` |
+| Manual entry and alternate display | `js/marker-detail-*.js` |
+| Reports and AI profile label | `js/export-report-html.js`, `js/lab-context.js` |
+| Offline source-module cache | `service-worker.js` |
+
+## Verification
+
+Use change-scoped verification:
+
+```bash
+npm test -- tests/unit-profiles.test.js tests/unit-profile-data.test.js tests/unit-profile-active-data.test.js
+npm test -- tests/marker-placement-editing.test.js tests/report-export-html-runtime.test.js
+npx playwright test tests/playwright/data-browser-coverage.spec.js
+npm run typecheck:checkjs
+npm run architecture:check
+npm run production:check
+```
+
+The catalog audit pins the built-in count, validates every override dotKey, resolves every marker in every profile, and round-trips all 196 ANZ projections. A schema addition must deliberately update the count and pass every profile. Add a focused import/manual-entry assertion when introducing a new non-canonical report unit.

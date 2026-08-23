@@ -36,7 +36,9 @@ Marker objects begin with schema fields and gain runtime fields as `getActiveDat
 
 For ordinary markers, an adopted laboratory interval suppresses generic contextual fallback guidance. A manual range wins over the adopted interval. For estradiol, progesterone, LH, and FSH, a trustworthy per-draw phase range is deliberately date-specific and is the effective reference for that point instead of a flat interval.
 
-`getEffectiveRangeForDate()` resolves the plotted/status range in this order:
+`resolveMarkerRangeContext()` is the shared resolver. It returns `judgingRange`, used for status, plus `displayedRanges`, used by a surface that needs to explain Reference and Optimal together. `getEffectiveRangeForDate()` and `getEffectiveRangeLabelForDate()` are compatibility projections over the same result.
+
+The resolver selects the plotted/status range in this order:
 
 1. phase-specific reference for that date;
 2. context-specific optimal range when optimal display is active;
@@ -45,6 +47,8 @@ For ordinary markers, an adopted laboratory interval suppresses generic contextu
 5. static effective reference, including personal overrides.
 
 Do not attach a context range when its required inputs are missing. The UI should render an explicit state such as **Requires fasting** or leave the point unrated rather than synthesizing a cutoff.
+
+Compare dates must use the resolver for both selected indices. In **Both** mode it renders each displayed range and marks the range used for status. When the signatures differ by date, it renders two labelled date groups. Open bounds use `≤` or `≥`. Improved/worsened compares normalized distance outside each date's judging range; two in-range values are neutral, not ranked by distance from the midpoint.
 
 ## Range policies and labels
 
@@ -164,6 +168,7 @@ The bundled demo fixtures are product walkthroughs, not normative clinical datas
 | Import extraction and review | `js/pdf-import.js`, `js/pdf-import-review.js`, `js/pdf-import-commit.js` |
 | Collection metadata ownership | `js/lab-context-collection.js` |
 | Effective range UI | `js/marker-analysis.js`, chart and marker-detail modules |
+| Unit-profile projection | `js/unit-profiles.js`, `js/data.js`, marker-detail input/display modules |
 | Suggestions and migrations | `js/marker-range-suggestions.js`, `js/profile-marker-alias-migrations.js` |
 
 Use change-scoped tests for the touched owner. At minimum, cover direct-versus-computed precedence, same-date inputs, unit conversion, missing/context-gated inputs, import ownership/re-review/delete, range revert order, alias metadata migration, and recorded-versus-predicted phase behavior. GitHub Actions owns the exhaustive browser and combined-coverage runs.

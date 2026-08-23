@@ -85,6 +85,7 @@
             "pages": [
               "guides/pdf-import",
               "guides/manual-entry",
+              "guides/unit-profiles",
               "guides/specialty-labs",
               "guides/biomarker-charts",
               "guides/lab-ranges-calculated-markers",
@@ -167,6 +168,7 @@
               "developers/marker-model",
               "developers/marker-terminology",
               "developers/data-pipeline",
+              "developers/unit-profiles",
               "developers/lab-markers-ranges-internals",
               "developers/storage-schema",
               "developers/sync-delta-internals",

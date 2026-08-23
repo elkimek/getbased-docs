@@ -34,7 +34,7 @@ age/sex/time/fasting context → contextRefRanges[] / contextOptimalRanges[]
 direct lab calculations or deterministic calculated fallbacks
               │
               ▼
-optional display-unit conversion → marker placement projection → cached data
+International / ANZ / US unit profile → marker placement projection → cached data
 ```
 
 The caller is responsible for applying date range filtering after receiving `data`:
@@ -57,14 +57,14 @@ hematology.wbc
 
 This storage format is used in:
 
-- `UNIT_CONVERSIONS` keys
+- unit-profile and import-conversion registry keys
 - `OPTIMAL_RANGES` keys
 - `PHASE_RANGES` keys
 - `importedData.entries[].markers` — each entry stores its values keyed this way
 - `importedData.customMarkers` — custom marker definitions
 - AI prompt references in `buildMarkerReference()`
 
-It is not the marker's immutable identity or necessarily its rendered category. Built-in markers use stable `gb:marker:*` IDs, custom definitions carry `custom:*` IDs, and `importedData.markerPlacements` can select a different visual category. After the pipeline finishes its native calculations and unit conversion, `applyMarkerPlacements()` projects accepted placements and attaches `markerId`, `storageDotKey`, `nativeCategoryKey`, and `displayCategoryKey` to active markers.
+It is not the marker's immutable identity or necessarily its rendered category. Built-in markers use stable `gb:marker:*` IDs, custom definitions carry `custom:*` IDs, and `importedData.markerPlacements` can select a different visual category. After the pipeline finishes its native calculations and unit-profile projection, `applyMarkerPlacements()` projects accepted placements and attaches `markerId`, `storageDotKey`, `nativeCategoryKey`, and `displayCategoryKey` to active markers.
 
 Mutation code must use `marker.storageDotKey`; it must not reconstruct a persisted key from `displayCategoryKey` or a rendered card ID. See [Marker model and category placement](/developers/marker-model).
 
@@ -151,6 +151,14 @@ Calculated values are computed in-pipeline in the native `calculatedRatios` cate
 PhenoAge and Bortz Age are hidden calculated components. Biological Age combines both when available and falls back to either one. Explicit creatinine-unreliable low-muscle context gates the calculation.
 
 See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for range precedence, all calculation formulas, collection-context ownership, phase gates, and alias migration requirements.
+
+## Unit-profile projection
+
+Canonical values, static ranges, phase ranges, context ranges, and calculations are complete before the selected display profile runs. `js/unit-profiles.js` resolves every built-in marker for International (`EU` legacy storage ID), Australia/New Zealand (`ANZ`), or US display. `applyUnitConversion()` converts values and all range shapes together, then marker placement runs last.
+
+Identity and factor-1 projections change only the label and do not round the number. Custom marker units remain unchanged. Manual entry converts a selected compatible unit back to canonical storage rather than persisting the active display value.
+
+See [Unit profile internals](/developers/unit-profiles) for the registries, source provenance, input boundary, consumers, and full-schema audit.
 
 ## The `data` parameter pattern
 

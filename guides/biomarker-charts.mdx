@@ -116,12 +116,15 @@ The **Compare** view lets you select any two lab dates and see how every marker 
 
 Open **Compare dates** from Analysis tools and use the two date pickers to choose your dates. Every marker with a value on either date appears in the comparison table, showing:
 
+- The applicable range or ranges for the selected display mode
 - The value on the first (earlier) date
 - The value on the second (later) date
 - The direction and magnitude of the change
-- Whether each value is within the reference range
+- Whether each value is inside the range currently used for status
 
-Status colors follow the same convention as the rest of the app: green for normal, red for high, blue for low.
+In **Both** mode, the **Ranges** column shows Reference and Optimal separately and marks the one **used** for status. If a range changes by date because of age, collection time, fasting, or menstrual phase, each date receives its own labelled range instead of one misleading shared interval. Open-ended ranges appear as `≤` or `≥` thresholds.
+
+Status colors follow the same convention as the rest of the app: green for in range, red for high, and blue for low. **Improved** and **Worsened** compare how far each result sits outside its own applicable range; movement within the accepted band remains neutral rather than implying that its midpoint is healthier.
 
 <Tip>
   For the most useful comparisons, pick a date just before starting an intervention and a date several months later. Year-over-year comparisons help account for seasonal variation in markers like vitamin D.
