@@ -1,216 +1,292 @@
 ---
-title: "How AI is instructed"
-description: "Understand getbased system prompts, runtime context, editable instructions, and how to propose a prompt change."
+title: "See what getbased asks AI"
+description: "Find the instruction used by chat, imports, insights, and Light & Sun—and see what information is included with it."
 ---
 
-# How AI is instructed
+# See what getbased asks AI
 
-getbased does not send every AI feature the same generic instruction. Chat, report import, summaries, Light & Sun reviews, and other focused tools each use a purpose-built prompt with a bounded input and output contract.
+Whenever getbased uses AI, it sends an instruction that describes the job. Chat receives an instruction about answering health and lab questions. A report import receives a different instruction about extracting dates, markers, values, and ranges. Other features have their own focused instructions.
+
+This guide lets you start with something you did in the app and answer four questions:
+
+- What did getbased ask the AI to do?
+- What information was included?
+- Could I review or edit the message first?
+- Where can I read the complete wording?
 
 <Info>
-  The public [system prompt catalog](/developers/system-prompts) lists every developer-controlled instruction family, including prompts that are sent as user-role task instructions for multimodal or local-model compatibility.
+  Want to inspect the wording immediately? Go to [Find a prompt by feature](#find-a-prompt-by-feature), choose the action, and follow its link in the **Read** column.
 </Info>
 
-## Find the request by action
+## Start with what you did
 
-Use this section to answer: “When I do this in the application, what instruction does getbased send on my behalf?” Each prompt link opens the readable application-authored text. Runtime profile values, report contents, measurements, and user-written text appear as `{placeholders}` rather than exposing anyone's data.
+<CardGroup cols={2}>
+  <Card title="I sent a chat message" icon="message-circle" href="#when-you-send-a-chat-message">
+    See what surrounds your message and which profile information can be included.
+  </Card>
+  <Card title="I clicked Ask AI" icon="sparkles" href="#when-you-use-ask-ai">
+    See the message getbased prepares and whether you can edit it first.
+  </Card>
+  <Card title="An AI feature ran" icon="list-search" href="#find-a-prompt-by-feature">
+    Browse report imports, summaries, Biology Scores, EMF, Light & Sun, and more.
+  </Card>
+  <Card title="I want to control my data" icon="sliders-horizontal" href="#control-what-information-is-included">
+    Review context controls, attachments, chat history, and provider boundaries.
+  </Card>
+</CardGroup>
 
-<Tip>
-  **Exact** means the displayed sentences are literal source text. **Normalized** means the instruction is assembled at runtime; the documentation preserves its wording and order while replacing dynamic values or a named shared block with placeholders.
-</Tip>
+## A prompt in plain language
 
-### When you send a chat message
-
-getbased does not silently rewrite the message you typed. It builds this request around it:
+A request to an AI usually contains three parts:
 
 ~~~text
-SYSTEM
-{chat.base — the maintained base system prompt}
-{one applicable web/private-mode hint}
-
-Current lab data:
-{profile context enabled under Insight → Manage → Context}
-{optional Knowledge Base passages selected for this question}
-{optional personality instruction}
-{optional attribution rule for earlier responses from other personalities}
-
-MESSAGES
-{up to the last 30 conversation messages}
-user: {the exact message you sent}
+what getbased asks the AI to do
++ the information needed for that job
++ your question, file, image, or selected record
+= the request sent to your chosen AI service
 ~~~
 
-If you attach images, the last user message becomes a provider-compatible multimodal message containing those images and the same typed text. If a response reaches its output limit, the app may add the separately documented continuation message.
+The first part is the **prompt** or **instruction**. It can set the AI's role, limits, writing style, and required answer format. The second part is the **context**—for example, enabled lab results or one Light & Sun session. The final part is the immediate task, such as your chat message or the report that needs to be read. Your **AI provider** is the outside service or local model you selected to process that request.
+
+<Note>
+  A prompt guides a model; it does not guarantee a correct answer. AI text can still be incomplete or wrong. Keep medical decisions with a qualified professional.
+</Note>
+
+## When you send a chat message
+
+getbased sends the words you typed as your message. It does not silently rewrite them. Around that message, it can add the normal chat instruction, enabled profile information, recent conversation history, and optional tools such as a personality or Knowledge Base.
+
+Here is the plain-language shape of a normal request:
+
+~~~text
+GETBASED'S INSTRUCTION
+Act as the getbased lab analyst.
+Use supplied facts and dates.
+Explain patterns carefully and stay within the documented health boundaries.
+
+INFORMATION ADDED FOR THIS CHAT
+Enabled profile and lab context
+Optional Knowledge Base passages
+Optional personality
+Up to the last 30 eligible conversation messages
+
+YOUR MESSAGE
+The exact text you sent
+~~~
+
+If you attach images, the current message also contains the prepared image data. If web search is enabled and supported, search results can be added before the answer is generated.
+
+<Tip>
+  Read the maintained [chat instruction](/developers/system-prompts-chat#prompt-chat-base) and the [optional chat additions](/developers/system-prompts-chat#prompt-chat-context). Braces such as `{enabled profile context}` stand for information filled in when you send.
+</Tip>
+
+### A simple example
+
+Suppose you write: “Why has my ferritin fallen over the last year?”
+
+The AI can receive:
+
+- that exact question;
+- the getbased chat instruction;
+- enabled ferritin values, dates, ranges, and relevant notes;
+- enabled supplement, medication, diet, cycle, or other profile context;
+- recent messages in the same conversation;
+- an optional personality and relevant Knowledge Base passages.
+
+It does not automatically receive every stored item. The request uses the sources enabled for AI and the information selected for that feature.
+
+## When you use Ask AI
+
+An **Ask AI**, **Discuss**, or chat-shortcut button can create the user message for you. This app-written message is separate from the chat instruction, and both are documented.
+
+Most feature buttons open chat with the message in the composer. You can read it, change it, or delete it before sending. A small number of explicit shortcuts send their documented message immediately after you click; the full list labels those actions.
+
+For example, a marker action starts with a message shaped like:
+
+~~~text
+Tell me about my {marker name} results.
+Values: {dated values and units}.
+Current status: {status}.
+What does this mean and should I be concerned about anything?
+~~~
+
+Other app-written messages cover correlations, Genome findings, recommendations, Biology Score coverage, supplement evidence, Light Audit comparisons, and EMF follow-up.
+
+<Info>
+  [Read every app-written chat message](/developers/system-prompts-chat#prompt-chat-prefills), including which actions prefill the composer and which send after the click.
+</Info>
+
+<span id="find-the-request-by-action"></span>
+
+## Find a prompt by feature
+
+Choose the part of getbased you used. The final column opens the complete maintained instruction. Technical values that only exist at send time are shown as readable placeholders.
 
 <AccordionGroup>
-  <Accordion title="Chat, personalities, and Knowledge Base">
+  <Accordion title="Chat and Ask AI">
 
-| What you do | Application-authored instruction | Data added |
-|---|---|---|
-| Send a message you wrote | [`chat.base`](/developers/system-prompts-chat#prompt-chat-base) plus [`chat.context`](/developers/system-prompts-chat#prompt-chat-context) | Enabled profile context, optional Knowledge Base passages, recent thread, attachments, and your exact message |
-| Choose **Ask AI** or an in-app chat shortcut | [`chat.prefills`](/developers/system-prompts-chat#prompt-chat-prefills), followed by normal chat | The exact or parameterized app-authored user message shown in the catalog, plus normal chat context |
-| Let a cut-off answer continue | [`chat.continue`](/developers/system-prompts-chat#prompt-chat-continue) | The existing request plus one automatic continuation message |
-| Run a multi-persona discussion | [`chat.discussion`](/developers/system-prompts-chat#prompt-chat-discussion) | The same chat system/context plus automatic initial, rebuttal, or joining-persona task text |
-| Generate a custom personality draft | [`chat.persona-generator`](/developers/system-prompts-chat#prompt-chat-persona-generator) | The person, character, archetype, or style you entered; no profile context |
-| Create a saved consultation summary | [`chat.summary`](/developers/system-prompts-chat#prompt-chat-summary) | The bounded conversation transcript |
-| Use the Knowledge Base / Interpretive Lens | [`lens.rewrite`](/developers/system-prompts-chat#prompt-lens-rewrite), followed by normal chat | Your question is expanded into retrieval queries; selected passages are then attached to chat context |
+| What you do | What getbased asks AI to do | Information that can be included | Read |
+|---|---|---|---|
+| Send your own chat message | Answer as a cautious lab and health-data analyst | Your exact message, enabled profile context, recent chat, attachments, and optional Knowledge Base or web results | [Main instruction](/developers/system-prompts-chat#prompt-chat-base) · [Added context](/developers/system-prompts-chat#prompt-chat-context) |
+| Choose **Ask AI**, **Discuss**, or a chat shortcut | Use an app-written question for the selected marker, score, finding, recommendation, or comparison | The focused values or record named in that message, followed by normal chat context | [App-written messages](/developers/system-prompts-chat#prompt-chat-prefills) |
+| Continue an answer that hit its output limit | Resume exactly where the answer stopped without repeating it | The earlier request and partial response | [Continuation message](/developers/system-prompts-chat#prompt-chat-continue) |
+| Run a multi-persona discussion | Ask each selected personality for an initial view, response, or joining view | Normal chat context and earlier participants' answers | [Discussion messages](/developers/system-prompts-chat#prompt-chat-discussion) |
+| Generate a custom personality draft | Draft editable communication and reasoning instructions for the person or style you name | The name, archetype, character, or style you entered; not your health profile | [Personality draft prompt](/developers/system-prompts-chat#prompt-chat-persona-generator) |
+| Save a consultation summary | Turn the selected conversation into findings, action items, and open questions | A limited copy of the eligible conversation | [Summary prompt](/developers/system-prompts-chat#prompt-chat-summary) |
+| Use an Interpretive Lens | Add your saved lens text to the normal chat instruction without rewriting it | Your own lens text and normal chat context | [Added context](/developers/system-prompts-chat#prompt-chat-context) |
+| Use a Knowledge Base with query rewriting | Create several search phrases, retrieve related passages, and add them to normal chat | Your question and selected passages from the connected library | [Search rewrite prompt](/developers/system-prompts-chat#prompt-lens-rewrite) |
 
-Most feature **Ask AI** actions fill the composer so you can inspect or edit the message before sending. A small set of explicit chat shortcuts sends its documented question immediately after the click. Neither path introduces another hidden system prompt; both use the normal chat request above.
   </Accordion>
 
   <Accordion title="Reports, photos, products, and privacy">
 
-| What you do | Application-authored instruction | Data added |
-|---|---|---|
-| Drop a PDF lab report | [`import.classify`](/developers/system-prompts-imports#prompt-import-classify), then [`import.lab-text`](/developers/system-prompts-imports#prompt-import-lab-text) | A bounded report snippet for classification, then prepared report text, marker catalog, date rules, and reused custom keys |
-| Import photographed report pages | [`import.lab-image`](/developers/system-prompts-imports#prompt-import-lab-image) | Bounded page images, filename when present, marker catalog, and extraction rules |
-| Let import infer collection time or fasting | [`import.collection-context`](/developers/system-prompts-imports#prompt-import-collection-context) | Only statements found in the report; this fragment is part of lab extraction |
-| Use compatible local-model PII rewriting | [`privacy.local-pii`](/developers/system-prompts-imports#prompt-privacy-local-pii) | Prepared report text sent only to the configured compatible endpoint for this step |
-| Review supplement/medication photos or a product page | [`import.supplement`](/developers/system-prompts-imports#prompt-import-supplement) | Up to four selected images or bounded product-page text; the result opens as a review draft |
-| Review a light-device photo or product page | [`import.light-device`](/developers/system-prompts-imports#prompt-import-light-device) | Selected image or bounded product text; extracted specifications require review |
-| Import an EMF assessment PDF | [`import.emf`](/developers/system-prompts-imports#prompt-import-emf) | Prepared PDF text and the EMF output schema |
+| What you do | What getbased asks AI to do | Information that can be included | Read |
+|---|---|---|---|
+| Import a text-based lab PDF | First identify the report type, then extract dates, markers, values, units, and printed ranges | A short report sample for identification, then prepared report text and the current marker list | [Identification](/developers/system-prompts-imports#prompt-import-classify) · [Text extraction](/developers/system-prompts-imports#prompt-import-lab-text) |
+| Import photographed or scanned report pages | Read every supplied page and extract the same lab fields | The selected page images, optional filename, marker list, and date guidance | [Image extraction](/developers/system-prompts-imports#prompt-import-lab-image) |
+| Read collection time or fasting status | Use only an explicitly labeled collection time or fasting statement | Statements present in the report; no guess from test type or clock time | [Collection rules](/developers/system-prompts-imports#prompt-import-collection-context) |
+| Use optional compatible local-model privacy cleanup | Replace likely personal identifiers while preserving lab data | Prepared report text sent to the configured compatible local endpoint for this step | [Privacy-cleanup prompt](/developers/system-prompts-imports#prompt-privacy-local-pii) |
+| Review supplement or medication photos or a product page | Separate active ingredients, other ingredients, directions, warnings, and quality-test results | Up to four selected images or a limited amount of public product-page text | [Product extraction prompt](/developers/system-prompts-imports#prompt-import-supplement) |
+| Review a light-device photo or product page | Extract only stated device type, wavelengths, modes, distances, and measurements | The selected image or a limited amount of public page text | [Device extraction prompt](/developers/system-prompts-imports#prompt-import-light-device) |
+| Import an EMF assessment PDF | Extract room-by-room readings, sources, and mitigations into a review draft | Prepared report text and the supported measurement types | [EMF import prompt](/developers/system-prompts-imports#prompt-import-emf) |
+
   </Accordion>
 
   <Accordion title="Dashboard, reports, Biology Scores, supplements, and EMF">
 
-| What happens | Application-authored instruction | Data added |
-|---|---|---|
-| Generate the practitioner report overview | [`insight.report-summary`](/developers/system-prompts-insights#prompt-insight-report-summary) | Only sections and profile sources selected in the report builder |
-| Generate or refresh the dashboard Focus Card | [`insight.focus-card`](/developers/system-prompts-insights#prompt-insight-focus-card) | Bounded goals, conditions, flagged markers, changes, supplements, and optional Knowledge Base passages |
-| Refresh stale context-card summaries and dots | [`insight.context-dots`](/developers/system-prompts-insights#prompt-insight-context-dots) | Only the requested stale profile areas and their bounded context |
-| Open an uncached custom marker description | [`insight.marker-description`](/developers/system-prompts-insights#prompt-insight-marker-description) | Marker name and unit only; no profile context |
-| Ask for a Biology Score explanation | [`insight.biology-score`](/developers/system-prompts-insights#prompt-insight-biology-score) | The score already calculated by code, its ranges, coverage, flags, dates, and missing markers |
-| Ask AI to suggest Biology Score context flags | [`insight.biology-context`](/developers/system-prompts-insights#prompt-insight-biology-context) | Bounded profile context; suggestions are allowlisted and require your review |
-| Generate supplement-impact dots | [`insight.supplement-impact`](/developers/system-prompts-insights#prompt-insight-supplement-impact) | Supplement periods and computed before/after marker summaries |
-| Interpret or compare EMF assessments | [`insight.emf`](/developers/system-prompts-insights#prompt-insight-emf) | One assessment or a selected before/after pair |
+| What happens | What getbased asks AI to do | Information that can be included | Read |
+|---|---|---|---|
+| Generate a practitioner report overview | Summarize the selected report into a short practitioner-facing overview | Only the report sections and profile sources selected in the report builder | [Report prompt](/developers/system-prompts-insights#prompt-insight-report-summary) |
+| Generate or refresh **Current Focus** | Highlight the most important current pattern and a useful next step | A limited selection of goals, conditions, flagged markers, changes, supplements, and optional Knowledge Base passages | [Current Focus prompt](/developers/system-prompts-insights#prompt-insight-focus-card) |
+| Refresh profile-card summaries and dots | Summarize only the requested profile areas and return a short status and tip | The stale profile areas being refreshed | [Profile summary prompt](/developers/system-prompts-insights#prompt-insight-context-dots) |
+| Open a custom marker description that has not been created yet | Explain what the marker measures in one sentence | The marker name and unit; no profile context | [Marker description prompt](/developers/system-prompts-insights#prompt-insight-marker-description) |
+| Explain a Biology Score | Explain the result already calculated by getbased without recalculating it | The score, supplied ranges, coverage, flags, dates, and missing markers | [Score explanation prompt](/developers/system-prompts-insights#prompt-insight-biology-score) |
+| Ask AI to suggest Biology Score context | Suggest only supported context flags for your review | A limited set of relevant profile context; suggestions do not apply themselves | [Context-review prompt](/developers/system-prompts-insights#prompt-insight-biology-context) |
+| Generate supplement-impact dots | Describe before/after marker patterns without proving causation | Supplement periods and computed before/after marker summaries | [Impact prompt](/developers/system-prompts-insights#prompt-insight-supplement-impact) |
+| Interpret or compare EMF assessments | Explain the strongest readings and practical priorities | One assessment or the selected before/after pair | [EMF interpretation prompt](/developers/system-prompts-insights#prompt-insight-emf) |
+
   </Accordion>
 
   <Accordion title="Light & Sun">
 
-| What happens | Application-authored instruction | Data added |
-|---|---|---|
-| Save a supported Light Tool measurement | [`light.measurement`](/developers/system-prompts-light#prompt-light-measurement) | That measurement and its source/quality metadata |
-| Open the daily Light & Sun view with logged data | [`light.today`](/developers/system-prompts-light#prompt-light-today) | Today's sessions, tools, environment, explicit deterministic warnings, trends, and relevant goals |
-| View a room with enough entered data | [`light.room`](/developers/system-prompts-light#prompt-light-room) | That room, associated measurements, timing, source, and quality |
-| Request a completed device-session verdict | [`light.device-session`](/developers/system-prompts-light#prompt-light-device-session) | That session, active mode/firing peaks, modeled doses, distance quality, and safety flags |
-| View a configured screen record | [`light.screen`](/developers/system-prompts-light#prompt-light-screen) | Device type, room, after-sunset hours, tint/blocker settings, and entered habits |
-| Open the seven-day channel review with logged activity | [`light.weekly-pattern`](/developers/system-prompts-light#prompt-light-weekly-pattern) | Current and previous seven-day logged Sun/device patterns |
-| Save a frozen multi-room Light Audit | [`light.audit`](/developers/system-prompts-light#prompt-light-audit) | Snapshot rooms, screens, and measurements within the documented date window |
-| Request a completed Sun-session verdict | [`light.sun-session`](/developers/system-prompts-light#prompt-light-sun-session) | That session's modeled signals, solar phase, MED state, weather/body/eye context, and supplied cautions |
-| Complete Light & Sun setup | [`light.onboarding`](/developers/system-prompts-light#prompt-light-onboarding) | Saved setup answers such as skin-model reference, location, eyewear, and lighting environment |
-| View the indoor-burden summary with mapped rooms/screens | [`light.indoor-burden`](/developers/system-prompts-light#prompt-light-indoor-burden) | Current room/screen screening signals and evidence quality |
+| What happens | What getbased asks AI to do | Information that can be included | Read |
+|---|---|---|---|
+| Save a supported Light Tool measurement | Interpret one measurement while respecting its measurement limits | That result and its source, calibration, timing, room, and quality information | [Measurement prompt](/developers/system-prompts-light#prompt-light-measurement) |
+| Open the daily view with logged activity | Summarize the day's timing, sources, clear warnings, and one useful next step | Today's Sun/device sessions, tools, environment, trends, warnings, and relevant goals | [Today prompt](/developers/system-prompts-light#prompt-light-today) |
+| View a room with enough information | Describe the room's light pattern and uncertainty | That room, related measurements, timing, sources, screens, and measurement quality | [Room prompt](/developers/system-prompts-light#prompt-light-room) |
+| Request a completed device-session verdict | Interpret the setup actually used without inventing a protocol | The session, device class, active mode, firing wavelengths, modeled values, distance quality, and safety flags | [Device-session prompt](/developers/system-prompts-light#prompt-light-device-session) |
+| View a configured screen | Describe the recorded evening-use pattern without claiming a measured dose | Device type, room, hours after sunset, tint/blocker settings, and entered habits | [Screen prompt](/developers/system-prompts-light#prompt-light-screen) |
+| Open the seven-day review | Compare current and previous logged patterns without treating missing logs as missing exposure | Current and previous seven-day Sun/device activity | [Weekly prompt](/developers/system-prompts-light#prompt-light-weekly-pattern) |
+| Save a multi-room Light Audit | Synthesize the frozen room, screen, and measurement snapshot | Audit rooms, screens, and nearby measurements in the documented date window | [Audit prompt](/developers/system-prompts-light#prompt-light-audit) |
+| Request a completed Sun-session verdict | Explain the modeled signals, timing, uncertainty, and supplied safety state | That session's solar phase, modeled signals, weather, body/eye context, and cautions | [Sun-session prompt](/developers/system-prompts-light#prompt-light-sun-session) |
+| Complete Light & Sun setup | Summarize which parts of the saved setup matter most | Saved skin-model reference, location, eyewear, protection, and lighting-environment answers | [Setup prompt](/developers/system-prompts-light#prompt-light-onboarding) |
+| View the indoor-light burden summary | Explain the strongest current room/screen pattern and missing evidence | Current mapped rooms, screens, screening signals, and evidence quality | [Indoor summary prompt](/developers/system-prompts-light#prompt-light-indoor-burden) |
 
-Seven of these instructions also insert the exact shared [`light.hardware-guardrails`](/developers/system-prompts-light#prompt-light-hardware-guardrails) block.
+Seven Light & Sun instructions also include the same [fixture and flicker safety rules](/developers/system-prompts-light#prompt-light-hardware-guardrails).
+
   </Accordion>
 </AccordionGroup>
 
+## Know what happens before sending
+
+| Kind of action | What you can see first |
+|---|---|
+| Message you type | The exact message remains in the composer until you send it. |
+| Most **Ask AI** actions | The app-written message appears in the composer and can be edited or removed. |
+| Immediate chat shortcut | The documented message is sent after you deliberately click that shortcut. |
+| Focused feature such as a summary or Light verdict | There is no chat composer. The feature uses its documented instruction and the selected record. |
+| Report or product extraction | You select the file, image, or page first. Extracted facts appear in a review step before they are saved. |
+
 <Warning>
-  Documentation can show the maintained template, but not a future request containing your live private data. The app builds that request at send time. Review the template here and control attached profile sources under **Insight → Manage → Context** before sending.
+  A review screen lets you correct AI-extracted results before saving; it does not mean the provider never received the selected file or prepared content. Check the feature's privacy note before starting an import.
 </Warning>
 
-## What makes up an AI request
+## Control what information is included
 
-<Tabs>
-  <Tab title="Developer instructions">
-    These are maintained with the application. They define the task, safety boundaries, permitted claims, output format, and what the model must not infer.
+For ordinary chat, open **Insight → Manage → Context** to choose which stored sources may influence later requests. Turning a source off keeps it stored but excludes it from new in-app AI context.
 
-    Examples include the base chat analyst prompt, the PDF extraction schema, and the Light measurement rule that a camera is not a spectrometer.
-  </Tab>
-  <Tab title="Selected context">
-    This is the profile data enabled under **Insight → Manage → Context**, plus feature-specific inputs such as a report, one Sun session, or one device record.
+Depending on the action, a request can also include:
 
-    Context is assembled at request time. Turning a context source off prevents that source from being added to later requests.
-  </Tab>
-  <Tab title="Your request">
-    In chat, this is the message you enter. Some buttons create an editable starting message—for example **Ask AI** on a marker or Genome finding.
+- recent messages from the current conversation;
+- images attached to the current message;
+- the report, product page, measurement, session, room, or assessment you selected;
+- an active personality;
+- selected Knowledge Base passages;
+- web-search results when web search is enabled and supported.
 
-    Automatic tasks use a narrow app-authored request, such as “summarize this conversation” or “extract these report fields.”
-  </Tab>
-  <Tab title="Optional modifiers">
-    The active personality, interpretive lens passages, web-search state, and private-mode restrictions can append additional instructions.
+The AI provider selected in **Settings → AI** receives the assembled request. A local or private connection can change where and how it is transported, but it does not remove information that the selected feature needs for the request.
 
-    These modifiers do not replace the feature's base safety and output rules.
-  </Tab>
-</Tabs>
+See [Privacy and data storage](/guides/privacy), [Connect an AI provider](/ai-providers), and [Local encryption](/guides/encryption) for the storage and transport boundaries.
 
-## Prompt families
+## Understand the wording you see
 
-| Family | What it controls | Typical output |
-|---|---|---|
-| Chat and discussion | Health-analysis boundaries, context use, personality, web behavior, and multi-persona attribution | Markdown conversation |
-| Import and privacy | Report classification, marker extraction, collection metadata, local PII rewriting, and supplement/device parsing | Validated structured data or reviewed text |
-| Summaries and insights | Dashboard focus, profile-area dots, reports, Biology Scores, marker descriptions, supplement impacts, and EMF interpretation | Short prose or bounded JSON |
-| Light & Sun | Ten source-specific verdicts for sessions, rooms, screens, measurements, weekly patterns, and onboarding | Bounded `dot`/`tip`/`detail` JSON |
+Read the full prompt blocks in two simple ways:
 
-## What you can change
-
-- Choose which profile context sources are included.
-- Edit or remove a custom chat personality.
-- Switch the active built-in personality.
-- Edit a prefilled **Ask AI** message before sending it.
-- Enable or disable web search where the provider supports it.
-- Enable, disable, or change the interpretive lens and Knowledge Base.
-- Pause AI entirely or switch provider/model.
-
-Developer-controlled extraction and analysis prompts are intentionally not editable in the app. A silent local edit could change parsing or safety behavior without the review and tests those flows depend on.
-
-## What is visible to the model
-
-The prompt catalog distinguishes three boundaries:
-
-| Boundary | Meaning |
+| Label | Meaning |
 |---|---|
-| **System instruction** | App-authored instructions sent in the provider's system position |
-| **Task instruction** | App-authored instructions sent as a user or multimodal text part when a provider path requires it |
-| **Runtime context** | Selected profile data, report text/images, product-page text, measurements, or prior conversation messages |
+| **Exact wording** | The displayed sentences match the fixed wording maintained in the app. |
+| **Template wording** | The fixed wording is shown, while changing values are replaced with braces such as `{report text}` or `{marker name}`. |
 
-The selected provider receives the composed request. An enabled private provider transport also carries specialized surfaces that route through that same provider, subject to the provider's supported request modes. Ordinary voice endpoints are a separate subsystem and are not automatically protected by private chat mode. See [Privacy and data storage](/guides/privacy) and [AI providers](/ai-providers).
+No public documentation can display a future request containing your live private information. Placeholders show where that information would appear without publishing it.
 
-Voice transcription and speech synthesis do not add a hidden developer prompt. They send the recording or text-to-read together with selected model, language, and voice settings.
+The prompt ID and source-file link on the full page are there for reviewers and contributors. You do not need to understand the code to read the instruction block.
 
-## How outputs are checked
+## Understand the result
 
-Structured features do not treat arbitrary prose as valid data:
+AI has different responsibilities in different features:
 
-- import responses are parsed against expected fields and normalized before review;
-- Light & Sun verdicts accept only known dot colors and cap displayed text;
-- Biology Score context suggestions are limited to an allowlist and require user review before a flag is applied;
-- supplement and device imports open a review step before saving;
-- malformed JSON normally fails closed or falls back to a neutral state.
+- **Chat and interpretations** return model-written explanations. They are not independently fact-checked.
+- **Imports** return structured candidates that getbased parses, normalizes, and shows for review before saving.
+- **Short dots and verdicts** accept only known display values and limit output length, but their wording is still AI-generated.
+- **Biology Scores, calculated markers, reference ranges, and Light dose calculations** come from fixed calculations or stored source data. AI can explain them, but it does not calculate or redefine them.
 
-Free-form chat, summaries, and interpretations remain model-generated text. They can be incomplete or wrong and should not be treated as a diagnosis or medical decision.
+If an import or verdict response is missing the fields getbased expects, it normally fails, falls back to a neutral state, or stays out of saved data. A valid-looking answer can still be factually wrong, so review important results.
 
-## Propose a prompt change
+## Common questions
+
+<AccordionGroup>
+  <Accordion title="Does getbased rewrite what I type in chat?">
+    No. Your current text is sent as the user message. The app adds its instruction and permitted context around it. Image attachments change the technical message format, but not the text you wrote.
+  </Accordion>
+  <Accordion title="Does every chat send my entire profile?">
+    No. Chat uses enabled context sources and limited summaries. Feature-specific actions can add the selected marker, finding, or record. Use **Insight → Manage → Context** to turn sources on or off.
+  </Accordion>
+  <Accordion title="Does Ask AI use a hidden extra prompt?">
+    It uses the normal chat instruction plus an app-written user message for that action. Most of those messages are visible and editable in the composer. All current templates are listed under [app-written chat messages](/developers/system-prompts-chat#prompt-chat-prefills).
+  </Accordion>
+  <Accordion title="Can I change the main instruction?">
+    The main extraction and analysis instructions are maintained with the app because changes can affect safety, parsing, and compatibility. You can change your message, enabled context, personality, Knowledge Base, web-search setting, provider, and model.
+  </Accordion>
+  <Accordion title="Does private or encrypted mode use a different health prompt?">
+    The health instruction remains the same. The transport can add a short private-mode note and changes how the request reaches the provider. See [Privacy and data storage](/guides/privacy) for the exact boundary.
+  </Accordion>
+  <Accordion title="Do dictation and Listen add another prompt?">
+    No developer health prompt is added for voice transcription or speech synthesis. Those services receive the recording or text-to-read together with their selected voice settings. They can use a different provider from chat.
+  </Accordion>
+</AccordionGroup>
+
+## Report or propose a change
+
+If an instruction looks unclear, biased, unsafe, too broad, or inconsistent with the feature:
 
 <Steps>
-  <Step title="Find the prompt">
-    Open the [developer prompt catalog](/developers/system-prompts) and choose the relevant family. Each entry names its source file, runtime additions, expected output, and validation path.
+  <Step title="Name the action">
+    Say what you clicked or what feature ran, such as **Ask AI on a marker** or **Import report photos**.
   </Step>
-  <Step title="Describe the failure">
-    Include the feature, provider/model, input conditions, actual behavior, and expected behavior. Remove personal health data, credentials, report text, and private Knowledge Base content.
+  <Step title="Link the prompt">
+    Use the relevant **Read** link above so reviewers can find the maintained wording quickly.
   </Step>
-  <Step title="Explain the tradeoff">
-    State whether the proposal changes medical caution, evidence standards, tone, bias, privacy, output shape, token use, or compatibility with local models.
+  <Step title="Describe the problem">
+    Explain the behavior you saw, what you expected, and why the wording may have contributed.
   </Step>
-  <Step title="Open a public proposal">
-    Use the [GitHub issue tracker](https://github.com/elkimek/get-based/issues). A prompt change should update its source, catalog entry, and focused tests together.
+  <Step title="Remove private information">
+    Replace health values, names, report text, credentials, private Knowledge Base content, and other identifying information with made-up examples.
+  </Step>
+  <Step title="Open a public issue">
+    Use the [GitHub issue tracker](https://github.com/elkimek/get-based/issues). Maintainers can follow the [technical prompt review workflow](/developers/system-prompts#review-workflow).
   </Step>
 </Steps>
 
 <Warning>
-  Never paste an API key, share password, OAuth token, Cashu token, raw health report, or identifiable medical record into a public prompt proposal.
+  Never paste an API key, share password, OAuth token, Cashu token, raw health report, or identifiable medical record into a public issue.
 </Warning>
-
-## Review questions
-
-When reading a prompt, ask:
-
-- Does it distinguish recorded facts, model inference, and unsupported speculation?
-- Does it make a diagnosis, prescribe treatment, or invent a threshold?
-- Could profile/report text override the developer instruction?
-- Are sex, age, cycle, culture, geography, or lifestyle assumptions justified by supplied data?
-- Does a missing log get mistaken for missing biology or noncompliance?
-- Is the output contract parsed and validated as documented?
-- Does the wording work for both small local models and large hosted models?
-- Is the same safety rule duplicated elsewhere and at risk of drifting?
-
-The [prompt review workflow](/developers/system-prompts#review-workflow) expands this checklist for maintainers.

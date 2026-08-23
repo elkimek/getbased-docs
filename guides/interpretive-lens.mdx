@@ -27,12 +27,14 @@ You usually do not need to explain well-known researchers or frameworks. If the 
 
 ## How the lens changes AI analysis
 
-Every AI interaction includes your lens text as part of the context when an AI provider is connected. The AI will:
+Supported chat and insight requests include your lens text as part of the context when an AI provider is connected. The AI will:
 
 - Frame its analysis through the paradigms you listed
 - Draw on the research traditions those experts represent
 - Flag where your results align or conflict with those frameworks
 - Prioritize the markers and factors those frameworks consider important
+
+getbased does not rewrite your saved lens. It adds the text to the request as context. You can [read where the lens appears in the chat instruction](/developers/system-prompts-chat#prompt-chat-context).
 
 For example, if your lens includes *"circadian biology, UV and mitochondrial health, ancestral diet"*, the AI will consider light exposure, vitamin D, and metabolic markers through those frameworks rather than giving you a standard clinical reading.
 

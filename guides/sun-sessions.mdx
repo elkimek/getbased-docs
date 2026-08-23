@@ -90,6 +90,10 @@ You can add a therapy panel, SAD lamp, dawn simulator, or other device with stat
 
 You can request an AI interpretation from a completed session. The app supplies the logged conditions, modeled signals, uncertainties, device use, and safety context. The AI is instructed not to infer vitamin D status, call a channel deficient or complete, recommend looking at the sun, or turn a missing log into a medical conclusion.
 
+<Info>
+  Read the complete [Sun-session instruction](/developers/system-prompts-light#prompt-light-sun-session) or [light-device-session instruction](/developers/system-prompts-light#prompt-light-device-session) to see exactly what the AI is asked to explain and avoid.
+</Info>
+
 Sun sessions, light-device sessions, and indoor-light records belong to **Insight → Manage → Context → Data sources → Light & Sun context**. With that source enabled, chat can receive recent source and rhythm summaries, safety cautions, configured devices, and indoor screening context. Turning it off does not delete the records.
 
 When relevant Genome markers are available, getbased may add conservative association context to the modeled vitamin D response. It does not calculate a personal vitamin D dose or replace a 25-OH vitamin D test.

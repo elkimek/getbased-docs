@@ -90,6 +90,10 @@ getbased resizes the images for extraction and does not save them in the therapy
 
 You can review a link and photos for the same item. Missing fields and distinct rows are combined. When two sources disagree, the earlier value is kept and the conflict is called out for manual correction.
 
+<Info>
+  [Read what getbased asks AI to extract](/developers/system-prompts-imports#prompt-import-supplement) from product pages and label photos. The instruction is limited to product facts and tells the model not to turn label directions into your personal regimen.
+</Info>
+
 ### Select and edit the draft
 
 The review separates active ingredients, other label ingredients, laboratory/quality results, label directions, and warnings.
@@ -134,6 +138,8 @@ Each quality row has an **AI** checkbox. Turning it off keeps the source result 
 - **Reports, exports, backups, and encrypted sync** preserve the structured record and its periods.
 
 Control whether stored therapy records can influence in-app AI under **Insight → Manage → Context → Data sources → Supplements & medications**. Turning the source off does not delete anything.
+
+See the maintained wording for the [supplement-impact summary](/developers/system-prompts-insights#prompt-insight-supplement-impact) and [app-written chat questions](/developers/system-prompts-chat#prompt-chat-prefills).
 
 ## Read mitochondrial evidence cards carefully
 

@@ -134,6 +134,8 @@ Available report sections include flagged results, category tables, a summary, t
 
 The preview itself does not call an AI provider. Only the optional **Practitioner overview** action crosses that boundary, after normal cloud-provider consent where applicable. Height and weight are shown in the profile's selected display units, while the canonical cm and kg values keep BMI calculations consistent.
 
+You can [read the practitioner-overview instruction](/developers/system-prompts-insights#prompt-insight-report-summary) before generating it. The page shows fixed wording with placeholders where your selected report material is inserted.
+
 <Warning>
 The report is a snapshot of the sections, categories, and date range you selected. Review it against the source records before relying on it for a clinical conversation.
 </Warning>

@@ -64,6 +64,8 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
     When an AI provider is configured, the knowledge base can rephrase each question into three variants before searching, then merge the results. This closes the vocabulary gap between how you write your notes and how you ask questions later — a search for *"Black Seed Oil"* will also find notes titled *"Nigella Sativa"*.
 
     Toggle **"Improve recall with query rewriting"** in the knowledge base panel (default: on). Each rewrite uses roughly 100 tokens from your configured provider. Repeat questions in the same session use cached rewrites.
+
+    You can [read the query-rewriting instruction](/developers/system-prompts-chat#prompt-lens-rewrite). It receives your question, not your lab values or profile details.
   </Tab>
   <Tab title="External server (self-hosted)">
     The external server backend connects to a knowledge server you run — useful for larger document libraries, shared libraries, or faster GPU retrieval that a browser cannot match.
@@ -144,6 +146,8 @@ Open **Knowledge Base** from the Manage section of the sidebar, or use the knowl
 ## Where knowledge base results appear
 
 When a library is active, knowledge base search runs automatically on every chat message and Current Focus refresh. getbased fetches the most relevant passages and sends them with your health context before the AI answers. The AI cites them inline when relevant.
+
+See [what getbased asks AI](/guides/ai-prompts#when-you-send-a-chat-message) to understand where those passages appear in the full chat request.
 
 A **badge in the chat header** shows the active library name whenever retrieval is running.
 
