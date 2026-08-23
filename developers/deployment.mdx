@@ -1,205 +1,216 @@
 ---
 title: "Deployment"
-description: "Vercel, service worker, CSP, PWA, and release checks."
+description: "Production build, hosted service boundaries, self-host variables, service worker, CSP, and PWA configuration."
 ---
-
-{/* Synced during developer-docs migration. */}
-
 
 # Deployment
 
-getbased is deployed on Vercel. The browser app is shipped as static files, and Vercel also runs small same-origin API routes from `api/` for features that need hosted infrastructure. Vercel serves the app files directly, executes those API routes, and injects security headers.
+The current official deployment separates the static browser app from two narrow VPS services. Vercel still builds and serves the app, compatibility redirects, diagnostics, and bounded transition adapters, but current official clients do not send wearable/CAMS traffic or new profile shares through the static app host.
 
-## Vercel configuration
+## Production build
 
-`vercel.json` uses a deploy-time catalog fetch plus the legacy `routes` array (not `rewrites` or `headers`):
+`vercel.json` enables Git deployment only for `main` and runs:
 
 ```json
 {
-  "buildCommand": "node scripts/fetch-catalog.mjs",
-  "outputDirectory": ".",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "headers": { "...CSP and security headers..." },
-      "continue": true
-    },
-    { "src": "^/guide/(.*)", "status": 301, "headers": { "Location": "/docs/guide/$1" } },
-    { "src": "^/docs/guide/getting-started(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/quickstart" } },
-    { "src": "^/docs/guide/charts(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/guides/biomarker-charts" } },
-    { "src": "^/docs/guide/folder-backup(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/guides/backup" } },
-    { "src": "^/docs/guide/json-export-import(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/guides/export-import" } },
-    { "src": "^/docs/guide/ai-providers(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/ai-providers" } },
-    { "src": "^/docs/guide/([^.]+?)(?:\\.html)?/?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/guides/$1" } },
-    { "src": "^/docs(?:/.*)?$", "status": 301, "headers": { "Location": "https://docs.getbased.health/" } },
-    { "src": "^/app/?$", "dest": "/index.html" }
-  ]
+  "buildCommand": "node scripts/fetch-catalog.mjs && node scripts/build-production.mjs",
+  "outputDirectory": "."
 }
 ```
 
-| Route | Destination |
+The catalog fetch runs first. The Rolldown build then rewrites the native-module development entry to a content-hashed startup bundle while retaining feature-level lazy chunks. `vercel.json` gives hashed `js/bundle-*.js` files immutable cache headers and applies the CSP and security headers before the legacy documentation redirects and `/app` rewrite.
+
+Production catalog fetch variables are build-time secrets, not browser runtime configuration:
+
+| Variable | Purpose |
 |---|---|
-| `/` | `index.html` — the application (served by Vercel filesystem default) |
-| `/api/share` | `api/share.js` — encrypted profile share envelope storage |
-| `/api/proxy` | `api/proxy.js` — same-origin helper for wearable runtime config, CAMS/light data, and allowlisted external API calls |
-| `/api/commit` | `api/commit.js` — deployed commit/version helper used by diagnostics and smoke checks |
-| `/guide/*` | 301 redirect to the equivalent old `/docs/guide/*` compatibility path |
-| `/docs` | 301 redirect to `https://docs.getbased.health/` |
-| `/docs/guide/getting-started` | 301 redirect to `https://docs.getbased.health/quickstart` |
-| `/docs/guide/charts` | 301 redirect to `https://docs.getbased.health/guides/biomarker-charts` |
-| `/docs/guide/folder-backup` | 301 redirect to `https://docs.getbased.health/guides/backup` |
-| `/docs/guide/json-export-import` | 301 redirect to `https://docs.getbased.health/guides/export-import` |
-| `/docs/guide/ai-providers` | 301 redirect to `https://docs.getbased.health/ai-providers` |
-| `/docs/guide/*` | 301 redirect to the equivalent Mintlify guide path |
-| `/app` | `index.html` — app route used when the landing-page project owns `/` |
-| Everything else | Served as-is from the filesystem (JS, CSS, images, manifest) |
+| `CATALOG_FETCH_URL` | Full HTTPS URL for the private recommendations catalog; use a GitHub Contents API URL for a private GitHub repository |
+| `CATALOG_FETCH_TOKEN` | Read-only token for that source |
+| `CATALOG_FETCH_HEADER_NAME` | Optional authentication-header name; defaults to `Authorization` |
+| `CATALOG_FETCH_HEADER_VALUE` | Optional complete header value; defaults to `Bearer ${CATALOG_FETCH_TOKEN}` |
 
-User documentation is not built from this repository anymore. It lives in the separate Mintlify docs project at `docs.getbased.health`; this app keeps only compatibility redirects for old `app.getbased.health/docs/*` links.
+With no URL, the script accepts an existing readable catalog or copies the public example stub. When a URL is present but a preview build has no token, it also uses the stub. A configured production fetch that returns invalid JSON or the wrong catalog shape fails the build rather than silently shipping it.
 
-## API routes
+## Official service topology
 
-Vercel functions live in `api/`. They must stay same-origin, minimal, and avoid handling plaintext health data unless a feature explicitly requires it.
-
-### `/api/share`
-
-`api/share.js` stores password-protected profile share links. The browser builds a single-profile export, encrypts it locally with AES-GCM using a key derived from the user-provided password, and uploads only the encrypted envelope. The password is never sent to the route and is not embedded in the link.
-
-| Method | Purpose |
-|---|---|
-| `POST /api/share` | Store a new encrypted envelope and management-token hash |
-| `GET /api/share?id=...` | Return the encrypted envelope for a recipient to decrypt locally |
-| `DELETE /api/share?id=...` | Delete the hosted envelope when the creating browser supplies the management token |
-| `OPTIONS /api/share` | CORS preflight for allowed same-origin/app origins |
-
-Production requires a Vercel Blob write token configured as a sensitive environment variable. The route uses a private Blob store namespace, caps payload size, rejects shares longer than 30 days, rejects weak PBKDF2 iteration counts, rate-limits anonymous share creation, and returns `no-store` JSON responses. The route never has the password or plaintext profile JSON.
-
-Local development mirrors the endpoint in `dev-server.js` with an in-memory store so the modal and deep-link flow can be smoke-tested without Blob credentials. That local store is process-local and disappears when the dev server restarts.
-
-### `/api/proxy`
-
-`api/proxy.js` is the controlled same-origin proxy boundary. It exists for browser flows that cannot safely call a third-party endpoint directly from `app.getbased.health`.
-
-Current responsibilities:
-
-- wearable runtime configuration and OAuth helper calls where client IDs/secrets must not be hardcoded into docs;
-- CAMS/light-data relay paths used by Sun & Light calculations;
-- Custom API proxying with public-host and allowlist checks so it cannot become a general SSRF tunnel;
-- CORS and method handling for the app's own allowed origins.
-
-Do not add a new proxy mode without documenting the target host, the caller allowlist, what secrets it can see, and which tests cover the branch.
-
-### `/api/commit`
-
-`api/commit.js` returns the deployed app identity used by smoke checks, diagnostics, and “which build am I looking at?” debugging. Keep it cheap, no-store, and free of private deployment-provider details.
-
-## Domain layout
-
-The app and landing page are deployed as two separate Vercel projects on the same domain:
-
-| Subdomain | Vercel project | Repo |
+| Origin | Responsibility | Plaintext boundary |
 |---|---|---|
-| `getbased.health` | `get-based-site` | [elkimek/get-based-site](https://github.com/elkimek/get-based-site) |
-| `app.getbased.health` | `get-based` | [elkimek/get-based](https://github.com/elkimek/get-based) |
+| `getbased.health` | Landing page and `/app` compatibility route | Static files |
+| `app.getbased.health` | Browser application, build identity, compatibility routes | Static files and ordinary request metadata |
+| `integrations.getbased.health` | Narrow compatibility endpoint at `/api/proxy` | Transient provider credentials/responses for approved operations; no intentional payload logging or persistence |
+| `shares.getbased.health` | Opaque encrypted profile envelopes at `/api/share` | Ciphertext plus expiry, deletion, abuse-control, and connection metadata; never the share password or profile plaintext |
+| `sync.getbased.health` | Evolu encrypted sync relay | Encrypted sync records and operational metadata |
+| `docs.getbased.health` | Mintlify documentation | Public documentation only |
 
-DNS points the root, app, and www hostnames at the Vercel projects. Keep provider-specific DNS account details out of public docs.
+`js/proxy-runtime.js` routes official hosts to the integrations service and independent self-hosts to same-origin `/api/proxy`. `js/profile-share.js` routes current `vps1_...` links from official hosts directly to the share service while older IDs and self-hosted links remain same-origin.
 
-The landing page is self-contained (all CSS/JS inline) and depends only on three icon files. CTA links point to `https://app.getbased.health`. A small inline script rewrites these to `/app` on `localhost` for local development.
+## Vercel routes that remain
 
-### Local dev server
-
-`node dev-server.js` mirrors the production layout. If the site repo is cloned as a sibling (`../get-based-site`), the server routes:
-
-| Path | Destination |
+| Route | Current role |
 |---|---|
-| `/` | Landing page from `../get-based-site/index.html` |
-| `/app` | App from `index.html` |
-| `/api/share` | In-memory encrypted profile share endpoint |
-| `/api/proxy` | local proxy/runtime-config mirror with LAN/same-origin safety gates |
-| `/api/commit` | local commit/version helper |
-| `/api/deploy-catalog` | local git/Vercel deploy-catalog helper for operator workflows |
-| `/docs/*` | 301 redirect to `docs.getbased.health` |
+| `/app` | Rewrites to `index.html` |
+| `/api/commit` | No-store build identity for diagnostics, previews, and service-worker cache keys |
+| `/api/proxy` | Same-origin compatibility endpoint for independent deployments and legacy clients; not the current official-client destination |
+| `/api/share` | Bounded legacy Blob/standalone-service transition adapter; not the destination for new official `vps1_` writes |
+| `/guide/*` and `/docs/*` | Redirect old paths to `docs.getbased.health` |
+| Hashed bundles and other app assets | Served from the filesystem |
 
-Without the sibling repo, `/` serves the app directly. Override the site path with `SITE_DIR=/path/to/site node dev-server.js`.
+User documentation is not built from the application repository. It lives in the separate Mintlify project.
 
-## CSP headers
+## Compatibility proxy service
 
-The Content-Security-Policy allows what the current app needs:
+The standalone entry point is `server/compat-proxy-server.js`; deployment assets live in `deploy/compat-proxy/`. The container listens on its internal port and should be published only on host loopback behind a TLS reverse proxy that exposes the exact `/api/proxy` path.
 
-```
-default-src 'self'
-script-src  'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:
-            https://umami-iota-olive.vercel.app
-            https://cdn.jsdelivr.net
-style-src   'self' 'unsafe-inline'
-font-src    'self'
-connect-src 'self' https: wss:
-            http://localhost:*
-            http://127.0.0.1:*
-            ws://localhost:*
-            ws://*.onion
-            http://*.onion
-img-src     'self' data: blob:
-worker-src  'self' blob:
-manifest-src 'self'
-frame-src   'none'
-object-src  'none'
-base-uri    'self'
-```
+The operated policy accepts only classified operations:
 
-`'unsafe-inline'` is required for scripts because `index.html` has inline bootstrapping and legacy window-exported action hooks. `'wasm-unsafe-eval'` and `blob:` are needed for in-browser model/vector/worker paths such as local Knowledge Base and private transports.
+- official Oura, Withings, Polar, and existing legacy Fitbit OAuth/API requests;
+- the exact NVIDIA NRAS GPU-attestation operation;
+- CAMS atmosphere requests with coordinates forced to a 0.1° grid;
+- bounded credential-free public-page fetches used by reviewed application features.
 
-Most JS libraries are bundled locally in `vendor/`, but the CSP currently permits `https://cdn.jsdelivr.net` for explicitly allowed browser-runtime dependencies. Run `./update-vendor.sh` when bumping vendored assets, and update `vercel.json` whenever a provider or runtime dependency needs a new host.
+It is not a hosted Custom API, chat, voice, WHOOP, Ultrahuman, or Google Health proxy. Generic authenticated AI requests fail closed. Request bodies, wearable credentials, health responses, and OAuth payloads are held only long enough to forward the request and are not intentionally written or logged.
 
-`localhost:*` and `127.0.0.1:*` in `connect-src` allow plain HTTP Local AI servers on the same machine. The general `https:` source permits HTTPS LAN and remote compatible endpoints. A plain HTTP LAN endpoint such as `http://192.168.x.x` is blocked from the hosted HTTPS app by browser mixed-content rules; this is separate from CORS and cannot be relaxed by changing the CSP alone. An encrypted tunnel or HTTPS reverse proxy is required.
+### Standalone compatibility variables
 
-If a new AI provider, wearable provider, private transport, worker runtime, or relay host is added, review `connect-src`, `script-src`, service-worker bypass rules, and `api/proxy.js` together.
+| Variable | Required | Purpose |
+|---|---:|---|
+| `OURA_CLIENT_SECRET` | For official Oura | Confidential token exchange |
+| `WITHINGS_CLIENT_SECRET` | For official Withings | Confidential token exchange |
+| `POLAR_CLIENT_SECRET` | For official Polar | Confidential token exchange |
+| `UVDATA_BEARER` | For the fixed CAMS upstream | Server-side upstream authorization |
+| `COMPAT_PROXY_BIND` | No | Listener address; Compose sets `0.0.0.0` inside the container |
+| `COMPAT_PROXY_PORT` | No | Listener port; Compose sets `8787` |
+| `COMPAT_PROXY_REQUEST_TIMEOUT_MS` | No | Overall incoming-request timeout |
+| `PROXY_RATE_LIMIT_MAX` | No | Requests allowed per bounded window; default deployment value is 300 |
+| `PROXY_RATE_LIMIT_WINDOW_MS` | No | Window length; default deployment value is 60,000 ms |
 
-`vercel.json` also sets `Onion-Location` for Tor discovery and `Link` service descriptors for `/.well-known/mcp.json` and `/.well-known/agent-skills/index.json`.
+Never expose the container port directly, add request-body logging, or broaden an operated allowlist without documenting the target, data visible to the service, origin policy, limits, and tests.
+
+## Profile-share service
+
+The current official store is `server/profile-share-server.js` with a SQLite adapter in `lib/profile-share-sqlite-store.js`; deployment assets live in `deploy/profile-share/`. The browser compresses and encrypts a single-profile export before upload. The service accepts at most a 3.75 MB envelope and a 30-day expiry, while the reverse proxy caps the HTTP body at 4 MB.
+
+Cleanup runs at service start, hourly, after creation, and when an expired record is read. The database ceiling defaults to 512 MiB. The operated policy intentionally keeps no retained database backup, so service loss can invalidate outstanding links without affecting source profiles.
+
+### Standalone share variables
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `PROFILE_SHARE_RATE_LIMIT_KEY` | Yes | At least 32 characters; keys rotating HMAC abuse-control identifiers |
+| `PROFILE_SHARE_BIND` | No | Listener address; Compose sets `0.0.0.0` inside the container |
+| `PROFILE_SHARE_PORT` | No | Listener port; Compose sets `8790` |
+| `PROFILE_SHARE_SQLITE_PATH` | Yes outside the Compose default | Absolute database path |
+| `PROFILE_SHARE_DATABASE_MAX_BYTES` | No | Database ceiling; Compose sets 536,870,912 bytes |
+| `PROFILE_SHARE_REQUEST_TIMEOUT_MS` | No | Overall incoming-request timeout |
+
+The service must run in its own container and writable volume, separate from the compatibility proxy, Evolu relay, and UV service. Do not log request bodies, query strings containing share IDs, or management material.
+
+### Legacy Blob transition
+
+Existing Vercel Blob envelopes are not copied. `api/share.js` implements a bounded transition configured with:
+
+| Variable | Purpose |
+|---|---|
+| `GETBASED_PROFILE_SHARE_UPSTREAM_URL` | Exact HTTPS standalone-service URL |
+| `GETBASED_PROFILE_SHARE_TRANSITION_STARTED_AT` | Cutover instant |
+| `GETBASED_PROFILE_SHARE_LEGACY_BLOB_UNTIL` | End of legacy reads/deletes, no more than 31 days after cutover |
+| `BLOB_READ_WRITE_TOKEN` | Legacy Blob access during the bounded window only |
+
+Before cutover, the adapter retains legacy behavior. During the window, it redirects new writes, serves live legacy reads/deletes from Blob, and redirects legacy misses. After the deadline, all supported operations redirect and Blob credentials can be removed. Do not turn the transition into an indefinite fallback.
+
+## Self-hosted `/api/proxy`
+
+An independent deployment keeps the same-origin endpoint and its own provider credentials. Relevant variables are:
+
+| Variable | Purpose |
+|---|---|
+| `OURA_CLIENT_ID`, `OURA_CLIENT_SECRET` | Oura OAuth app |
+| `WITHINGS_CLIENT_ID`, `WITHINGS_CLIENT_SECRET` | Withings OAuth app |
+| `POLAR_CLIENT_ID`, `POLAR_CLIENT_SECRET` | Polar OAuth app |
+| `WHOOP_ENABLED`, `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET` | Fail-closed experimental WHOOP support; WHOOP is a confidential client |
+| `ULTRAHUMAN_ENABLED`, `ULTRAHUMAN_CLIENT_ID`, `ULTRAHUMAN_CLIENT_SECRET` | Fail-closed experimental Ultrahuman support |
+| `GOOGLE_HEALTH_ENABLED`, `GOOGLE_HEALTH_CLIENT_ID`, `GOOGLE_HEALTH_CLIENT_SECRET` | Fail-closed Google Health support |
+| `FITBIT_CLIENT_ID` | Existing legacy Fitbit connections only |
+| `UVDATA_UPSTREAM`, `UVDATA_BEARER` | Explicit compatible CAMS service and optional bearer; an independent host does not inherit the operated upstream |
+| `PROXY_RATE_LIMIT_MAX`, `PROXY_RATE_LIMIT_WINDOW_MS` | Rate-limit bounds |
+| `PROXY_RATE_LIMIT_BLOB_TOKEN` | Optional cross-instance limiter token on Vercel |
+| `PROXY_ALLOW_INSTANCE_RATE_LIMIT` | Explicitly permit the weaker instance-local fallback on Vercel |
+| `PROXY_UPSTREAM_TIMEOUT_MS` | Upstream lifecycle timeout |
+| `PROXY_POSTAL_QUEUE_MAX` | Per-instance queued postal lookups, bounded to 1–64; default 8 |
+
+Client secrets never enter runtime config. The browser receives only public client IDs and capability booleans. A missing or incomplete fail-closed provider configuration must block connect, exchange, refresh, sync, and backfill while leaving disconnect available.
+
+For CAMS, set `UVDATA_UPSTREAM` explicitly on an independent self-host or choose browser-direct Open-Meteo. `UVDATA_BEARER` is required only when that selected upstream expects it.
+
+## Local development
+
+`node dev-server.js` serves source modules and mirrors same-origin APIs:
+
+| Path | Behavior |
+|---|---|
+| `/` | Sibling landing page when available; otherwise the app |
+| `/app` | `index.html` |
+| `/api/proxy` | Local runtime-config and proxy-policy mirror |
+| `/api/share` | Process-local encrypted-envelope store, cleared on restart |
+| `/api/commit` | Local build identity |
+| `/api/deploy-catalog` | Operator catalog workflow when configured |
+| `/docs/*` | Redirect to public documentation |
+
+Use `.env.local` for untracked local secrets. Environment variables already present in the process take precedence.
+
+The local-only `/api/deploy-catalog` workflow has a separate set of maintainer variables. They are not browser configuration and are unrelated to the production build's `CATALOG_FETCH_*` inputs:
+
+| Variable | Purpose |
+|---|---|
+| `CATALOG_GIT_REPO` | Optional repository path when the catalog symlink target cannot be detected automatically |
+| `CATALOG_COMMIT_MSG` | Optional commit-message override for the catalog update |
+| `VERCEL_DEPLOY_HOOK_URL` | Secret Vercel deploy-hook URL called only after the catalog commit is pushed successfully |
+
+Missing configuration skips the corresponding operation. The development endpoint validates the deploy-hook URL shape and never exposes these values to the browser.
+
+## Content Security Policy
+
+The current hosted policy allows self scripts, Wasm evaluation, blob workers, the approved analytics origin, jsDelivr for explicitly retained runtime needs, HTTPS/WebSocket connections, and loopback Local AI connections. It denies frames, objects, and foreign base URLs. The exact source of truth is `vercel.json`.
+
+When adding a provider or browser runtime, review the CSP, direct-CORS requirements, service-worker network-only list, proxy policy, and public privacy disclosure together. CSP permission does not authorize use of the compatibility relay.
 
 ## Service worker
 
-The service worker (`service-worker.js`) manages PWA caching. The cache name includes a version number:
+`service-worker.js` imports `version.js` and builds the cache name as `labcharts-v${APP_VERSION}`. Production uses that semver name. Preview and local builds append the sanitized `/api/commit` cache key or SHA so two deployments with the same app version do not share a cache.
 
-```js
-const CACHE_NAME = 'labcharts-v55';
-```
+The install step precaches the complete app shell with bounded concurrency and retries; installation fails if a required entry cannot be fetched. Routing then follows these rules:
 
-**When to bump the version:** Any time you change an app file — JS, CSS, HTML, manifest, images. Incrementing the version busts the cache for existing users, who will download fresh files on next visit.
-
-The service worker uses three caching strategies:
-
-| Resource type | Strategy |
+| Request | Strategy |
 |---|---|
-| AI API calls (OpenRouter, Routstr, PPQ, Venice, Local AI) | **Bypass** — `return` without `event.respondWith`. Streaming ReadableStreams must go directly to the page without SW IPC buffering |
-| App shell (HTML, CSS, JS, vendor libs, fonts, images) | **Stale-while-revalidate** — serve cached, update in background |
+| AI/provider and other classified cross-origin requests | Network only, outside service-worker response handling so streams remain direct |
+| Same-origin `/api/*` | Network only |
+| Production same-origin app assets | Current-version cache first, then network |
+| Preview/local same-origin app assets | Network first, then current cache |
+| Navigation | Cached route when present, with `/app` or `index.html` as offline fallback |
+| Explicit update probe | Network first |
 
-The API bypass is critical for streaming. If the service worker intercepts a streaming SSE response, the IPC pipe between the SW and the page buffers the chunks, breaking the streaming experience. The bypass (returning without calling `event.respondWith`) routes requests directly to the network. Local/private hosts are bypassed only when they are cross-origin, so same-origin app-shell requests can still be cached. Normal localhost development unregisters the SW to avoid stale module caches; use `/app?dev-sw=1` for an explicit local offline smoke test.
+Activation deletes older `labcharts-v*` caches. Local development normally unregisters the worker; use `/app?dev-sw=1` only for an intentional local offline check.
 
 ## PWA manifest
 
-`manifest.json` makes the app installable as a native app on desktop and mobile:
+The current manifest contract is:
 
 ```json
 {
-  "name": "getbased",
+  "id": "/app",
+  "name": "getbased — Personal Health Intelligence",
   "short_name": "getbased",
-  "start_url": "/",
+  "start_url": "/app",
+  "scope": "/app",
   "display": "standalone",
   "background_color": "#0f1117",
-  "theme_color": "#0f1117",
-  "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon.svg",     "sizes": "any",     "type": "image/svg+xml" }
-  ]
+  "theme_color": "#0a0a12",
+  "launch_handler": { "client_mode": "navigate-existing" }
 }
 ```
 
-## Vendor dependencies
+The 192 px and 512 px PNG icons use relative paths and `any maskable`; the SVG is an `any` icon. Keep the manifest, service-worker `/app` fallback, installed-PWA smoke test, and landing-page routes aligned.
 
-Chart.js, pdf.js, and Google Fonts are bundled locally in `vendor/`. To update:
+## Change-scoped release checks
 
-1. Edit the version pins at the top of `update-vendor.sh`
-2. Run `./update-vendor.sh`
-3. Bump `version.js` to bust the SW cache
-4. Commit the updated `vendor/` directory
+Before release, run the checks related to the changed boundary: production-build validation for build or asset changes, proxy policy/server tests for integrations, profile-share transition/service tests for sharing, and service-worker/manifest checks for PWA changes. GitHub Actions owns the exhaustive browser and combined-coverage matrix.

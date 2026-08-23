@@ -252,7 +252,19 @@ Shared AI API transport helpers used by `api.js`.
 
 **Key exports:**
 - `fetchWithRetry(url, options, config)` — wraps fetch with request timeout, transient network retry, and 429 backoff
-- `createProxyFetch(shouldUseProxy)` — builds the Custom API proxy fetch wrapper
+- `createProxyFetch(shouldUseProxy)` — compatibility fetch selector used by the shared OpenAI-format helper. Current Custom API calls pass `false`, so Custom validation, model discovery, and chat are browser-direct and do not fall back to a relay.
+
+### `app-extension-runtime.js` and `app-extension-bootstrap.js`
+
+Neutral single-extension boundary for trusted edition builds. The public/self-host bootstrap installs no extension, leaving the independently runnable core behavior unchanged. This is a build-time adapter contract, not dynamic plugin loading.
+
+**Hook groups:** Settings slots/actions/lifecycle, onboarding slots/actions, AI ownership/authorization/transport/model policy/options/error mapping, voice request authorization/playback policy, sync keys/encrypted prefixes/conflict policy/post-apply callback, and startup.
+
+An extension requires a stable ID. Active extension-owned AI transport fails closed when `authorizeRequest` is absent or does not return `true`.
+
+### `unique-id.js`
+
+Creates collision-resistant local record IDs with `crypto.randomUUID()` or `crypto.getRandomValues()`. `createUniqueId(prefix?)` throws when Web Crypto is unavailable instead of persisting a weak fallback identifier.
 - `readWithStallTimeout(reader, label, timeoutMs?)` — guards one streaming read; Local AI uses the extended allowance only before its first token
 - `STREAM_STALL_TIMEOUT_MS`, `LOCAL_AI_FIRST_TOKEN_STALL_MS`, `FETCH_REQUEST_TIMEOUT_MS`, `AI_IMPORT_REQUEST_TIMEOUT_MS` — transport timeout constants
 
@@ -796,6 +808,8 @@ Data export, import, and reset.
 
 Encrypted single-profile share links. The module creates a profile export through the module-only `buildClientExportObject()` helper, encrypts it in the browser with a password, posts only the ciphertext envelope to `/api/share`, and imports shared profiles from `#share/{id}` deep links after local password decryption. Shared envelopes require at least 100,000 PBKDF2-SHA256 iterations; the normal generated value is 600,000.
 
+On official hosts, new `vps1_...` IDs route directly to `https://shares.getbased.health/api/share`; older IDs and independent self-hosts retain the same-origin route. Passwords require at least 12 characters, the generated value contains 24 random bytes, and expiry is capped at 30 days.
+
 **Key exports:**
 - `createProfileShare({ profileId, password, expiresDays })` — builds, encrypts, uploads, and records a managed share link for one profile
 - `encryptProfileShareEnvelope(exportObj, secret, options?)` / `decryptProfileShareEnvelope(envelope, secret)` — AES-256-GCM envelope helpers using PBKDF2-SHA256
@@ -1191,7 +1205,7 @@ Voice is a first-use chat subsystem rather than part of the startup bundle. `voi
 
 - `voice-provider-browser-local.js` runs downloaded Whisper STT and Kokoro TTS through `voice-local-stt-worker.js`, `voice-local-tts-worker.js`, and the serialized `voice-local-engine.js` worker controller.
 - `voice-provider-local-server.js` calls OpenAI-compatible `/v1/audio/transcriptions`, `/v1/audio/speech`, and `/v1/models` endpoints directly from the browser.
-- `voice-provider-xai.js` and `voice-provider-elevenlabs.js` use `voice-provider-cloud-shared.js` to call the bounded same-origin `/api/voice` relay.
+- `voice-provider-ai-cloud.js` supplies the xAI adapter plus the OpenRouter, PPQ, and Venice audio paths; `voice-provider-elevenlabs.js` supplies ElevenLabs. Both use `voice-provider-cloud-shared.js` for browser-direct calls after cloud-processing consent.
 - `voice-provider-catalog.js` owns capability and execution-location metadata; `voice-model-catalog.js` pins local models, voices, languages, download sizes, and CPU/WebGPU modes.
 
 **Settings and storage:**
@@ -1200,7 +1214,7 @@ Voice is a first-use chat subsystem rather than part of the startup bundle. `voi
 - `voice-settings-schema.js` is the authority for device-local, syncable, secret, and backup keys. `voice-settings-storage.js` validates preferences and delegates secret writes to encrypted provider storage.
 - Downloaded model assets and fetched voice catalogs are rebuildable caches. They are not sync payloads or backup data.
 
-**Server boundary:** `api/voice.js` delegates to `lib/voice-relay-handler.js`; `lib/voice-relay-policy.js` allowlists providers/actions, bounds request and response sizes, validates identifiers and languages, and maps normalized requests to xAI or ElevenLabs.
+**Network boundary:** cloud voice is direct browser transport. Do not document or restore the removed `/api/voice` relay without a new reviewed privacy and consent design.
 
 **Key exports:** `loadVoiceModule`, `toggleVoiceRecording`, `toggleMessageSpeech`, `maybeAutoReadAssistantMessage`, `stopVoiceActivity`, `getVoiceSettings`, `setVoiceSetting`, `transcribeVoice`, `createVoiceSynthesizer`
 
@@ -1711,7 +1725,7 @@ Supplement, lifestyle, light-device, and EMF affiliate recommendations driven by
 
 ### `crypto.js`
 
-Data encryption at rest and cross-tab sync.
+Passphrase encryption, browser-device credential wrapping, and cross-tab data-change notifications.
 
 **Key exports:**
 - `encryptedSetItem(key, value)` / `encryptedGetItem(key)` — AES-256-GCM via PBKDF2 passphrase
@@ -1719,6 +1733,8 @@ Data encryption at rest and cross-tab sync.
 - `validatePassphrase(p)` — checks 4 strength rules (8+ chars, lowercase, uppercase, special), returns `{ valid, message }`
 - `broadcastDataChanged(profileId)` — BroadcastChannel message for multi-tab sync
 - `SENSITIVE_PATTERNS` — array of localStorage key pattern strings that get encrypted
+
+With passphrase protection off, supported credential keys use a `d1:` AES-GCM envelope backed by a non-extractable key in IndexedDB. If device wrapping is unavailable, credential persistence fails closed to memory-only behavior. BroadcastChannel never carries the encryption key; each tab unlocks independently.
 
 **Window exports:** `setEncryptionEnabled`, `changePassphrase`, `exportBackup`, `importBackup`
 
@@ -1885,11 +1901,11 @@ Connect/disconnect/backfill orchestration. OAuth dispatch table, scheduled stale
 
 ### Wearables vendor adapters
 
-Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wearables-<vendor>-auth.js` (OAuth dance). Apple Health and Manual skip the auth half — Apple is file-import only, Manual is fully local. Tokens never leave the device; `sync-payload.js` strips `wearableConnections` from the synced payload (and again on pull as defense-in-depth).
+Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wearables-<vendor>-auth.js` (OAuth dance). Apple Health and Manual skip the auth half. Tokens are always encrypted in the per-profile device-local vault and are excluded from sync and backups. They do leave the browser transiently when the selected OAuth exchange, refresh, or provider call requires the operated or self-hosted compatibility endpoint.
 
-**OAuth2 (server-side secret):** `wearables-oura.js` + `…-oura-auth.js`, `…-withings.js` + `…-withings-auth.js`, `…-ultrahuman.js` + `…-ultrahuman-auth.js`, `…-polar.js` + `…-polar-auth.js`, and `…-google-health.js` + `…-google-health-auth.js`. Secrets live in `.env.local` + `/api/proxy`. Google Health additionally requires the explicit server capability gate and encrypts its credentials and raw rows with its device-local credential vault key.
+**OAuth2 confidential clients:** Oura, Withings, Polar, Google Health, and WHOOP inject the deployment secret at the compatibility endpoint. Google Health and WHOOP additionally require explicit server capability gates; Google Health credentials and raw rows use the always-on device-local key.
 
-**OAuth2 PKCE (no secret):** `wearables-whoop.js` + `…-whoop-auth.js`. The Fitbit PKCE modules remain only to sync already-connected legacy users during the migration window; the adapter is hidden for new connections.
+**Other OAuth paths:** Ultrahuman follows its reviewed experimental self-host contract. Fitbit's PKCE modules remain only for already-connected legacy users; the adapter is hidden for new connections and has no reconnect flow.
 
 **No OAuth:** `wearables-apple-health.js` (file-import — `parseAppleHealthXml` reads the `export.xml` from a Health zip), `wearables-manual.js` (`logManualMetric` / `logManualBP` + `MANUAL_TAGS` whitelist for what users can log by hand).
 

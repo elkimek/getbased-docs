@@ -1,81 +1,57 @@
 ---
 title: "Track your indoor light environment"
-description: "Map the rooms and screens that make up your indoor light exposure so the AI can reason about your full photobiological day, not just time outside."
+description: "Record rooms, screens, and practical light observations as heuristic context for your Light & Sun history."
 ---
 
-Most people spend eight to fourteen hours a day under artificial light. That indoor half of your day shapes your circadian rhythm, your sleep quality, and your hormone signals just as much as the time you spend outside — often more. The **Light Environment** section in the Light lens maps your rooms and screens so getbased can see the whole picture.
+The **Light environment** section records the rooms, sources, screens, and timing patterns that make up a typical indoor day. getbased turns those answers into a screening summary that can sit beside sun sessions, sleep, wearable, and lab context.
 
-## What light environment tracking covers
+This is a self-reported heuristic, not measured light dose, a clinical score, or a diagnosis. A higher burden tier identifies patterns worth reviewing; it does not prove harm or explain a symptom.
 
-Light environment tracking has two components: **rooms** and **screens**. Together they produce a set of derived signals that the AI uses alongside your sun sessions, wearable data, and lab results.
+## Add rooms
 
-## Adding rooms
+Add rooms where you regularly spend time. A room can include:
 
-Add the rooms where you spend real time — kitchen, living room, office, bedroom, and so on. For each room you log:
+- Its primary light-source category, such as warm or cool LED, fluorescent, incandescent, mixed, daylight-only, or unknown
+- Approximate occupied hours
+- Whether it is used after sunset
+- Saved readings from the Light tools, with the capture method and confidence
 
-- **Primary light source** — LED cool, LED warm, LED tunable, fluorescent, incandescent, halogen, candle, mixed, daylight only, or unknown
-- **Hours occupied per day** — how many hours you spend in that room while awake
-- **After-sunset use** — whether you spend evening time in this room
+Use **Lux meter** for a supported sensor, entered meter reading, or calibrated camera estimate. Use **Flicker detector** only as a camera banding screen. The **Home audit** is the quickest way to create relative room-brightness observations during one held-exposure walkthrough.
 
-Each room card has inline measurement buttons so you can capture real numbers without switching tools:
+## Add screens
 
-- Tap **Lux Meter** to measure the room's average brightness
-- Tap **Flicker Detector** to check the dominant light source for PWM flicker
+Record the phone, laptop, monitor, tablet, or television patterns that are relevant to your usual week:
 
-Measurements save automatically and the AI sees them with confidence weights reflecting how they were captured.
+- Approximate daily use
+- Approximate use after sunset
+- Night-mode, filter, or glasses choices
+- A broad brightness setting
 
-<Tip>
-The fastest way to fill in all your rooms at once is the **Eye-level audit** tool — a 10-minute camera walkthrough that captures lux per room as you move through your home. See [Light tools](/guides/light-tools) for details.
-</Tip>
+These are disclosure fields, not measurements of spectral exposure. Screen content, viewing distance, room light, hardware, and user settings can all change the actual light reaching the eye.
 
-## Screen disclosure cards
+## Indoor-light screening summary
 
-Add the screens you use regularly — phone, laptop, monitor, tablet, TV. For each screen you disclose:
+The summary combines selected patterns such as after-sunset screen time, time in rooms used after sunset, daylight access, and reported source types. It reports a small set of qualitative tiers and the observations that contributed to them.
 
-- **Hours per day** — total awake screen time
-- **Evening hours** — screen time after sunset (the biologically expensive window)
-- **Blue-blocker status** — f.lux, Night Shift, a dedicated app, blue-blocking glasses, or a hardware filter
-- **Brightness level** — high, medium, or low
-
-Evening screen hours without a blue-blocker are the primary driver of the junk-light contamination score that feeds the AI's indoor burden assessment.
-
-## Light burden audit
-
-The Light lens shows your **indoor burden tier** — a five-level assessment (negligible / mild / moderate / high / severe) computed from:
-
-- Evening screen hours without a blue-blocker
-- Hours spent in rooms after sunset
-- Number of rooms without any daylight access
-- Light source quality across your logged rooms
-
-When you make a change — swapping a cool LED for a warm one, adding blackout curtains, installing a dimmer — you can capture a **before/after snapshot** from the Light Audit section and see the per-room delta side by side. This turns qualitative changes into something measurable over time.
+Use the result to remember the environment you described and compare changes. For example, you can save before-and-after room snapshots after moving a lamp or changing curtains. A difference in this heuristic is not a measured biological change.
 
 <Note>
-The survey is meant to reflect your usual week, not your best week. Re-open it once a quarter or after a move. The deficit signals smooth out over rolling windows, so one week of vacation won't skew your baseline.
+Answer for a typical week. Review the record after a move, schedule change, or meaningful lighting change. Missing fields mean missing context, not a healthy or unhealthy result.
 </Note>
 
-## AI verdicts on your light environment
+## AI interpretation
 
-getbased generates AI verdicts on your room setup, screen habits, and overall light burden. The verdict engine evaluates your logged rooms and screens against your sun session data and returns a green / yellow / red assessment with a short explanation.
+Room, screen, and burden interpretations can be generated from the active AI provider. The AI receives only the selected Light & Sun context and the compact observations prepared by getbased. It should describe the screening picture and uncertainty without turning it into measured dose or a medical conclusion.
 
-Verdicts fire automatically when you save changes and can be refreshed manually from any room or screen card. Each card shows its own verdict independently, so you can see which specific room or screen is driving your burden score.
+A photosensitizing-medication flag is included as a general caution. The app does not invent a universal indoor-light sensitivity rule or numeric medication multiplier. Follow medication guidance and ask a clinician or pharmacist about personal reactions.
 
-## Photosensitive medication awareness
+## Context and storage
 
-If you've flagged a photosensitizing medication in your sun session setup (tetracyclines, isotretinoin, thiazides, NSAIDs, amiodarone, St. John's Wort, and similar), that flag also informs how the AI interprets your indoor light environment. Users on photosensitizing drugs are more sensitive to the blue-heavy end of LED and fluorescent spectra indoors, not just to UV outdoors. The AI accounts for this when it reasons about your light burden.
+Light environment data belongs to **Insight → Manage → Context → Data sources → Light & Sun context**. With that source enabled, AI context can include:
 
-<Warning>
-getbased is a measurement and tracking tool, not a medical advisor. If you're on a photosensitizing medication and have concerns about light sensitivity, talk to your prescribing clinician.
-</Warning>
+- Room and screen counts
+- Reported after-sunset use and filter choices
+- Source categories and saved measurement methods
+- The qualitative indoor-light screening tier and contributing patterns
 
-## Where light environment data appears in AI context
-
-Light environment data belongs to the **Light & Sun** source. It appears in in-app AI chat and light-related score context when **Insight → Manage → Context → Data sources → Light & Sun context** is on. With that source enabled, the AI context can include:
-
-- Room count and screen count
-- After-sunset room and screen counts
-- Whether blue-blockers are in use
-- Your indoor burden tier
-- The two derived deficit axes — daytime indoor hours under artificial light, and LED + evening blue-light contamination weighted by source type and timing
-
-A user who walks 15 minutes outside but sits under cool LEDs for 11 hours has a fundamentally different photobiological day than someone who stays indoors for 2 hours under warm light in the evening. The AI can see that picture when the Light & Sun source is enabled; turning it off does not delete your logged rooms, screens, or measurements.
+Turning the source off keeps these records out of new in-app AI context without deleting them. Records stay in browser storage and follow your encryption, export, and opt-in sync settings. Camera frames remain local and are discarded after processing.

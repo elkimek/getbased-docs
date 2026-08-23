@@ -92,7 +92,7 @@ Web search and image inputs are disabled because those features would expand the
 
 ### Checks performed by getbased
 
-getbased uses [`venice-e2ee@0.4.1`](https://github.com/elkimek/venice-e2ee/releases/tag/v0.4.1) with both `requireDcap` and `requireGpu` enabled. For each new cached session, the client generates a 32-byte nonce and fetches Venice's TDX and GPU evidence. Session creation requires all of the following:
+getbased uses [`venice-e2ee@0.5.3`](https://github.com/elkimek/venice-e2ee/releases/tag/v0.5.3) with both `requireDcap` and `requireGpu` enabled. For each new cached session, the client generates a 32-byte nonce and fetches Venice's TDX and GPU evidence. Session creation requires all of the following:
 
 1. **Quote binding:** The client accepts the documented hex or base64 quote representation, checks that it is an Intel TDX quote, confirms the requested model and fresh nonce, binds the signing-key address to TDX `REPORTDATA`, rejects the debug attribute, and rejects negative or inconsistent fields reported by Venice.
 2. **Intel DCAP verification:** The browser runs the TDX quote through the vendored `@phala/dcap-qvl` verifier. This validates the quote signature, PCK certificate chain, collateral and revocation information, and TCB status. Unknown or rejected TCB states fail the session.
@@ -101,7 +101,7 @@ getbased uses [`venice-e2ee@0.4.1`](https://github.com/elkimek/venice-e2ee/relea
 
 The DCAP result raises the library's `verificationLevel` to `"dcap"`. GPU verification is a separate required policy recorded through `gpuVerified` and `gpu.tokensVerified`; it is not folded into that string value.
 
-NVIDIA does not accept this POST directly from a browser. The hosted deployment therefore allows only the fixed NRAS URL through `/api/proxy` and relays the evidence body verbatim. Message content is not part of the GPU evidence. The browser authenticates the returned tokens independently, but NVIDIA learns that the evidence was checked.
+NVIDIA does not accept this POST directly from a browser. On an official getbased host, `getProxyApiUrl()` routes only the fixed NRAS operation to `https://integrations.getbased.health/api/proxy`; an independent deployment uses its own same-origin `/api/proxy`. The compatibility service relays the evidence body verbatim. Message content is not part of the GPU evidence. The browser authenticates the returned tokens independently, but the service sees the evidence exchange and NVIDIA learns that the evidence was checked.
 
 ### Checks not currently performed
 

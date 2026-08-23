@@ -29,7 +29,7 @@ Marker placements affect only presentation. The shared copy keeps the same under
     On desktop, click the share button in the top bar. On mobile, open the profile menu and choose **Share Profile**. You can also open **Settings -> Data -> Share Profile**.
   </Step>
   <Step title="Choose the password and expiry">
-    Use the generated password or enter your own password. Choose how long the link should stay available: 7, 14, or 30 days.
+    Use the generated high-entropy password or enter one with at least 12 characters. Choose how long the link should stay available: 7, 14, or 30 days.
   </Step>
   <Step title="Confirm upload">
     Read the confirmation text and check the consent box. getbased creates a locked copy of the selected profile.
@@ -71,10 +71,18 @@ Stopping a link prevents future loads from that link. It does not remove copies 
 
 ## Privacy model
 
-- The selected profile is locked in your browser before upload.
+- The selected profile is compressed and encrypted in your browser with AES-256-GCM before upload. The key is derived from the password with PBKDF2-SHA256 using 600,000 iterations.
 - The password is never sent with the link and is never stored by getbased.
 - The link only finds the locked copy; the password unlocks it.
 - If the password is lost, getbased cannot recover the shared copy.
 - If someone has both the link and password, they can import the shared profile until it expires or you stop sharing it.
+
+On the official app, the browser sends the encrypted envelope directly to getbased's dedicated share service. The static application host does not receive the profile. The service stores the opaque envelope, expiry and deletion state, and a keyed identifier used for abuse controls; like any network service, it can observe connection metadata. It does not receive the password or profile plaintext.
+
+The share database is intentionally not retained in backups. A service outage or data loss can therefore make an active link unavailable before its expiry. This does not affect the source profile in the sender's browser, and you can create a new link when the service is available.
+
+<Note>
+A shared copy is a time-limited handoff, not a durable backup. Keep a regular export or folder backup for recovery.
+</Note>
 
 For your regular backup and migration options, see [Export and import](/guides/export-import), [Backup](/guides/backup), and [Sync across devices](/guides/cross-device-sync).

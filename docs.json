@@ -120,6 +120,7 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
+              "guides/ai-prompts",
               "guides/voice",
               "guides/ai-model-testing",
               "guides/recommendations",
@@ -181,6 +182,16 @@
               "developers/agent-access-relay",
               "developers/lens-local-internals",
               "developers/lens-endpoint-contract"
+            ]
+          },
+          {
+            "group": "Prompt catalog",
+            "pages": [
+              "developers/system-prompts",
+              "developers/system-prompts-chat",
+              "developers/system-prompts-imports",
+              "developers/system-prompts-insights",
+              "developers/system-prompts-light"
             ]
           },
           {

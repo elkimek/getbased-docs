@@ -18,16 +18,22 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 
 | Key | Type | Purpose |
 |---|---|---|
-| `labcharts-profiles` | JSON array | Profile index: `[{ id, name, createdAt }]` |
+| `labcharts-profiles` | JSON array or passphrase ciphertext | Profile index: `[{ id, name, createdAt }]`; sensitive when passphrase protection is enabled |
 | `labcharts-ai-provider` | string | Active AI provider: `'openrouter'` \| `'routstr'` \| `'ppq'` \| `'venice'` \| `'ollama'` |
-| `labcharts-openrouter-key` | string | OpenRouter API key |
-| `labcharts-routstr-key` | string | Routstr node session key |
+| `labcharts-openrouter-key` | protected string | OpenRouter API key; `d1:` device envelope without a passphrase or passphrase ciphertext when enabled |
+| `labcharts-routstr-key` | protected string | Routstr node session key; same credential-wrapping rule |
 | `labcharts-routstr-node` | string | Selected Routstr node URL (from Nostr discovery) |
 | `labcharts-cashu-wallet-mint` | string | Cashu wallet mint URL (mirror of IDB meta for sync) |
 | `labcharts-cashu-wallet-mnemonic` | string | BIP-39 wallet seed phrase (encrypted via `encryptedSetItem`) |
-| `labcharts-ppq-key` | string | PPQ API key |
-| `labcharts-venice-key` | string | Venice AI API key |
-| `labcharts-ollama` | JSON | Local AI config: `{ url, model, mode, apiKey }`. Key kept as `ollama` for backwards compat |
+| `labcharts-ppq-key` | protected string | PPQ API key |
+| `labcharts-venice-key` | protected string | Venice AI API key |
+| `labcharts-custom-key` | protected string | Custom API key |
+| `labcharts-lens-key` | protected string | External Knowledge Base key |
+| `labcharts-ollama` | protected JSON | Local AI config: `{ url, model, mode, apiKey }`. Key kept as `ollama` for backwards compatibility |
+| `labcharts-xai-voice-key` | protected string | xAI voice key |
+| `labcharts-elevenlabs-voice-key` | protected string | ElevenLabs voice key |
+| `labcharts-voice-local-server-key` | protected string | Device-scoped compatible voice-server key |
+| `labcharts-meteo-config` | protected JSON | Sun data-source URL/bearer configuration |
 | `labcharts-ollama-pii-model` | string | Local AI model used for PII obfuscation (can differ from main chat model) |
 | `labcharts-openrouter-model` | string | Selected OpenRouter model ID (e.g., `anthropic/claude-sonnet-4-6`) |
 | `labcharts-routstr-model` | string | Selected Routstr model ID |
@@ -42,6 +48,10 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-time-format` | string | `'24h'` \| `'12h'` — time display preference |
 | `labcharts-debug` | string | Debug mode flag — enables console output and diff viewer |
 | `labcharts-pii-choice` | sessionStorage | One-time PII warning flag (sessionStorage, not localStorage) |
+| `labcharts-encryption-enabled` | string | `'true'` when passphrase protection is enabled |
+| `labcharts-encryption-salt` | string | Global Base64 PBKDF2 salt for the passphrase-derived key |
+| `labcharts-cloud-ai-consent` | JSON | Versioned, recipient-scoped cloud AI/voice approvals on this browser |
+| `labcharts-hosted-wearable-consent` | JSON | Versioned profile/provider-scoped operated wearable-relay approvals |
 | `labcharts-sync-enabled` | string | `'true'` means this browser has a configured Sync identity; it does not by itself mean relay traffic is active |
 | `labcharts-sync-paused` | string | `'true'` pauses a configured identity on this browser without deleting its Evolu owner or local Sync history |
 | `labcharts-sync-backup-restore-pending` | JSON array | Durable profile-ID handoff that makes restored profiles publish before the first inbound merge |
@@ -78,8 +88,6 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-{profileId}-dob` | string | `'YYYY-MM-DD'` — date of birth |
 | `labcharts-{profileId}-country` | string | ISO country code |
 | `labcharts-{profileId}-zip` | string | ZIP/postal code |
-| `labcharts-encryption-enabled` | string | `'true'` — encryption at rest enabled |
-| `labcharts-{profileId}-enc-salt` | string | Base64 PBKDF2 salt for this profile's encryption |
 
 ## importedData structure
 
@@ -555,7 +563,17 @@ The complete raw DNA or report file is never stored. Raw imports keep only match
 
 Raw re-import refreshes raw-file calls but preserves mtDNA and SNP objects with structured `source` metadata. When a raw file and an explicit manual/report override contain the same rsID, the explicit override remains authoritative. `catalogVersion` is preserved when a manual call is added to an older raw import so the app can still prompt for a genuine catalog refresh.
 
-## IndexedDB — auto-backup
+## IndexedDB databases
+
+| Database | Stores | Security and portability |
+|---|---|---|
+| `labcharts-backups` | Automatic snapshots and optional folder handle | Snapshot contents follow backup filtering; folder handles remain browser-local |
+| `labcharts-wearables-{profileId}` | Daily wearable rows, metadata, non-exportable device key, encrypted OAuth vault records | Raw rows and tokens do not sync; tokens are excluded from backups; Google Health rows are excluded from raw backups |
+| Per-profile cycle database | Raw cycle observations and import metadata | Device-local rows; passphrase-wrapped when enabled |
+| Cashu wallet database | Proofs and wallet state | Sensitive device-local state with its own export/recovery contract |
+| Knowledge Base stores | Local documents, chunks, vectors, and model assets | Device-local/rebuildable according to the Knowledge Base backend |
+
+### Auto-backup database
 
 Database: `labcharts-backups`
 Object store: `snapshots`
@@ -590,29 +608,29 @@ Maximum 5 snapshots are kept per profile. The oldest is pruned automatically on 
 
 Unsent `chatDraft_*` records are intentionally absent from full database, auto, folder, and single-profile backups. Sent conversations and custom personas are included.
 
-## Encryption
+## Encryption and credential envelopes
 
-When encryption is enabled (`labcharts-encryption-enabled = 'true'`), sensitive localStorage keys are stored as AES-256-GCM ciphertext (base64-encoded) instead of plaintext JSON.
+When passphrase protection is enabled, `crypto.js` derives one non-exportable AES-256-GCM key with PBKDF2-SHA256, 600,000 iterations, and the global `labcharts-encryption-salt`. Sensitive localStorage values use a passphrase ciphertext envelope. The protected patterns include profile blobs and index, imported data, chat/thread/draft/persona state, provider and voice credentials, Local AI and Knowledge Base secrets, Cashu mnemonic, weather credentials, and extension-declared encrypted keys/prefixes.
 
-Encrypted key patterns (`SENSITIVE_PATTERNS` in `crypto.js`):
+Non-sensitive display preferences, selected model IDs, and rebuildable caches remain plaintext. The profile index is not in that group: it is protected when passphrase encryption is on so profile names are not deliberately exposed.
 
-- `*-imported` — all importedData
-- `*-chat` — legacy chat history
-- `*-chat-threads` — thread index
-- `*-chat-t_*` — per-thread messages
-- `*-chatDraft_*` — device-local unsent drafts
-- `*-chatPersonalityCustom` — custom persona records
-- `*-chatPersonalityDeleted` — custom persona tombstones
+With passphrase protection off, health/profile blobs are normal JSON but supported credentials do not revert to deliberate plaintext storage. They use a `d1:<iv>:<ciphertext>` AES-GCM envelope whose non-exportable key is held in the dedicated device-local wearable database. The storage-key name is included in the authenticated plaintext to prevent envelope substitution. Legacy plaintext credentials are migrated; if the device key cannot be used, persistence fails closed and the value remains memory-only.
 
-Keys that are not sensitive (preferences, model selections, pricing caches, profile index) are always stored in plaintext.
+Wearable OAuth credentials use a stricter per-profile vault under the same device-key primitive. Credential generations prevent an in-flight refresh from recreating a disconnected account. These records and keys are excluded from sync and backups.
 
-The encryption key is derived via PBKDF2 from a user passphrase + per-profile salt (`labcharts-{profileId}-enc-salt`).
+Raw Google Health daily rows are always wrapped with the device key and excluded from raw-data backups. Other wearable and cycle rows receive an additional passphrase wrapper only when passphrase protection is enabled.
+
+`BroadcastChannel('labcharts-sync')` carries only `{ type: 'data-changed', profileId }`. It never distributes a derived key; each tab maintains and clears its own in-memory unlock state.
+
+Full database/folder backups omit `d1:` credentials because their key is not portable. When passphrase protection is enabled, supported passphrase-encrypted credentials can be retained and require the same salt/passphrase after restore. Wearable OAuth tokens remain excluded in both modes.
 
 ## Hosted encrypted share records
 
 Profile sharing is opt-in and uses hosted storage only after the user confirms upload in the Share Profile modal. The browser creates a normal v2 single-profile export, strips credential surfaces through `buildClientExportObject()`, compresses it when supported, and encrypts it locally before upload. The share password never leaves the browser and is not stored in the share link.
 
-Production records are stored by `api/share.js` in private Vercel Blob objects under `profile-shares/v1/{id}.json`. Production also stores small per-client fixed-slot rate-limit marker records under `profile-share-rate/v1/{sha256-client}/{windowStart}/{slot}.json` to add friction to anonymous share creation without relying on a read-then-write counter. Local development stores the same logical share record in the `dev-server.js` in-memory map.
+Current official `vps1_...` records are sent directly to the dedicated profile-share service and stored in its bounded SQLite object store. The database also contains expiry/deletion maintenance records and rotating HMAC-derived abuse-control identifiers based on caller network metadata. It does not store the raw share password or decrypted profile. Cleanup runs at startup, hourly, after creation, and on expired reads; the operated database has no retained backup.
+
+The Vercel `api/share.js` path is now a bounded transition adapter for older Blob records. Before the configured cutover it can use the legacy store; during the no-more-than-31-day transition it redirects new writes, serves live old reads/deletes, and redirects misses; after the deadline it redirects all supported requests. Existing envelopes are not migrated or copied. Local development uses the same logical record shape in a process-local map.
 
 ```js
 {

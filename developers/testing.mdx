@@ -73,7 +73,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/api-provider-contracts.test.js` | **Vitest** — provider adapter inference, Local AI context planning, native capability fallbacks, transport diagnostics, and secret redaction |
 | `tests/api-transport.test.js` | **Vitest** — Local AI first-token allowance, normal mid-stream stall timeout, cancellation, and transport timeout cleanup |
 | `tests/pdf-import-progress-phases.test.js` | **Vitest** — reading/writing phase labels, learned prefill estimates, stream transition, and progress cleanup |
-| `tests/test-a11y-axe.js` | Runtime axe-core 4.10 scan across every lens + 6 Settings tabs + EMF editor (14 stops). Baseline-locked CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
+| `tests/test-a11y-axe.js` | Runtime locally installed axe-core 4.13 scan across every lens + Settings surfaces + EMF editor. Zero-baseline critical/serious CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
 | `tests/test-a11y-phase3.js` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
 | `tests/test-ai-verdict-engine-instance.js` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
 | `tests/test-adapters.js` | Adapter registry: structure, fatty acids, OAT, metabolomix, cross-adapter |
@@ -167,8 +167,8 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-sun-defaults.js` | Onboarding defaults: Fitzpatrick mapping, OTT score boundaries, getSunDefaults round-trip |
 | `tests/test-sun-spectrum.js` | Bird-Riordan reconstruction + action-spectrum convolution + vit-D calibration gate |
 | `tests/test-sun-ui-flow.js` | Behavioral UI flow for the Light & Sun lens: dashboard strip, /light page, session controls |
-| `tests/test-sun-uvdata.js` | Multi-source UV/ozone client: SSRF guard, manual entry, provider routing, solar-zenith math |
-| `tests/test-sun-uvdata-flow.js` | Behavioral flow for `sun-uvdata.js`: cache, provider chain (auto / open-meteo / selfhost / noaa), interpolateAtmosphere bracketing, readStaleCache fallback |
+| `tests/test-sun-uvdata.js` | Multi-source UV/ozone client: SSRF guard, retired-manual-source exclusion, compatibility adapters, provider routing, solar-zenith math |
+| `tests/test-sun-uvdata-flow.js` | Behavioral flow for `sun-uvdata.js`: cache, current provider chain, legacy manual/NOAA mode migration, interpolation bracketing, stale-cache fallback |
 | `tests/test-sun.js` | Sun session orchestration: lifecycle, hydration, rolling totals, vit-D IU accumulation, MED carry-over |
 | `tests/test-supplement-impact.js` | Supplement-biomarker impact analysis: batched computation, caching, health dots |
 | `tests/supplement-medication-domain.test.js` | **Vitest** — stable IDs, status derivation, periods, schedule exposure, quantities, unit normalization, and additive migration |
@@ -212,9 +212,9 @@ npx vitest run tests/api-provider-contracts.test.js
 npx playwright test tests/playwright/import-benchmarks.spec.js
 ```
 
-`tests/test-provider-local-ai-runtime.js` is a legacy browser fixture executed by the Playwright browser-script runner as part of `./run-tests.sh`. Always run the full script before shipping because Local AI changes also affect Settings, PDF import, sync, service-worker assets, and provider routing.
+`tests/test-provider-local-ai-runtime.js` is a legacy browser fixture executed through the Playwright browser-script runner. While iterating, run its focused wrapper and any directly affected Settings, import, or service-worker specs. GitHub Actions owns the exhaustive browser matrix.
 
-## Run all tests headlessly
+## Full CI runner
 
 ```bash
 ./run-tests.sh
@@ -231,7 +231,9 @@ The script:
 
 ## Coverage status
 
-`COVERAGE=1 ./run-tests.sh` runs Vitest with V8 coverage enabled, runs the normal Playwright suite with Chromium JS coverage enabled, then merges the Playwright suite shards from `tests/.playwright-coverage/` with `tests/.vitest-coverage/coverage-final.json`. The reporter writes `tests/.coverage.json` and prints separate Playwright, Vitest/Node, and combined global function/byte coverage percentages for app-source JavaScript.
+`./run-tests.sh` and the full Playwright command are intentionally guarded outside CI because they run the complete browser matrix and can produce substantial disk writes. Local development should use change-scoped Vitest files and Playwright specs. Run the guarded full matrix only after explicit approval to set `GETBASED_ALLOW_HIGH_WRITE_TESTS=1`; routine exhaustive verification belongs to GitHub Actions.
+
+With CI authorization, `COVERAGE=1 ./run-tests.sh` runs Vitest with V8 coverage, runs the Playwright suite with Chromium JS coverage, then merges `tests/.playwright-coverage/` with `tests/.vitest-coverage/coverage-final.json`. The reporter writes `tests/.coverage.json` and prints separate Playwright, Vitest/Node, and combined global function/byte coverage percentages for app-source JavaScript.
 
 Running `node scripts/playwright-coverage.mjs` directly still falls back to the legacy high-surface Chromium sampler when no Playwright suite shards are present. The full `COVERAGE=1 ./run-tests.sh` path requires suite shards so coverage regressions in the Playwright instrumentation fail clearly.
 
@@ -239,22 +241,22 @@ Coverage is report-only by default. Set `COVERAGE_MIN=90` or another percentage 
 
 ## Accessibility regression scan
 
-`tests/test-a11y-axe.js` loads axe-core 4.10 from cdnjs at runtime and runs `axe.run()` against the live DOM at 14 stops (every lens + every modal). Severity policy:
+`tests/test-a11y-axe.js` uses the pinned local `axe-core` 4.13 dependency and runs `axe.run()` against the live rendered surfaces. It does not fetch axe from a CDN. Severity policy:
 
 - **critical / serious** → test fails on regression vs baseline
 - **moderate / minor** → logged but doesn't block (axe leans opinionated at those tiers)
 
 ### Baseline-locked gate
 
-The gate is **baseline-relative**, not zero-tolerance. Real-world a11y adoption gates on "no regression from current state" — gating on zero violations the first time a codebase adopts axe would block every PR forever.
+The gate is baseline-relative, and the current critical/serious baseline is zero. Any critical or serious rule at any scanned stop is therefore a regression.
 
 Baseline lives at `tests/.a11y-baseline.json`:
 
 ```json
 {
-  "_axeVersion": "4.10.0",
+  "_axeVersion": "4.13.0",
   "critical": {},
-  "serious": { "color-contrast": 124, "nested-interactive": 40 },
+  "serious": {},
   "moderate": {},
   "minor": {}
 }
@@ -262,14 +264,14 @@ Baseline lives at `tests/.a11y-baseline.json`:
 
 The test fails when any critical/serious rule's count **exceeds** the baseline. New rules with non-zero counts ARE a regression (the suite never saw them before). Improvements (current < baseline) pass and emit a hint to refresh the baseline.
 
-`_axeVersion` pins the runtime axe-core load. Bumping the cdnjs URL without bumping this field would surface rule renames as false regressions; the test prints an info line on mismatch.
+`_axeVersion` must match both the local dependency and `PINNED_AXE_VERSION` in the fixture. Update and review all three together when bumping axe because rule changes can appear as regressions.
 
 ### Refreshing the baseline
 
 After a wave of fixes that legitimately drops violation counts:
 
 ```bash
-A11Y_REBASELINE=1 ./run-tests.sh
+A11Y_REBASELINE=1 npx playwright test tests/playwright/a11y-axe-browser.spec.js
 ```
 
 `tests/playwright/a11y-axe-browser.spec.js` pipes the env var into the page context before loading the fixture. The test prints a `▶ {...}` JSON line — copy it over the critical/serious/moderate/minor blocks in `tests/.a11y-baseline.json`. Don't lower these numbers without an actual fix; the gate would lock in the new lower bound and silently accept regressions.

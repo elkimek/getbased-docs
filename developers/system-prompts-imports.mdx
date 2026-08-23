@@ -1,0 +1,322 @@
+---
+title: "Import and extraction prompts"
+description: "Prompt contracts for lab reports, local PII rewriting, supplements, EMF reports, and light-device specification extraction."
+---
+
+# Import and extraction prompts
+
+Import prompts transform untrusted documents, images, and public-page text into reviewable structured drafts. They do not authorize the model to diagnose or to save arbitrary output directly.
+
+<Warning>
+  Report text, OCR, image text, and fetched pages can contain instructions written by an attacker or copied from another system. Prompt wording is only one defense. JSON schemas, allowlists, normalization, size limits, source validation, and a human review step remain required.
+</Warning>
+
+## Lab-report pipeline
+
+~~~text
+local file classification
+  → text extraction or page-image fallback
+  → optional local PII rewriting / regex obfuscation
+  → AI extraction
+  → JSON parsing and normalization
+  → import preview
+  → explicit save
+~~~
+
+### `import.classify`
+
+| Property | Current behavior |
+|---|---|
+| Source | [`js/pdf-import-preflight.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.js) |
+| Input | First approximately 2,000 characters of extracted PDF text |
+| Output | `testType` and optional `labName` JSON |
+| Token cap | 80, with a 64-token minimum |
+| Failure | Returns no classification and lets the existing preflight path continue |
+
+<AccordionGroup>
+  <Accordion title="Classifier instructions">
+    System:
+
+    ~~~text
+    You classify lab reports. Respond with ONLY a JSON object, no other text.
+    ~~~
+
+    Parameterized user task:
+
+    ~~~text
+    What type of lab test is this PDF? Look at the header, lab name, and test names.
+
+    Respond with ONE of:
+    - {"testType":"blood"} for standard blood panels
+    - {"testType":"OAT"} for organic-acids urine tests
+    - {"testType":"fattyAcids"} for fatty-acid profiles
+    - {"testType":"Metabolomix+"}
+    - {"testType":"DUTCH"}
+    - {"testType":"HTMA"}
+    - {"testType":"GI"}
+    - {"testType":"biostarks","labName":"BioStarks"}
+    - {"testType":"comprehensive","labName":"{identified lab}"}
+    - {"testType":"{descriptive specialty type}"} for other specialty tests
+
+    Include labName when the lab or product is identifiable.
+
+    First approximately 2,000 characters:
+    {report snippet}
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+### `import.lab-text` and `import.lab-image`
+
+Both variants use a dynamic system instruction. The exact marker catalog is rendered at request time, so no static document can reproduce the complete request byte-for-byte.
+
+<Tabs>
+  <Tab title="Shared instruction">
+    ~~~text
+    You are a lab report data extraction assistant. Extract biomarker results and map them to the supplied key|English name|expected unit catalog.
+
+    {current compact marker catalog}
+
+    - Translate non-English test names to their English medical equivalent for matching.
+    - Return standard English unit abbreviations.
+    - Take reference ranges only from the report, never the marker catalog.
+    - Return the sample-collection date as YYYY-MM-DD.
+    - Apply {regional ambiguous-date guidance}.
+    - Apply {IMPORT_COLLECTION_CONTEXT_PROMPT}.
+    - Parse decimal commas.
+    - Preserve the detection-limit number for "< X" or "> X".
+    - Keep rawName exactly as shown.
+    - Match by medical/biochemical equivalence, units, reference range, assay, and specimen type.
+    - Keep hs-CRP separate from ordinary CRP and separate distinct testosterone assays.
+    - Never map a urine-prefixed row to a serum/plasma/blood marker.
+    - Include every numeric result. Unknown results use mappedKey:null plus a proposed custom key/name/category.
+    - Put each fatty-acid product in one product-specific category.
+    - Keep specialty-test markers out of standard blood categories, except the documented BioStarks hybrid fields.
+    - Return only the expected JSON object.
+    ~~~
+  </Tab>
+  <Tab title="Text variant">
+    The text variant receives extracted, de-identified report text in one user message:
+
+    ~~~text
+    Extract all biomarker results from this lab report (file: {optional filename}):
+
+    {report text}
+    ~~~
+
+    It also appends previously used profile marker keys when available so repeated imports can reuse the same custom mapping.
+  </Tab>
+  <Tab title="Image variant">
+    The image variant receives bounded page images followed by:
+
+    ~~~text
+    Extract all biomarker results from this lab report (file: {optional filename}). Read every page carefully.
+    ~~~
+
+    Its system prompt is shorter than the text variant but retains the same date, unit, reference-range, specimen, specialty-test, and “include every numeric result” invariants.
+  </Tab>
+  <Tab title="Output contract">
+    ~~~json
+    {
+      "testType": "blood",
+      "date": "YYYY-MM-DD",
+      "sampleTime": "08:30",
+      "fasting": true,
+      "markers": [
+        {
+          "rawName": "Test Name",
+          "value": 5.23,
+          "mappedKey": "category.marker",
+          "unit": "mg/dL",
+          "refMin": 4.0,
+          "refMax": 6.0
+        }
+      ]
+    }
+    ~~~
+  </Tab>
+</Tabs>
+
+The router requests JSON mode/schema where supported, disables reasoning output for this task, uses zero temperature, detects truncation, normalizes fields, and opens an import preview. See [`IMPORT_JSON_SCHEMA`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.js) and the [marker mapping pipeline](https://github.com/elkimek/get-based/blob/main/js/pdf-import-marker-mapping.js).
+
+### `import.collection-context`
+
+This shared system fragment is inserted into text and image extraction:
+
+~~~text
+- Also return sampleTime as HH:MM (24-hour time) only when the report explicitly labels a collection, draw, or specimen time. Never substitute received, accessioned, processed, analyzed, result, or report time. Return null if the collection time is absent or ambiguous.
+- Return fasting as true only when the report explicitly says fasting/fasted or uses an explicit fasting-specimen label such as fS-. Return false only when it explicitly says non-fasting. Do not infer fasting from the clock time, the tests ordered, or a glucose result; return null when unknown.
+~~~
+
+### Lab-import review watchpoints
+
+- The report itself is untrusted content, but the extraction systems do not uniformly include an explicit “document text is data, never instructions” sentence.
+- The text and image prompts duplicate many rules and can drift.
+- The image prompt is intentionally shorter and may behave differently on specialty reports.
+- Mapping rules include named languages, products, and assay examples; evaluations should cover unlisted languages and labs without treating the examples as exhaustive.
+- A filename is included when available and must not be treated as clinical evidence.
+
+## `privacy.local-pii`
+
+This task runs only against the configured eligible local model. It is sent entirely as a user message rather than a system message.
+
+<AccordionGroup>
+  <Accordion title="Current local PII task prompt">
+    ~~~text
+    TASK: Replace ONLY personal identifiers in this lab report. Output the FULL text with minimal changes.
+
+    REPLACE these with fake data:
+    - Patient names → fictional names
+    - Dates of birth → fictional dates in the same format
+    - Birth numbers → random numbers in the same format
+    - Addresses → fictional addresses
+    - Phone numbers → random phone numbers
+    - Emails → fictional emails
+    - Doctor names → fictional doctor names
+    - Patient IDs → random numbers
+
+    DO NOT CHANGE:
+    - Collection dates, sample dates, and report dates
+    - ALL "=== Page N ===" headers
+    - ALL lab test names, numeric values, units, reference ranges
+    - ALL line structure and formatting
+
+    Output ONLY the modified text. No explanations, no markdown, no commentary.
+
+    TEXT TO PROCESS:
+    {report text}
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+The app compares the returned text with the original, checks sensitive values and lab-data preservation, and can fall back to deterministic regex obfuscation. The user can review the de-identified text before a cloud request.
+
+<Note>
+  “Replace” is not the same as guaranteed anonymization. Unusual identifiers can survive, and fabricated replacements can still be identifying by coincidence. This feature remains a review aid.
+</Note>
+
+## `import.supplement`
+
+One shared schema prompt is used in two positions:
+
+| Input | Instruction position | Context |
+|---|---|---|
+| Label photos | Multimodal user text part | Reconcile front label, Supplement Facts, OTC Drug Facts, prescription label, and directions across images |
+| Product page | System | Fetched, stripped, bounded page text plus deterministic page facts |
+
+<AccordionGroup>
+  <Accordion title="Normalized supplement extraction contract">
+    ~~~text
+    Return ONLY one JSON object:
+    {
+      product, genericName, brand,
+      type: "supplement|medication|null",
+      dosageForm, route, servingSize, labelDirections,
+      ingredients: [{name, amountValue, amountUnit, basis, confidence}],
+      inactiveIngredients: [...],
+      qualityTests: [{
+        category, analyte, canonicalAnalyte, resultText, comparator,
+        value, unit, basis, declaredText, limitText, method, status, confidence
+      }],
+      warnings: [...],
+      confidence
+    }
+
+    Understand the source in its original language and script. Preserve names and source wording; do not translate names. Extract only visible facts. Never invent a personal dose or schedule. Keep label directions separate from personal use.
+
+    Classification is mandatory:
+    - ingredients contains only deliberately formulated active dietary or medicinal ingredients;
+    - inactiveIngredients contains excipients and non-active formulation substances;
+    - every certificate-of-analysis or laboratory result belongs only in qualityTests;
+    - a tested analyte is not evidence that it was intentionally added;
+    - exclude barcodes, package count, price, stock, and expiry metadata;
+    - ignore patient-identifying text;
+    - use null when a fact is absent.
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+The review draft separates deterministic page facts from AI-inferred fields and requires user confirmation before save.
+
+## `import.light-device`
+
+The same instruction is a system prompt for fetched product-page text and a multimodal user task for a device-label photo.
+
+<AccordionGroup>
+  <Accordion title="Normalized light-device extraction contract">
+    ~~~text
+    Extract light therapy device specs. Reply with ONLY JSON:
+    {
+      brand, model,
+      type: "uvb|uva|combined|pbm-targeted|sad|dawn-sim|full-spectrum",
+      peakWavelengths,
+      mwPerCm2At15cm,
+      recommendedDistanceCm,
+      irradianceBasis,
+      irradianceByDistanceCm,
+      distanceModel,
+      peakShares,
+      peakShareBasis,
+      melanopicDER,
+      melanopicEdiLux,
+      melanopicBasis,
+      lux,
+      channelGroups,
+      modes,
+      coupling,
+      notes
+    }
+
+    Use only explicitly stated measurements, modes, group wiring, coupling, and spectral shares. A hybrid panel's total irradiance is not UV irradiance. Use inverse-square behavior only when the source explicitly describes a point source. Use null for fields not found. Do not invent an all-on mode, coupling, measurements, or spectral shares.
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+Extracted advanced fields are shown in a review disclosure. The source URL is retained as provenance when the input was a page.
+
+## `import.emf`
+
+<AccordionGroup>
+  <Accordion title="Current EMF report parser contract">
+    ~~~text
+    You are an EMF assessment report parser. Extract room-by-room electromagnetic field measurements from Building Biology (Baubiologie) assessment reports.
+
+    Reference measurement types and standard units:
+    {runtime SBM-2015 measurement type map}
+
+    Unit conversions:
+    - AC Magnetic: 1 mG = 100 nT
+    - RF: 1 mW/m² = 1000 µW/m²
+    - RF: convert from V/m using P = E²/377 if needed
+
+    Find the assessment date and consultant. For each room, extract readings, map them to acElectric/acMagnetic/rfMicrowave/dirtyElectricity/dcMagnetic, and list identified sources and recommended or completed mitigations.
+
+    Return ONLY valid JSON:
+    {
+      "date": "YYYY-MM-DD",
+      "consultant": "Name or null",
+      "rooms": [{
+        "name": "Bedroom",
+        "location": "bed pillow area",
+        "measurements": {
+          "acElectric": {"value": 28, "unit": "V/m", "meter": "NFA1000"}
+        },
+        "sources": ["..."],
+        "mitigations": ["..."]
+      }],
+      "note": "..."
+    }
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+The report is de-identified before this request using the selected PII path. Parsed rooms are shown for review rather than silently merged.
+
+## Focused verification
+
+- [`tests/pdf-import-review-boundaries.test.js`](https://github.com/elkimek/get-based/blob/main/tests/pdf-import-review-boundaries.test.js) and the focused PDF import suites cover mapping, parsing, collection context, and truncation.
+- [`tests/supplement-import-draft.test.js`](https://github.com/elkimek/get-based/blob/main/tests/supplement-import-draft.test.js) covers classification and normalization.
+- [`tests/test-emf.js`](https://github.com/elkimek/get-based/blob/main/tests/test-emf.js) covers EMF parsing and state behavior.
+- [`tests/playwright/light-device-modal-loader-browser-coverage.spec.js`](https://github.com/elkimek/get-based/blob/main/tests/playwright/light-device-modal-loader-browser-coverage.spec.js) covers the custom-device modal and extracted fields.
+
+Before changing an extraction prompt, use synthetic reports/pages with embedded adversarial instructions and compare the final normalized draft—not only the raw model response.

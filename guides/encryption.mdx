@@ -1,24 +1,30 @@
 ---
 title: "Encrypt your getbased data at rest"
-description: "Add a passphrase to protect your health data with AES-256-GCM encryption at rest — stored only in your browser, completely independent of sync."
+description: "Add a passphrase to protect your health data with AES-256-GCM encryption at rest, independently of sync."
 ---
 
-By default, getbased stores your data in plaintext in your browser's localStorage and IndexedDB — only your browser can access it, and nothing leaves your device unless you explicitly enable sync, create a password-protected share link, or send data to an AI provider. For an additional layer of protection, you can lock your data behind a passphrase using AES-256-GCM encryption at rest.
+getbased keeps profile and health data in your browser. Without a passphrase, that data is readable inside your browser profile. Credentials receive separate protection even in this default state: getbased wraps supported AI, voice, wearable, and service credentials with a non-exportable, browser-specific key before storing them. If that protection is unavailable, getbased removes legacy plaintext credentials and keeps new ones in memory for the current session instead of writing them unprotected.
 
-## What local encryption does
+For broader protection, enable a passphrase. getbased derives an encryption key with PBKDF2-SHA256 using 600,000 iterations and encrypts sensitive data with AES-256-GCM before writing it to browser storage.
 
-When you set a passphrase, getbased derives a cryptographic key from it using PBKDF2 and then encrypts your data before writing it to localStorage. Every time you open getbased, you are prompted for your passphrase to decrypt and load your data.
+## What passphrase encryption covers
 
-The encryption covers:
+When passphrase protection is enabled, it covers:
 
-- All imported lab data — entries, notes, supplements, cycle data, context cards
-- Sent chat conversations, thread indexes, unsent per-conversation drafts, custom personas, and persona deletion records
-- Wearable IndexedDB rows — per-profile daily values including HRV, sleep score, resting heart rate, and manual entries
+- Imported lab data, profile details, notes, supplements, cycle data, context cards, and genetics
+- Sent conversations, thread indexes, unsent per-conversation drafts, custom personas, and persona deletion records
+- AI, voice, local-server, knowledge-base, Cashu, weather-source, and extension credentials
+- Wearable, cycle, and Cashu records stored in IndexedDB
 
-Settings that contain no health data (AI provider choice, theme, display preferences) remain in plaintext so the app can load correctly before decryption.
+Settings that contain no health data, such as theme and display preferences, remain readable so the app can start before you unlock it.
+
+Some device-scoped records have stricter handling:
+
+- Wearable OAuth tokens are always kept in a per-profile, device-local encrypted vault. They are excluded from sync and backups, so reconnect each provider in every browser.
+- Raw Google Health rows are always device-key encrypted and excluded from raw-data backups. Other raw wearable rows use passphrase encryption when it is enabled.
 
 <Warning>
-There is no passphrase recovery. If you forget your passphrase, your encrypted data cannot be decrypted. Export a plaintext JSON backup before enabling encryption, and store your passphrase somewhere safe.
+There is no passphrase recovery. If you forget it, getbased cannot decrypt the protected data on that browser. Store the passphrase safely and keep backups you understand before enabling encryption.
 </Warning>
 
 ## Enable encryption
@@ -38,12 +44,12 @@ There is no passphrase recovery. If you forget your passphrase, your encrypted d
     A strength meter with a color-coded bar and checklist shows your progress as you type. The **Encrypt** button stays disabled until all four rules pass.
   </Step>
   <Step title="Confirm">
-    Click **Encrypt**. getbased encrypts your existing data and saves it. From this point on, you'll be prompted for your passphrase each time you open the app.
+    Click **Encrypt**. getbased encrypts your existing sensitive data and saves it. You will be prompted for the passphrase when a tab needs to unlock that data.
   </Step>
 </Steps>
 
 <Note>
-After your first PDF import, getbased shows a one-time prompt suggesting you enable encryption. You can dismiss it and enable encryption later from Settings — it is a reminder, not a requirement.
+After your first PDF import, getbased shows a one-time prompt suggesting you enable encryption. You can dismiss it and enable encryption later from Settings; it is a reminder, not a requirement.
 </Note>
 
 ## Passphrase requirements
@@ -57,27 +63,33 @@ After your first PDF import, getbased shows a one-time prompt suggesting you ena
 
 ## No recovery path
 
-There is intentionally no reset or recovery mechanism. The passphrase is never stored — only the key derived from it is used at runtime. If you lose your passphrase:
+There is intentionally no reset or recovery mechanism. The passphrase is never stored; only the key derived from it is kept in memory while a tab is unlocked. If you lose the passphrase, you can clear the browser data and start fresh, but that permanently deletes data that exists only there.
 
-- Your encrypted localStorage data cannot be decrypted.
-- Your other devices (if using sync) still hold their own copies, encrypted with the same key.
-- You can start fresh by clearing your browser data, but this permanently deletes all encrypted data.
+Local passphrase protection is configured per browser. Cross-device sync does not distribute the passphrase or an unlocked local key to another device.
 
-Store your passphrase in a password manager or write it down and keep it somewhere secure.
+## Tabs unlock independently
 
-## Cross-tab decryption
+Each tab holds its own in-memory key. getbased uses `BroadcastChannel` only to announce that stored data changed; it does not broadcast the encryption key. Unlock each tab that needs access. Closing a tab clears that tab's in-memory key.
 
-getbased uses the browser's `BroadcastChannel` API to share the decrypted key across tabs in the same browser session. When you unlock getbased in one tab, other tabs in the same window automatically unlock without prompting you again. When you close all tabs, the in-memory key is cleared.
+## Backups and credentials
+
+A plaintext JSON profile export contains the profile data you chose to export, so protect the downloaded file yourself. Full database and folder backups behave differently for credentials:
+
+- With passphrase protection off, browser-device credential envelopes are not portable and credentials are omitted from the backup.
+- With passphrase protection on, supported credentials can be included as passphrase-encrypted values and require the same passphrase after restore.
+- Wearable OAuth tokens remain device-local and are not backed up.
+
+See [Backup](/guides/backup) and [Export and import](/guides/export-import) before relying on a copy for recovery.
 
 ## Relationship to sync encryption
 
-Local encryption and [cross-device sync](/guides/cross-device-sync) are independent systems that protect your data in different contexts:
+Local encryption and [cross-device sync](/guides/cross-device-sync) are independent:
 
-- **Local encryption** (your passphrase → PBKDF2 → AES-256-GCM) protects data at rest on each device.
-- **Sync encryption** (your mnemonic → Evolu key derivation → XChaCha20-Poly1305) protects data in transit and on the relay.
+- **Local encryption** uses your passphrase to protect sensitive browser storage on that device.
+- **Sync encryption** uses your Evolu mnemonic identity to protect synced records before they reach the relay.
 
-You can enable one, both, or neither. Enabling local encryption has no effect on sync, and disabling sync has no effect on local encryption.
+You can enable either or both. The sync relay receives encrypted records, but enabling sync does not unlock another browser or replace local backups.
 
 <Tip>
-For maximum protection: enable local encryption, enable sync (so your data is replicated and encrypted on the relay), and export regular JSON backups as a third copy you control offline.
+For stronger resilience, enable local encryption, keep the sync mnemonic and local passphrase in a password manager, and maintain regular offline backups.
 </Tip>

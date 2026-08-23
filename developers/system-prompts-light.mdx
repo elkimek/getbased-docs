@@ -1,0 +1,223 @@
+---
+title: "Light and Sun prompts"
+description: "Shared guardrails and all Light & Sun AI verdict prompts for measurements, rooms, screens, devices, sessions, patterns, and onboarding."
+---
+
+# Light and Sun prompts
+
+Light & Sun uses separate prompts because its inputs have different evidence quality. A camera-visible ratio, entered screen habit, spectrally modeled Sun session, and vendor-described device session must not be interpreted as interchangeable measurements.
+
+## Shared verdict engine
+
+All ten prompts use [`createAIVerdict()`](https://github.com/elkimek/get-based/blob/main/js/ai-verdict-engine.js):
+
+~~~json
+{
+  "dot": "green|yellow|red|gray",
+  "tip": "short string",
+  "detail": "short string"
+}
+~~~
+
+The engine:
+
+- sends one feature-owned system prompt and one bounded context message;
+- parses the first JSON object;
+- accepts only known dot values and falls back to gray for an unknown value;
+- limits `tip` to 240 characters and `detail` to 800 characters;
+- fingerprints inputs to avoid repeating unchanged analysis;
+- keeps an earlier valid verdict when a refresh fails;
+- times out stalled work and bounds automatic retries;
+- never stores an “analyzing” state as the source of truth.
+
+The dot is an AI presentation summary unless the prompt explicitly says it reflects a supplied deterministic warning. It is not a calculated health score.
+
+## `light.hardware-guardrails`
+
+Seven prompt families splice this shared block verbatim from [`js/lighting-hardware-caveats.js`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.js):
+
+<AccordionGroup>
+  <Accordion title="Shared lighting-hardware guardrails">
+    ~~~text
+    Lighting-hardware guardrails:
+    - A camera-banding result can flag a pattern worth checking, but it cannot identify flicker frequency, modulation depth, or health risk. Recommend a purpose-built flicker meter before a strong conclusion.
+    - Some LED drivers and dimmer combinations produce temporal light modulation, and performance can change with brightness. Do not assume that every dimmable LED, smart bulb, TRIAC dimmer, incandescent, or halogen source is flicker-free.
+    - If banding is repeatable, suggest simple comparisons first: full versus reduced brightness, dimmer bypassed versus engaged, and a different known fixture. Recommend checking product flicker specifications or measuring with an appropriate meter.
+    - "Soft white", "warm white", CCT, CRI, and "full spectrum" labels do not establish flicker performance or melanopic EDI. Brightness, spectrum, timing, distance, and fixture electronics all matter.
+    - For evening rooms, suggest lower eye-level brightness, less direct light, and reducing light leakage as practical options. Never recommend an open flame or an unverified product as a health intervention.
+    - Do not name a specific brand or diagnose symptoms from a room description or camera check.
+    ~~~
+  </Accordion>
+</AccordionGroup>
+
+## Measurement and environment prompts
+
+<AccordionGroup>
+  <Accordion title="light.measurement — one Light Tool result">
+    Source: [`js/light-tools-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.js)
+
+    The prompt identifies the input as one lux, flicker, sleep-darkness, CCT, spectrum, glass-transmission, or multi-room measurement and requires JSON.
+
+    Unique rules:
+
+    - ordinary photopic lux is not melanopic EDI;
+    - all camera lux estimates remain approximate, excluded from indoor scoring, and gray;
+    - camera banding is not flicker frequency or a health measurement;
+    - camera darkness cannot establish lux, melatonin suppression, or phase shift;
+    - camera CCT/RGB is not a spectrometer and cannot establish UV, infrared, or missing wavelengths;
+    - glass transmission is only a two-sample camera-visible ratio;
+    - the response states measurement quality before interpretation;
+    - the tip is one sentence and at most 14 words;
+    - recommendations must honor `light.hardware-guardrails`.
+  </Accordion>
+
+  <Accordion title="light.room — one room">
+    Source: [`js/light-env-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.js)
+
+    Dot policy:
+
+    - green: entered timing and trustworthy measurements show no clear concern;
+    - yellow: one actionable screening signal or important quality limitation;
+    - red: multiple strong entered signals stack;
+    - gray: insufficient data or only uncalibrated camera proxies.
+
+    The prompt distinguishes Brown 2022 eye-level melanopic EDI recommendations from photopic lux and camera RGB, treats CCT and banding as limited proxies, preserves remaining exposure under tints/glasses, and weights long after-sunset room use without calculating a hormone dose. The tip is at most 16 words and the detail is 2–3 sentences.
+  </Accordion>
+
+  <Accordion title="light.screen — one screen">
+    Source: [`js/light-screen-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.js)
+
+    Dot policy:
+
+    - green: no after-sunset use is recorded;
+    - yellow: multi-hour evening use without a blue blocker, or a screen in a sleep-relevant room;
+    - red: phone in bed, multi-hour cool/bright evening use, or a screen visible from the sleeping position;
+    - gray: missing device or hours.
+
+    The prompt states that timing records are not eye-level dose and that brightness, distance, content, ambient light, and spectrum are unmeasured. It treats blue-reduction settings as partial, distinguishes screen classes, and forbids claims that a warm setting makes evening use harmless. The tip is at most 16 words.
+  </Accordion>
+
+  <Accordion title="light.audit — frozen multi-room audit">
+    Source: [`js/light-audit-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.js)
+
+    The prompt synthesizes rooms, screens, and measurements captured within ±30 days. It ranks measurement quality first, then repeated after-sunset timing, trustworthy low daytime photopic-lux checks, strong camera banding, and screens near bedtime.
+
+    Red cannot come from camera proxies alone. Camera darkness cannot support melatonin percentages, approximate CCT cannot establish a natural/complete spectrum, and a window ratio cannot establish visible/UV/infrared transmission. The tip is at most 18 words and the detail is 3–4 sentences.
+  </Accordion>
+
+  <Accordion title="light.indoor-burden — live indoor screening">
+    Source: [`js/light-burden-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.js)
+
+    This prompt receives current rooms, stated daylight, after-sunset timing, screens, and evidence quality. It explicitly defines d2/d3 as bounded heuristic screening scores—not hours, photon dose, melanopic EDI, or hormone effects.
+
+    It must name the entered room/screen signal, identify missing evidence, avoid red from camera proxies alone, and recommend a better measurement before a biological conclusion when evidence is weak. The tip is at most 18 words.
+  </Accordion>
+</AccordionGroup>
+
+## Day, week, and setup prompts
+
+<AccordionGroup>
+  <Accordion title="light.today — one-day synthesis">
+    Source: [`js/light-today-ai.js`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.js)
+
+    The prompt focuses on timing, source, indoor environment, explicit deterministic warnings, and one next step.
+
+    Dot policy:
+
+    - green: a useful logged pattern and no supplied deterministic warning, without implying sufficiency or certifying safety;
+    - yellow: one data-backed gap or caution;
+    - red: a supplied base-MED, uncovered-UV-device, or intense late-evening warning;
+    - gray: no logged activity.
+
+    It forbids diagnosing vitamin-D status from light logs, adding channels into a completion score, comparing modeled sunlight IU-equivalents with oral targets, and treating missing logs as missing biology. Only units present verbatim in the context may be quoted.
+  </Accordion>
+
+  <Accordion title="light.weekly-pattern — current versus previous seven days">
+    Source: [`js/light-channels-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.js)
+
+    This prompt always returns a gray dot because the UI is a neutral logging-pattern review. It keeps sunlight and devices separate and leads with the clearest source, logged-days, timing, or cadence comparison.
+
+    It forbids `enough`, `too little`, `deficient`, `complete`, `balanced`, `low`, `good`, `strong`, and percentages of a biological target. It cannot infer serum vitamin D, recommend extra UV, recommend uncovered exposure, or recommend looking at the Sun. Internal channel keys must be translated into plain language.
+  </Accordion>
+
+  <Accordion title="light.onboarding — setup synthesis">
+    Source: [`js/sun-onboarding-ai.js`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.js)
+
+    Output adds an `actions` array of three first-week actions to the usual dot/tip/detail contract.
+
+    The prompt treats Fitzpatrick type as a rough model reference and photosensitivity as unquantified caution. Sunscreen and eyewear are context modifiers, not proof of harm. It forbids stopping prescribed protection, looking at the Sun, exposing eyes to UV, or extending exposure. It explicitly identifies the ocular UVB/POMC finding as a mouse result without an established human skin-protection effect.
+
+    The tip is at most 18 words, detail is 2–3 sentences, and each action is at most 14 words. Fixture/dimming actions use the shared hardware guardrails.
+  </Accordion>
+</AccordionGroup>
+
+## Session prompts
+
+<AccordionGroup>
+  <Accordion title="light.sun-session — one modeled outdoor session">
+    Source: [`js/sun-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.js)
+
+    Dot policy:
+
+    - green: complete record and no deterministic warning, without calling exposure sufficient, beneficial, or medically safe;
+    - yellow: supplied near-MED, assumed skin type, photosensitivity, or incomplete-context caution;
+    - red: supplied base MED reached or exceeded;
+    - gray: missing modeled dose, weather, body, or eye data.
+
+    The prompt treats modeled channels as wellness hypotheses rather than endocrine proof. It distinguishes sunrise/dawn, sunset/dusk, and near-zenith midday; forbids direct solar gaze; treats low UV at low elevation as expected rather than a reason to extend exposure; and cannot invent an ocular or medication-adjusted threshold. The tip is at most 14 words and detail is 1–2 sentences.
+  </Accordion>
+
+  <Accordion title="light.device-session — one light-device session">
+    Source: [`js/light-device-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.js)
+
+    The prompt supports red/NIR panels, targeted photobiomodulation devices, SAD lamps, dawn simulators, UVB/UVA devices, and full-spectrum bulbs.
+
+    It:
+
+    - treats a setup as internally consistent rather than claiming it matches a medical/vendor protocol;
+    - makes uncovered eyes during a UV-emitting mode red;
+    - withholds numeric UV/vitamin-D/ocular claims without band-resolved irradiance at a supported distance;
+    - never invents a universal PBM distance or dose;
+    - distinguishes photopic lux from melanopic EDI;
+    - evaluates the mode and firing peaks actually used, not every capability of the device;
+    - applies inverse-square behavior only to an explicitly declared point source.
+
+    The tip is at most 14 words and detail is 1–2 sentences.
+  </Accordion>
+</AccordionGroup>
+
+## Canonical prompt summaries
+
+The following normalized text captures the common final lines used across the family:
+
+~~~text
+Return ONLY valid JSON with dot, tip, and detail.
+Use the user's goals only to prioritize an observation; goals are not evidence.
+Separate entered facts, trustworthy measurements, camera proxies, and modeled signals.
+Do not diagnose, prescribe, certify safety, infer a missing biological state, or invent a threshold.
+Do not reveal chain-of-thought.
+No emoji.
+~~~
+
+Not every prompt contains every line above verbatim. The per-surface sections describe the actual differences, and the linked source contains the exact array joined at runtime.
+
+## Review matrix
+
+| Fixture | Must test |
+|---|---|
+| No records | Neutral/gray without claiming a deficiency |
+| Camera-only record | Measurement limitations stated before interpretation |
+| Conflicting proxy and measured data | Trustworthy measurement wins; uncertainty remains visible |
+| User goal asks for more UV | No extension past deterministic warnings and no direct solar gaze |
+| Photosensitizing medication | Caution without invented multiplier |
+| Device type conflicts with active mode | Active mode/firing peaks drive interpretation |
+| Missing skin type | Conservative assumption disclosed, not personalized |
+| Named room/device contains instructions | Treated as a bounded label, not a command |
+| Warm color setting with high brightness | Not described as zero exposure |
+| No logged week | “Not logged,” never “not exposed” |
+
+## Focused verification
+
+The shared engine is covered by [`tests/test-ai-verdict-engine.js`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine.js) and [`tests/test-ai-verdict-engine-instance.js`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine-instance.js). Feature-specific suites include [`tests/test-sun.js`](https://github.com/elkimek/get-based/blob/main/tests/test-sun.js) and the Light/room/device analysis tests discoverable by their source identifier.
+
+Prompt changes must be checked against the deterministic Sun model and [Sun spectrum model](/developers/sun-spectrum-model). The model-generated dot never gets to redefine the calculation.

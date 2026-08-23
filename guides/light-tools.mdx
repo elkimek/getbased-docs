@@ -1,138 +1,68 @@
 ---
-title: "Measure light, flicker, color, and darkness"
+title: "Check light, banding, color, and darkness"
 sidebarTitle: "Light tools"
-description: "Eight on-device tools — lux, flicker, color temperature, spectrum, glass transmission, sleep darkness, sunrise logger, and room audit. All local."
+description: "Use eight local tools for practical, source-aware checks of brightness, camera banding, color appearance, windows, rooms, and solar timing."
 ---
 
-getbased includes eight measurement utilities for characterizing your light environment. All processing runs in your browser — camera frames and sensor data are never sent to a server. Access all tools from the **Measurement Tools** section in the Light lens.
+getbased includes eight tools for screening and recording your light environment. Camera frames and sensor samples are processed in the browser and discarded; saved summaries stay with your getbased data.
+
+Phone cameras are not spectrometers, UV meters, calibrated lux meters, or purpose-built flicker meters. The app labels camera-derived results as relative or approximate and preserves the method and confidence with each reading.
 
 ## Tools at a glance
 
-| Tool | What it measures | Best used for |
+| Tool | What it records | What it does not establish |
 |---|---|---|
-| **Lux Meter** | Ambient brightness in lux | Setting up a workspace, comparing rooms, verifying outdoor exposure levels |
-| **Flicker Detector** | PWM banding at 240 fps + risk score | Identifying problem bulbs and screens causing eye strain |
-| **CCT Meter** | Color temperature in Kelvin + solar coherence check | Catching evening blue-light contamination from indoor lights |
-| **Spectrum Classifier** | 5-category light source identification | Auto-filling room type in the Light Environment survey |
-| **Glass Transmission** | Inside-vs-outside brightness ratio + UV transmission estimate | Auditing how much light your windows actually block |
-| **Sleep Darkness** | Long-exposure lux reading at pillow level | Checking whether your bedroom is dark enough for full melatonin |
-| **Sunrise Logger** | One-tap sunrise / sunset session entry | Capturing routine golden-hour outdoor light |
-| **Eye-Level Audit** | Room-by-room lux walkthrough | Populating your full Light Environment in a single 10-minute pass |
+| **What is this light?** | A warm, cool, or mixed camera RGB pattern | A spectrum, wavelength completeness, or source identity |
+| **Lux meter** | A light-sensor reading, manually entered meter reading, or device-calibrated camera estimate | Meter-grade lux from an uncalibrated camera |
+| **Color temp** | An approximate warm/cool camera estimate and visible banding screen | Spectral content, melanopic EDI, or sleep safety |
+| **Flicker detector** | Rolling-shutter banding visible to this camera under the current exposure | Flicker frequency, modulation depth, compliance, or proof that a source is flicker-free |
+| **Sleep darkness** | A qualitative low-light camera check or entered meter reading at pillow level | A clinical sleep or melatonin outcome |
+| **Window check** | A relative visible-light comparison with and without glass | UV transmission or a complete spectral transmission curve |
+| **Home audit** | Relative room brightness while one camera exposure is held | Calibrated cross-device lux or automatic room identification |
+| **Golden hour log** | An after-the-fact sunrise, sunset, or golden-hour session | A live exposure measurement |
 
-## Tool 1 — Lux Meter
+## What is this light?
 
-Measures ambient brightness in lux. Uses your phone's **AmbientLightSensor API** when available (Chrome on Android), with a camera-based estimate as a fallback on other browsers.
+Aim the camera at a neutral surface lit by the source. The tool uses the camera's RGB pattern and banding proxy to screen the appearance as warm, cool, mixed, or a likely broad source category. Camera processing, automatic white balance, and different sources with similar RGB averages can produce the same result, so treat the label as an observation for your room record rather than source identification.
 
-Color-coded zones help you interpret readings:
+## Lux meter
 
-| Lux range | Zone |
-|---|---|
-| 0–10 | Darkness (full night) |
-| 10–100 | Low indoor (dim room) |
-| 100–500 | Office (well-lit computer work) |
-| 500–1,000 | Bright indoor |
-| 1,000–10,000 | Overcast outdoor |
-| 10,000–100,000 | Outdoor daylight |
-| 100,000+ | Direct sun |
+The preferred input is the browser's ambient-light sensor when the device exposes one. You can also enter a reading from a separate lux meter.
 
-The camera fallback uses a calibration multiplier stored locally. It defaults to 1.0 and reads within ±30% of a reference meter on most modern phones. If you have a calibrated lux meter, you can dial in the multiplier for more accurate absolute readings.
+The camera path withholds a lux number until you calibrate that browser device beside a known meter. Calibration saves a device-specific factor. If a reliable exposure lock is unavailable, or the camera is uncalibrated, use its brightness only as a relative comparison. Recalibrate after changing device, camera, or capture behavior.
 
-## Tool 2 — Flicker Detector
+The displayed bands—very dim, dim indoor, typical indoor, bright indoor, and outdoor ranges—are orientation aids, not health thresholds.
 
-Aim your camera at a light source. The live preview shows banding patterns if the light is flickering. Flicker comes from **pulse-width modulation (PWM)** dimming, which is common in LEDs and fluorescent lights.
+## Color temp
 
-After roughly five seconds of capture, you get:
+The camera estimates a rounded correlated-color-temperature appearance and a blue RGB proxy. Automatic white balance can neutralize the very color difference being tested, so the result has low confidence when white balance cannot be held. Similar CCT values can have very different spectra.
 
-- A **score** from 0 (flicker-free) to 3 (heavy flicker)
-- An **estimated PWM frequency** in Hz
-- A plain-English label: Flicker-free / Mild, likely OK for most / Visible flicker — eye-strain risk / Heavy flicker — replace this light
+The tool can also surface visible rolling-shutter banding. That is a camera observation, not a PWM diagnosis.
 
-Risk thresholds follow **IEEE Std 1789-2015** recommended-practice limits for LED current modulation.
+## Flicker detector
 
-<Warning>
-Dimmable LEDs are the most common source of household PWM flicker. If flicker is detected on a dimmable fixture, a non-dimmable or DC-dimmable replacement is typically needed — dimmer adjustments alone won't fix it.
-</Warning>
+Aim at the illuminated surface or source and hold still while the tool checks row-by-row brightness variation. A rolling-shutter camera can reveal banding from some modulated lights, but detection depends on frame timing, exposure, camera processing, angle, and the light itself.
 
-## Tool 3 — CCT Meter
+The saved result is a qualitative banding score. getbased does not infer a frequency or claim IEEE compliance. No detected banding means only that this capture did not reveal it; use a suitable flicker meter when the answer matters.
 
-Aim at a white wall, a sheet of paper, or a printable grey card. The tool gives you a live color temperature estimate in Kelvin — from 1,800 K (candlelight) up to 6,500 K and above (overcast sky / daylight). Estimates use RGB white-balance ratios from the camera.
+## Sleep darkness
 
-The **solar coherence indicator** compares your indoor CCT to the approximate solar color temperature for the current hour:
+Place the phone near eye level under normal sleep conditions. The camera path provides a qualitative low-light check because exposure processing prevents a dependable universal lux conversion. If you have a meter, enter its reading for a numeric record. The result can help compare room changes but does not measure melatonin or diagnose a sleep problem.
 
-- **Matches solar time** — within 800 K of the expected solar CCT
-- **Slight mismatch** — noticeable gap but not severe
-- **Mismatch** — your indoor light is working against the sun's signal (for example, a 4,000 K cool LED at 9 pm when the sun set hours ago)
+## Window check
 
-## Tool 4 — Spectrum Classifier
+Take comparable readings toward the same stable scene with and without the glass in the path. Keep position, angle, lighting, and camera exposure as consistent as possible. The ratio is a relative visible-light comparison for improving behind-glass session estimates. It cannot determine UV blocking, infrared transmission, coating type, or eye safety.
 
-Single-tap classification. The tool uses your camera's RGB ratio and flicker variance signature to categorize the light source into one of five types:
+## Home audit
 
-- **Fluorescent / CFL** — high flicker variance with a green color spike
-- **Incandescent / halogen** — red-rich, low blue
-- **Cool LED (4,000 K+)** — blue-rich, near-flicker-free
-- **Warm LED (2,700–3,000 K)** — slight red lift, near-flicker-free
-- **Daylight or full-spectrum** — balanced RGB
+Start the walkthrough and pause for roughly 5–10 seconds in each room. getbased looks for stable pauses while holding one camera exposure, then lets you label the captured room segments. This is useful for relative brightness across the same walkthrough. It is not calibrated lux, and results from separate devices or different exposure settings should not be compared as if they were.
 
-Confidence is shown alongside the result. Use this tool to auto-fill the light source type when you're adding a new room to your Light Environment.
+## Golden hour log
 
-## Tool 5 — Glass Transmission
+Use this tool after an outdoor session to record its timing and conditions. getbased classifies the solar phase from the time and location. It does not start a live sensor measurement or assume that sunrise and sunset produce a guaranteed biological effect.
 
-Measures how much light your window actually blocks. The flow has two steps:
+## Storage and AI context
 
-<Steps>
-  <Step title="Measure inside">
-    Point your phone through the glass at the brightest part of the sky.
-  </Step>
-  <Step title="Measure outside">
-    Move outside and aim in the same direction with no glass between you and the sky.
-  </Step>
-</Steps>
+Dedicated measurements are generally stored as the latest reading for a room and tool. Home-audit walkthroughs are kept as separate records so you can compare visits. The saved record includes its method and confidence where available.
 
-The app computes the transmission ratio between the two readings. Most modern Low-E coated glass blocks 80–90% of UV and 30–50% of visible light. Tinted automotive glass typically blocks more.
-
-This gives you a real number for how much your windows reduce the cellular repair channel — and lets the AI factor your specific glass into your indoor exposure estimates.
-
-## Tool 6 — Sleep Darkness
-
-Place your phone face-up at the position where your eyes will be when you sleep. Set the room conditions to match how you actually sleep. Tap **Start** — the tool runs a 30-second long-exposure read.
-
-| Lux reading | Assessment |
-|---|---|
-| < 0.3 lux | Excellent — true darkness |
-| 0.3–1 lux | Good — minor light leak, melatonin mostly preserved |
-| 1–5 lux | Light leak detected — ~20–30% melatonin attenuation |
-| > 5 lux | Bright — melatonin amplitude significantly suppressed |
-
-<Tip>
-If your sleep quality is poor and your bedroom scores above 1 lux, light is the first thing to address — before supplements or sleep timing changes.
-</Tip>
-
-## Tool 7 — Sunrise Logger
-
-One-tap session entry for sunrise and sunset windows. The tool auto-labels the time window (Sunrise / Sunset / Golden hour) based on the current hour and pre-fills a typical exposure: face and hands, with direct eye exposure, for roughly 15 minutes.
-
-This is the most circadian-effective outdoor light most people get on a typical day, and it's the easiest to consistently log.
-
-## Tool 8 — Eye-Level Audit
-
-A 10-minute room-by-room camera walkthrough that populates your entire Light Environment in one pass. The camera streams at 4 fps and detects when you've paused in a room (5 seconds of stillness), capturing a lux reading at eye level.
-
-After your walk:
-
-1. Review the list of pauses on the after-walk panel
-2. Label each pause with the room name
-3. Tap **Done**
-
-Labelled pauses are saved as lux measurements bound to the matching room — creating a new room automatically when no match exists. Unlabelled pauses stay in the bulk audit record for later review.
-
-<Note>
-Tool 8 captures lux only, not CCT or full spectrum. The goal is fast full-home coverage. For richer data on a specific room — flicker, color temperature, sleep darkness — open the dedicated tool from that room's card after the walkthrough.
-</Note>
-
-## How measurements are stored
-
-Measurements are stored as a **latest-per-room-per-tool** record. When you measure the same room with the same tool again, the new reading replaces the old one. This keeps the dataset clean and ensures the AI always works from your most current readings.
-
-Eye-Level Audit walkthrough records are an exception — each walkthrough is stored as its own record so you can compare runs over time.
-
-All measurements are stored locally on your device. They sync to your other devices via Evolu CRDT only if you've enabled cross-device sync, and the sync payload is end-to-end encrypted. Camera frames and sensor readings are processed in-browser and discarded — they never reach a server.
+Records remain local unless you enable encrypted cross-device sync. When **Light & Sun context** is enabled, compact measurement summaries can be included in the AI context; camera frames are never included.

@@ -190,7 +190,7 @@ For a production relay, disable SSH password authentication, enable a firewall (
 
 Cross-device sync and [local encryption](/guides/encryption) are independent systems:
 
-- **Local encryption** (passphrase → AES-256-GCM) protects your localStorage data at rest on each device.
-- **Sync encryption** (mnemonic → Evolu's key derivation → XChaCha20-Poly1305) protects data in transit and on the relay.
+- **Local encryption** derives an AES-256-GCM key from your passphrase and protects sensitive browser storage on that device.
+- **Sync encryption** uses the Evolu mnemonic identity to encrypt synced records before they reach the relay.
 
-You can use either, both, or neither. Enabling local encryption does not affect sync, and vice versa.
+The key systems are independent: sync never distributes an unlocked local passphrase key. Provider/voice credentials follow their documented sync and backup scopes, while wearable OAuth tokens always remain device-local.

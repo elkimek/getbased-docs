@@ -15,24 +15,26 @@ The Light & Sun lens reconstructs solar spectral irradiance and convolves it thr
 ```
 Atmosphere (UV index, ozone, cloud cover, temperature, altitude)
         │  via js/sun-uvdata.js — multi-source ladder:
-        │     selfhost (CAMS-mirrored) → CAMS direct → NOAA NWS → Open-Meteo
-        │     → offline zenith-angle fallback → manual entry
+        │     auto: explicit selfhost (if configured) → deployment CAMS operation
+        │           → browser-direct Open-Meteo
+        │     selfhost: configured endpoint → Open-Meteo
+        │     open-meteo: browser-direct Open-Meteo only
         ▼
 Solar zenith angle (NOAA solar position algorithm, ±1° accuracy)
         │  js/sun-uvdata.js → solarZenithAngle(date, lat, lon)
         ▼
 Bird-Riordan-style clear-sky reconstruction
         │  js/sun-spectrum.js → reconstructSpectrum()
-        │  280-2500 nm at 5 nm resolution (89 bands)
+        │  280-2500 nm at 5 nm resolution (445 bands)
         │  Extraterrestrial × Rayleigh × Ozone (Bass-Paur) × Aerosol × Cloud
         ▼
 Per-channel convolution with action spectra
         │  js/sun-spectrum.js → computeChannelDoses()
-        │  8 channels × 89 bands × 5nm bandwidth
+        │  8 channels × 445 bands × 5nm bandwidth
         ▼
 Dose accumulator (channel-au, internal unit)
-        │  Mapped to qualitative tier (none/low/moderate/good/strong)
-        │  via channelTier() vs CHANNEL_DISPLAY[k].dailyTarget
+        │  Legacy normalization anchors remain for stored analyses/correlations
+        │  but the current user UI reports source and rhythm, not target progress
         ▼
 UI (channel pills, channel cards, AI context)
 ```
@@ -40,10 +42,10 @@ UI (channel pills, channel cards, AI context)
 ## Wavelength grid
 
 ```javascript
-WAVELENGTHS = [280, 285, 290, ..., 2495, 2500]  // 89 bands at 5nm
+WAVELENGTHS = [280, 285, 290, ..., 2495, 2500]  // 445 bands at 5nm
 ```
 
-5 nm matches CAMS UV index forecast resolution and is fine enough for the action-spectrum convolutions. Coarser grids would lose the sharp UVB peak; finer grids would oversample without improving accuracy.
+The 5 nm interval is the application's internal modeling grid. It samples the narrow UV weighting curves more usefully than a coarse grid, but it does not add spectral information to a scalar UVI input or turn the reconstruction into a measurement.
 
 ## Action spectra (per channel)
 
@@ -74,13 +76,13 @@ E(λ) = E0(λ) × T_Rayleigh × T_O3 × T_aerosol × cloudT
 
 Where:
 - **E0(λ)** — extraterrestrial spectral irradiance, hardcoded fit to ASTM E490 reference at sample points 280, 300, 320, 340, 360, 380, 400, 420, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1500, 2000, 2500 nm with linear interpolation between
-- **T_Rayleigh** — `exp(-tauR × airMass / 1000)` with `tauR = (115.6406 / (nm/1000)^4 - 1.335 / (nm/1000)^2) × altScale` and `altScale = exp(-altitudeM / 8000)`
+- **T_Rayleigh** — `exp(-tauR × airMass)` with `tauR = altScale / (λ´ × (115.6406 - 1.335/λ²))`, `λ = nm/1000`, and `altScale = exp(-altitudeM / 8000)`
 - **T_O3** — `exp(-ozoneAbsorption(nm) × airMass × ozoneDU/1000)` with Bass-Paur cross-section approximation peaking in the Hartley band (~250 nm)
-- **T_aerosol** — `exp(-tauA × airMass)` with `tauA = 0.27 × (nm/500)^-1.14`
+- **T_aerosol** — `exp(-tauA × airMass)` with `tauA = beta × (nm/500)^-1.14`; `beta` uses a positive supplied AOD value or the `0.10` fallback
 - **cloudT** — `1 - 0.75 × cloudCover` (linear cloud transmission)
 - **airMass** — `1 / max(cos(zenithDeg × π/180), 0.001)`
 
-Honest accuracy: ±25% relative for our use case (correlation against biomarkers). Not a radiometer. The full Bird-Riordan model has aerosol single-scattering, multiple scattering, and direct/diffuse separation that we deliberately drop for code simplicity. If the lens grows toward research-grade radiometry, re-implement against SMARTS-2.
+This is a coarse deterministic estimate, not validated radiometry. The implementation assigns broad heuristic uncertainty and the UI must preserve that distinction. The full Bird-Riordan model has aerosol single-scattering, multiple scattering, and direct/diffuse separation that this implementation simplifies. A research-grade use would require measurement-backed validation and a more complete radiative-transfer model.
 
 ## Channel dose calculation
 
@@ -104,7 +106,8 @@ dose = Σ_λ E(λ) × W(λ) × dλ × duration × gain
 ```
 
 Where `gain` is:
-- **Skin channels** (vitamin_d, pomc, no_cv, nir_solar, pbm_*) → `bodyExposureFraction` (0–1)
+- **Whole-body skin-yield proxies** (`vitamin_d`, `pomc`, `no_cv`) → `skinIrradianceMultiplier × bodyExposureFraction`
+- **Local skin-fluence channels** (`nir_solar`, `pbm_red`, `pbm_nir`) → `skinIrradianceMultiplier` when any body exposure is logged; they do not shrink with the size of the treated patch
 - **Eye channels** (circadian, violet_eye) → `eyeMultiplier(eyeExposure)`:
   - `direct + clear` → 1.0
   - `clear-glasses` → 0.85 (blocks UV, passes visible)
@@ -155,17 +158,17 @@ With per-Fitzpatrick MED values from Diffey 1991 / GrassrootsHealth (in SED unit
 
 Burn-risk is `cumulativeMEDToday()` (sum across all sessions today).
 
-### Retinal UV
+### Ocular actinic UV
 
 ```javascript
-retinalUVdose({ spectrum, eyeExposure }) → J/m²
+ocularActinicUVdose({ spectrum, eyeExposure, zenithDeg, glassBetween }) → J/m²
 ```
 
-Only counts when `eyeExposure.mode === 'direct'`. Sums irradiance for λ ≤ 400 nm × duration. Used as a pure safety counter — never recommended to maximize. Sun-gazing protocols are deliberately not supported.
+Integrates wavelengths through the ICNIRP actinic-UV weighting up to 400 nm, applies the logged duration and a low-solar-elevation gate, and supports the `direct` and wavelength-attenuated `glass-window` paths. It represents incident anterior-eye actinic UV, not retinal dose and not the visible or thermal hazard of looking at the sun. The legacy export name `retinalUVdose` aliases this function for stored/session compatibility only. It is a safety counter and is never recommended to maximize.
 
-## Daily targets
+## Legacy normalization anchors
 
-`CHANNEL_DISPLAY[k].dailyTarget` defines the literature-rough target for "a meaningful healthy daily dose":
+`CHANNEL_DISPLAY[k].dailyTarget` remains an internal compatibility anchor used by older tiered records and correlation helpers:
 
 | Channel | Daily target (channel-au) |
 |---|---|
@@ -178,7 +181,7 @@ Only counts when `eyeExposure.mode === 'direct'`. Sums irradiance for λ ≤ 400
 | pbm_red | 8000 |
 | pbm_nir | 10000 |
 
-These map to the qualitative tier function:
+Legacy helpers map these anchors through the following tier function:
 
 ```javascript
 ratio = dose / dailyTarget
@@ -189,9 +192,9 @@ ratio < 1.00  → 'good'      // tier 3
 ratio ≥ 1.00  → 'strong'    // tier 4
 ```
 
-`weeklyChannelTier()` uses the same ratios but multiplies the daily target by 7 — keeps a 7-day rollup from being scored against a 1-day expectation (a value that scores "moderate" against daily would otherwise score "low" against weekly).
+`weeklyChannelTier()` uses the same ratios with a sevenfold anchor for older seven-day rollups.
 
-Targets are deliberately rough. They're not normative — they're a translation layer so the UI doesn't show channel-au integers. The AI sees raw dose; users see tiers.
+These values are not literature-established personal requirements, treatment doses, or user goals. The current channel UI must not expose percentages, deficiency, sufficiency, completion, or progress against them. It shows whether sunlight and/or a device signal was logged, the source split, and a seven-day rhythm. AI prompts carry the same rule: missing logs are missing data, not missing biology.
 
 ## Adding a new channel
 
@@ -209,18 +212,17 @@ Targets are deliberately rough. They're not normative — they're a translation 
 
 | `cfg.mode` | Order |
 |---|---|
-| `auto` (default) | selfhost (if URL set) → CAMS hosted relay → Open-Meteo → offline zenith |
+| `auto` (default) | selfhost (if URL set) → deployment CAMS operation → Open-Meteo |
 | `selfhost` | selfhost → Open-Meteo |
 | `open-meteo` | Open-Meteo only |
-| `manual` | none (always returns null, manual entry required) |
 
-Legacy `cams` and `noaa` modes (from earlier v1.7.x dev iterations) auto-migrate to `auto` on load via `getMeteoConfig()` so users with stored configs from a pre-shipping build don't get stuck.
+Legacy `cams`, `noaa`, and `manual` modes auto-migrate to `auto` in `getMeteoConfig()`. The current picker exposes only **Auto**, **Open-Meteo**, and **Self-hosted**.
 
-**CAMS hosted relay** is implemented by the public [`getbased-uvdata`](https://github.com/elkimek/getbased-uvdata) companion service. The browser talks only to the same-origin `/api/proxy` route; the server-side deployment injects any required upstream credential and returns Open-Meteo-shaped atmosphere data. Self-hosters can run the same relay and point Settings → Light & Sun → Sun data source → Self-hosted at their own URL.
+**CAMS compatibility operation:** official clients send the fixed CAMS payload to `https://integrations.getbased.health/api/proxy`; independent deployments use same-origin `/api/proxy`. The operated relay forces latitude and longitude to a 0.1° grid even if a client sends more precision, injects the fixed upstream bearer, and returns a bounded atmosphere envelope. The browser applies the same rounding before a direct Open-Meteo fallback. Self-hosters can run a compatible source and select **Self-hosted**.
 
-We deliberately don't pull CAMS-McRad surface UV — that product is queue-based with pre-registered locations, structurally incompatible with synchronous per-coord serving. The `/spectrum` endpoint on the relay runs Bird-Riordan reconstruction server-side fed by real CAMS atmosphere, which collapses the model uncertainty band from ±20–45% to ±10–15% in the UV sweet-spot.
+The relay does not expose a server-side `/spectrum` reconstruction. It returns atmosphere data; `reconstructSpectrum()` always runs in the browser. CAMS-McRad surface UV remains out of scope because its queue/pre-registered-location model does not fit synchronous per-coordinate requests.
 
-**Source confidence** is computed at read time via `computeUVConfidence({source, snapshotAgeSec, cloudCover, zenithDeg, uvIndex, isStale, manualOverridden})` — no longer a static per-source number. Stale grid (>24 h) halves the confidence; heavy cloud (>0.8), low sun (zenith >80°), and below-threshold UVI (&lt;2) each multiplicatively discount further. Manual UV-meter readings lock to 1.0; everything else caps at 0.99.
+**Source confidence** is computed at read time from source, snapshot age, cloud cover, sun elevation, UVI band, and staleness. It is an uncertainty signal for the modeled input, not radiometer accuracy. Do not restore the retired manual-source shortcut or assign perfect confidence to a user-entered UVI: one value cannot supply the full atmosphere/spectrum model.
 
 ## Validation
 
@@ -229,7 +231,7 @@ We deliberately don't pull CAMS-McRad surface UV — that product is queue-based
 - Sun-below-horizon → all-zero spectrum
 - Atmospheric attenuation (zenith / ozone / cloud / altitude) — directional checks
 - Channel dose calculation (all channels, body fraction scaling, eye-mode gating, sunglasses → near-zero circadian)
-- Safety counters (SED scales linearly with duration, Fitzpatrick I burns faster than VI, retinal-UV only in `direct` mode)
+- Safety counters (SED scales linearly with duration, Fitzpatrick I reaches its reference before VI, ocular actinic UV is weighted and gated by eye/glass conditions)
 - Edge cases (night spectrum, zero-duration session)
 
 Quarterly validation against published clear-sky measurement campaigns (NREL SRRL, NOAA SURFRAD) is the next-tier rigour. Keep that report in the developer docs when it exists; do not treat it as part of the current verified test suite.

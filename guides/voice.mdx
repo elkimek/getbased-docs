@@ -1,12 +1,12 @@
 ---
 title: "Use voice in AI chat"
 sidebarTitle: "Voice"
-description: "Dictate chat messages and listen to AI replies with on-device models, a compatible voice server, xAI, or ElevenLabs."
+description: "Dictate chat messages and listen to AI replies with on-device models, a compatible server, an existing AI-provider connection, xAI, or ElevenLabs."
 ---
 
-Voice lets you speak into the chat composer and hear assistant replies read aloud. It is separate from the AI provider that generates the answer: your AI provider handles the conversation, while the voice service you choose handles transcription, spoken replies, or both.
+Voice lets you speak into the chat composer and hear assistant replies read aloud. Voice processing is a separate operation from generating the chat answer, but **Same as chat** can reuse a supported OpenRouter, PPQ, or Venice connection for both dictation and speech.
 
-You can keep voice processing in this browser after a one-time model download, connect an OpenAI-compatible voice server you control, or use xAI or ElevenLabs with your own API key.
+You can keep voice processing in this browser after a one-time model download, connect an OpenAI-compatible voice server you control, reuse a supported AI-provider account, or use xAI or ElevenLabs with a separate voice key.
 
 ## Choose where voice is processed
 
@@ -14,10 +14,12 @@ Open **Settings → Voice**, then choose one service for dictation and spoken re
 
 | Voice service | Dictation | Spoken replies | What leaves this browser device |
 |---|---:|---:|---|
+| **Same as chat** | Yes | Yes | Uses OpenRouter, PPQ, or Venice directly when that active AI provider is connected; otherwise falls back to **On this device** |
 | **On this device** | Yes | Yes | Nothing for the voice operation after the model files are downloaded |
 | **Local voice server** | Yes | Yes | The recording or reply text goes directly to the server URL you configure |
-| **xAI** | Yes | Yes | The requested recording or reply text, plus your voice API credential, is forwarded to xAI through the getbased voice relay |
-| **ElevenLabs** | Yes | Yes | The requested recording or reply text, plus your voice API credential, is forwarded to ElevenLabs through the getbased voice relay |
+| **OpenRouter / PPQ / Venice** | Yes | Yes | The requested recording or reply text goes directly to that provider using the account key already saved in **Settings → AI** |
+| **xAI** | Yes | Yes | The requested recording or reply text and voice credential go directly from your browser to xAI |
+| **ElevenLabs** | Yes | Yes | The requested recording or reply text and voice credential go directly from your browser to ElevenLabs |
 
 <Note>
 Voice processing and AI chat are two separate steps. Dictation first places a transcript in the composer so you can review it. When you send that message, your configured AI provider receives it together with the enabled chat context described in [AI chat](/guides/ai-chat#what-the-ai-knows).
@@ -25,7 +27,7 @@ Voice processing and AI chat are two separate steps. Dictation first places a tr
 
 ## Set up on-device voice
 
-On-device voice is the default and most private option. Models run in a browser worker and are downloaded only when you explicitly request them.
+On-device voice is the most private explicit option and the fallback when **Same as chat** cannot use the active AI provider. Models run in a browser worker and are downloaded only when you explicitly request them.
 
 <Steps>
   <Step title="Open Voice settings">
@@ -95,15 +97,21 @@ In **Settings → Voice → Connections → OpenAI-compatible local server**, en
 “Local voice server” means a direct compatible connection, not necessarily inference on this browser device. A LAN or remote URL receives the recording or reply text. Use HTTPS or a trusted encrypted tunnel for any connection that leaves your device, and make sure the server allows browser requests from the getbased origin.
 </Warning>
 
-## Connect xAI or ElevenLabs
+## Reuse an AI provider or connect xAI or ElevenLabs
+
+Choose **Same as chat** to reuse OpenRouter, PPQ, or Venice when the active provider is connected in **Settings → AI**. You can also select one of those providers explicitly for voice. OpenRouter exposes compatible transcription and speech model choices; PPQ and Venice use their supported audio endpoints and voice catalogs.
+
+Routstr, Custom API, and Local AI do not currently supply the automatic voice path. **Same as chat** falls back to the browser models for those providers. To use your own compatible audio endpoint, select **Local voice server** separately.
 
 Expand the provider under **Settings → Voice → Connections**, paste a voice API key, then click **Save key** and **Test connection**. Refresh the voice list before choosing a hosted voice.
 
-Cloud voice requests use the same-origin getbased relay because browsers cannot safely call every provider API cross-origin. The relay validates and bounds the request, forwards your key only for that request, and returns the transcription, voice list, or audio response. xAI and ElevenLabs apply their own pricing, retention, and account policies.
+Cloud voice requests go directly from your browser to OpenRouter, PPQ, Venice, xAI, or ElevenLabs. The provider must permit the browser request and applies its own pricing, retention, and account policies; getbased does not retry a failed direct request through its servers. A provider's private or TEE chat mode does not automatically protect its separate voice endpoint.
 
-Voice credentials follow the app-wide storage setting. With **Settings → Data → Security** encryption enabled and unlocked, xAI, ElevenLabs, and compatible-server keys are encrypted at rest. With encryption disabled, they are plaintext in browser storage.
+Before the first request to a cloud voice recipient, getbased asks for explicit, provider-specific approval. If you decline, no request is sent. The approval covers later cloud AI and voice actions you initiate with that recipient; withdraw it at any time in **Settings → Privacy**.
 
-xAI and ElevenLabs voice settings and keys can be carried by end-to-end encrypted cross-device sync. The compatible-server URL and optional key are device-scoped and are not synced. Full database and folder backups include all configured Voice settings and credentials as stored: encrypted when local encryption is enabled, otherwise plaintext. Treat an unencrypted backup as sensitive. See [Voice privacy and storage](/guides/privacy#voice-processing) for the full boundary.
+Voice credentials are never deliberately stored as plaintext. With passphrase protection off, getbased wraps supported keys with a non-exportable key held by that browser. With passphrase protection on, it protects them with the passphrase-derived key. If device protection is unavailable, getbased keeps a new key in memory for the session instead of persisting it unprotected.
+
+Sync carries the sync-scoped voice preferences plus the supported OpenRouter, PPQ, Venice, xAI, and ElevenLabs keys inside its end-to-end encrypted payload. On the receiving browser, synced keys are wrapped again by that browser's current device or passphrase protection. The compatible-server URL and optional key are device-scoped and are not synced. Full database and folder backups are different: they omit device-key-wrapped credentials when passphrase protection is off, and include supported credentials only as passphrase-encrypted values when it is on. See [Voice privacy and storage](/guides/privacy#voice-processing) for the full boundary.
 
 ## Troubleshooting
 

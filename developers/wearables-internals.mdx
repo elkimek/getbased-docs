@@ -1,74 +1,89 @@
 ---
 title: "Wearables internals"
-description: "Developer contract for wearable OAuth, local daily rows, synced summaries, runtime configuration, and Agent Access series export."
+description: "Developer contract for wearable OAuth routing, hosted consent, device-local credential encryption, daily rows, summaries, and Agent Access."
 ---
 
-Wearables span vendor OAuth, local IndexedDB time-series storage, compact synced summaries, dashboard UI, and Agent Access series export. This page documents the boundaries contributors must preserve.
+Wearables span provider OAuth, a narrow compatibility service, local IndexedDB time-series storage, compact synced summaries, dashboard UI, and optional Agent Access series. Preserve the routing, consent, and credential boundaries together.
 
 ## Supported paths
 
-| Source | Path |
-|---|---|
-| Oura, Withings, Polar, WHOOP, Ultrahuman | Direct OAuth/API fetchers plus normalized metric adapters |
-| Google Health | Self-host-only OAuth/API aggregator for Fitbit, Pixel Watch, and supported Google-account data |
-| Fitbit | Legacy adapter retained only for already-connected users during the September 2026 migration window |
-| Apple Health | XML/ZIP file import, parsed locally |
-| Manual values | manual weight, blood pressure, resting HR, and related metrics |
+| Source | Official hosted path | Independent self-host path |
+|---|---|---|
+| Oura, Withings, Polar | Dedicated `integrations.getbased.health/api/proxy` after profile/provider-scoped consent | Same-origin `/api/proxy` with the operator's OAuth app |
+| Existing legacy Fitbit | Dedicated compatibility service while the stored authorization and API remain usable | Same-origin `/api/proxy`; no new connect or reconnect flow |
+| Google Health | Disabled | Same-origin confidential OAuth/API aggregator behind an explicit capability gate |
+| WHOOP | Disabled | Same-origin confidential OAuth client behind an explicit capability gate |
+| Ultrahuman | Disabled | Same-origin experimental OAuth client behind an explicit capability gate |
+| Apple Health | Local XML/ZIP import | Local XML/ZIP import |
+| Manual values | Local entry | Local entry |
+
+Official routing is selected by `getProxyApiUrl()` in `proxy-runtime.js`; self-hosted deployments never fall back to the operated compatibility origin. Hosted policy classification must reject WHOOP, Ultrahuman, Google Health, generic AI, voice, and Custom API operations.
 
 ## Core modules
 
 | Module family | Role |
 |---|---|
-| `wearables-*.js` | provider-specific OAuth, fetch, and UI helpers |
-| `wearable-adapters.js` | normalize vendor payloads into getbased metric ids |
-| `wearables-store.js` | local daily rows, encrypted backup snapshots, and summary persistence |
-| `wearables-detail-modal.js` | per-metric charts and manual-entry detail UI |
-| `settings` wearables panel | provider connection status and runtime configuration |
-| `sync-messenger.js` / Agent Access helpers | optional wearable daily-series push |
+| `wearables-*.js` | Provider OAuth, fetch, normalization, and UI helpers |
+| `wearable-adapters.js` | Metric registry, OAuth metadata, runtime client-ID overrides, and capability flags |
+| `wearables-connect.js` | Connect, callback, sync, 7-day update, 90-day import, disconnect, and scheduler orchestration |
+| `wearables-settings-groups.js` | Settings grouping and hosted provider/profile consent records |
+| `wearables-credential-vault.js` | Per-profile device-local access/refresh-token vault and generation guards |
+| `wearables-store.js` | Per-profile daily rows, device-key/passphrase envelopes, metadata, and backup filtering |
+| `wearables-summary.js` | Compact profile summary derivation |
+| `sync-payload.js` and Agent Access helpers | Local-only stripping, summary sync, and optional daily-series export |
 
-## Storage split
+## Hosted relay consent
 
-Wearable data deliberately has two layers:
+`requestHostedWearableRelayConsent(profileId, adapterId, displayName)` runs before an official hosted OAuth flow. The approval is scoped to the active profile and provider and states that getbased s.r.o. can read the forwarded account details and health responses transiently. Declining must produce no provider or relay request.
 
-| Layer | Sync behavior | Why |
+Disconnect must revoke the local consent record, remove the credential-vault record, delete that provider's local imported rows, and preserve the ability to remove a stale connection when runtime configuration is unavailable. Provider-side account revocation remains a separate action.
+
+Never reuse cloud-AI consent for wearables or use one wearable approval for another provider/profile.
+
+## OAuth contracts
+
+Oura, Withings, Polar, Google Health, and WHOOP are confidential clients: the browser sends an authorization code or refresh token through the selected compatibility endpoint, which injects the deployment's client secret. WHOOP is not a secretless PKCE integration.
+
+Ultrahuman follows its adapter's reviewed OAuth contract. Fitbit's retained legacy path uses PKCE, but only already-connected users can continue; do not restore a connect or reconnect entry point.
+
+`collectWearableConfigured()` reports Google Health, WHOOP, and Ultrahuman available only when each provider's enable flag is exactly `true` and its required client ID and secret are all present. Runtime config exposes only public client IDs and capability booleans. A disabled capability must block connect, exchange, refresh, update, and backfill while leaving disconnect available.
+
+The callback flow pins the initiating profile and client ID in session storage. Do not re-read a later runtime override after returning from the provider.
+
+## Storage split and encryption
+
+| Layer | Location | Sync/backup behavior |
 |---|---|---|
-| compact summaries, baselines, trends, anomalies | syncs with the profile | enough for dashboard cards and AI context on another device |
-| raw daily rows | local only | large, provider-specific, and not worth exposing through the sync payload |
-| OAuth refresh tokens | local only | a mnemonic should not grant live vendor-account access |
-| Agent Access series window | syncs | lets another paired browser keep the same MCP export preference |
+| Connection metadata without tokens | `importedData` | Syncable where allowed |
+| Access and refresh tokens | Per-profile wearable IndexedDB metadata, AES-GCM under a non-exportable device key | Excluded from sync and all backups; reconnect on every browser |
+| Google Health daily rows | Per-profile wearable IndexedDB, always device-key encrypted | Excluded from raw-row backups and sync |
+| Other daily rows | Per-profile wearable IndexedDB, passphrase-encrypted when local encryption is enabled | Local only; eligible for local backup filtering rules |
+| Compact summaries, baselines, trends, anomalies | `importedData` | End-to-end encrypted profile sync |
+| Agent Access series window | Profile preference | Syncs so paired browsers retain the same export choice |
 
-If a new metric needs detailed charts on another device, do not silently sync the whole raw table. Add a compact summary first and decide deliberately whether detail rows belong in sync.
+Credential writes use generation checks so an in-flight refresh cannot recreate a connection after disconnect. Never move token material back into `wearableConnections`, a profile export, logs, or debug snapshots.
 
-## Runtime configuration
+If a new metric needs charts on another device, add or extend the compact summary deliberately; do not silently sync the raw table.
 
-Self-hosted and production deployments can provide wearable client ids/secrets through runtime config and `api/proxy.js`. Do not hardcode real provider credentials in docs, source, test snapshots, or browser-visible constants.
+## Settings and sync behavior
 
-Google Health is a fail-closed capability. `collectWearableConfigured()` reports it available only when `GOOGLE_HEALTH_ENABLED=true`, `GOOGLE_HEALTH_CLIENT_ID`, and `GOOGLE_HEALTH_CLIENT_SECRET` are all present. Runtime config returns the public client ID and boolean capability, never the secret. Disabled deployments must block connect, token exchange, refresh, sync, and backfill while preserving disconnect and account-wide revocation for previously stored connections.
+The settings panel groups rows as **Connected**, **Ready to connect**, **For self-hosted**, and **Add without a connection**. Current providers expose **Update now** for the last 7 days and **Import last 90 days** for the full window. Legacy Fitbit exposes migration/disconnect rather than reconnect.
 
-The legacy Fitbit adapter is hidden for new users but remains visible and syncable for existing connections while their current token and the legacy API still work. Do not add a legacy reconnect path; Google requires users to re-consent through Google OAuth for migration.
+The scheduler runs on visibility changes and a six-hour interval after runtime configuration is ready. Provider reads populate local daily rows, then derive a compact summary. Sparse manual readings retain their full local history rather than being truncated to the provider window.
 
-When adding a provider, document:
+Manual weight input follows the selected kg/lb display unit and normalizes to canonical kg before storage. Do not apply a display conversion twice during import, summary derivation, reports, or BMI calculation.
 
-- OAuth callback path and allowed origin expectations;
-- token storage key and encryption behavior;
-- normalized metric ids;
-- whether the provider supports backfill and how many days;
-- how disconnect/revoke behaves;
-- test fixtures with fake payloads only.
+## Agent Access series
 
-## Agent Access wearable series
-
-Settings → Agent Access can push a daily-series section for MCP clients: off, 7 days, 30 days, or 90 days. The browser serializes one metric per line, oldest to newest, using `—` for missing days and source labels in parentheses.
-
-This is a read-only export surface. The MCP must not write wearable values back through Agent Access.
+Settings → Agent Access can expose an off, 7-day, 30-day, or 90-day read-only daily series to the user's MCP. The browser serializes oldest to newest, represents missing days explicitly, and retains source labels. Agent Access must not become a wearable write surface.
 
 ## Verification checklist
 
-Before shipping wearable changes:
-
-- run provider fetcher/adapter tests with fixture payloads;
-- run sync-flow tests proving summaries sync and OAuth tokens do not;
-- run browser specs for connect/disconnect UI if touched;
-- verify Apple Health imports stay local and large files remain cancellable;
-- verify manual entries merge with vendor values without duplicating days;
-- verify Agent Access series output if metric ids or daily-row shape changed.
+- Run the provider auth/fetcher and adapter tests with fake payloads.
+- Prove official policy accepts only approved providers and self-host-only providers never fall back to the operated service.
+- Prove consent denial sends nothing and disconnect clears consent, vault material, and provider rows.
+- Prove tokens and Google Health raw rows stay out of sync and backups.
+- Run the relevant Settings connect/disconnect browser spec when UI behavior changes.
+- Verify 7-day update, 90-day import, scheduler, and manual kg/lb normalization for touched paths.
+- Verify Apple Health parsing remains local and cancellable.
+- Verify Agent Access output when metric IDs or the daily-row shape changes.

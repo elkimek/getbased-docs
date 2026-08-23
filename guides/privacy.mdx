@@ -18,7 +18,9 @@ Clearing your browser data will erase your local getbased data, so use the [expo
 
 ## Encryption at rest
 
-By default, data is stored unencrypted in your browser's local storage. Other websites cannot read it, but someone with access to your device, browser profile, or malicious extensions may be able to. For an extra layer of protection, you can enable **AES-256-GCM encryption at rest** from **Settings → Data → Security**. When active, your data is encrypted with a key derived from your passphrase via PBKDF2 before being written to storage.
+By default, profile and health data is readable inside your browser profile. Other websites cannot normally read it, but someone with access to your device, browser profile, or a malicious extension may be able to. Credentials have an additional default safeguard: supported AI, voice, wearable, and service credentials are wrapped with a browser-specific, non-exportable key rather than deliberately stored as plaintext. If that protection is unavailable, getbased keeps new credentials in memory instead of persisting them unprotected.
+
+For broader protection, enable **AES-256-GCM encryption at rest** from **Settings → Data → Security**. getbased derives the key from your passphrase with PBKDF2-SHA256 using 600,000 iterations. Each tab unlocks independently; the key is not broadcast to other tabs.
 
 See [Encrypt your data](/guides/encryption) for setup instructions and passphrase requirements.
 
@@ -48,10 +50,16 @@ getbased supports multiple AI backends. The privacy implications differ by provi
 | PPQ / Routstr (Private TEE) | Encrypted body — decrypted inside an attested TEE | Yes, encrypted |
 | Venice AI (standard) | Prepared lab content or selected AI context over HTTPS; provider retention policy applies | Yes |
 | Venice AI (Encrypted TEE Mode) | Encrypted message content; request metadata remains visible | Yes, partly encrypted |
-| Custom API | Prepared report content, AI context, and key sent to the endpoint you configure; the getbased proxy may forward public-endpoint requests without storing them | Yes |
+| Custom API | Prepared report content, AI context, and key sent directly from the browser to the endpoint you configure | Yes |
 | Local AI — loopback server and downloaded model | Requests stay on this browser device | No off-device request |
 | Local AI — LAN server | Requests leave this browser device for another machine on your network | Yes, local network |
 | Local AI — remote endpoint or cloud-tagged model | Requests go to the endpoint or model operator | Yes |
+
+### Consent before cloud processing
+
+Before the first request to OpenRouter, PPQ, Routstr, Venice, xAI, ElevenLabs, or a remote Custom API origin, getbased displays a recipient-specific consent prompt. Nothing is sent until you approve, and declining sends nothing. Private or loopback Custom API origins do not require cloud-processing consent.
+
+An approval covers later cloud AI and cloud voice actions you choose to initiate with that recipient. Review the approved recipients or withdraw all cloud-processing approvals in **Settings → Privacy**. After withdrawal, the next cloud request requires approval again.
 
 ### PPQ and Routstr Private TEE modes
 
@@ -86,7 +94,7 @@ If either required check is absent or fails, the encrypted session does not star
 
 The two checks do not prove that the TDX environment and GPU are running together. getbased also does not currently enforce an approved Venice code-measurement allowlist or independently verify the source of every response. The per-chunk response key is therefore not independently bound to the attested signing key.
 
-NVIDIA does not accept the GPU-check request directly from a browser, so the deployment's same-origin proxy relays the GPU evidence to NRAS. Message content is not included. The signed NRAS results are still verified in your browser, and NVIDIA learns that an attestation was checked. See [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the full protocol boundary and remaining assumptions.
+NVIDIA does not accept the GPU-check request directly from a browser, so the official app sends only the GPU evidence through getbased's dedicated compatibility relay; a self-host sends it through its own same-origin compatibility endpoint. Message content is not included. The signed NRAS results are still verified in your browser, and NVIDIA learns that an attestation was checked. See [TEE attestation and encrypted AI transport](/developers/tee-attestation#venice-encrypted-tee-mode) for the full protocol boundary and remaining assumptions.
 
 ### Local AI endpoint location
 
@@ -94,23 +102,27 @@ Connect any OpenAI-compatible server in **Settings → AI → Local AI**. The la
 
 getbased classifies the configured setup as **this device**, **LAN server**, **remote server**, or **cloud**. Ollama `:cloud` models are always treated as cloud-hosted even when the Ollama client runs on your computer. A remote connection over plain HTTP does not protect health data or API credentials unless an underlying VPN or encrypted tunnel does.
 
-For a fully on-device path, use a loopback URL and a model downloaded to that machine. See [Connect an AI provider](/ai-providers#local-ai) for setup and browser transport restrictions.
+For a fully on-device path, use a loopback URL and a model downloaded to that machine. See [Connect an AI provider](/ai-providers#set-up-a-provider) for setup and browser transport restrictions.
 
 ## Voice processing
 
-Voice is configured separately from the AI provider that generates chat answers. The privacy boundary depends on the service selected in **Settings → Voice**:
+Voice is a separate operation from generating a chat answer. **Same as chat** can reuse a supported OpenRouter, PPQ, or Venice connection; otherwise it falls back to the on-device models. The privacy boundary depends on the resolved service in **Settings → Voice**:
 
 | Voice service | Dictation boundary | Spoken-reply boundary |
 |---|---|---|
+| **Same as chat** | Uses the active OpenRouter, PPQ, or Venice audio endpoint when supported and connected; otherwise uses the on-device row below | Uses the same resolution and fallback rule |
 | **On this device** | The temporary microphone recording is transcribed by a downloaded Whisper model in a browser worker | The selected assistant reply is synthesized by a downloaded Kokoro model in a browser worker |
 | **Compatible voice server** | The recording is sent directly to the configured `/v1/audio/transcriptions` endpoint | The selected reply text is sent directly to the configured `/v1/audio/speech` endpoint |
-| **xAI / ElevenLabs** | The recording and voice API key pass through the bounded same-origin getbased relay to the selected provider | The selected reply text and voice API key pass through the relay to the selected provider |
+| **OpenRouter / PPQ / Venice** | The recording and existing AI-provider key go directly to the provider's standard audio endpoint | The selected reply text and existing key go directly to that provider's standard audio endpoint |
+| **xAI / ElevenLabs** | The recording and voice API key go directly from the browser to the selected provider | The selected reply text and voice API key go directly from the browser to the selected provider |
 
 Raw microphone recordings are not added to profile storage, backups, sync, or chat history. Dictation inserts a transcript into the composer for review. The transcript reaches the main AI provider only when you choose to send the message, at which point normal chat context rules apply.
 
-On-device model files and fetched voice lists are rebuildable browser caches and do not sync or enter backups. Voice credentials are encrypted at rest only when **Settings → Data → Security** encryption is enabled and unlocked; otherwise they are plaintext in browser storage.
+On-device model files and fetched voice lists are rebuildable browser caches and do not sync or enter backups. Voice credentials use browser-device encryption when passphrase protection is off and passphrase encryption when it is on.
 
-xAI and ElevenLabs voice settings and keys can be included in end-to-end encrypted cross-device sync. Compatible-server connection details and its optional key are device-scoped and do not sync. Full database and folder backups include all configured Voice settings and credentials in their stored form. That means backups preserve encrypted values when local encryption is enabled but contain plaintext credentials when it is disabled. See [Use voice in AI chat](/guides/voice) for setup and provider behavior.
+All cloud voice recipients require the same recipient-scoped processing approval used for cloud AI. A private/TEE chat selection does not extend its attestation or encrypted-message protocol to these ordinary audio endpoints.
+
+Sync-scoped voice preferences and supported OpenRouter, PPQ, Venice, xAI, and ElevenLabs keys can be included in end-to-end encrypted cross-device sync and are rewrapped under the receiving browser's local credential protection. Compatible-server connection details and its optional key are device-scoped and do not sync. Full database and folder backups follow a narrower rule: they omit device-key-wrapped credentials when passphrase protection is off; when it is on, supported credentials remain passphrase-encrypted. See [Use voice in AI chat](/guides/voice) for setup and provider behavior.
 
 ## Model-test history
 
@@ -124,7 +136,9 @@ Cross-device sync is entirely opt-in. When you enable it, an Evolu CRDT engine e
 
 ## Profile sharing
 
-Profile sharing is opt-in. When you create a share link, getbased locks a copy of the selected profile in your browser with the password you choose or generate, then uploads only that locked copy. The password is not added to the link and is not stored by getbased.
+Profile sharing is opt-in. When you create a share link, getbased locks a copy of the selected profile in your browser with the password you choose or generate, then uploads only that locked copy. The password is not added to the link and is not stored by getbased. The official app uploads directly to the dedicated getbased share service, not the static app host.
+
+The share service can observe ordinary connection metadata and stores a keyed abuse-control identifier with expiry and deletion metadata. It stores the opaque encrypted envelope, not the profile plaintext. The service has no retained database backup, so an outage or data loss can invalidate an active link; the source profile remains in the sender's browser.
 
 Anyone who has both the link and the password can import the shared profile until the link expires or you stop sharing it. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
 

@@ -1,134 +1,95 @@
 ---
 title: "Log sun exposure sessions in getbased"
-description: "Track vitamin D, circadian rhythm, cardiovascular, and four other biological channels from every sun session — with live dose totals and burn alerts."
+description: "Record sun sessions, model wavelength-related light signals, and keep timing and skin-safety context together."
 ---
 
-Sun isn't just vitamin D. Different wavelengths do different things — set your body clock, support circulation, charge your mitochondria, regulate mood hormones. The **Light** lens tracks your sun exposure across six biological channels and lets you correlate them with your labs and wearable data over time.
+The **Light** lens records where, when, and how sunlight reached you. getbased uses weather data and a browser-side spectrum model to describe six wavelength-related signals. These are modeled inputs, not measured biological responses, diagnoses, or daily requirements.
 
-## What sun sessions tracks
+## What the six channels mean
 
-Each session is scored across six channels based on how your accumulated dose compares to a literature-derived daily target. Scores run from **none → low → moderate → good → strong**.
+| Channel | What the log represents | Important limit |
+|---|---|---|
+| **Vitamin D** | Vitamin-D-effective UVB modeled at uncovered skin | It does not measure vitamin D synthesis or blood status, and an empty log is not a deficiency |
+| **Skin & mood** | UV-related POMC pathway input at skin | It does not measure hormones, mood, or an outcome |
+| **Blood vessels** | UVA-related skin input associated with nitric-oxide release | It is not a blood-pressure reading or a reason to seek more UVA |
+| **Outdoor eye light** | Violet/cyan outdoor light reaching the eye under the logged conditions | Human pathway details remain exploratory; never look at the sun |
+| **Body clock** | Timed ambient light reaching the eye | Timing matters more than a score; ordinary ambient outdoor light is sufficient to log this signal |
+| **Cell energy & repair** | Red and near-infrared light modeled at skin and deeper tissue | Systemic effects remain under study and are not measured by the app |
 
-| Channel | What it does | Spectrum |
-| --- | --- | --- |
-| **Vitamin D** | UVB on bare skin triggers vitamin D synthesis. Synthesis plateaus before your skin reddens — more time does not mean more vitamin D. | UVB 290–315 nm |
-| **Mood & hormones** | Sunlight on skin triggers α-MSH (the tan signal), β-endorphin (mood lift), and ACTH (stress response). | UVB \+ UVA |
-| **Cardiovascular** | UVA releases nitric oxide from skin — supporting blood-vessel function, lowering blood pressure, and dampening inflammation. | UVA 315–400 nm |
-| **Outdoor eye light** | Violet light at 360–400 nm reaches sensors in both the eye and skin. Linked to eye health and dopamine. This is what distinguishes real outdoor light from window light, even when both feel equally bright. | Violet 360–400 nm |
-| **Body clock** | Bright light at the eye anchors your circadian rhythm — earlier bedtimes, faster wake-up, deeper sleep. Strongest in the first two hours after sunrise. | Blue ~490 nm (melanopic peak) |
-| **Cellular repair** | Solar 600–1400 nm penetrates deep into tissue and supports mitochondria, local melatonin production, and recovery. This is the half of sunlight that windows block entirely. | Red \+ IR-A 600–1400 nm |
+Two additional red and near-infrared channels are used for compatible light-device sessions. Device output stays distinct from full-spectrum sunlight in the UI and AI context.
 
-<Note>
-  The app deliberately doesn't surface raw dose numbers. The AI sees them, but your dashboard shows qualitative scores — which is all you need to make decisions.
-</Note>
+The channel detail cards show the source of a logged signal, its seven-day rhythm, and plain-language context. They do not show progress toward a universal daily target. No matching exposure means only that none was recorded.
 
-## How to log a session
-
-The primary flow is a one-tap quick log.
+## Log a session
 
 <Steps>
   <Step title="Start a session">
-    Tap **Log a sun session** in the Light lens or the **Light Today** dashboard widget. The app pulls the current UV index and ozone for your location, reconstructs the spectrum at your sun angle, and starts accruing dose.
+    Choose **Log a sun session** in the Light lens or **Light Today** dashboard widget. getbased fetches the available atmosphere snapshot for your rounded location and starts accumulating the modeled signal.
   </Step>
-  <Step title="Stop when you're done">
-    When you come back inside, tap the same button — now labelled **Stop session — N min**. That's the whole flow.
+  <Step title="Adjust details when needed">
+    Use the full picker to record exposed body regions, eyewear or window conditions, and SPF. The quick log reuses the previous session's choices.
+  </Step>
+  <Step title="Stop the session">
+    Choose **Stop session** when you finish. Review the recorded duration, conditions, safety estimate, and channel signals.
   </Step>
 </Steps>
 
-Quick-log defaults carry over from your last session. If you want to adjust body regions, eyewear, or SPF before you start, open the full session picker from the Light lens.
-
 ### First-time setup
 
-The first time you open the Light lens, a short setup card asks a few questions to calibrate your personal scores:
+The setup records context used by the model:
 
-- **Skin type** (Fitzpatrick I–VI) — used to scale your personal sunburn threshold
-- **Home lighting** — LED cool, LED warm, fluorescent, incandescent, or mixed
-- **Eyewear outside** — none, sunglasses, clear glasses, or contacts with UV block
-- **Location precision** — your country is the default; tap **Use precise location** for sharper UV math (stored on this device only, never synced)
-- **Photosensitizing medication** — if you take tetracyclines, isotretinoin, thiazides, NSAIDs, amiodarone, St. John's Wort, or similar drugs, your effective burn threshold drops roughly 2.5×
-
-An optional 10-question light-burden audit captures how indoor- or artificial-light-dominated your typical day is. The AI uses this baseline when interpreting your channel scores ("your low body-clock channel makes sense given your light-burden score").
-
-## Live session controls
-
-While a session is running, a **Live** card pins to the top of the Light lens with running dose totals per channel. You can interact mid-session:
-
-| Control | What it does |
-| --- | --- |
-| **Pause** | Freezes dose accrual during a shade break. The timer keeps ticking. Tap again to resume. |
-| **Flip** | Tap when you turn from front to back (or vice versa). The region picker covers one side at a time; flipping tells the app fresh skin is now exposed, which doubles the vitamin D yield to reflect that newly-exposed skin keeps synthesizing after the first side approaches saturation. |
-| **Sunscreen** | Log a mid-session reapplication. The app commits the dose accrued under the previous SPF, then continues under the new value. |
-| **Ozone override** | Manually enter total-column ozone in Dobson Units if you have a local advisory or a personal meter. |
-
-For targeted protocols (face only, abdomen only, back only), the detailed session view includes a **per-region anatomical silhouette picker** covering 16 regions split across front and back.
-
-## MED calculation and burn alerts
-
-The Light lens and **Light Today** dashboard widget show your **burn risk** in plain English throughout the day:
-
-- **Safe** — under 30% of your personal daily sunburn threshold
-- **Moderate** — 30–70%
-- **Approaching** — 70–100% — time to cover up if you go back outside
-- **Reached** — over 100% — sunburn risk, no more direct sun today
-
-These thresholds are computed from each session's CIE-erythemal-weighted dose compared to your Fitzpatrick skin type's minimal erythemal dose (MED). The burn model uses a 1.5× conservative cap and warns you explicitly before you reach it.
+- **Fitzpatrick skin type** provides a rough reference for the erythemal model; it is not a personal safe-time guarantee.
+- **Home lighting** and the optional 10-question indoor-light audit add screening context.
+- **Eyewear outside** changes the estimated spectrum reaching the eye.
+- **Location precision** starts from the country in your profile. Precise location is optional, stays device-local, and is not synced.
+- **Photosensitizing medication** records a caution. getbased does not apply a universal multiplier because the medicine, dose, formulation, and reaction type matter.
 
 <Warning>
-  If you've checked the photosensitizing medication box in your setup, your effective burn threshold is reduced by approximately 2.5×. Alerts will fire sooner.
+Medication photosensitivity and the app's burn estimate cannot establish a safe exposure time. Follow the medication guidance and ask the prescribing clinician or pharmacist when unsure.
 </Warning>
 
-## Atmosphere data
+## Controls during a session
 
-getbased uses real atmospheric data to reconstruct the solar spectrum at your location and elevation. You can choose your **Sun data source** directly in the Light lens:
+| Control | What it does |
+|---|---|
+| **Pause** | Stops signal accumulation during a shade or indoor break while retaining the overall session timeline |
+| **Flip** | Records that you changed orientation; it does not multiply dose or assume that more skin became exposed |
+| **Body regions** | Update these if the uncovered area changes after turning or covering up |
+| **Sunscreen** | Commits the previous interval and continues with the newly selected SPF context |
+| **Ozone override** | Records a total-column ozone value when you have a trustworthy source |
 
-<Tabs>
-  <Tab title="Default (CAMS + Open-Meteo)">
-    KNMI-validated total column ozone, aerosol optical depth, and particulate data from the Copernicus Atmosphere Monitoring Service (CAMS), merged with Open-Meteo for cloud cover, temperature, and a baseline UV index. Best accuracy when you need precise channel estimates.
-  </Tab>
-  <Tab title="Open-Meteo only">
-    Skips CAMS entirely. One fewer upstream service sees your location. Slightly less precise ozone data.
-  </Tab>
-  <Tab title="Self-hosted">
-    Run your own `getbased-uvdata` server (the CAMS relay code is open source) and point the app at it. Your latitude and longitude never leave your infrastructure.
-  </Tab>
-  <Tab title="Manual">
-    Type the UV index yourself before each session. No network calls at all.
-  </Tab>
-</Tabs>
+The detailed picker includes front and back body regions. A flip by itself does not change the chosen coverage, so update the regions whenever coverage changes.
 
-**Source confidence** is computed per request — snapshot age, cloud cover, sun elevation, UV index band, and a stale flag all discount the displayed percentage. A reading at low sun under heavy cloud honestly drops to around 40%, even from CAMS. No false precision.
+## Skin-safety estimate
 
-<Info>
-  Latitude and longitude default to your country from your profile. No automatic geolocation prompt fires at session start. The optional precise-location upgrade is stored on this device only and never synced.
-</Info>
+getbased computes a CIE-erythemal-weighted Standard Erythemal Dose and compares the cumulative daily result with a Fitzpatrick reference MED. The UI uses qualitative caution states as the modeled fraction rises.
 
-## Photobiology device library
+This is an estimate built from atmospheric inputs and logged coverage. It does not account for every personal, medication, reflection, altitude, or skin-condition factor and must not be treated as a guarantee against burning. A photosensitivity flag increases the caution shown without inventing a numeric threshold adjustment.
 
-Got a red-light therapy panel, a SAD lamp, a UVB lamp, or a full-spectrum bulb? Add it from the **Light Devices** section in the Light lens.
+## Sun data sources and location privacy
 
-getbased ships a **19-preset library** covering devices from Chroma, EMR-Tek, and Mitochondriak. For other brands — Joovv, Mito Red, Sperti, Verilux, Lumie, and others — paste the spec sheet into the custom-device dialog and the AI extractor maps wavelength and irradiance into the same schema.
+Choose a source in the Light lens:
 
-Device sessions feed the same six per-channel dose totals as outdoor sun. If you use a photobiomodulation (PBM) panel but spend little time outdoors, the **Cellular repair** channel will still light up — and the AI will see your device sessions in context. The correlation engine also includes the two PBM-specific channels (660 nm red / 810–850 nm NIR) so device-heavy users get device × biomarker correlations surfaced over time.
+| Source | Behavior |
+|---|---|
+| **Auto** | Uses a configured self-hosted source when present; otherwise the official app requests CAMS context through the dedicated compatibility relay, then falls back to browser-direct Open-Meteo |
+| **Open-Meteo** | Contacts Open-Meteo directly from the browser |
+| **Self-hosted** | Contacts the compatible public HTTPS endpoint you configure; if it fails validation or is unavailable, the app falls back to Open-Meteo |
 
-## AI sun analysis
+Older stored CAMS, NOAA, or manual modes migrate to **Auto**. Manual source selection is no longer offered in the current UI.
 
-After each session, getbased can generate a verdict on your sun exposure. The AI evaluates your channel mix, your device use, your skin type, your photosensitive-medication flag, and your rolling weekly totals — and returns a green / yellow / red assessment with a short explanation.
+On the official app, latitude and longitude are rounded to 0.1°—roughly an 11 km grid—before either the CAMS request or Open-Meteo fallback. The CAMS compatibility service reads its local atmosphere grid and does not forward those coordinates to Copernicus or Open-Meteo. If fallback is needed, the browser sends the same rounded location directly to Open-Meteo. The static application host does not receive these weather requests. A self-hoster can choose its own compatible service and rounding policy.
 
-Verdicts fire automatically when you stop a session. You can also request a fresh analysis manually from the session detail card.
+Source confidence reflects observable uncertainty such as snapshot age, cloud cover, sun elevation, source coverage, and stale data. It is not instrument accuracy.
 
-## Where sun data appears in AI context
+## Light devices
 
-Sun sessions, light-device sessions, and indoor light environment data belong to the **Light & Sun** source. They appear in in-app AI chat and light-related score context when **Insight → Manage → Context → Data sources → Light & Sun context** is on. With that source enabled, the Light summary can cover:
+You can add a therapy panel, SAD lamp, dawn simulator, or other device with stated or measured wavelength and irradiance information. Presets and custom devices map their output to the relevant signals. A device session never stands in for sunlight, and a manufacturer specification is not an independent measurement.
 
-- Your active channel deficits and surpluses
-- Your configured devices and recent device sessions
-- Your week's per-channel exposure (sun and devices combined)
-- Your skin's daily sunburn budget
+## AI interpretation and context
 
-Once you have four or more weeks of overlapping sessions and lab results, channel-by-biomarker correlations join the standard context while the Light & Sun source is enabled — so the AI can reason about things like the relationship between your weekly UVB dose and your 25-OH vitamin D trend.
+You can request an AI interpretation from a completed session. The app supplies the logged conditions, modeled signals, uncertainties, device use, and safety context. The AI is instructed not to infer vitamin D status, call a channel deficient or complete, recommend looking at the sun, or turn a missing log into a medical conclusion.
 
-<Tip>
-  Sun and wearable data sit side-by-side in dashboard widgets and, when both sources are enabled, in AI context. That lets the AI reason about things like "low HRV on days after high-UV sessions" without you having to connect the dots yourself.
-</Tip>
+Sun sessions, light-device sessions, and indoor-light records belong to **Insight → Manage → Context → Data sources → Light & Sun context**. With that source enabled, chat can receive recent source and rhythm summaries, safety cautions, configured devices, and indoor screening context. Turning it off does not delete the records.
 
-If your Genome data includes `GC rs2282679`, `CYP2R1 rs10741657`, `NADSYN1/DHCR7 rs12785878`, or the `CYP24A1`-region `rs6013897`, getbased can apply conservative context weights to the modeled vitamin D serum-response estimate. These variants are associated with circulating 25-OH vitamin D; the adjustment is not a direct measurement of skin synthesis or a clinical dose calculation. VDR and CYP27B1 catalog findings remain available as interpretation context but do not change the numeric estimate.
+When relevant Genome markers are available, getbased may add conservative association context to the modeled vitamin D response. It does not calculate a personal vitamin D dose or replace a 25-OH vitamin D test.

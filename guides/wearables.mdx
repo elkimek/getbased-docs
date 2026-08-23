@@ -5,6 +5,8 @@ description: "Sync direct wearable providers, import Apple Health, enable Google
 
 The Body lens pulls data from your connected devices into a unified biometrics workspace. HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more can appear in the Body lens and in the **Biometrics Overview** dashboard widget. If you do not own a wearable, you can log weight, blood pressure, and resting heart rate manually.
 
+In **Settings → Wearables**, integrations are grouped as **Connected**, **Ready to connect**, **For self-hosted**, and **Add without a connection**, so unavailable hosted integrations are not presented as ordinary connect buttons.
+
 ## Body lens and Biometrics Overview
 
 Each selected metric appears as a card in **Body** and in the dashboard's **Biometrics Overview** widget. Tap any card to open a 90-day chart with statistics and a full reading history. Cards for metrics your device does not measure are hidden automatically.
@@ -32,6 +34,8 @@ Metrics surfaced on the strip include:
 | **Ultrahuman** | Experimental OAuth 2.0 | Self-host only. Requires the operator's Ultrahuman developer app, client ID, client secret, and explicit enable flag. Hidden on unconfigured hosted deployments. |
 | **Manual** | None | Built-in. Log weight, blood pressure, and resting HR directly on the dashboard without a device. |
 
+On the official app, Oura, Withings, Polar, and an existing legacy Fitbit connection use getbased's dedicated compatibility relay for OAuth exchanges and provider fetches. Google Health, WHOOP, and Ultrahuman are self-hosted only and never fall back to the official relay.
+
 ## How to connect a wearable
 
 <Steps>
@@ -41,6 +45,9 @@ Metrics surfaced on the strip include:
   <Step title="Click Connect">
     Find the vendor row you want and click **Connect**.
   </Step>
+  <Step title="Approve the hosted relay when applicable">
+    Before an official hosted connection sends anything, review the provider-specific relay notice and approve it. If you decline, getbased sends nothing.
+  </Step>
   <Step title="Authorize on the vendor's site">
     For OAuth-based vendors, you are redirected to the vendor's authorization page. Approve access and you are redirected back automatically.
   </Step>
@@ -48,6 +55,8 @@ Metrics surfaced on the strip include:
     getbased fetches the last 90 days of data. Raw daily rows are stored in your browser's local database; a compact summary populates the Body lens and Biometrics Overview widget.
   </Step>
 </Steps>
+
+The hosted relay notice explains that getbased s.r.o. forwards account credentials and requested health responses for that provider. The relay can read them transiently to complete the request but does not intentionally log or persist them. Approval is scoped to the current browser profile and provider. Disconnecting withdraws that approval, removes the local connection and its imported provider data, and leaves any separate provider-side authorization for you to revoke in the provider account.
 
 <Warning>
 Google says the legacy Fitbit Web API will stop syncing in September 2026, but has not published an exact shutdown day. Existing getbased connections are retained as a temporary bridge; do not assume they will work through September 30. Google Health is the replacement only on self-hosted deployments configured with their own Google Cloud OAuth project. See [Google's migration notice](https://developers.google.com/health/about).
@@ -84,7 +93,7 @@ You can log weight, blood pressure, and resting heart rate without any wearable.
     Tap the card (for example, the `Weight –` card with a `+ Log` affordance at the bottom).
   </Step>
   <Step title="Enter the value">
-    Type the number into the inline input — weight in kg, blood pressure as systolic/diastolic with optional pulse, resting HR in bpm.
+    Type the number into the inline input — weight in your configured kg or lb display unit, blood pressure as systolic/diastolic with optional pulse, resting HR in bpm. Weight is normalized to kg internally, so changing display units does not change the underlying reading.
   </Step>
   <Step title="Add context (optional)">
     Tap a context chip — **resting**, **morning-fasted**, **post-workout**, or **stress** — to help the AI interpret the reading correctly.
@@ -113,8 +122,8 @@ Your choice is saved per metric, per profile, and syncs across your devices. Ven
 
 Each current supported vendor row in **Settings → Wearables** normally has two sync actions:
 
-- **Sync now** — refetches the last 7 days. Use this when you've just synced your device and want the dashboard to update immediately.
-- **Backfill 90 days** — refetches the full 90-day window. Use this after returning from a trip, switching devices, or noticing a gap in the chart. This is slower — some vendors apply rate limits that add 30 seconds or more to the request.
+- **Update now** — refetches the last 7 days. Use this when you've just synced your device and want the dashboard to update immediately.
+- **Import last 90 days** — refetches the full 90-day window. Use this after returning from a trip, switching devices, or noticing a gap in the chart. This is slower; some vendors apply rate limits that add 30 seconds or more to the request.
 
 Background sync runs automatically every 6 hours while the tab is open, so the dashboard typically stays current on its own.
 
@@ -130,15 +139,16 @@ Use **Add metrics** in the Biometrics Overview widget to choose which wearable a
 
 ## Privacy
 
-- **Raw daily rows never leave your device.** They are stored in your browser's IndexedDB, encrypted at rest.
+- **Provider requests follow the connection boundary shown in Settings.** On the official app, Oura, Withings, Polar, and legacy Fitbit credentials and responses pass transiently through the dedicated compatibility relay after consent. Self-hosted providers use the operator's same-origin endpoint. Apple Health parsing remains entirely in the browser.
+- **Raw daily rows stay device-local after import.** Google Health rows are always browser-device encrypted. Other provider rows use passphrase encryption when **Settings → Data → Security** protection is enabled; without it, they remain readable inside the browser profile.
 - **Compact summary data** syncs to your other devices via Evolu CRDT, which is end-to-end encrypted using your mnemonic identity.
-- **OAuth refresh tokens stay local.** They are not included in the sync payload — you reconnect each vendor on each device.
+- **OAuth refresh tokens stay local and encrypted.** They use the browser's per-profile device vault and are excluded from sync and backups, so you reconnect each vendor on each device.
 - **AI chat context** includes a compact wearable summary by default when **Insight → Manage → Context → Data sources → Body → Wearable recovery context** is on. Turn that source off to keep wearables out of in-app chat and Body-related score modifiers.
 - **Personal Agent (MCP)** is controlled separately in **Settings → Agent Access**. When Agent Access is enabled, the agent receives the compact wearable summary; you can optionally push a daily time series there for richer time-series reasoning.
 
 ## Self-hosting OAuth
 
-If you self-host getbased, the OAuth `client_id` values bundled with the app are registered for `*.getbased.health` redirect URIs only. To use any OAuth-based wearable on your own instance, register your own OAuth app with each provider and set the corresponding environment variable:
+If you self-host getbased, register your own OAuth app with each provider and set the corresponding environment variables. Official hosted credentials and redirect registrations are not reusable on a custom hostname.
 
 | Variable | Provider | Notes |
 |---|---|---|
@@ -169,7 +179,7 @@ Google Health requests three restricted, read-only scopes: activity and fitness,
 
 <AccordionGroup>
   <Accordion title="'Polar connected — waiting on first device sync'">
-    The OAuth handshake succeeded, but Polar's API uses a transactions model that returns no data until your device has uploaded a sync to Polar Flow. Open the Polar app on your phone, sync your watch, then click **Sync now** in getbased.
+    The OAuth handshake succeeded, but Polar's API uses a transactions model that returns no data until your device has uploaded a sync to Polar Flow. Open the Polar app on your phone, sync your watch, then click **Update now** in getbased.
   </Accordion>
   <Accordion title="'Needs reconnection' badge on a vendor row">
     The OAuth refresh token expired or was revoked. Click **Reconnect** on a current supported vendor row to re-authorize. Legacy Fitbit is the exception: its old authorization cannot be reconnected in getbased.

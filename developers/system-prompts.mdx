@@ -1,0 +1,158 @@
+---
+title: "System prompt catalog"
+description: "Public inventory, ownership, trust boundaries, and review workflow for every developer-controlled AI instruction family."
+---
+
+# System prompt catalog
+
+This catalog is the public map of developer-controlled AI instructions in getbased. It covers literal system prompts, runtime system fragments, and app-authored task prompts that are deliberately sent in the user role for multimodal or local-model compatibility.
+
+<Warning>
+  Application source is authoritative. Prompt text shown in this catalog is normalized for readability: runtime values are replaced with `{placeholders}` and shared fragments are named once. A prompt change is incomplete until the source, this catalog, and directly related tests agree.
+</Warning>
+
+## Browse the catalog
+
+<CardGroup cols={2}>
+  <Card title="Chat and retrieval" icon="messages-square" href="/developers/system-prompts-chat">
+    Base chat, dynamic context, personalities, discussion, continuation, summaries, and Knowledge Base query rewriting.
+  </Card>
+  <Card title="Import and extraction" icon="file-scan" href="/developers/system-prompts-imports">
+    Lab reports, PII rewriting, supplements, EMF reports, and light-device specification extraction.
+  </Card>
+  <Card title="Insights and reports" icon="sparkles" href="/developers/system-prompts-insights">
+    Dashboard, report, Biology Score, supplement, EMF, and marker-description prompts.
+  </Card>
+  <Card title="Light and Sun" icon="sun" href="/developers/system-prompts-light">
+    Shared hardware guardrails and all ten Light & Sun verdict prompts.
+  </Card>
+</CardGroup>
+
+## Scope
+
+Included:
+
+- every non-empty `system` value supplied to the shared AI router;
+- system-prompt fragments appended at runtime;
+- developer-authored task instructions sent as user-role content;
+- automatic continuation and discussion messages that the app inserts;
+- dynamic prompt contracts whose rendered text depends on schemas, marker catalogs, allowlists, or selected context.
+
+Excluded:
+
+- a user's own chat message;
+- visible, editable suggestion buttons and prefilled questions;
+- provider capability probes such as the one-token `hi` request;
+- voice transcription and speech-synthesis payloads, which send audio or text plus model, language, and voice settings but no developer prompt;
+- transport formatting that only maps the same instruction to a provider API;
+- deterministic scoring formulas, schemas, and context data that do not instruct a model.
+
+Visible **Ask AI** templates for markers, correlations, recommendations, Genome findings, and Biology Score coverage inherit the normal chat system prompt. They are user messages rather than separate privileged instructions.
+
+## Complete registry
+
+| ID | Surface | Instruction position | Source of truth |
+|---|---|---|---|
+| `chat.base` | Normal chat and multi-persona chat | System | `CHAT_SYSTEM_PROMPT` in [`js/constants.js`](https://github.com/elkimek/get-based/blob/main/js/constants.js) |
+| `chat.context` | Context, web state, personality, other-persona attribution | System fragments | [`js/chat-prompt-context.js`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.js) |
+| `chat.continue` | Truncated-response continuation | Automatic user message | [`js/chat-continuation.js`](https://github.com/elkimek/get-based/blob/main/js/chat-continuation.js) |
+| `chat.discussion` | Initial, rebuttal, and joining-persona turns | Automatic user messages | [`js/chat-discussion-round-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-prompts.js) |
+| `chat.persona-generator` | Custom personality draft | System + narrow user request | [`js/chat-personalities.js`](https://github.com/elkimek/get-based/blob/main/js/chat-personalities.js) |
+| `chat.summary` | Saved consultation summary | System | [`js/chat-summaries.js`](https://github.com/elkimek/get-based/blob/main/js/chat-summaries.js) |
+| `lens.rewrite` | Knowledge Base multi-query expansion | System | [`js/lens.js`](https://github.com/elkimek/get-based/blob/main/js/lens.js) |
+| `import.classify` | Lab-report preflight classification | System + task template | [`js/pdf-import-preflight.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.js) |
+| `import.lab-text` | Text report extraction | Dynamic system + report text | [`js/pdf-import.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.js) |
+| `import.lab-image` | Image report extraction | Dynamic system + multimodal content | [`js/pdf-import.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.js) |
+| `import.collection-context` | Collection time and fasting rules | Shared system fragment | [`js/pdf-import-ai-utils.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.js) |
+| `privacy.local-pii` | Local-model report de-identification | User-role task instruction | [`js/pii.js`](https://github.com/elkimek/get-based/blob/main/js/pii.js) |
+| `import.supplement` | Label/photo and product-page extraction | User task for images; system for pages | [`js/supplement-import-draft.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-import-draft.js), [controller](https://github.com/elkimek/get-based/blob/main/js/supplement-import-controller.js) |
+| `import.light-device` | Product-page/photo specification extraction | System for pages; user task for images | [`js/light-device-setup-modal.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-setup-modal.js) |
+| `import.emf` | EMF PDF extraction | Dynamic system | [`js/emf.js`](https://github.com/elkimek/get-based/blob/main/js/emf.js) |
+| `insight.report-summary` | Practitioner-facing report overview | System | [`js/export-report.js`](https://github.com/elkimek/get-based/blob/main/js/export-report.js) |
+| `insight.focus-card` | Dashboard focus card | System | [`js/focus-card.js`](https://github.com/elkimek/get-based/blob/main/js/focus-card.js) |
+| `insight.context-dots` | Profile-area summaries and dots | Dynamic system | [`js/context-card-health-dots.js`](https://github.com/elkimek/get-based/blob/main/js/context-card-health-dots.js) |
+| `insight.marker-description` | One-sentence custom-marker reference | System | [`js/marker-detail-content.js`](https://github.com/elkimek/get-based/blob/main/js/marker-detail-content.js) |
+| `insight.biology-score` | Deterministic Biology Score explanation | System | [`js/biology-score-ai.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-ai.js) |
+| `insight.biology-context` | Suggested deterministic context flags | Dynamic system | [`js/biology-score-context-ai.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-context-ai.js) |
+| `insight.supplement-impact` | Marker-change impact dots | Dynamic system | [`js/supplement-impact.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-impact.js) |
+| `insight.emf` | Single and before/after EMF interpretation | System + task variant | [`js/emf-interpretation.js`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.js) |
+| `light.measurement` | One Light Tool measurement | System | [`js/light-tools-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.js) |
+| `light.today` | One-day Light Today synthesis | System | [`js/light-today-ai.js`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.js) |
+| `light.room` | One room | System | [`js/light-env-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.js) |
+| `light.device-session` | One light-device session | System | [`js/light-device-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.js) |
+| `light.screen` | One screen record | System | [`js/light-screen-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.js) |
+| `light.weekly-pattern` | Current versus previous seven days | System | [`js/light-channels-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.js) |
+| `light.audit` | Frozen multi-room audit | System | [`js/light-audit-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.js) |
+| `light.sun-session` | One modeled Sun session | System | [`js/sun-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.js) |
+| `light.onboarding` | Light & Sun setup synthesis | System | [`js/sun-onboarding-ai.js`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.js) |
+| `light.indoor-burden` | Live indoor screening picture | System | [`js/light-burden-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.js) |
+| `light.hardware-guardrails` | Shared fixture/flicker restrictions | Shared system fragment | [`js/lighting-hardware-caveats.js`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.js) |
+
+## Trust and assembly model
+
+`callClaudeAPI()` is a provider-neutral router. The caller owns the instruction and context; transports do not invent a new medical persona.
+
+```text
+feature-owned base instruction
+  + shared developer fragments
+  + selected runtime context
+  + user or automatic task message
+  → provider adapter
+  → response parser / renderer
+```
+
+Provider adapters map the system instruction into the provider's supported request shape. Venice encrypted mode encrypts the same system and message content before transport. Ollama and other OpenAI-compatible paths use a system-role message when a system instruction exists.
+
+Runtime context can contain user-controlled text. A section wrapper such as `[section:untrusted-profile-context]` is documentation for the model, not a security boundary by itself. The parser, allowlists, normalization, review UI, and deterministic code remain the enforcement boundary.
+
+## Review workflow
+
+<Steps>
+  <Step title="Identify the contract">
+    Record the catalog ID, source identifier, instruction position, runtime placeholders, expected output, parser, and fallback.
+  </Step>
+  <Step title="Build adversarial fixtures">
+    Cover ordinary input, missing data, contradictory data, stale data, embedded instructions, sensitive data, demographic edge cases, and a small local model.
+  </Step>
+  <Step title="Review seven dimensions">
+    Evaluate factual grounding, medical scope, bias and assumptions, prompt-injection resistance, privacy minimization, output compatibility, and cost/context size.
+  </Step>
+  <Step title="Change source and docs together">
+    Update the literal or builder, the relevant catalog page, and focused contract tests. Do not patch only the rendered copy.
+  </Step>
+  <Step title="Compare behavior">
+    Use fixed inputs and judge both regressions and intended improvements. Structured surfaces must also test malformed, extra, and partial output.
+  </Step>
+</Steps>
+
+### Required review questions
+
+| Dimension | Questions |
+|---|---|
+| Grounding | Can the model use only supplied facts? Does it distinguish logs, measurements, estimates, and inference? |
+| Medical scope | Does it diagnose, prescribe, certify safety, or invent a threshold? |
+| Bias | Does it assume sex, age, cycle state, geography, culture, diet, resources, or compliance? |
+| Injection | Can report, product-page, note, persona, or Knowledge Base text become an instruction? |
+| Privacy | Is every included field necessary for this task? Is the recipient disclosed and consented? |
+| Contract | Can the parser reject invalid enums, prose, missing fields, oversized values, or unsafe actions? |
+| Compatibility | Does it work with the smallest supported local context and with providers that handle system messages differently? |
+
+## Change proposal template
+
+```md
+Prompt ID:
+Feature and source:
+Provider/model tested:
+Input fixture (de-identified):
+Current output:
+Expected output:
+Proposed instruction change:
+Bias/safety/privacy impact:
+Output-schema impact:
+Focused tests:
+Catalog pages updated:
+```
+
+<Note>
+  Exact user health data and provider credentials do not belong in issues, fixtures, snapshots, or prompt documentation. Use synthetic examples.
+</Note>

@@ -1,0 +1,120 @@
+---
+title: "How AI is instructed"
+description: "Understand getbased system prompts, runtime context, editable instructions, and how to propose a prompt change."
+---
+
+# How AI is instructed
+
+getbased does not send every AI feature the same generic instruction. Chat, report import, summaries, Light & Sun reviews, and other focused tools each use a purpose-built prompt with a bounded input and output contract.
+
+<Info>
+  The public [system prompt catalog](/developers/system-prompts) lists every developer-controlled instruction family, including prompts that are sent as user-role task instructions for multimodal or local-model compatibility.
+</Info>
+
+## What makes up an AI request
+
+<Tabs>
+  <Tab title="Developer instructions">
+    These are maintained with the application. They define the task, safety boundaries, permitted claims, output format, and what the model must not infer.
+
+    Examples include the base chat analyst prompt, the PDF extraction schema, and the Light measurement rule that a camera is not a spectrometer.
+  </Tab>
+  <Tab title="Selected context">
+    This is the profile data enabled under **Insight → Manage → Context**, plus feature-specific inputs such as a report, one Sun session, or one device record.
+
+    Context is assembled at request time. Turning a context source off prevents that source from being added to later requests.
+  </Tab>
+  <Tab title="Your request">
+    In chat, this is the message you enter. Some buttons create an editable starting message—for example **Ask AI** on a marker or Genome finding.
+
+    Automatic tasks use a narrow app-authored request, such as “summarize this conversation” or “extract these report fields.”
+  </Tab>
+  <Tab title="Optional modifiers">
+    The active personality, interpretive lens passages, web-search state, and private-mode restrictions can append additional instructions.
+
+    These modifiers do not replace the feature's base safety and output rules.
+  </Tab>
+</Tabs>
+
+## Prompt families
+
+| Family | What it controls | Typical output |
+|---|---|---|
+| Chat and discussion | Health-analysis boundaries, context use, personality, web behavior, and multi-persona attribution | Markdown conversation |
+| Import and privacy | Report classification, marker extraction, collection metadata, local PII rewriting, and supplement/device parsing | Validated structured data or reviewed text |
+| Summaries and insights | Dashboard focus, profile-area dots, reports, Biology Scores, marker descriptions, supplement impacts, and EMF interpretation | Short prose or bounded JSON |
+| Light & Sun | Ten source-specific verdicts for sessions, rooms, screens, measurements, weekly patterns, and onboarding | Bounded `dot`/`tip`/`detail` JSON |
+
+## What you can change
+
+- Choose which profile context sources are included.
+- Edit or remove a custom chat personality.
+- Switch the active built-in personality.
+- Edit a prefilled **Ask AI** message before sending it.
+- Enable or disable web search where the provider supports it.
+- Enable, disable, or change the interpretive lens and Knowledge Base.
+- Pause AI entirely or switch provider/model.
+
+Developer-controlled extraction and analysis prompts are intentionally not editable in the app. A silent local edit could change parsing or safety behavior without the review and tests those flows depend on.
+
+## What is visible to the model
+
+The prompt catalog distinguishes three boundaries:
+
+| Boundary | Meaning |
+|---|---|
+| **System instruction** | App-authored instructions sent in the provider's system position |
+| **Task instruction** | App-authored instructions sent as a user or multimodal text part when a provider path requires it |
+| **Runtime context** | Selected profile data, report text/images, product-page text, measurements, or prior conversation messages |
+
+The selected provider receives the composed request. An enabled private provider transport also carries specialized surfaces that route through that same provider, subject to the provider's supported request modes. Ordinary voice endpoints are a separate subsystem and are not automatically protected by private chat mode. See [Privacy and data storage](/guides/privacy) and [AI providers](/ai-providers).
+
+Voice transcription and speech synthesis do not add a hidden developer prompt. They send the recording or text-to-read together with selected model, language, and voice settings.
+
+## How outputs are checked
+
+Structured features do not treat arbitrary prose as valid data:
+
+- import responses are parsed against expected fields and normalized before review;
+- Light & Sun verdicts accept only known dot colors and cap displayed text;
+- Biology Score context suggestions are limited to an allowlist and require user review before a flag is applied;
+- supplement and device imports open a review step before saving;
+- malformed JSON normally fails closed or falls back to a neutral state.
+
+Free-form chat, summaries, and interpretations remain model-generated text. They can be incomplete or wrong and should not be treated as a diagnosis or medical decision.
+
+## Propose a prompt change
+
+<Steps>
+  <Step title="Find the prompt">
+    Open the [developer prompt catalog](/developers/system-prompts) and choose the relevant family. Each entry names its source file, runtime additions, expected output, and validation path.
+  </Step>
+  <Step title="Describe the failure">
+    Include the feature, provider/model, input conditions, actual behavior, and expected behavior. Remove personal health data, credentials, report text, and private Knowledge Base content.
+  </Step>
+  <Step title="Explain the tradeoff">
+    State whether the proposal changes medical caution, evidence standards, tone, bias, privacy, output shape, token use, or compatibility with local models.
+  </Step>
+  <Step title="Open a public proposal">
+    Use the [GitHub issue tracker](https://github.com/elkimek/get-based/issues). A prompt change should update its source, catalog entry, and focused tests together.
+  </Step>
+</Steps>
+
+<Warning>
+  Never paste an API key, share password, OAuth token, Cashu token, raw health report, or identifiable medical record into a public prompt proposal.
+</Warning>
+
+## Review questions
+
+When reading a prompt, ask:
+
+- Does it distinguish recorded facts, model inference, and unsupported speculation?
+- Does it make a diagnosis, prescribe treatment, or invent a threshold?
+- Could profile/report text override the developer instruction?
+- Are sex, age, cycle, culture, geography, or lifestyle assumptions justified by supplied data?
+- Does a missing log get mistaken for missing biology or noncompliance?
+- Is the output contract parsed and validated as documented?
+- Does the wording work for both small local models and large hosted models?
+- Is the same safety rule duplicated elsewhere and at risk of drifting?
+
+The [prompt review workflow](/developers/system-prompts#review-workflow) expands this checklist for maintainers.

@@ -108,6 +108,22 @@ A copy-ready explanation for Google's **How will the scopes be used?** field is 
   Google currently caps a new unverified OAuth client at 100 users. Testing mode requires each tester to be added explicitly, and its refresh tokens expire after seven days. Supporting more than 100 users requires a third-party security review. Check Google's setup page before launch because these requirements can change.
 </Note>
 
+## Sun atmosphere source
+
+An independent deployment does not inherit getbased's operated CAMS upstream or bearer. You have two supported choices:
+
+- Select **Open-Meteo** in the Light lens for a browser-direct source with no server configuration.
+- Run a compatible `getbased-uvdata` service, set `UVDATA_UPSTREAM` to its explicit base URL, and set `UVDATA_BEARER` only when that service requires one.
+
+```bash
+UVDATA_UPSTREAM=https://uvdata.your-host.example
+UVDATA_BEARER=
+```
+
+The self-hosted `/api/proxy` fails closed for CAMS when `UVDATA_UPSTREAM` is empty. It does not silently use the getbased-operated service. The app then falls back to browser-direct Open-Meteo in **Auto** mode.
+
+For a multi-instance Vercel deployment, also configure a suitable proxy limiter with `PROXY_RATE_LIMIT_BLOB_TOKEN`, or explicitly accept the weaker per-instance fallback with `PROXY_ALLOW_INSTANCE_RATE_LIMIT=1`. `PROXY_RATE_LIMIT_MAX`, `PROXY_RATE_LIMIT_WINDOW_MS`, and `PROXY_UPSTREAM_TIMEOUT_MS` tune the shared proxy bounds. `PROXY_POSTAL_QUEUE_MAX` optionally caps queued Nominatim postal lookups per instance from 1 to 64; the default is 8.
+
 ## Deploying to Vercel
 
 A `vercel.json` is already present in the repo root — no extra configuration is needed.
@@ -129,6 +145,14 @@ A `vercel.json` is already present in the repo root — no extra configuration i
 <Tip>
   For a basic self-hosted install, no additional build configuration is needed — the app runs out of the box with the example supplement catalog included in the repo.
 </Tip>
+
+## Self-hosted profile sharing
+
+The local development server provides only a process-memory `/api/share` store, so its links disappear when the process restarts. For durable temporary links, run `server/profile-share-server.js` behind the same HTTPS origin at `/api/share`, using the container assets under `deploy/profile-share/`.
+
+The standalone service requires an absolute `PROFILE_SHARE_SQLITE_PATH` and a unique `PROFILE_SHARE_RATE_LIMIT_KEY` of at least 32 characters. Optional bounds include `PROFILE_SHARE_BIND`, `PROFILE_SHARE_PORT`, `PROFILE_SHARE_DATABASE_MAX_BYTES`, and `PROFILE_SHARE_REQUEST_TIMEOUT_MS`.
+
+The browser encrypts before upload, but the service still observes ordinary connection metadata and stores keyed abuse-control, expiry, and deletion metadata beside the opaque envelope. Decide and document your own backup policy. The official operated service intentionally has no retained database backup so deleted or expired temporary links are not resurrected; that also means infrastructure loss can invalidate live links.
 
 ## Running your own sync relay
 

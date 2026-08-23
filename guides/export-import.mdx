@@ -26,7 +26,7 @@ A JSON export contains your complete health record for the current profile: all 
 - All 9 lifestyle context cards (diet, sleep, exercise, environment, and more)
 - Notes, health goals, and context card change history
 - Complete supplement and medication records, including lifecycle periods, schedules, product ingredients, quality evidence, and reviewed-import provenance
-- Biometrics — height, weight history, blood pressure history, pulse history
+- Biometrics — height, weight history, blood pressure history, pulse history. Height is stored in cm and weight in kg; your display-unit preference controls how the app shows them after import.
 - Menstrual cycle data (if entered)
 - Genetics data — SNP results from DNA raw data import (if imported)
 - Custom marker definitions
@@ -113,18 +113,30 @@ Drop a database bundle exported with **Export All** onto the app, or select it w
   <Step title="Open the profile">
     Open the profile you want to export as a report.
   </Step>
-  <Step title="Export PDF">
-    Use the PDF export control in the data tools. A report builder opens with a preview before download.
+  <Step title="Open the report builder">
+    Use the PDF export control in the data tools. Choose **Clinician**, **Full**, or **Personal** as a starting template.
   </Step>
-  <Step title="Review the practitioner overview">
-    The builder can include an editable **Practitioner Overview**: a short AI-generated summary of the selected lab data, context cards, supplements, and notes. Edit this text before exporting if you want the report to speak in your own words.
+  <Step title="Choose dates and content">
+    Select **Current**, **3 months**, **6 months**, **1 year**, or **All time**. Choose at least one section and one lab category. Category controls show the live number of matching results and include **All**, **Flagged**, and **Clear** shortcuts.
+  </Step>
+  <Step title="Review the local preview">
+    The browser builds the report preview locally. Review the patient details, selected results, display units, and section order before sharing it.
+  </Step>
+  <Step title="Add an optional practitioner overview">
+    If you choose to generate a **Practitioner overview**, getbased sends only the currently selected report material to your active AI provider. Edit or remove the generated text before export.
   </Step>
   <Step title="Print or save">
-    Use **Print** or **Save PDF** from the report preview.
+    Use **Print** or **Save PDF** from the preview.
   </Step>
 </Steps>
 
-The PDF report includes biomarker results, trends, a readable patient header, selected lab categories, context card summaries, therapy status and periods, active ingredients, separate other-ingredient and source-quality sections, notes, and the optional Practitioner Overview — formatted for sharing with a healthcare provider.
+Available report sections include flagged results, category tables, a summary, trends, supplements and medications, notes, genetics, and context. The chosen template only sets an initial selection; you remain in control of the final content.
+
+The preview itself does not call an AI provider. Only the optional **Practitioner overview** action crosses that boundary, after normal cloud-provider consent where applicable. Height and weight are shown in the profile's selected display units, while the canonical cm and kg values keep BMI calculations consistent.
+
+<Warning>
+The report is a snapshot of the sections, categories, and date range you selected. Review it against the source records before relying on it for a clinical conversation.
+</Warning>
 
 ## Common use cases
 

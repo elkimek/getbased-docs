@@ -1,6 +1,6 @@
 ---
 title: "AI provider internals"
-description: "Developer contract for provider routing, private transports, Local AI adapters and lifecycle, Custom API proxying, model storage, OAuth, and web-search boundaries."
+description: "Developer contract for direct provider routing, cloud consent, private transports, Local AI adapters and lifecycle, model storage, OAuth, and web-search boundaries."
 ---
 
 AI provider code touches health context, API keys, browser transport, private TEE modes, web search, import parsing, and chat streaming. Treat it as a privacy/security surface, not just a dropdown.
@@ -14,7 +14,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 | PPQ Private TEE | Tinfoil/private endpoint wrapper | browser-encrypted request body, attestation/lock state, web search disabled |
 | Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
 | Venice | standard or Encrypted TEE Mode | Encrypts message content; requires TDX binding, Intel DCAP, NVIDIA NRAS, and NRAS-token signature checks; metadata remains visible; web search/images are disabled |
-| Custom API | same-origin proxy | public-host/allowlist checks prevent generic SSRF behavior |
+| Custom API | direct browser request | endpoint must support browser CORS; no getbased relay fallback |
 | Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; native Ollama/LM Studio features are capability-gated |
 
 ## Core modules
@@ -34,7 +34,9 @@ AI provider code touches health context, API keys, browser transport, private TE
 | `api-local.js` | Local AI prompt sizing, context planning, native request selection, and normalized diagnostics |
 | `local-ai-lifecycle.js` | memory-only runtime tracking and same-machine model handoff/unload |
 | `chat-attestation.js` | lock/attestation status shown in chat |
-| `api/proxy.js` | Custom API and runtime proxy boundary |
+| `api-custom.js` | Browser-direct Custom model discovery, validation, and chat transport |
+| `cloud-ai-consent.js` | Versioned recipient/origin-scoped approval before cloud AI or voice transport |
+| `proxy-runtime.js` | Narrow compatibility-service routing for non-AI operations such as operated NRAS/wearables/CAMS |
 
 ## Local AI adapter contract
 
@@ -86,7 +88,7 @@ Ollama can pass `num_ctx`. For a current LM Studio server, `prepareNativeRequest
 
 Local streaming gets a 15-minute allowance only for the first reader result because prompt prefill can be silent. Every later read keeps the shared 30-second stall guard. Provider finish reasons and native LM Studio token accounting normalize to `truncated`; PDF text and image imports reject that result before JSON review so a partial marker list cannot be confirmed.
 
-All adapters return the common text/usage result plus optional diagnostics. Generic compatible endpoints use direct browser requests to `/v1/chat/completions`; they do not go through the Custom API proxy.
+All adapters return the common text/usage result plus optional diagnostics. Generic compatible endpoints and Custom API use direct browser requests to `/v1/chat/completions`.
 
 ### Runtime handoff and VRAM
 
@@ -113,17 +115,13 @@ Web search can add external search results to the prompt. It must be disabled wh
 
 User docs should say this plainly, and UI state should match it: no visible Web toggle when search is unavailable.
 
-## Custom API proxy boundary
+## Custom API direct-transport boundary
 
-Custom API uses `api/proxy.js`, not a raw browser call to arbitrary URLs. The proxy must keep:
+`api-custom.js` calls `/models` and `/chat/completions` directly from the browser with `credentials: 'omit'`. `callOpenAICompatibleAPI()` receives `{ useProxy: false }`, and connection errors explicitly state that no server retry occurred.
 
-- method restrictions;
-- CORS restrictions;
-- private-network/public-host checks;
-- target allowlist or explicit validation;
-- no logging of prompt bodies or API keys.
+Remote Custom origins require recipient/origin-scoped cloud-processing consent before chat data is sent. Loopback and private-network Custom origins are treated as local for that consent gate, though the configured machine can still read the request. The endpoint must allow the exact app origin with CORS and must satisfy mixed-content rules.
 
-Any relaxation of this boundary needs a security review and tests.
+Do not reintroduce an implicit relay fallback. It would change which operator can see prompts and credentials and would require a new implementation, privacy disclosure, consent route, abuse controls, and security review.
 
 ## OpenRouter OAuth invariants
 

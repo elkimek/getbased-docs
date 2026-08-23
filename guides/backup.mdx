@@ -66,11 +66,13 @@ Each folder backup is a full snapshot of your getbased database:
 - Chat history and conversation threads
 - Custom personalities and marker definitions
 - Per-profile marker category placements and display customizations
-- API keys and app settings
+- App settings. Supported credentials are included only when passphrase protection is enabled, and remain passphrase-encrypted.
 - Device-local AI model-test history
-- Full wearable IndexedDB — all per-device daily rows including HRV, sleep, RHR, and manual entries
+- Eligible wearable IndexedDB rows. OAuth tokens and always-device-encrypted Google Health raw rows are excluded; other device-local daily rows follow the active passphrase state.
 
 Unsent per-conversation chat drafts stay only in the working browser and are not included in snapshots, folder backups, or manual exports. Sent messages and custom personas are included.
+
+With passphrase protection off, browser-device `d1:` credential envelopes are omitted because their non-exportable key cannot move to another browser. With protection on, supported credentials can be restored only with the same passphrase and included encryption salt. Wearable OAuth tokens are never backed up, so reconnect providers after moving browsers.
 
 Two files are written to your chosen folder on each backup:
 

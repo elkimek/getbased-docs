@@ -83,6 +83,14 @@ When you send a chat message, getbased includes filled cards only if the **Insig
 
 Open **Insight → Manage → Context → Data sources** to control that source. The same panel has separate switches for **Supplements & Medications**, **Blood marker results**, genome context, **Light & Sun**, and **Wearable recovery context**.
 
+The panel groups sources under **Profile**, **Genome**, **Labs**, **Light**, and **Body**. Each source shows one of three states:
+
+- **Included** — available data from that source will be prepared for a new in-app AI request.
+- **Off** — the source is excluded until you turn it on.
+- **No data** — the source is enabled but the active profile has nothing available for it yet.
+
+These labels describe the current context boundary; they are not health-status indicators. Turning a source off does not delete its records.
+
 Use freeform notes for anything that does not fit neatly into a structured card: recent travel, a new medication, unusual stress, or anything else relevant. When the relevant source is enabled, this helps the AI connect lab results with things you have told getbased, such as sleep, diet, stress, environment, supplements, or recent changes.
 
 An explicit answer is different from an unanswered field. For example, selecting **None** for bloating or **Normal** for appetite tells the AI that you ruled out that symptom; leaving the question unanswered omits it. Skin type from **Light & Circadian** is included as context too.
