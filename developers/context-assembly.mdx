@@ -293,7 +293,7 @@ The most complex composition — layers 4 components. Lab context is placed befo
 │                    SYSTEM PROMPT                      │
 │                                                      │
 │  ┌────────────────────────────────────────────────┐  │
-│  │ CHAT_SYSTEM_PROMPT (constants.js)              │  │
+│  │ CHAT_SYSTEM_PROMPT (chat-system-prompt.js)     │  │
 │  │ Priority-tiered structure:                     │  │
 │  │                                                │  │
 │  │ ## Core Rules                                  │  │
@@ -524,7 +524,7 @@ Each AI feature has independent caching to avoid redundant API calls:
 
 3. **Data before persona**: In Chat, lab context is placed before the personality layer in the system prompt. This ensures the AI processes the medical data first, then adopts the persona style.
 
-4. **Priority-tiered system prompt**: `CHAT_SYSTEM_PROMPT` uses a 4-tier structure (Core Rules → Priority Context → Lifestyle Context → Style) instead of a flat bullet list. Health goals and interpretive lens are at the top of Priority Context.
+4. **Sectioned system prompt**: `CHAT_SYSTEM_PROMPT` separates core safety, range interpretation, priority context, lifestyle context, the no-data state, supplements, and output style. Health goals and interpretive lens remain at the top of Priority Context.
 
 5. **Empty-card guards**: Cards with no meaningful content are completely omitted rather than sent as empty sections. Each card has a specific content check (not just truthiness).
 
@@ -672,7 +672,7 @@ Each entry documents:
 | File | Key Functions |
 |---|---|
 | `js/utils.js` | `hasCardContent()` — generic empty-card gate for context assembly |
-| `js/constants.js` | `CHAT_SYSTEM_PROMPT` — priority-tiered system prompt |
+| `js/chat-system-prompt.js` | `CHAT_SYSTEM_PROMPT` — sectioned base chat instruction |
 | `js/context-source-registry.js` | `CONTEXT_SOURCE_IDS`, profile-scoped source toggles, lab-group slug helpers |
 | `js/context-card-dashboard-ai.js` | Manage → Context modal, Answer grounding cards, Data sources UI |
 | `js/context-card-health-dots.js` | Card summaries/dots/tips, per-card fingerprints and cache, demo live-AI policy |

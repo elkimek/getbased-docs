@@ -96,10 +96,19 @@ Static arrays and string constants used across modules.
 
 **Key exports:**
 - `CHAT_PERSONALITIES` — array of `{ id, name, icon, promptText }` for the 3 built-in personalities
-- `CHAT_SYSTEM_PROMPT` — the base system prompt string injected into all AI chat requests
 - `COUNTRY_LATITUDES` — `{ countryCode: latitudeBand }` (~70 countries, 5 bands: arctic/north/temperate/subtropical/tropical)
 - `FAKE_DATA` — synthetic name/address/DOB data for PII obfuscation
 - Per-card option arrays: `SLEEP_DURATIONS`, `SLEEP_QUALITIES`, `SLEEP_SCHEDULES`, `SLEEP_ISSUES`, `SLEEP_ENVIRONMENTS`, `SLEEP_PRACTICES`, `LIGHT_AM`, `LIGHT_DAYTIME`, `LIGHT_UV`, `LIGHT_EVENING`, `LIGHT_SCREEN`, `LIGHT_TECH_ENV`, `LIGHT_COLD`, `LIGHT_GROUNDING`, `LIGHT_MEAL_TIMING`, `STRESS_LEVELS`, `STRESS_SOURCES`, `STRESS_MANAGEMENT`, `ENV_SETTING`, `ENV_CLIMATE`, `ENV_WATER`, `ENV_WATER_CONCERNS`, `ENV_EMF`, `ENV_EMF_MITIGATION`, `ENV_HOME_LIGHT`, `ENV_AIR`, `ENV_TOXINS`, `ENV_BUILDING`, `LOVE_STATUS`, `LOVE_RELATIONSHIP`, `LOVE_SATISFACTION`, `LOVE_LIBIDO`, `LOVE_FREQUENCY`, `LOVE_ORGASM`, `LOVE_CONCERNS`, `PERIOD_SYMPTOMS`, `DIET_TYPES`, `DIET_RESTRICTIONS`, `DIET_PATTERNS`, `EXERCISE_FREQUENCIES`, `EXERCISE_TYPES`, `EXERCISE_INTENSITIES`, `EXERCISE_DAILY_MOVEMENT`
+
+**Window exports:** none
+
+---
+
+### `chat-system-prompt.js`
+
+Chat-only source of truth for the base analyst instruction. Keeping it in the lazy Chat graph prevents prompt text from increasing the initial application bundle.
+
+**Key export:** `CHAT_SYSTEM_PROMPT` — injected into normal and multi-persona chat requests before dynamic context and persona instructions.
 
 **Window exports:** none
 

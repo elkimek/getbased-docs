@@ -58,7 +58,7 @@ Visible **Ask AI** and chat-shortcut templates inherit the normal chat system pr
 
 | ID | Surface | Instruction position | Source of truth |
 |---|---|---|---|
-| `chat.base` | Normal chat and multi-persona chat | System | `CHAT_SYSTEM_PROMPT` in [`js/constants.js`](https://github.com/elkimek/get-based/blob/main/js/constants.js) |
+| `chat.base` | Normal chat and multi-persona chat | System | `CHAT_SYSTEM_PROMPT` in [`js/chat-system-prompt.js`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.js) |
 | `chat.context` | Context, web state, personality, other-persona attribution | System fragments | [`js/chat-prompt-context.js`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.js) |
 | `chat.continue` | Truncated-response continuation | Automatic user message | [`js/chat-continuation.js`](https://github.com/elkimek/get-based/blob/main/js/chat-continuation.js) |
 | `chat.discussion` | Initial, rebuttal, and joining-persona turns | Automatic user messages | [`js/chat-discussion-round-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-prompts.js) |

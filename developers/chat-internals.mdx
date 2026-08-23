@@ -46,7 +46,7 @@ For a normal turn, `chat-send.js`:
 
 1. snapshots the active thread and provider state;
 2. appends and persists the user message;
-3. assembles `CHAT_SYSTEM_PROMPT`, enabled `buildLabContext()` output, web/private-mode hints, and the active persona;
+3. assembles [`CHAT_SYSTEM_PROMPT`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.js), enabled `buildLabContext()` output, web/private-mode hints, and the active persona;
 4. sends up to the last 30 eligible conversation messages;
 5. streams into a thread-bound DOM node and screen-reader status; and
 6. persists the final assistant message, usage, provider/model metadata, context disclosure, knowledge-base sources, and recommendation state.
