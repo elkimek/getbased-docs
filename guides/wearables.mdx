@@ -1,6 +1,6 @@
 ---
 title: "Connect wearables and track biometrics"
-description: "Sync direct wearable providers, import Apple Health, enable Google Health when self-hosting, or log readings manually."
+description: "Sync supported wearable providers, import Apple Health, enable WHOOP or Google Health when self-hosting, or log readings manually."
 ---
 
 The Body lens pulls data from your connected devices into a unified biometrics workspace. HRV, resting heart rate, sleep score, readiness, steps, weight, blood pressure, SpO₂, and more can appear in the Body lens and in the **Biometrics Overview** dashboard widget. If you do not own a wearable, you can log weight, blood pressure, and resting heart rate manually.
@@ -30,7 +30,7 @@ Metrics surfaced on the strip include:
 | **Google Health** | Google OAuth 2.0 | Self-host only. Uses read-only access for supported Fitbit, Pixel Watch, and other data in the connected Google account. The official hosted app does not enable it. |
 | **Fitbit (legacy)** | Fitbit OAuth 2.0 (PKCE) | Existing connections only. They can continue syncing while their authorization remains valid and the legacy API is available, but new connections and legacy reconnection are not offered. |
 | **Apple Health** | File import | Export from the iPhone Health app and drop the `.zip` file. No OAuth, no server contact. |
-| **WHOOP** | Experimental OAuth 2.0 | Self-host only. Requires the operator's WHOOP developer app, client ID, client secret, and explicit enable flag. Hidden on unconfigured hosted deployments. |
+| **WHOOP** | OAuth 2.0 | Supported on configured self-hosted deployments only. Requires the operator's WHOOP developer app, client ID, client secret, explicit enable flag, and compliance with WHOOP's developer requirements. The official hosted app does not enable it. |
 | **Ultrahuman** | Experimental OAuth 2.0 | Self-host only. Requires the operator's Ultrahuman developer app, client ID, client secret, and explicit enable flag. Hidden on unconfigured hosted deployments. |
 | **Manual** | None | Built-in. Log weight, blood pressure, and resting HR directly on the dashboard without a device. |
 
@@ -61,6 +61,29 @@ The hosted relay notice explains that getbased s.r.o. forwards account credentia
 <Warning>
 Google says the legacy Fitbit Web API will stop syncing in September 2026, but has not published an exact shutdown day. Existing getbased connections are retained as a temporary bridge; do not assume they will work through September 30. Google Health is the replacement only on self-hosted deployments configured with their own Google Cloud OAuth project. See [Google's migration notice](https://developers.google.com/health/about).
 </Warning>
+
+## WHOOP on a self-hosted deployment
+
+WHOOP is a first-class self-host integration, not a hosted getbased connection. Your deployment owner registers and operates the WHOOP developer application, and your deployment's same-origin `/api/proxy` handles confidential token exchange, refresh, and WHOOP API requests. No WHOOP request falls back to getbased's operated compatibility relay.
+
+Before authorization, getbased shows the requested read access and explains the data path, local storage, optional encrypted Sync and AI context, disconnection, and provider-side revocation. The requested scopes are:
+
+- `read:profile`
+- `read:cycles`
+- `read:recovery`
+- `read:sleep`
+- `read:workout`
+- `offline`
+
+The current integration reads WHOOP's v2 profile, cycle, recovery, and sleep resources. It joins recovery records to their v2 cycle and sleep IDs so recovery, HRV, resting heart rate, readiness, sleep performance, strain, and average heart rate are attributed to the physiological day rather than the later processing timestamp.
+
+WHOOP credentials, imported daily rows, and WHOOP-specific connection/derived profile values are AES-GCM encrypted with this browser's non-exportable device key. Raw WHOOP rows, tokens, and the connection record are excluded from Sync and backups. Allowlisted compact derived surfaces, such as the wearable summary and source preferences, can join end-to-end-encrypted profile Sync or the AI/Agent context you enable.
+
+**Disconnect** deletes this browser's WHOOP tokens, imported rows, derived WHOOP source data, and local connection approval. It does not automatically revoke the operator's application at WHOOP; revoke that access in your WHOOP account as a separate step when you want provider-side access to stop.
+
+<Note>
+  Each self-host operator is the WHOOP application owner and is responsible for app approval, user support, consent/privacy disclosures, retention, security, and the current [WHOOP API Terms of Use](https://developer.whoop.com/api-terms-of-use/). See [Self-hosting](/guides/self-hosting#whoop-developer-program-and-operator-responsibility).
+</Note>
 
 ## Apple Health setup
 
@@ -140,7 +163,7 @@ Use **Add metrics** in the Biometrics Overview widget to choose which wearable a
 ## Privacy
 
 - **Provider requests follow the connection boundary shown in Settings.** On the official app, Oura, Withings, Polar, and legacy Fitbit credentials and responses pass transiently through the dedicated compatibility relay after consent. Self-hosted providers use the operator's same-origin endpoint. Apple Health parsing remains entirely in the browser.
-- **Raw daily rows stay device-local after import.** Google Health rows are always browser-device encrypted. Other provider rows use passphrase encryption when **Settings → Data → Security** protection is enabled; without it, they remain readable inside the browser profile.
+- **Raw daily rows stay device-local after import.** WHOOP and Google Health rows are always browser-device encrypted. WHOOP-specific connection metadata and derived profile values use the same device-only boundary. Other provider rows use passphrase encryption when **Settings → Data → Security** protection is enabled; without it, they remain readable inside the browser profile.
 - **Compact summary data** syncs to your other devices via Evolu CRDT, which is end-to-end encrypted using your mnemonic identity.
 - **OAuth refresh tokens stay local and encrypted.** They use the browser's per-profile device vault and are excluded from sync and backups, so you reconnect each vendor on each device.
 - **AI chat context** includes a compact wearable summary by default when **Insight → Manage → Context → Data sources → Body → Wearable recovery context** is on. Turn that source off to keep wearables out of in-app chat and Body-related score modifiers.
@@ -158,7 +181,7 @@ If you self-host getbased, register your own OAuth app with each provider and se
 | `ULTRAHUMAN_ENABLED` | Ultrahuman | Must be exactly `true`; experimental self-host integration. |
 | `ULTRAHUMAN_CLIENT_ID` | Ultrahuman | Also requires `ULTRAHUMAN_CLIENT_SECRET`. |
 | `ULTRAHUMAN_CLIENT_SECRET` | Ultrahuman | Keep server-side. |
-| `WHOOP_ENABLED` | WHOOP | Must be exactly `true`; experimental self-host integration. |
+| `WHOOP_ENABLED` | WHOOP | Must be exactly `true`; enables the supported self-host integration. |
 | `WHOOP_CLIENT_ID` | WHOOP | Also requires `WHOOP_CLIENT_SECRET`; WHOOP uses a confidential OAuth client. |
 | `WHOOP_CLIENT_SECRET` | WHOOP | Keep server-side. |
 | `GOOGLE_HEALTH_ENABLED` | Google Health | Must be exactly `true`. |
@@ -171,7 +194,7 @@ Register your actual redirect URI (for example, `http://localhost:8000/app` for 
 When provider variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. Google Health, WHOOP, and Ultrahuman stay disabled unless their `*_ENABLED=true` flag and both OAuth credential variables are present. The browser receives only public client IDs and availability flags; secrets stay behind `/api/proxy`.
 </Note>
 
-On `localhost`, WHOOP and Ultrahuman appear as **experimental · setup required** until configured. On other unconfigured hosted domains, they are hidden. A fully configured self-host shows **experimental · self-hosted** and enables **Connect**. If an operator later disables either provider, existing connections remain removable but sync and reconnect pause.
+On `localhost`, disabled self-host setup rows remain visible so an operator can discover the required variables. On other unconfigured hosted domains, WHOOP and Ultrahuman are hidden. A complete enabled configuration exposes **Connect**. If an operator later disables either provider, existing connections remain removable but sync and reconnect pause.
 
 Google Health requests three restricted, read-only scopes: activity and fitness, health metrics and measurements, and sleep. The operator of each self-hosted OAuth project is responsible for Google's consent-screen, verification, user-limit, and any security-assessment requirements. Personal testing can use Google's testing mode; a public rollout may require verification and an annual Cloud App Security Assessment. Follow the [Google Health setup guide](https://developers.google.com/health/setup) for the current requirements.
 
@@ -193,7 +216,10 @@ Google Health requests three restricted, read-only scopes: activity and fitness,
   <Accordion title="Apple Health import is slow">
     Large Apple Health exports can be 100 MB or more for multi-year history. Parsing runs entirely in your browser — no server is involved — so expect 30–60 seconds for large files.
   </Accordion>
-  <Accordion title="WHOOP or Ultrahuman is not in the connect list">
-    These are experimental self-host integrations and are hidden on an unconfigured hosted domain. Set `WHOOP_ENABLED=true` with `WHOOP_CLIENT_ID` and `WHOOP_CLIENT_SECRET`, or `ULTRAHUMAN_ENABLED=true` with `ULTRAHUMAN_CLIENT_ID` and `ULTRAHUMAN_CLIENT_SECRET`, then restart the deployment. `localhost` shows the disabled setup rows even before configuration.
+  <Accordion title="WHOOP is not in the connect list or returns host access unavailable">
+    WHOOP is self-host only and hidden on an unconfigured hosted domain. Confirm that `WHOOP_ENABLED=true`, `WHOOP_CLIENT_ID`, and `WHOOP_CLIENT_SECRET` are all present on the server, that the redirect URI matches both WHOOP and `js/wearable-adapters.js`, then restart the deployment. `localhost` shows the disabled setup row before configuration. An existing connection remains removable when host access is unavailable, but sync and reconnect pause.
+  </Accordion>
+  <Accordion title="Ultrahuman is not in the connect list">
+    Ultrahuman remains an experimental self-host integration and is hidden on an unconfigured hosted domain. Set `ULTRAHUMAN_ENABLED=true` with `ULTRAHUMAN_CLIENT_ID` and `ULTRAHUMAN_CLIENT_SECRET`, then restart the deployment. `localhost` shows the disabled setup row before configuration.
   </Accordion>
 </AccordionGroup>

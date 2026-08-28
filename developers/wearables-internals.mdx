@@ -12,7 +12,7 @@ Wearables span provider OAuth, a narrow compatibility service, local IndexedDB t
 | Oura, Withings, Polar | Dedicated `integrations.getbased.health/api/proxy` after profile/provider-scoped consent | Same-origin `/api/proxy` with the operator's OAuth app |
 | Existing legacy Fitbit | Dedicated compatibility service while the stored authorization and API remain usable | Same-origin `/api/proxy`; no new connect or reconnect flow |
 | Google Health | Disabled | Same-origin confidential OAuth/API aggregator behind an explicit capability gate |
-| WHOOP | Disabled | Same-origin confidential OAuth client behind an explicit capability gate |
+| WHOOP | Disabled | Supported same-origin confidential OAuth/API integration behind an explicit capability gate; operator-owned developer app only |
 | Ultrahuman | Disabled | Same-origin experimental OAuth client behind an explicit capability gate |
 | Apple Health | Local XML/ZIP import | Local XML/ZIP import |
 | Manual values | Local entry | Local entry |
@@ -50,6 +50,33 @@ Ultrahuman follows its adapter's reviewed OAuth contract. Fitbit's retained lega
 
 The callback flow pins the initiating profile and client ID in session storage. Do not re-read a later runtime override after returning from the provider.
 
+### WHOOP OAuth and operator boundary
+
+`wearables-whoop-auth.js` requests `read:recovery`, `read:sleep`, `read:workout`, `read:cycles`, `read:profile`, and `offline`. Pending state records the random state, exact redirect URI, start time, client ID, and initiating profile in session storage. The callback consumes it once, rejects mismatched or older-than-ten-minute state, and exchanges the code through the self-host's `/api/proxy`.
+
+`WHOOP_ENABLED`, `WHOOP_CLIENT_ID`, and `WHOOP_CLIENT_SECRET` must all be present. The public client ID and capability flag may enter runtime config; the secret must not. Hosted compatibility policy rejects WHOOP operations, and `getProxyApiUrl()` must never fall back from an independent self-host to the operated service.
+
+The pre-authorization disclosure in `wearables-whoop-storage.js` is part of the integration contract. It identifies scopes and uses, self-host routing, device encryption, optional encrypted Sync/AI/Agent context, local deletion, and provider-side revocation. Preserve explicit user authorization before data access.
+
+An independent operator owns the WHOOP developer application and must review WHOOP's [Developer Platform process](https://developer.whoop.com/docs/developing/overview/), [app approval](https://developer.whoop.com/docs/developing/app-approval/), and [API Terms of Use](https://developer.whoop.com/api-terms-of-use/). The repository supplies an integration implementation, not shared credentials, WHOOP approval, operator support, or a legal determination about retention/cache headers. Never embed operator credentials in the open-source tree.
+
+## WHOOP v2 data normalization
+
+`wearables-whoop.js` uses only current data paths under `https://api.prod.whoop.com/developer/v2`:
+
+| Resource | Path | Canonical output |
+|---|---|---|
+| Basic profile | `user/profile/basic` | Optional account email and name for connection display |
+| Cycles | `cycle` | Date anchor, strain, and average heart rate |
+| Recoveries | `recovery` | HRV RMSSD, resting heart rate, and recovery/readiness score |
+| Sleep | `activity/sleep` | Sleep-performance score and sleep start used for attribution |
+
+The fetcher requests cycles, recoveries, and sleeps concurrently with UTC start/end timestamps and cursor pagination, bounded to 20 pages. Per-resource failure currently logs only in debug mode and contributes an empty collection so available resources can still normalize.
+
+WHOOP v2 recovery rows carry `cycle_id` and `sleep_id` instead of embedded v1 objects. Build maps from fetched cycle/sleep IDs to their start times, then attribute recovery to the related physiological start day. Use `created_at` only as a last resort: it is often the later processing time and otherwise shifts recovery by a day. Sleep and workout IDs can be UUIDs in v2, so ID maps must accept strings as well as legacy numeric-compatible values. See WHOOP's [v1-to-v2 migration guide](https://developer.whoop.com/docs/developing/v1-v2-migration/) and [API reference](https://developer.whoop.com/api/).
+
+The requested `read:workout` scope is disclosed, but the current daily normalizer does not fetch workout rows. Do not document a workout metric until a reviewed mapping, storage impact, and user-visible consumer are implemented.
+
 ## Storage split and encryption
 
 | Layer | Location | Sync/backup behavior |
@@ -57,11 +84,13 @@ The callback flow pins the initiating profile and client ID in session storage. 
 | Connection metadata without tokens | `importedData` | Syncable where allowed |
 | Access and refresh tokens | Per-profile wearable IndexedDB metadata, AES-GCM under a non-exportable device key | Excluded from sync and all backups; reconnect on every browser |
 | Google Health daily rows | Per-profile wearable IndexedDB, always device-key encrypted | Excluded from raw-row backups and sync |
+| WHOOP daily rows | Per-profile wearable IndexedDB, always device-key encrypted | Excluded from raw-row backups and sync |
+| WHOOP connection, source summary, source-owned metrics/overrides, and change events | Device-encrypted WHOOP profile sidecar, rehydrated into runtime `importedData` | The connection stays local. Allowlisted derived summary, source preferences, and change events can follow encrypted profile Sync or single-profile export; the device envelope itself never does. |
 | Other daily rows | Per-profile wearable IndexedDB, passphrase-encrypted when local encryption is enabled | Local only; eligible for local backup filtering rules |
 | Compact summaries, baselines, trends, anomalies | `importedData` | End-to-end encrypted profile sync |
 | Agent Access series window | Profile preference | Syncs so paired browsers retain the same export choice |
 
-Credential writes use generation checks so an in-flight refresh cannot recreate a connection after disconnect. Never move token material back into `wearableConnections`, a profile export, logs, or debug snapshots.
+Credential writes use generation checks so an in-flight refresh cannot recreate a connection after disconnect. `transformWhoopStorageValue()` splits WHOOP-owned profile fields into `WHOOP_PROFILE_DATA_META` before local storage and transparently hydrates them after read, including migration of legacy plaintext profile fields. Restricted daily rows migrate in place to `_devicePayload` envelopes without overwriting a newer row that landed during encryption. Never move token material, the local connection record, or the sidecar envelope into sync, exports, logs, or debug snapshots. Sync/export may carry only the existing allowlisted derived profile surfaces after hydration.
 
 If a new metric needs charts on another device, add or extend the compact summary deliberately; do not silently sync the raw table.
 
@@ -82,7 +111,10 @@ Settings → Agent Access can expose an off, 7-day, 30-day, or 90-day read-only 
 - Run the provider auth/fetcher and adapter tests with fake payloads.
 - Prove official policy accepts only approved providers and self-host-only providers never fall back to the operated service.
 - Prove consent denial sends nothing and disconnect clears consent, vault material, and provider rows.
-- Prove tokens and Google Health raw rows stay out of sync and backups.
+- Prove tokens plus WHOOP and Google Health raw rows stay out of sync and backups.
+- Prove WHOOP v2 cycle/recovery/sleep joining uses physiological start dates, accepts UUID IDs, paginates, and leaves absent metrics null.
+- Prove WHOOP profile-sidecar migration, hydration, device encryption, disconnect cleanup, and ordinary-profile stripping with and without optional passphrase protection.
+- Verify the WHOOP disclosure and self-host capability gate before authorization; no configured path may use the operated compatibility service.
 - Run the relevant Settings connect/disconnect browser spec when UI behavior changes.
 - Verify 7-day update, 90-day import, scheduler, and manual kg/lb normalization for touched paths.
 - Verify Apple Health parsing remains local and cancellable.

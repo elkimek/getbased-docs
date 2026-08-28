@@ -1,0 +1,131 @@
+---
+title: "Nutrition prompts"
+description: "Meal-photo, nutrition-label, correction, benchmark, and selected-history AI instructions with their schemas, context, and privacy boundaries."
+---
+
+# Nutrition prompts
+
+Meals & Nutrition has two multimodal extraction tasks and one explicit chat handoff. The image tasks are app-authored user-role content because providers differ in multimodal system-message support. The selected model receives the images, instruction, optional user-entered facts, and a strict JSON schema.
+
+The prompt source is [`js/nutrition-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.js). Aggregate history text is built in [`js/nutrition-summary-context.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-summary-context.js).
+
+## Shared structured output
+
+Both image paths request one object with this shape:
+
+~~~json
+{
+  "mealName": "string",
+  "components": [
+    {
+      "name": "string",
+      "quantityG": 0,
+      "confidence": 0.75,
+      "nutrients": { "registeredNutrientKey": 0 }
+    }
+  ],
+  "nutrients": { "registeredNutrientKey": 0 },
+  "confidence": 0.75,
+  "assumptions": ["string"],
+  "warnings": ["string"],
+  "label": null
+}
+~~~
+
+Every registered nutrient key is present in the provider schema and may be null. Client normalization rejects negative and non-finite values, repairs a narrow set of common JSON formatting failures, rejects truncated/non-actionable output, and makes the result editable before save.
+
+<Warning>
+  Structured output constrains shape, not factual accuracy. Food identity, recipe, portion, and composition remain estimates unless the user supplies authoritative facts or label values.
+</Warning>
+
+<span id="prompt-nutrition-meal-photo"></span>
+
+## `nutrition.meal-photo`
+
+Triggered by **Log meal → Meal photo → Analyze photo** and reused for each selected model in **Meal Benchmarks**.
+
+<Accordion title="Normalized meal-photo instruction">
+  ~~~text
+  Analyze these views of one meal for user review. Return only JSON matching the schema. Whole-meal and component nutrient keys are {all registered nutrient keys}.
+
+  Rules:
+  - Work weight-first: identify visible foods/drinks, estimate actual consumed grams from geometry and genuine scale cues, then calculate nutrients. Never substitute a standard serving or work backward from calories. Cross-check combined mass; without scale, use a conservative estimate and warn.
+  - Use prepared-food density unless raw. Every component contains the same complete nutrient field set so reviewed gram changes can scale its profile; top totals equal the sum of all non-null component values. Include material oils, sauces, toppings, and drinks; keep hidden amounts conservative and list assumptions.
+  - Name each component as a specific food identity, including visible preparation, skin/fat state, and material sauce or breading when known. Do not include portion size in the name.
+  - Estimate a numeric quantityG for every component even without a scale; warn when uncertain. Use null for unknown nutrients, never zero.
+  - Estimate detailed whole-meal nutrients from identified foods, preparation, and portion weights using food-composition knowledge. These are approximate composition estimates, not visually measured values. Return null when identity, fortification, recipe, or preparation makes a nutrient unreliable. Distinguish total from added sugar and total fat from fatty-acid subtypes.
+  - fluidMl is visible consumed drink volume, not hydration; plainWaterMl is identified plain water only.
+  - Images are views of one meal: never double-count. Warn about ambiguity; do not state uncertain ingredients or allergens as facts.
+  - Confidence rates identity only and uses the maintained discrete identity scale. Top confidence is the lowest material component.
+  - Make a best effort and set label to null.
+  ~~~
+</Accordion>
+
+Optional **Known details** are appended as user-provided facts and bounded to 500 characters. The instruction tells the model to treat them as authoritative only where they describe the meal.
+
+If the user changes an incorrect meal identity and selects recalculate, this correction is appended:
+
+~~~text
+User correction: "{corrected meal name}" is authoritative. Earlier identification "{previous meal name}" was wrong.
+Recalculate components, grams, and nutrients from scratch without anchoring to the old estimate. Keep visible sides, sauces, and drinks unless excluded; warn about uncertain preparation, portions, or hidden ingredients.
+~~~
+
+<span id="prompt-nutrition-label"></span>
+
+## `nutrition.label`
+
+Triggered by **Log meal → Nutrition label → Analyze label** and by the label mode in Meal Benchmarks.
+
+<Accordion title="Normalized nutrition-label instruction">
+  ~~~text
+  Read these views of one food or drink Nutrition Facts label. Return only schema JSON with consumed totals for {all registered nutrient keys}.
+
+  Rules:
+  - Transcribe absolute amounts, never % Daily Value. Read serving size, container servings, and basis before scaling to the user's amount. A serving is not a recommendation.
+  - Resolve dual columns; warn about ambiguity or unreadable rows. Images show one product, not multiple packages.
+  - Convert kJ to kcal with kJ / 4.184 and salt to sodium with salt / 2.5; record conversions in assumptions.
+  - Use null for absent or unreadable values and never invent micronutrients or use zero for unknown.
+  - The component represents the consumed product. Derive grams and drink volume when possible; plainWaterMl is only plain water.
+
+  User-reported consumption: {amount} {servings|g|ml|packages}. Nutrient totals and component quantity must represent this consumed amount, not automatically the whole container.
+  ~~~
+</Accordion>
+
+The returned `label` object records the detected serving text, gram/milliliter basis, container servings, label basis, and the user's consumed amount/unit. Client review remains authoritative before save.
+
+<span id="prompt-nutrition-history"></span>
+
+## `nutrition.history`
+
+Triggered by **Meals & Nutrition → History → Ask AI** after the Meals & Nutrition data source is enabled. This action opens chat with an editable user message; it does not send immediately.
+
+~~~text
+Review my Meals & Nutrition history for the {selected timeframe}.
+Nutrition history range: {30D|3M|6M|1Y|All} ({description}).
+This is a coverage-limited aggregate: unlogged days and missing nutrient values are unknown, not zero. Do not infer skipped meals, under-eating, or a deficiency unless the logging coverage supports it.
+Selected range: {meal/drink counts, logged-day coverage, review ratio, recorded averages, and available detailed averages}.
+Logged timing: {first meal, last meal, eating window, fasting window when supported}.
+What patterns are reasonably supported, what remains uncertain because of coverage, and what would be most useful to track next?
+~~~
+
+The exact aggregate is generated from the selected range. Individual meal names, notes, ingredients, photos, and response check-ins are omitted. Chat assembly attaches a receipt block that suppresses the automatic nutrition context for this one message so the selected history is not duplicated.
+
+## Transport and retention boundary
+
+- Image tasks send up to four original selected images directly to the chosen image-capable provider only after the user selects analysis.
+- Full-size images are kept only in the in-memory request workspace and are not saved by getbased.
+- The first cloud meal request uses recipient-specific `meal-photo` consent.
+- Benchmarks reuse one prepared image set across selected models, but every model call has its own abort signal and provider recipient.
+- The selected-history action sends only if the user submits the editable chat message using their current chat provider.
+
+## Review checklist
+
+- Keep meal-photo and label behavior separate; a label path must not invent nutrients absent from the label.
+- Keep unknown values null through schema, parser, review, storage, summaries, targets, and prompt context.
+- Test multiple views of one meal so the model does not double-count them.
+- Test authoritative known details and corrected identity without preserving the earlier estimate as an anchor.
+- Test label bases, dual columns, servings, grams, milliliters, packages, kJ conversion, and salt-to-sodium conversion.
+- Test malformed, extra, partial, truncated, and negative output.
+- Test cancellation and confirm no automatic retry can create an unexpected second provider charge.
+- Confirm full images, user-entered meal facts, and provider output do not enter logs or public fixtures.
+- Confirm selected-history output states its coverage limits and does not duplicate automatic nutrition context.

@@ -20,6 +20,14 @@ Every built-in marker has two identifiers:
 
 Renames and category moves must preserve the stable identity and add an alias migration. Never treat the current category path as permanent identity.
 
+## Unit-profile boundary
+
+Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.js` projects all 196 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
+
+`getActiveData()` applies the projection after calculations and range resolution. Tables, charts, marker details, reports, manual entry, and AI context consume that same result. Manual entry and import review accept compatible regional and secondary units and convert them back to canonical storage. Custom markers retain their user-supplied canonical unit.
+
+Do not convert again in an individual renderer. Add regional differences to the central profile or secondary-unit registries, record conversion provenance where needed, and round-trip the complete catalog in `unit-profiles.test.js` plus focused active-data and range-shape tests.
+
 ## Effective-range data layers
 
 Marker objects begin with schema fields and gain runtime fields as `getActiveData()` builds the active dataset.
@@ -45,6 +53,8 @@ For ordinary markers, an adopted laboratory interval suppresses generic contextu
 5. static effective reference, including personal overrides.
 
 Do not attach a context range when its required inputs are missing. The UI should render an explicit state such as **Requires fasting** or leave the point unrated rather than synthesizing a cutoff.
+
+Compare Dates must resolve this contract independently for both selected dates. `compare-correlations.js` uses `resolveMarkerRangeContext()` to render every displayed range, marks the range used for status when more than one is visible, and groups the ranges by date when their signatures differ. Direction coloring compares normalized distance outside each date's applicable range; it must not score movement toward a static midpoint as improvement.
 
 ## Range policies and labels
 
@@ -159,11 +169,11 @@ The bundled demo fixtures are product walkthroughs, not normative clinical datas
 | Concern | Primary modules |
 |---|---|
 | Schema and range metadata | `js/marker-schema/`, `js/schema.js`, `js/schema-environment.js` |
-| Active data and calculations | `js/data.js`, `js/data-calculated-markers.js`, `js/marker-context-ranges.js` |
+| Active data, calculations, and display units | `js/data.js`, `js/data-calculated-markers.js`, `js/marker-context-ranges.js`, `js/unit-profiles.js`, `js/secondary-unit-conversions.js` |
 | Cycle draw context | `js/cycle-draw-phases.js`, `js/data.js`, `js/schema-environment.js` |
 | Import extraction and review | `js/pdf-import.js`, `js/pdf-import-review.js`, `js/pdf-import-commit.js` |
 | Collection metadata ownership | `js/lab-context-collection.js` |
-| Effective range UI | `js/marker-analysis.js`, chart and marker-detail modules |
+| Effective range and comparison UI | `js/marker-analysis.js`, `js/compare-correlations.js`, chart and marker-detail modules |
 | Suggestions and migrations | `js/marker-range-suggestions.js`, `js/profile-marker-alias-migrations.js` |
 
 Use change-scoped tests for the touched owner. At minimum, cover direct-versus-computed precedence, same-date inputs, unit conversion, missing/context-gated inputs, import ownership/re-review/delete, range revert order, alias metadata migration, and recorded-versus-predicted phase behavior. GitHub Actions owns the exhaustive browser and combined-coverage runs.

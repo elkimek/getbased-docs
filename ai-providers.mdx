@@ -4,7 +4,7 @@ sidebarTitle: "AI providers"
 description: "Connect cloud, private-enclave, crypto-paid, custom, local, and remote compatible AI backends, then compare their lab-import accuracy and speed."
 ---
 
-getbased supports several AI provider paths for PDF import, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. AI requests go directly from your browser to the selected provider or compatible endpoint; getbased does not retry them through its servers. Supported credentials are wrapped with a browser-specific device key when passphrase encryption is off and with your passphrase-derived key when it is on.
+getbased supports several AI provider paths for PDF import, meal-photo and nutrition-label analysis, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. AI requests go directly from your browser to the selected provider or compatible endpoint; getbased does not retry them through its servers. Supported credentials are wrapped with a browser-specific device key when passphrase encryption is off and with your passphrase-derived key when it is on.
 
 <Note>
 Voice uses a separate service chosen in **Settings → Voice**. **Same as chat** can reuse a connected OpenRouter, PPQ, or Venice account and otherwise falls back on-device. You can also select on-device voice, a compatible voice server, one of those AI accounts, xAI, or ElevenLabs independently from the provider that generates chat answers. See [Use voice in AI chat](/guides/voice).
@@ -19,6 +19,9 @@ Before the first request to a cloud AI or cloud voice recipient, getbased shows 
 | Feature | Requires AI? |
 |---|---|
 | PDF import | Yes |
+| Meal-photo or nutrition-label analysis | Yes, with an image-capable model |
+| Manual meal entry, targets, and nutrition history | No |
+| Meal model benchmarks | Yes, with at least one configured image-capable model |
 | AI chat panel | Yes |
 | Focus card (dashboard insight) | Yes |
 | Live context-card summaries and status dots | Yes (demo profiles include precomputed versions) |
@@ -205,6 +208,7 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
 
         - [Ollama](https://ollama.com) — command-line, easiest setup
         - [LM Studio](https://lmstudio.ai) — GUI with drag-and-drop model loading
+        - Unsloth Studio — compatible local server with automatic model and runtime discovery
         - [Jan](https://jan.ai) — open-source desktop app
         - llama.cpp, LocalAI, or any OpenAI-compatible server
       </Step>
@@ -224,13 +228,13 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
         The default is `http://localhost:11434` for Ollama. Enter the base URL for another local, LAN, or remote server. Add an API key if that endpoint requires one.
       </Step>
       <Step title="Test the connection">
-        Click **Test**. getbased detects native Ollama and LM Studio servers when possible, otherwise it uses the standard OpenAI-compatible model list. Choose a text-generation model from the discovered list.
+        Click **Test**. getbased detects native Ollama and LM Studio servers when possible, recognizes Unsloth Studio through its compatible model metadata, and otherwise uses the standard OpenAI-compatible model list. Choose a text-generation model from the discovered list.
       </Step>
     </Steps>
 
-    ### Native server support
+    ### Native and first-class server support
 
-    Ollama and LM Studio expose extra information beyond the compatible API. When detected, getbased can show loaded state, context length, quantization, model size, and VRAM use. It can also request a larger context for complex imports and release a loaded model when switching between supported servers on the same machine.
+    Ollama and LM Studio expose extra information beyond the compatible API. When detected, getbased can show loaded state, context length, quantization, model size, and VRAM use. It can also request a larger context for complex imports and release a loaded model when switching between supported servers on the same machine. Unsloth Studio is recognized as its own Local AI provider, exposes its active runtime when available, and can offer image-capable models for meal analysis.
 
     On a current LM Studio server, a large import can reload the selected model at the planned context, verify the context LM Studio actually fitted into memory, and generate through the streaming compatible endpoint. If the previous instance cannot be unloaded, getbased checks whether it is really gone and otherwise stops with manual-unload guidance instead of loading a duplicate model into memory.
 
@@ -273,6 +277,10 @@ All providers show a tiered model dropdown with two groups:
 
 Recommended models are chosen for accuracy with medical and scientific data. You can use any model, but recommended ones produce the most reliable results.
 
+The current recommendation families include Claude Sonnet/Opus 5, GPT 5.6 and 5.4, Gemini 3.7/3.6/3.5 Flash, GLM 5.3 Flash, Kimi K3, and current Grok 4 variants where a provider offers them. Availability and exact IDs vary by provider. GLM 5.3 Flash is included across OpenRouter, PPQ, Routstr, Custom-compatible discovery, and supported private catalogs.
+
+Meal-photo selectors are separate: they show only models reported as image-capable and can follow the main model or use a dedicated route. Use [Meal Benchmarks](/guides/meals-nutrition#compare-meal-estimates) to compare those models on the same images.
+
 <Warning>
   **Use the same model for all your imports.** When you import a lab PDF, the AI generates marker keys (like `biochemistry.glucose`) to map results. Different models may generate slightly different keys for the same marker, which can cause the same biomarker to appear as two separate entries in your charts. Pick a model and stick with it. If you do switch, getbased runs a pre-flight check before each import and warns you if your model has changed since the last import.
 </Warning>
@@ -285,26 +293,18 @@ The comparison works across local models, hosted compatible endpoints, and built
 
 ## How much does it cost?
 
-AI providers charge based on how much text is sent and received. getbased displays the exact cost of every interaction in the chat panel. Here is what real usage costs with the recommended models:
+AI providers usually charge for input and output tokens, and image-capable models may also price image input. Catalogs and prices change frequently. getbased uses the current pricing metadata returned by supported providers when available and shows tracked tokens and estimated cost on chat, meal analysis, and benchmark results. A provider can still bill a canceled or failed request even when it returns no usage count.
 
-| Model | Provider | Import a lab PDF | Chat message | First month\* | Ongoing month\*\* |
-|---|---|---|---|---|---|
-| Claude Sonnet 4.6 | OpenRouter / Routstr / PPQ | ~$0.04 | ~$0.02 | ~$1.00 | ~$0.50 |
-| GPT 5.4 | OpenRouter / Venice / Routstr / PPQ | ~$0.03 | ~$0.02 | ~$0.80 | ~$0.45 |
-| Gemini 3.1 Pro | OpenRouter / Venice / Routstr / PPQ | ~$0.03 | ~$0.01 | ~$0.60 | ~$0.35 |
-| Grok 4 | OpenRouter / Venice / Routstr / PPQ | ~$0.01 | ~$0.005 | ~$0.25 | ~$0.15 |
-| Any model | Custom API (direct key) | Varies | Varies | Varies | Varies |
-| Self-hosted model | Local AI (Ollama, LM Studio, Jan) | No provider fee | No provider fee | Electricity only | Electricity only |
-| Hosted compatible model | Local AI / Custom API | Varies | Varies | Varies | Varies |
-
-\* _First month: importing your first labs and setting up your profile through chat — typically 3–5 imports and 30+ chat messages._
-
-\*\* _Ongoing month: 2–3 lab imports, 20–30 chat messages, dashboard AI features. Heavy users who chat daily may spend 2–3× more._
+| Path | Provider fee |
+|---|---|
+| Built-in cloud provider | Current provider/model price; shown when usage and pricing are available |
+| Custom or hosted compatible endpoint | Determined by that endpoint |
+| Downloaded model on this device or your own server | No per-request provider fee; hardware and electricity costs remain |
 
 <Tip>
-  Most users spend well under $1 per month. Every AI response in getbased shows its cost below the message, so you always know exactly what you are spending. If your credits run out, the app shows a clear message with a link to add more.
+  Review the model's current provider price before a large import or multi-model meal benchmark. When the provider returns usage, getbased records it per result so you can compare cost with review quality.
 </Tip>
 
 <Tip>
-  Run a downloaded model on your own hardware with [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), or [Jan](https://jan.ai) and pay no provider fee. You will need 8GB or more of VRAM — or a Mac with 16GB or more of unified memory — for capable models. The Model Advisor in Settings shows what fits your hardware.
+  Run a downloaded model on your own hardware with [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai), Unsloth Studio, or [Jan](https://jan.ai) and pay no provider fee. Hardware needs depend on the model and quantization; the Model Advisor shows what the connected server reports and what may fit.
 </Tip>

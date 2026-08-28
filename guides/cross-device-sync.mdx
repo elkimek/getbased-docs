@@ -1,9 +1,9 @@
 ---
 title: "Sync getbased across multiple devices"
-description: "Use a 24-word mnemonic to sync your profiles, lab data, and AI settings across devices. The relay stores only encrypted data."
+description: "Use a 24-word mnemonic to sync profiles, labs, reviewed meals, and settings across devices. The relay stores only encrypted data."
 ---
 
-getbased can sync your profiles, lab data, and AI settings across as many devices as you like. Sync is opt-in and end-to-end encrypted: a relay server carries the data between your devices, but it only ever stores ciphertext. Without your mnemonic, the relay cannot read anything.
+getbased can sync your profiles, lab data, reviewed meal records, and settings across as many devices as you like. Sync is opt-in and end-to-end encrypted: a relay server carries the data between your devices, but it only ever stores ciphertext. Without your mnemonic, the relay cannot read anything.
 
 ## How it works
 
@@ -86,7 +86,7 @@ Use disconnect/reset only when you intend to remove the identity from this brows
 
 The following data flows across all paired devices:
 
-- All profile data — lab entries, per-file import history, context cards, notes, complete supplement and medication records, cycle data, custom markers, marker category placements, EMF assessments
+- All profile data — lab entries, per-file import history, reviewed meal records and small thumbnails, nutrition targets, context cards, notes, complete supplement and medication records, cycle data, custom markers, marker category placements, EMF assessments
 - Profile metadata — name, sex, date of birth, location, tags
 - AI settings — provider, API keys, model selections, Venice Encrypted TEE Mode toggle, PPQ private-mode preference
 - Agent Access state — enabled flag, relay profile metadata, read token, Agent Context key, and the selected wearable daily-series window
@@ -96,6 +96,12 @@ The following data flows across all paired devices:
 Changing a marker's category syncs as a small profile customization. It never changes the marker keys stored in lab entries, so another device can apply the same visual placement without rewriting values, import provenance, notes, or history.
 
 Settings such as theme are device-specific and do not sync. Unsent per-conversation chat drafts, wearable OAuth refresh tokens, raw wearable daily rows, and AI model-test history also stay local to each browser even though compact wearable summaries and Agent Access series preferences can sync.
+
+### Meals and Nutrition
+
+Reviewed meals sync as timestamped profile items. The sync copy can include nutrient values, components, provenance, response check-ins, and up to four bounded thumbnails. Full-size selected photos never enter storage or Sync.
+
+Meal deletion uses a tombstone, so an older device cannot silently recreate a deleted entry. On the receiving browser, the synced thumbnail-only records are reconciled into that profile's device-encrypted meal cache before Daily Nutrition and History render.
 
 ### AI model-test history
 

@@ -20,7 +20,7 @@ Modules live under `js/`. The app has hundreds of focused top-level JavaScript m
 
 **Key exports:**
 - `MARKER_SCHEMA` — 196 core entries across 19 categories, including the 22-entry `calculatedRatios` category
-- `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for EU→US conversions
+- `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for canonical→US compatibility; schema-wide profile resolution lives in `unit-profiles.js`
 - `OPTIMAL_RANGES` — keyed by `"category.markerKey"`: `{ optimalMin, optimalMax, optimalMin_f?, optimalMax_f? }`
 - `PHASE_RANGES` — keyed by `"category.markerKey"`: `{ menstrual: { min, max }, follicular: {...}, ovulatory: {...}, luteal: {...} }` — covers `hormones.estradiol`, `hormones.progesterone`, `hormones.lh`, and `hormones.fsh`
 - `CONTEXT_REFERENCE_RANGES` / `CONTEXT_OPTIMAL_RANGES` — age-, sex-, and date-resolved guidance consumed by the active-data pipeline
@@ -40,6 +40,14 @@ Modules live under `js/`. The app has hundreds of focused top-level JavaScript m
 **Key generated exports:** `MARKER_SCHEMA`, `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, `resolveBuiltinMarkerDotKey()`, `CUSTOM_MARKER_ID_PREFIX`, and `isCustomMarkerId()`.
 
 See [Marker model and category placement](/developers/marker-model) for the authoring and migration contract.
+
+---
+
+### `unit-profiles.js` and `secondary-unit-conversions.js`
+
+Schema-wide display-unit projection over canonical marker storage. `unit-profiles.js` resolves every built-in marker for `EU` (International/SI), `ANZ` (Australia/New Zealand), and `US`; markers without a numeric difference use an identity projection. `secondary-unit-conversions.js` supplies compatible input and alternate clinical units. Import, manual entry, active data, ranges, reports, and AI context must use these central contracts rather than renderer-specific conversions.
+
+**Key exports:** `UNIT_PROFILE_IDS`, `UNIT_PROFILE_LABELS`, `ANZ_UNIT_OVERRIDES`, `normalizeUnitProfile()`, `getUnitProfileLabel()`, `resolveMarkerUnitProfile()`, `convertCanonicalToDisplay()`, `convertDisplayToCanonical()`, `getMarkerInputUnits()`, `convertUnitInputToCanonical()`, `convertCanonicalToInputUnit()`, and `auditUnitProfileCoverage()`.
 
 ---
 
@@ -143,7 +151,7 @@ Single shared mutable state object. Import `state` to read or write. No logic.
       customMarkers: {},       // { "cat.key": { markerId, name, unit, refMin, refMax, categoryLabel } }
       markerPlacements: {}     // { "gb:marker:*" | "custom:*": { categoryKey } }
     },
-    unitSystem: 'EU',          // 'EU' | 'US'
+    unitSystem: 'EU',          // 'EU' | 'ANZ' | 'US'
     currentProfile: 'default', // active profile id
     profiles: null,            // loaded profiles array
     profileSex: null,          // 'male' | 'female' | null
@@ -283,7 +291,7 @@ Creates collision-resistant local record IDs with `crypto.randomUUID()` or `cryp
 
 ### Local AI provider modules
 
-Local AI uses a normalized adapter layer so compatible endpoints work without hiding richer Ollama and LM Studio capabilities.
+Local AI uses a normalized adapter layer so compatible endpoints work without hiding richer Ollama, LM Studio, and Unsloth Studio capabilities.
 
 **Key modules and exports:**
 
@@ -504,6 +512,25 @@ The feature is split by responsibility. `supplements.js` orchestrates the editor
 **Record model:** schema-v2 rows have stable IDs and explicit use periods. Product-label directions, active ingredients, other label materials, personal regimen, and source laboratory evidence remain separate. Legacy fields and unknown keys are retained for compatibility.
 
 **Impact cache:** per-supp cache in `labcharts-{profileId}-suppImpact` keyed by supp name with a fingerprint that includes dosage, outer `timesPerDay`, per-ingredient fields, periods, and lab dates — any edit auto-invalidates only that supp's cache entry. Concurrent renders are coalesced via a 50ms debounced queue (`scheduleAnalyze` → `flushAnalyses`).
+
+---
+
+### Meals and Nutrition modules
+
+The feature is lazy-loaded through `nutrition-context.js`. `nutrition-analysis.js` and `nutrition-ai-settings.js` own image-capable provider routing and editable extraction; `nutrition-store.js` owns the device-encrypted IndexedDB cache and timestamp-aware profile mirror; `nutrition-summary.js` owns coverage-aware windows and history; the benchmark modules own independent photos and per-model cancel/retry behavior.
+
+**Key exports:**
+- `openNutritionModule()` / `openNutritionHistoryModule()` — lazy Body/dashboard routes
+- `analyzeMealPhoto()` / `buildMealAnalysisPrompt()` — meal-photo and nutrition-label structured extraction
+- `getNutritionAIRoute()` / `listNutritionVisionModels()` — dedicated route and image-capable provider catalog
+- `saveActiveProfileMeal()` / `deleteActiveProfileMeal()` — aligned canonical profile, cache, and tombstone operations
+- `sanitizeNutritionMeal()` — thumbnail allowlist and transient/full-image stripping boundary
+- `computeNutritionSummary()` / `computeNutritionHistory()` — 7/30/90-day summaries and 30D/3M/6M/1Y/All history
+- `buildNutritionSummaryContext()` / `buildNutritionHistoryAnalysisPrompt()` — bounded aggregate context and editable history handoff
+- `resolveNutritionTargets()` — fixed or weight-aware target projection
+- `runModelComparison()` / `cancelComparisonRun()` — parallel benchmark lifecycle with individual cancellation
+
+See [Meals and Nutrition internals](/developers/nutrition-internals) for the data record, full-size-image boundary, storage/sync reconciliation, request lifecycle, and required tests.
 
 ---
 
@@ -800,16 +827,27 @@ Lazy file-picker import binding for the hidden `#pdf-input`. It shares `loadPdfI
 Data export, import, and reset.
 
 **Key exports:**
-- `exportToJSON()` — exports v2 JSON for the current profile, including entries, context, custom marker identities, `markerPlacements`, notes, supplements, biometrics, genetics, Light/Sun data, and supported chat state
-- `buildClientExportObject(profileId, includeChat?)` — module-only helper that returns the reusable v2 single-profile export object used by JSON export and encrypted profile sharing. It includes profile metadata, labs, context, supplements, genetics, biometrics, marker notes, wearables summaries/preferences, and Light/Sun data, while excluding OAuth/wearable connection credentials and raw per-device wearable rows
+- `exportDataJSON()` — starts a v2 JSON export for the current profile, including entries, reviewed nutrition archive, targets, context, custom marker identities, `markerPlacements`, notes, supplements, biometrics, genetics, Light/Sun data, and optional supported chat state
+- `buildClientExportObject(profileId, includeChat?, includeNutrition?)` — module-only helper that returns the reusable v2 single-profile export object used by JSON export and encrypted profile sharing. Normal exports include a sanitized thumbnail-only nutrition archive; profile sharing deliberately disables it. OAuth/wearable connection credentials, raw per-device wearable rows, and full-size meal images remain excluded.
 - `exportClientJSON(profileId)` — exports a single client's data (used from Client List ⋮ menu)
 - `exportAllDataJSON()` — exports a full database bundle with all profiles, chat threads, custom personalities, and settings
 - `buildAllDataBundle()` — builds the bundle object used by both `exportAllDataJSON()` and folder backup
 - `importFromJSON(file)` — merges entries by date, deduplicates notes, overwrites context fields, merges healthGoals by text. Auto-detects database bundles and handles multi-profile merge
-- `exportToPDF()` — generates a printable PDF report with all data, charts, and context cards
+- `collectReportData(options?)` — returns the versioned, detached report snapshot selected by report-builder options
+- `exportPDFReport(options?)` — renders the selected report snapshot as printable HTML/PDF output
 - `clearAllData()` — confirms and wipes all imported data for the current profile
 
-**Window exports:** `exportToJSON`, `exportDataJSON`, `exportClientJSON`, `exportAllDataJSON`, `importFromJSON`, `exportToPDF`, `clearAllData`
+**Window exports:** none; shell actions and runtime dependencies use module imports.
+
+---
+
+### `export-report-data.js`, `export-report.js`, and `export-report-html.js`
+
+Report data is resolved once into a versioned, renderer-independent snapshot. `export-report-data.js` owns the pure schema, per-date range/status/provenance records, section minimization, and bounded agent projection. `export-report.js` owns active-state collection and the optional practitioner overview. `export-report-html.js` consumes the prepared snapshot for printable output and must not re-resolve report facts independently.
+
+**Key exports:** `REPORT_DATA_SCHEMA_VERSION`, `buildReportDataSnapshot()`, `formatReportDataForAgent()`, `buildPreparedReportPayload()`, `collectReportData()`, `buildReportAgentContext()`, `generateReportAISummary()`, `exportPDFReport()`, and `buildReportHTML()`.
+
+See [Report data contract](/developers/report-data).
 
 ---
 
@@ -1239,7 +1277,7 @@ Settings modal shell with profile, display, AI, Voice, privacy, data, wearables,
 - `openSettingsModal()` / `closeSettingsModal()`
 - `initSettingsModelFetch()` — fetches model lists for all providers on modal open
 - `saveProfileSettings()` — saves sex, DOB, location from the Profile section
-- `setUnitSystem(system)` — `'EU'` | `'US'`
+- `setUnitSystem(system)` — `'EU'` | `'ANZ'` | `'US'`
 
 **Window exports:** `openSettingsModal`, `closeSettingsModal`, `saveProfileSettings`, `setUnitSystem`, `setAIProvider`, `startTour`
 
@@ -1524,7 +1562,7 @@ Startup-loaded foundation/privacy side-effect imports extracted from `app-featur
 
 ### `app-health-data-modules.js`
 
-Startup-loaded Health & Data feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the previous charts/notes/supplements/recommendations/cycle/context/DNA/wearables import order while keeping the top-level feature list easier to scan.
+Startup-loaded Health & Data feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the charts/notes/supplements/recommendations/cycle/context/DNA/wearables order and installs the cold nutrition facade while keeping the full Meals & Nutrition feature lazy.
 
 **Key exports:** none
 

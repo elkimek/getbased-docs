@@ -99,9 +99,10 @@
             ]
           },
           {
-            "group": "Body & Wearables",
+            "group": "Body, Meals & Wearables",
             "pages": [
               "guides/supplements-medications",
+              "guides/meals-nutrition",
               "guides/wearables",
               "guides/menstrual-cycle"
             ]
@@ -168,6 +169,7 @@
               "developers/marker-terminology",
               "developers/data-pipeline",
               "developers/lab-markers-ranges-internals",
+              "developers/report-data",
               "developers/storage-schema",
               "developers/sync-delta-internals",
               "developers/context-assembly"
@@ -191,6 +193,7 @@
               "developers/system-prompts-chat",
               "developers/system-prompts-imports",
               "developers/system-prompts-insights",
+              "developers/system-prompts-nutrition",
               "developers/system-prompts-light"
             ]
           },
@@ -201,6 +204,7 @@
               "developers/chat-internals",
               "developers/genome-evidence-methodology",
               "developers/supplements-medications-internals",
+              "developers/nutrition-internals",
               "developers/sun-spectrum-model",
               "developers/wearables-internals"
             ]

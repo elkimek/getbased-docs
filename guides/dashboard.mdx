@@ -6,7 +6,7 @@ description: "Tour the getbased dashboard — first-visit setup, default widgets
 {/* Synced during developer-docs migration. */}
 
 
-The dashboard is the overview for the current profile. It summarizes what matters now, while the dedicated lenses give you deeper workspaces for labs, genetics, body signals, light, and AI synthesis.
+The dashboard is the overview for the current profile. It summarizes what matters now, while the dedicated lenses give you deeper workspaces for labs, genetics, meals and body signals, light, and AI synthesis.
 
 This is the current dashboard model, not a temporary redesign note. Use this page to understand how the app is organized today.
 
@@ -31,7 +31,7 @@ Desktop uses the sidebar. Smaller screens use bottom tabs and the menu.
 | **Dashboard** | Profile overview and customizable widgets |
 | **Labs** | Biomarker charts, tables, heatmaps, categories, and marker detail views |
 | **Genome** | Raw/report/manual DNA entry, APOE, mtDNA, and separately graded SNP association, evidence, and relevance context |
-| **Body** | Wearables, manual body metrics, sources, supplements, and cycle tracking |
+| **Body** | Meals and nutrition history, wearables, manual body metrics, sources, supplements, and cycle tracking |
 | **Light** | Sun sessions, therapy devices, indoor light, and measurement tools |
 | **Insight** | Current Focus, AI insights, Manage → Context, and next-step surfaces |
 | **Recommendations** | A global action plan built from all lenses |
@@ -50,11 +50,14 @@ After you add data, the dashboard starts with the widgets most users need first:
 - **Recommended Next Steps** — top data-linked actions across lenses
 - **Current Priority** — the marker most worth checking now
 - **Quick Markers** — pinned and priority-ranked marker tiles
+- **Daily Nutrition** — seven-day recorded averages, coverage, targets, quick drinks, history, and meal logging
 - **Biometrics Overview** — selected wearable and manual body metrics
 - **Light Today** — current light synthesis
 - **Key Trends** — auto-selected markers from the active date range
 
-More widgets are available for **Genetic Modifiers**, alerts, correlations, notes, supplements, cycle tracking, Manage → Context, light conditions, light sessions, individual markers, and individual Biology Score domains.
+More widgets are available for **Fuel Mix Context**, **Genetic Modifiers**, alerts, correlations, notes, supplements, cycle tracking, Manage → Context, light conditions, light sessions, individual markers, and individual Biology Score domains.
+
+Daily Nutrition target bars use semantic progress grades when you configure targets. They still reflect only recorded values; partial logging is not treated as zero intake. See [Log meals and review nutrition patterns](/guides/meals-nutrition).
 
 The AI-written widgets have separate, readable instructions. See the [Current Focus instruction](/developers/system-prompts-insights#prompt-insight-focus-card) and the [Light Today instruction](/developers/system-prompts-light#prompt-light-today), or [browse every AI feature in plain language](/guides/ai-prompts#find-a-prompt-by-feature).
 

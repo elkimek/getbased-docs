@@ -15,7 +15,7 @@ AI provider code touches health context, API keys, browser transport, private TE
 | Routstr | Cashu/Nostr node session | wallet and node balances are separate; real-funds paths need safety tests |
 | Venice | standard or Encrypted TEE Mode | Encrypts message content; requires TDX binding, Intel DCAP, NVIDIA NRAS, and NRAS-token signature checks; metadata remains visible; web search/images are disabled |
 | Custom API | direct browser request | endpoint must support browser CORS; no getbased relay fallback |
-| Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; native Ollama/LM Studio features are capability-gated |
+| Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; Ollama, LM Studio, and Unsloth Studio have identified adapter capabilities |
 
 ## Core modules
 
@@ -40,17 +40,17 @@ AI provider code touches health context, API keys, browser transport, private TE
 
 ## Local AI adapter contract
 
-`LOCAL_AI_PROVIDER_ADAPTERS` registers three adapters with a stable `id`, user-facing `label`, normalized `capabilities`, and `discover()` method. Adapters can also implement `infer()`, `prepareNativeRequest()`, `loadWithContext()`, and `unload()`.
+`LOCAL_AI_PROVIDER_ADAPTERS` registers Ollama, LM Studio, Unsloth Studio, and generic compatible adapters with a stable `id`, user-facing `label`, normalized `capabilities`, and `discover()` method. Adapters can also implement `infer()`, `prepareNativeRequest()`, `loadWithContext()`, and `unload()`.
 
-| Capability | Ollama | LM Studio | Generic compatible endpoint |
-|---|---|---|---|
-| Native discovery | Yes | Yes | No |
-| Loaded-model state | Yes | Yes | No |
-| Context override | Yes | Yes | No |
-| Native streaming | Yes | No | No |
-| Structured output | Yes | No | Compatible request hint |
-| Native performance stats | Yes | Yes | Endpoint-dependent |
-| Model unload | Yes | Yes | No |
+| Capability | Ollama | LM Studio | Unsloth Studio | Generic compatible endpoint |
+|---|---|---|---|---|
+| Native discovery | Yes | Yes | Compatible models + identified runtime | No |
+| Loaded-model state | Yes | Yes | Yes when status is available | No |
+| Context override | Yes | Yes | No | No |
+| Native streaming | Yes | No | Compatible streaming | No native path |
+| Structured output | Yes | No | Compatible request hint | Compatible request hint |
+| Native performance stats | Yes | Yes | Endpoint-dependent | Endpoint-dependent |
+| Model unload | Yes | Yes | No | No |
 
 Code outside the adapters must branch on capabilities or optional methods, not hard-coded product names. Unknown providers fall back to the compatible adapter.
 
@@ -60,8 +60,9 @@ Discovery normalizes the base URL before caching or probing.
 
 1. Probe LM Studio's native API and `/v1/models` in parallel.
 2. If the native LM Studio API succeeds, merge its richer metadata with compatible model IDs and do not send Ollama-only probes.
-3. Otherwise probe Ollama's `/api/tags` and `/api/ps` endpoints.
-4. Prefer Ollama when it is available with models; otherwise use the compatible result.
+3. If compatible models identify `owned_by: unsloth-studio`, query `/api/inference/status`, enrich loaded/context/vision state when available, and do not send Ollama-only probes.
+4. Otherwise probe Ollama's `/api/tags` and `/api/ps` endpoints.
+5. Prefer Ollama when it is available with models; otherwise use the identified or generic compatible result.
 
 Successful discovery is cached for 30 seconds and failed discovery for 3 seconds. Explicit connection tests force refresh. Cache entries include the normalized URL and API key so results cannot cross credentials.
 
@@ -82,7 +83,9 @@ Use the exact browser origin in CORS help. Do not recommend wildcard origins. Mi
 
 `api-local.js` estimates prompt tokens, adds a safety reserve, and clamps requested output to the loaded context. If the remaining context cannot satisfy the minimum output, it fails with the current and maximum context sizes instead of sending a predictably truncated request.
 
-Imports opt into discovery and native context planning because a full report can exceed a default loaded context. Dense lab tables use a conservative three-characters-per-token estimate; routine chat avoids an extra discovery probe before the first token.
+Imports and meal-photo analysis opt into discovery and native context planning because a full report or structured nutrition result can exceed a default loaded context. Dense lab tables use a conservative three-characters-per-token estimate; routine chat avoids an extra discovery probe before the first token.
+
+`nutrition-ai-settings.js` keeps an optional meal-specific model route separate from the main chat model while remaining on the active provider, and filters its catalog to image-capable models. Benchmarks can select models from multiple configured providers. Meal requests use recipient consent kind `meal-photo`, structured JSON output, no automatic retry, and their own abort signal. See [Meals and Nutrition internals](/developers/nutrition-internals).
 
 Ollama can pass `num_ctx`. For a current LM Studio server, `prepareNativeRequest()` selects a target context and `loadWithContext()` unloads the previous instance, loads the model through `/api/v1/models/load`, forces discovery, and returns the context LM Studio actually fitted. `api-local.js` replans output against that verified context, then generates through streaming `/v1/chat/completions`. A missing load route falls back to native non-streaming inference with a 15-minute ceiling. An unload failure may proceed only after forced discovery proves the old instance is gone; otherwise it fails before allocating a duplicate.
 

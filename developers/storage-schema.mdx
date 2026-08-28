@@ -35,6 +35,9 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-voice-local-server-key` | protected string | Device-scoped compatible voice-server key |
 | `labcharts-meteo-config` | protected JSON | Sun data-source URL/bearer configuration |
 | `labcharts-ollama-pii-model` | string | Local AI model used for PII obfuscation (can differ from main chat model) |
+| `labcharts-nutrition-ai-route` | JSON | Optional `{ provider, model }` route for meal photos and nutrition labels; separate from main chat selection |
+| `nutrition-history-range` | string | Device UI preference: `30d` \| `3m` \| `6m` \| `1y` \| `all` |
+| `nutrition-history-view` | string | Device UI preference: `meals` \| `trends` |
 | `labcharts-openrouter-model` | string | Selected OpenRouter model ID (e.g., `anthropic/claude-sonnet-4-6`) |
 | `labcharts-routstr-model` | string | Selected Routstr model ID |
 | `labcharts-ppq-model` | string | Selected PPQ model ID |
@@ -62,7 +65,7 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | Key | Type | Purpose |
 |---|---|---|
 | `labcharts-{profileId}-imported` | JSON (may be encrypted) | Main data store — see importedData structure below |
-| `labcharts-{profileId}-units` | string | `'EU'` \| `'US'` unit preference |
+| `labcharts-{profileId}-units` | string | `'EU'` (International/SI) \| `'ANZ'` (Australia/New Zealand) \| `'US'` display-unit profile |
 | `labcharts-{profileId}-rangeMode` | string | `'optimal'` \| `'reference'` \| `'both'` chart range mode |
 | `labcharts-{profileId}-noteOverlay` | string | `'off'` \| `'on'` — note dots on charts |
 | `labcharts-{profileId}-suppOverlay` | string | `'off'` \| `'on'` — supplement bars on charts |
@@ -462,6 +465,30 @@ Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder bac
     { field: "stress", date: "2026-02-15", snapshot: { level: "moderate", ... } }
   ],
 
+  // Canonical cross-device reviewed-meal surface. Every image is a bounded
+  // thumbnail; full-size selected images never enter importedData.
+  nutritionMeals: [
+    {
+      id: "meal_opaque_id",
+      eatenAt: "2026-08-27T18:30:00.000Z",
+      mealType: "dinner",
+      name: "Lentil bowl",
+      components: [{ name: "Cooked lentils", quantityG: 180, nutrients: { proteinG: 16 } }],
+      nutrients: { energyKcal: 520, proteinG: 28, carbohydrateG: 64, fatG: 18 },
+      source: { kind: "ai-photo-estimate", provider: "...", model: "..." },
+      images: [{ thumbnailUrl: "data:image/jpeg;base64,...", width: 240, height: 180 }],
+      updatedAt: "2026-08-27T18:34:00.000Z"
+    }
+  ],
+  nutritionTargets: {
+    configured: true,
+    energyKcal: 2200,
+    proteinBasis: "active",
+    proteinGPerKg: 1.6,
+    widgetNutrients: ["proteinG", "fiberG", "sodiumMg"]
+  },
+  nutritionContextDays: 30,
+
   // Agent Access profile-scoped state. Raw setup blobs are never stored;
   // this is the synced state used to reconnect browsers and re-push context.
   agentAccess: {
@@ -568,7 +595,8 @@ Raw re-import refreshes raw-file calls but preserves mtDNA and SNP objects with 
 | Database | Stores | Security and portability |
 |---|---|---|
 | `labcharts-backups` | Automatic snapshots and optional folder handle | Snapshot contents follow backup filtering; folder handles remain browser-local |
-| `labcharts-wearables-{profileId}` | Daily wearable rows, metadata, non-exportable device key, encrypted OAuth vault records | Raw rows and tokens do not sync; tokens are excluded from backups; Google Health rows are excluded from raw backups |
+| `getbased-nutrition-{profileId}` | AES-GCM meal payloads plus device-key, summary, comparison, reconciliation, and initialization metadata | Every cached meal is device-key encrypted; full-size images are forbidden; canonical thumbnail-only rows can sync/export through the profile surface |
+| `labcharts-wearables-{profileId}` | Daily wearable rows, metadata, non-exportable device key, encrypted OAuth vault records, WHOOP profile sidecar | Raw rows and tokens do not sync; tokens plus WHOOP/Google Health rows are excluded from raw backups |
 | Per-profile cycle database | Raw cycle observations and import metadata | Device-local rows; passphrase-wrapped when enabled |
 | Cashu wallet database | Proofs and wallet state | Sensitive device-local state with its own export/recovery contract |
 | Knowledge Base stores | Local documents, chunks, vectors, and model assets | Device-local/rebuildable according to the Knowledge Base backend |
@@ -618,7 +646,9 @@ With passphrase protection off, health/profile blobs are normal JSON but support
 
 Wearable OAuth credentials use a stricter per-profile vault under the same device-key primitive. Credential generations prevent an in-flight refresh from recreating a disconnected account. These records and keys are excluded from sync and backups.
 
-Raw Google Health daily rows are always wrapped with the device key and excluded from raw-data backups. Other wearable and cycle rows receive an additional passphrase wrapper only when passphrase protection is enabled.
+Nutrition cached meal payloads are always wrapped with a per-profile non-extractable device key. `sanitizeNutritionMeal()` strips full images and allowlists up to four bounded thumbnails before the record reaches IndexedDB, the profile mirror, Sync, or export.
+
+Raw WHOOP and Google Health daily rows are always wrapped with the device key and excluded from raw-data backups. WHOOP-owned connection metadata, source summaries, metrics/overrides, and change events are split into the encrypted `whoop-profile-data:v1` sidecar before the ordinary imported profile blob is stored, then rehydrated for runtime use. Other wearable and cycle rows receive an additional passphrase wrapper only when passphrase protection is enabled.
 
 `BroadcastChannel('labcharts-sync')` carries only `{ type: 'data-changed', profileId }`. It never distributes a derived key; each tab maintains and clears its own in-memory unlock state.
 

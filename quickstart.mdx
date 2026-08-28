@@ -1,7 +1,7 @@
 ---
 title: "Get started with getbased in under ten minutes"
 sidebarTitle: "Quickstart"
-description: "Launch getbased in your browser, take the first-visit tour, connect an AI provider when you need it, and import labs, DNA, wearables, or demo data."
+description: "Launch getbased in your browser, take the first-visit tour, connect an AI provider when you need it, and add labs, DNA, meals, wearables, or demo data."
 ---
 
 {/* Synced during developer-docs migration. */}
@@ -10,7 +10,7 @@ description: "Launch getbased in your browser, take the first-visit tour, connec
 getbased runs entirely in your browser with no installation and no account. A fresh profile starts with a short guided tour, then sends you to guided chat so you can decide what to add first.
 
 <Note>
-Charts, manual entry, correlations, comparisons, JSON import, and data export work without an AI provider. PDF/image import, chat, Current Focus generation, and AI interpretation need a provider.
+Charts, manual meal and lab entry, correlations, comparisons, JSON import, and data export work without an AI provider. PDF/image import, meal-photo or nutrition-label analysis, chat, Current Focus generation, and AI interpretation need a provider.
 </Note>
 
 ## Steps
@@ -51,7 +51,7 @@ Charts, manual entry, correlations, comparisons, JSON import, and data export wo
   </Step>
 
   <Step title="Connect AI only when you need it">
-    An AI provider is required for PDF/image import, AI chat, Current Focus generation, and AI-powered interpretations. You can explore demo data or enter values manually before setting one up.
+    An AI provider is required for PDF/image import, meal-photo or nutrition-label analysis, AI chat, Current Focus generation, and AI-powered interpretations. You can explore demo data or enter values manually before setting one up.
 
     Open **Settings** (gear icon) and select **AI**. getbased supports several provider paths:
 
@@ -59,7 +59,7 @@ Charts, manual entry, correlations, comparisons, JSON import, and data export wo
     - **PPQ** — pay-per-query with crypto top-ups, no KYC, and optional Private TEE mode.
     - **Routstr** — decentralized Bitcoin AI with a built-in Cashu wallet.
     - **Venice AI** — hosted AI with optional browser-side message encryption and limited attestation checks.
-    - **Local AI** — a direct connection to Ollama, LM Studio, Jan, or another compatible server on this device, your LAN, or a remote host.
+    - **Local AI** — a direct connection to Ollama, LM Studio, Unsloth Studio, Jan, or another compatible server on this device, your LAN, or a remote host.
     - **Custom API** — any OpenAI-compatible endpoint.
 
     See [Connect an AI provider](/ai-providers) for a full comparison and setup instructions. After connecting, use **Settings → Data → Test models on lab reports** to [compare accuracy and speed](/guides/ai-model-testing) before importing your own data.
@@ -80,8 +80,8 @@ Charts, manual entry, correlations, comparisons, JSON import, and data export wo
 
     If you do not have data on hand, load one of the built-in demo profiles:
 
-    - **Sarah** — iron, hormones, Oura, cycle context, supplements, and lifestyle context
-    - **Alex** — metabolic health, Withings body composition, OAT data, and EMF assessment data
+    - **Sarah** — iron, hormones, Oura, cycle context, supplements, lifestyle context, and a multi-week meal history
+    - **Alex** — metabolic health, Withings body composition, OAT and EMF assessment data, and a multi-week meal history
 
     You can also load demo profiles from the profile switcher in the header.
 
@@ -89,17 +89,17 @@ Charts, manual entry, correlations, comparisons, JSON import, and data export wo
 
     **Enter values manually**
 
-    For lab values, open a marker detail view and click **+ Add Value Manually**, fill an empty cell in **Compare dates**, or create a marker from **Custom markers**. For body metrics, use **Body** or the **Biometrics Overview** widget to log weight, blood pressure, or resting heart rate.
+    For lab values, open a marker detail view and click **+ Add Value Manually**, fill an empty cell in **Compare dates**, or create a marker from **Custom markers**. For meals, use **Daily Nutrition → Log meal** and type the reviewed values without a photo. For body metrics, use **Body** or the **Biometrics Overview** widget to log weight, blood pressure, or resting heart rate.
   </Step>
 
   <Step title="Explore the dashboard">
-    The dashboard is a customizable overview, not the only place where work happens. The default widgets surface Biological Coherence when available, current focus, biological age, recommended next steps, priority markers, quick markers, biometrics, light context, and key trends.
+    The dashboard is a customizable overview, not the only place where work happens. The default widgets surface Biological Coherence when available, current focus, biological age, recommended next steps, priority markers, quick markers, daily nutrition, biometrics, light context, and key trends.
 
     Use the sidebar on desktop, or the bottom tabs and menu on mobile, to move through:
 
     - **Labs** — biomarker charts, tables, heatmaps, and marker detail views
     - **Genome** — raw DNA, APOE, mtDNA, and SNP context
-    - **Body** — wearables, manual body metrics, supplements, and cycle tracking
+    - **Body** — meals and nutrition, wearables, manual body metrics, supplements, and cycle tracking
     - **Light** — sun sessions, therapy devices, indoor light, and measurement tools
     - **Insight** — Current Focus, AI insights, Manage → Context, and synthesis
     - **Recommendations** — data-linked next steps across all lenses

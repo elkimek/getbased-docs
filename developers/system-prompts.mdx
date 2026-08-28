@@ -27,6 +27,9 @@ This catalog is the public map of developer-controlled AI instructions in getbas
   <Card title="Insights and reports" icon="sparkles" href="/developers/system-prompts-insights">
     Dashboard, report, Biology Score, supplement, EMF, and marker-description prompts.
   </Card>
+  <Card title="Meals and Nutrition" icon="utensils" href="/developers/system-prompts-nutrition">
+    Meal photos, nutrition labels, corrections, benchmarks, and selected-history chat handoff.
+  </Card>
   <Card title="Light and Sun" icon="sun" href="/developers/system-prompts-light">
     Shared hardware guardrails and all ten Light & Sun verdict prompts.
   </Card>
@@ -74,6 +77,9 @@ Visible **Ask AI** and chat-shortcut templates inherit the normal chat system pr
 | `import.supplement` | Label/photo and product-page extraction | User task for images; system for pages | [`js/supplement-import-draft.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-import-draft.js), [controller](https://github.com/elkimek/get-based/blob/main/js/supplement-import-controller.js) |
 | `import.light-device` | Product-page/photo specification extraction | System for pages; user task for images | [`js/light-device-setup-modal.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-setup-modal.js) |
 | `import.emf` | EMF PDF extraction | Dynamic system | [`js/emf.js`](https://github.com/elkimek/get-based/blob/main/js/emf.js) |
+| `nutrition.meal-photo` | Meal-photo analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.js) |
+| `nutrition.label` | Nutrition-label analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.js) |
+| `nutrition.history` | Selected nutrition-history chat handoff | Editable user message | [`js/nutrition-summary-context.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-summary-context.js) |
 | `insight.report-summary` | Practitioner-facing report overview | System | [`js/export-report.js`](https://github.com/elkimek/get-based/blob/main/js/export-report.js) |
 | `insight.focus-card` | Dashboard focus card | System | [`js/focus-card.js`](https://github.com/elkimek/get-based/blob/main/js/focus-card.js) |
 | `insight.context-dots` | Profile-area summaries and dots | Dynamic system | [`js/context-card-health-dots.js`](https://github.com/elkimek/get-based/blob/main/js/context-card-health-dots.js) |

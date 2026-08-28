@@ -1,12 +1,12 @@
 ---
 title: "getbased: Health intelligence that's actually yours"
-description: "getbased is a free, open-source personal health platform that integrates labs, DNA, wearables, light, and AI — all stored locally in your browser."
+description: "getbased is a free, open-source personal health platform that integrates labs, DNA, meals, wearables, light, and AI — all stored locally in your browser."
 ---
 
 {/* Synced during developer-docs migration. */}
 
 
-getbased is a personal health intelligence platform organized around a customizable dashboard and five lenses on your biology — Labs, Genome, Body, Light, and Insight. Every lens informs every other: your DNA shapes how labs are interpreted, your wearable physiology shapes which biomarkers matter most, your light environment shapes your sleep and hormones, and the AI synthesizes across all of them with full context. Your data lives in your browser by default, with optional local encryption and no account required.
+getbased is a personal health intelligence platform organized around a customizable dashboard and five lenses on your biology — Labs, Genome, Body, Light, and Insight. Every lens informs every other: your DNA shapes how labs are interpreted, meals add recorded intake and timing, wearable physiology shapes which biomarkers matter most, your light environment shapes your sleep and hormones, and the AI can synthesize the context you enable. Your data lives in your browser by default, with optional local encryption and no account required.
 
 The dashboard is the overview for the current profile. The lenses are the deeper workspaces. Recommendations turn signals from all lenses into data-linked next steps.
 
@@ -16,7 +16,7 @@ The dashboard is the overview for the current profile. The lenses are the deeper
 |---|---|
 | **Labs** | 196 core markers across 19 categories, calculated markers, specialty and custom markers, category placement, lab-first and context-aware ranges, trend charts, and biological age (PhenoAge + Bortz) |
 | **Genome** | 60 curated SNPs across 18 categories, APOE haplotype, 39 mtDNA lineages, and separately graded evidence and personal relevance |
-| **Body** | Oura, Withings, Polar, Apple Health, optional self-hosted Google Health; manual biometrics; menstrual cycle tracking with phase-aware ranges |
+| **Body** | Meals and nutrition history; Oura, Withings, Polar, Apple Health, optional self-hosted WHOOP and Google Health; manual biometrics; menstrual cycle tracking with phase-aware ranges |
 | **Light** | Sun exposure with atmospheric UV data, photobiology devices, indoor light environment, 8 measurement tools |
 | **Insight** | AI chat with optional voice input and spoken replies, full health context, custom knowledge base, lifestyle context cards, Current Focus, and AI trend interpretation |
 
@@ -24,7 +24,7 @@ The dashboard is the overview for the current profile. The lenses are the deeper
 
 | Surface | What it does |
 |---|---|
-| **Dashboard** | Customizable overview with focus, biological age, recommendations, priority markers, biometrics, light context, and key trends |
+| **Dashboard** | Customizable overview with focus, biological age, recommendations, priority markers, daily nutrition, biometrics, light context, and key trends |
 | **Recommendations** | Global action plan built from Labs, Body, Light, Genome, and Insight signals |
 | **Compare dates** | Side-by-side lab draw comparison |
 | **Correlations** | Marker pair scatter plots and preset relationships |
@@ -46,6 +46,8 @@ getbased is built around a few principles that set it apart from most health app
 **Compare models with evidence.** Run a verified 68-result sample report or repeat one of your own imports to compare accuracy, review effort, speed, and runtime details across local models, hosted models, and cloud providers.
 
 **Any lab PDF, any format.** The AI import pipeline reads lab reports from any country, language, or lab. There is no approved lab list.
+
+**Editable meal estimates with a strict photo boundary.** Log from meal photos, nutrition labels, or manual values, then correct everything before saving. Full-size meal photos are sent only for the analysis you choose and are not stored; reviewed data and small thumbnails can join encrypted Sync.
 
 ## Start here
 
@@ -72,7 +74,10 @@ getbased is built around a few principles that set it apart from most health app
     Turn profile signals into data-linked next steps.
   </Card>
   <Card title="Connect a wearable" icon="watch" href="/guides/wearables">
-    Sync a direct provider, import Apple Health, or enable Google Health when self-hosting.
+    Sync a direct provider, import Apple Health, or enable WHOOP or Google Health when self-hosting.
+  </Card>
+  <Card title="Log meals and nutrition" icon="utensils" href="/guides/meals-nutrition">
+    Review editable photo or label estimates, manual meals, targets, timing, and history.
   </Card>
 </CardGroup>
 
@@ -85,7 +90,8 @@ getbased is built around a few principles that set it apart from most health app
 | Cost | Free | Free tier + paid upsell |
 | Data storage | Local browser by default; optional local encryption and encrypted sync | Cloud (their servers) |
 | AI providers | Multiple choices, including private-enclave, on-device, hosted compatible, and bring-your-own | Locked to one |
-| Model comparison | Built-in answer key and personal-report comparisons across providers | Usually unavailable |
+| Model comparison | Built-in lab answer key, personal-report comparisons, and meal-photo benchmarks across providers | Usually unavailable |
+| Meals and nutrition | Editable photo/label/manual logs, coverage-aware history, targets, timing, and encrypted thumbnails | Often cloud-account dependent |
 | Lab import | Any PDF, any format, any language | Specific labs or formats only |
 | Biomarkers | 196 core markers across 19 categories, specialty adapters, and unlimited custom markers | Limited set |
 | Specialty labs | OAT, fatty acids + custom marker pipeline for any test | Blood only |

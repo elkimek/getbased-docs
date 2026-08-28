@@ -38,7 +38,7 @@ The production build is deployment machinery, not the authoring format: source m
 index.html          — HTML structure only; script/CSS includes; SEO meta tags
 styles.css          — Core CSS: tokens, base resets, shared components, responsive/touch rules
 css/app-shell.css   — App chrome: header, sidebar navigation, footer, mobile shell, profile and sync controls
-css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
+css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, Meals & Nutrition, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
 api/share.js        — bounded legacy Blob → standalone share-service transition adapter
 api/proxy.js        — same-origin compatibility endpoint for self-hosts and legacy clients
 api/commit.js       — current deployed commit/version helper
@@ -86,7 +86,7 @@ js/
   api.js            — AI provider routing, OpenRouter, PPQ, Routstr, Venice, Local AI, Custom API, private modes, model management
   api-transport.js  — shared AI API fetch retry/timeouts and streaming read stall guard
   api-local.js      — Local AI prompt/context planning and adapter orchestration
-  local-ai-provider-registry.js — normalized Ollama, LM Studio, and compatible-endpoint adapter registry
+  local-ai-provider-registry.js — normalized Ollama, LM Studio, Unsloth Studio, and generic compatible-endpoint adapter registry
   local-ai-discovery.js / local-ai-lifecycle.js — cached capability discovery and same-machine model handoff
   profile.js        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
   data.js           — Cached getActiveData() projection, unit conversion, date range, and persistence
@@ -102,6 +102,11 @@ js/
   supplement-import-draft.js / supplement-quality.js — Strict source normalization, evidence merging, and quality-result semantics
   supplement-context.js / supplement-warnings.js — Bounded AI projections and claim-level mitochondrial evidence
   supplement-dashboard.js / supplement-impact.js — Current dashboard, historical overlays, and lab-impact analysis
+  nutrition-context.js / nutrition.js — Lazy Meals & Nutrition facade, feature composition, dashboard/Body entry points, and context integration
+  nutrition-analysis.js / nutrition-ai-settings.js — Multimodal meal/label extraction, schemas, dedicated vision route, and provider/model selection
+  nutrition-store.js / nutrition-sync-sanitize.js — Device-encrypted meal cache, thumbnail-only profile mirror, reconciliation, archives, and tombstones
+  nutrition-summary.js / nutrition-summary-context.js — Coverage-aware windows, history, timing/fasting, targets inputs, and bounded aggregate AI context
+  nutrition-benchmark-workspace.js / nutrition-comparison*.js — Independent benchmark source, per-model request lifecycle, deterministic comparison, and result handoff
   wearables.js      — Wearable dashboard strip, source picker, inline manual log forms, window facade
   wearables-detail-modal.js — Wearable metric detail modal, chart, manual entries, focus trap
   wearables-formatters.js / wearables-manual-form-ui.js — Shared wearable UI helpers
@@ -236,6 +241,8 @@ The contract exposes bounded hooks for Settings and onboarding slots/actions, AI
 The marker catalog uses an authoring → generated runtime → compatibility facade chain. Category modules under `js/marker-schema/` are the source of truth, `scripts/build-marker-schema.mjs` generates `js/marker-schema.js`, and long-lived consumers continue to import from `js/schema.js`. This keeps a large catalog maintainable without forcing a broad import-graph refactor.
 
 Marker storage and display are separate boundaries. Profile values and companion metadata remain keyed by native `category.markerKey`; immutable `gb:marker:*` and `custom:*` IDs let `marker-placement.js` apply a per-profile visual category only after `getActiveData()` completes calculations and unit conversion. Renderers may use `displayCategoryKey`, but mutations must resolve through `storageDotKey`.
+
+Units follow the same projection rule. `unit-profiles.js` maps canonical marker storage into the profile's International/SI (`EU`), Australia/New Zealand (`ANZ`), or US display units after calculation and range resolution. Import review and manual entry convert compatible selected units back to canonical values. Individual renderers must not carry their own regional conversion tables.
 
 The terminology registry follows a separate authoring and generation path. It is optional metadata and is intentionally outside startup, persistence, import/export, backup, sharing, and sync. See [Marker model and category placement](/developers/marker-model) and [Laboratory terminology registry](/developers/marker-terminology).
 
