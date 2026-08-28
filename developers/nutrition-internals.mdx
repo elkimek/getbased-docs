@@ -1,0 +1,140 @@
+---
+title: "Meals and Nutrition internals"
+description: "Developer contract for meal analysis, editable nutrient data, encrypted thumbnail-only storage, history aggregates, benchmarks, targets, sync, and AI context."
+---
+
+Meals & Nutrition combines a lazy UI feature, multimodal AI extraction, deterministic review math, a device-encrypted IndexedDB cache, a canonical profile sync surface, and bounded aggregate AI context. Preserve the full-size-image boundary and the distinction between recorded estimates and complete intake.
+
+## Module map
+
+| Module | Responsibility |
+|---|---|
+| `nutrition-context.js` | Lazy stylesheet/module loading, dashboard and Body entry points, summary hydration, and context-source integration |
+| `nutrition.js` | Feature facade and dependency configuration |
+| `nutrition-modal-controller.js` | Editor/history/benchmark routing, guarded close behavior, and background-session notices |
+| `nutrition-entry-forms.js`, `nutrition-review-ui.js`, `nutrition-render.js` | Manual entry, target/drink forms, editable review, history, Fuel Mix, and accessible rendering |
+| `nutrition-analysis.js` | Photo/label prompts, image preparation, structured schema, provider call, parsing, normalization, usage, and provenance |
+| `nutrition-ai-settings.js` | Optional meal-specific model route within the active provider, image-capable catalog, persistence, pricing, and Settings UI |
+| `nutrition-request-lifecycle.js` | One active meal analysis, background editor session, abort handling, and cancellation |
+| `nutrition-benchmark-workspace.js` | Photo/label source independent from Log meal and navigation-state preservation |
+| `nutrition-comparison-ui.js`, `nutrition-comparison-results.js` | Parallel per-model lifecycle, saved result presentation, individual cancel/retry/replace, and estimate handoff |
+| `nutrition-comparison.js` | Device-local reference scoring; no provider or storage access |
+| `nutrition-food-data.js`, `nutrition-nutrient-registry.js` | Component normalization, deterministic scaling, and the canonical nutrient field registry |
+| `nutrition-store.js`, `nutrition-sync-sanitize.js` | Device encryption, local cache, canonical profile mirror, reconciliation, tombstones, archive restore, and thumbnail allowlist |
+| `nutrition-summary.js`, `nutrition-summary-context.js` | Coverage-aware windows, history ranges, timing/fasting, detailed averages, trend baselines, and bounded AI text |
+| `nutrition-targets.js` | Profile targets, selected widget nutrients, and weight-aware protein resolution |
+| `nutrition-fuel-mix.js`, `nutrition-photo-provenance.js` | Neutral carb/fat composition, personal response associations, and estimate provenance |
+| `nutrition-history.js` | History routing, pagination, selected range, and editable chat handoff |
+| `demo-nutrition.js` | Synthetic meal archives used by demo profiles |
+
+The feature and `css/nutrition.css` load together only when needed. `nutrition-context.js` is the cold-path facade used by the shell, dashboard, context assembly, sync-applied listener, and import/export code.
+
+## Meal record boundary
+
+A canonical reviewed meal contains a stable ID, `eatenAt`, local-time metadata, occasion, name, note, components, whole-meal nutrients, source/provenance, review state, optional response check-in, and up to four sanitized image thumbnails.
+
+Rules that must remain true:
+
+- Unknown nutrient values are absent or null, never silently converted to zero.
+- Component nutrient edits and gram changes use deterministic arithmetic after AI returns.
+- `source.kind` distinguishes manual entries, volume-only drinks, label scans, and photo estimates.
+- Photo-estimate provenance records the provider/model and the keys the model estimated from food identity and portions.
+- An identity confidence value is a model self-rating; UI exposes only coarse language and never presents it as calibrated correctness.
+- A saved response check-in can contain the bounded hunger/energy choices and time, but it is excluded from compact AI nutrition context.
+
+The nutrient registry is the shared contract for editor fields, prompt/schema keys, aggregate coverage, model comparison, and context. Add a nutrient there first, then test every consumer that derives its allowlist from the registry.
+
+## Image and AI request lifecycle
+
+`prepareMealPhotos()` accepts at most four supported image files. It creates a small local preview/thumbnail and retains the original bytes only in the in-memory prepared request. `mealAnalysisImageBlocks()` sends the original image variant to the selected provider; resized previews are a legacy in-flight fallback, not the normal analysis source.
+
+`analyzeMealPhoto()`:
+
+1. Resolves the dedicated meal route or the main AI route and requires a vision-capable model.
+2. Builds the meal-photo or nutrition-label task as multimodal user content.
+3. Calls the provider router with structured JSON mode, temperature 0, no automatic request retry, the import timeout, a bounded output budget, and cloud consent kind `meal-photo`.
+4. Rejects truncated or non-actionable output.
+5. Normalizes aliases, non-negative numbers, components, assumptions, warnings, and label data.
+6. Returns an editable draft plus provider/model/usage provenance and thumbnail-only image records.
+
+The nutrition-label path records the user's amount and unit and requires totals for the consumed amount rather than the whole package. A correction supplies the user-entered identity as authoritative and asks the model to recalculate components and nutrients from scratch.
+
+One `AbortController` owns the active meal request. Closing the modal can convert it into a background session without aborting; explicit cancel aborts the signal and leaves the editor reusable. Keep the tab open because unsaved work is in memory.
+
+Each benchmark model owns a separate controller. Canceling one run must not cancel siblings. The comparison source is copied into an independent workspace, and selections are restored when routing between benchmark and editor. Profile changes invalidate or discard results rather than handing health data across profiles.
+
+See [Nutrition prompts](/developers/system-prompts-nutrition) for the maintained instruction and output contracts.
+
+## Deterministic benchmark scoring
+
+`scoreMealAnalysis()` compares a result with user-entered known values or a selected model baseline. It scores amount/core nutrient agreement and ingredient-name overlap, then ranks usable results. This is a developer and user evaluation aid, not an accuracy certificate.
+
+Do not:
+
+- treat a model baseline as ground truth;
+- include unknown reference fields in the denominator;
+- combine canceled, failed, or partial output with completed results;
+- persist API credentials or full request images in a comparison snapshot; or
+- make provider completion order determine rank or reference identity.
+
+## Storage, sync, and reconciliation
+
+The per-profile IndexedDB database is `getbased-nutrition-{normalizedProfileId}`. It contains `meals` and `meta` object stores. Every cached meal payload is AES-GCM encrypted under a non-extractable device key stored in IndexedDB metadata.
+
+`sanitizeNutritionMeal()` is the mandatory storage and sync boundary. It:
+
+- allowlists JPG, PNG, WebP, or GIF thumbnail data URLs;
+- caps each thumbnail at 160 KiB and each meal at four thumbnails;
+- retains only bounded media metadata and quality warnings;
+- strips `dataUrl`, `photoDataUrl`, `fullSizePhoto`, the legacy singular `image`, transient food candidates, and pre-enrichment visual snapshots; and
+- normalizes the optional response check-in.
+
+Reviewed sanitized meals are mirrored to `importedData.nutritionMeals`, which is the canonical cross-device surface. Saves merge against the latest committed profile value, clear the meal's tombstone, persist the profile, then mirror the timestamp-winning row back to IndexedDB. Deletes record a `nutritionMeals` tombstone before removing the local row.
+
+On startup and after `labcharts-sync-applied`, reconciliation merges the profile surface into the encrypted local cache. The initialization marker prevents an already-authoritative empty profile from being mistaken for a missing cache. Treat profile persistence and the cache update as one logical operation; preserve rollback behavior when the canonical profile write fails.
+
+## Summaries, timing, and targets
+
+`computeNutritionSummary()` creates seven-, 30-, and 90-day windows plus previous-period baselines. `computeNutritionHistory()` supports 30 days, 3 months, 6 months, 1 year, and all recorded history. Aggregates include:
+
+- food meals and volume-only drink counts;
+- logged days and per-nutrient complete-day coverage;
+- recorded daily averages;
+- reviewed-entry ratio and occasion counts;
+- first/last logged meal and observed eating windows;
+- consecutive-day observed fasting windows;
+- carb/fat composition and bounded personal response associations; and
+- sleep-relative timing when local wearable sleep intervals are available.
+
+Eating windows need at least two logged meals in one day. Fasting windows use the last logged meal of one day and first logged meal of the next and reject implausible gaps beyond 48 hours. These are observations over the log, not evidence that all intake was captured.
+
+Targets live in `importedData.nutritionTargets`. Protein can be fixed or resolved from the latest wearable/manual weight with a bounded factor. Target grade colors are presentation over recorded averages; they do not change nutrient values or compensate for incomplete logging.
+
+Fuel Mix is descriptive deterministic math from logged carbohydrate and fat. It has no preferred center and must not be labeled as measured Randle-cycle activity, substrate oxidation, insulin sensitivity, or metabolic health.
+
+## AI context contract
+
+Meals & Nutrition has its own context-source toggle and a profile-selected 7-, 30-, or 90-day context range. `buildNutritionSummaryContext()` emits at most 2,600 characters and includes aggregate reviewed estimates, coverage caveats, core averages, available detailed nutrient averages, timing, Fuel Mix language, and sufficiently supported trends.
+
+It never includes individual meal names, ingredients, notes, photos, or response check-ins. Detailed nutrition replaces the Diet & Digestion **Typical meals** narrative for the task; it must not be appended in a way that double-counts both sources.
+
+The explicit History **Ask AI** action creates an editable user message for the selected range. `buildNutritionHistoryReceiptContext()` tells chat assembly to omit the automatic nutrition summary for that message, preventing the same period from appearing twice.
+
+Agent Access uses the existing external-sharing context path and can receive the compact aggregate when profile context is assembled with external-sharing overrides. It still never receives individual meals or images through nutrition context.
+
+## Export, restore, and cleanup
+
+`buildNutritionArchive()` serializes up to 10,000 sanitized meals. Restore validates version, record count, IDs, dates, names, components, image type, dimensions, and size before seeding the canonical profile surface. A legacy archive full image may be validated for recovery, but the normal storage sanitizer strips it before writing.
+
+Profile removal must delete the profile's nutrition IndexedDB database. Full-size images are not an export surface. Keep nutrition storage cleanup aligned with profile deletion, database-bundle restore, Sync hydration, and demo archive loading.
+
+## Verification checklist
+
+- Run `tests/nutrition-analysis.test.js` for prompt-output normalization and incomplete output.
+- Run `tests/nutrition-ai-settings.test.js` when vision routing or model catalogs change.
+- Run `tests/nutrition-store.test.js`, `tests/nutrition-store-save-race.test.js`, and `tests/nutrition-sync.test.js` for encryption, thumbnails, reconciliation, races, and tombstones.
+- Run `tests/nutrition-summary.test.js`, `tests/nutrition-context.test.js`, `tests/nutrition-targets.test.js`, and `tests/nutrition-fuel-mix.test.js` for aggregate semantics.
+- Run `tests/nutrition-comparison.test.js` when scoring or model-run lifecycle changes.
+- Run the directly related cases in `tests/playwright/nutrition-module.spec.js` for editor/background cancellation, benchmark independence, history, targets, mobile accessibility, and saved-meal reuse.
+- Prove no full-size image or provider credential enters IndexedDB, profile JSON, sync, backup, comparison snapshots, logs, or fixtures.
+- Prove missing meals/nutrients remain unknown in UI, targets, trends, and AI prompts.

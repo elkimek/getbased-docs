@@ -119,7 +119,12 @@ Open **Compare dates** from Analysis tools and use the two date pickers to choos
 - The value on the first (earlier) date
 - The value on the second (later) date
 - The direction and magnitude of the change
-- Whether each value is within the reference range
+- The reference, optimal, or context-specific ranges selected in the current range mode
+- Whether each value is inside the range that actually applies to its own date
+
+When **Both** ranges are displayed, the range used for status is marked **used**. If collection context or a phase-aware range differs between the two dates, the Ranges column shows a separate labeled range for each date rather than hiding the difference behind one static interval. Open-ended ranges remain open-ended.
+
+Improved or worsened coloring compares how far each result falls outside its own applicable range. A move within a valid interval is neutral; getbased does not treat movement toward the interval midpoint as inherently better.
 
 Status colors follow the same convention as the rest of the app: green for normal, red for high, blue for low.
 

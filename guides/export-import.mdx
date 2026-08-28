@@ -7,7 +7,7 @@ getbased gives you full control over your data. You can export everything as JSO
 
 ## Export your data as JSON
 
-A JSON export contains your complete health record for the current profile: all lab entries, context cards, notes, structured supplement and medication records, biometrics, genetics, cycle data, custom markers, marker category placements, and chat history.
+A JSON export contains the current profile's portable health record: all lab entries, reviewed meal records and small thumbnails, nutrition targets, context cards, notes, structured supplement and medication records, biometrics, genetics, cycle data, custom markers, and marker category placements. Full-size meal photos are not saved and therefore cannot be exported. Chat is included only when you choose **Export with Chat** or export the full database bundle.
 
 ### Single-profile export
 
@@ -26,17 +26,18 @@ A JSON export contains your complete health record for the current profile: all 
 - All 9 lifestyle context cards (diet, sleep, exercise, environment, and more)
 - Notes, health goals, and context card change history
 - Complete supplement and medication records, including lifecycle periods, schedules, product ingredients, quality evidence, and reviewed-import provenance
+- Reviewed meal records, nutrient values, targets, response check-ins, and small thumbnails
 - Biometrics — height, weight history, blood pressure history, pulse history. Height is stored in cm and weight in kg; your display-unit preference controls how the app shows them after import.
 - Menstrual cycle data (if entered)
 - Genetics data — SNP results from DNA raw data import (if imported)
 - Custom marker definitions
 - Per-profile marker category placements and display customizations
-- Chat history, conversation threads, custom personas, and persona deletion records
+- Chat history, conversation threads, custom personas, and persona deletion records when **Export with Chat** is selected
 - Interpretive lens settings
 
 ### Export a single client profile
 
-Open the profile switcher from the header, then click the three-dot menu (⋮) next to any profile and select **Export**. This exports that specific profile as a standalone file — useful when managing multiple profiles and needing to back up or share one at a time.
+Open the profile switcher from the header, then click the three-dot menu (⋮) next to any profile. Choose **Export** for health/profile data or **Export with Chat** to add sent threads and custom-persona state. Both create a standalone file for that profile.
 
 ## Share one profile with a link
 
@@ -82,6 +83,7 @@ You import a JSON file the same way you import a lab PDF: use the header import 
     - **Context cards** are overwritten by the imported values.
     - **Health goals** are merged and deduplicated by text content.
     - **Supplements and medications** are deduplicated by name and first start date.
+    - **Meals** merge by stable meal ID and update time; deletion tombstones prevent an older copy from reviving a deleted meal.
     - **Sent conversations** with new IDs are added without deleting existing ones, up to 50 conversations in the destination profile. Use **Export All** and import the database bundle when migrating a larger chat archive.
     - **Custom personas** are restored when the destination does not already have custom-persona state.
     - **Marker category placements** are merged with the profile and continue to point to the same markers; no lab values are re-keyed or moved.
@@ -105,6 +107,7 @@ Drop a database bundle exported with **Export All** onto the app, or select it w
 - New profiles are created
 - Existing profiles are merged (lab entries by date, notes deduplicated)
 - Structured supplement and medication records are carried over without flattening product facts, quality evidence, or lifecycle periods
+- Reviewed meals, thumbnails, nutrition targets, and their deletion state are carried over
 - Chat threads, custom personas, and their deletion records are carried over
 
 ## Export a PDF health report
@@ -161,7 +164,7 @@ The report is a snapshot of the sections, categories, and date range you selecte
     Navigate to `app.getbased.health` in any browser on the new device.
   </Step>
   <Step title="Import">
-    Drop the bundle file onto the app or use the header import button. All your historical lab data, charts, context cards, and settings appear immediately.
+    Drop the bundle file onto the app or use the header import button. Your historical labs, reviewed meals, charts, context cards, and settings are restored. Reconnect device-local wearable OAuth providers separately.
   </Step>
 </Steps>
 

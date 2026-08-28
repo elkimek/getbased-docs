@@ -1,0 +1,101 @@
+---
+title: "Log meals and review nutrition patterns"
+sidebarTitle: "Meals & Nutrition"
+description: "Log meals from photos, nutrition labels, or manual values; review editable estimates, targets, timing, trends, and model benchmarks without saving full-size photos."
+---
+
+Meals & Nutrition is part of the **Body** lens and the **Daily Nutrition** dashboard widget. It is a coverage-aware food log: it summarizes what you recorded, keeps missing days and nutrients unknown, and does not treat an AI estimate as a measurement or diagnosis.
+
+Use **Log meal** from the dashboard widget or Body lens. From the same area you can open **History**, set personal targets, log a drink quickly, and review the carbohydrate/fat composition of recorded meals.
+
+## Log a meal
+
+Choose the path that matches the information you have.
+
+| Path | AI required? | What happens |
+|---|---:|---|
+| **Meal photo** | Yes, with an image-capable model | Add up to four views of one meal. The model identifies foods, estimates consumed portions, and returns editable nutrients and assumptions. |
+| **Nutrition label** | Yes, with an image-capable model | Add label photos and enter the amount eaten in servings, grams, milliliters, or packages. The result is scaled to that amount. |
+| **Manual review** | No | Enter the meal name, occasion, time, components, nutrients, and note yourself. Unknown values can stay blank. |
+| **Log again** | No | Open a saved meal and reuse its reviewed values with a new date and time. |
+
+For a photo or label, add known facts such as the food name, a weighed portion, preparation method, or an item that was not consumed. Select **Analyze photo**, then review the result before saving.
+
+<Warning>
+  Meal-photo nutrition is a model estimate based on identified foods and portions. It is not laboratory analysis. Edit incorrect identities, weights, or nutrients, keep uncertain values blank, and use a package label or trusted composition source when precision matters.
+</Warning>
+
+The review separates energy and macros from detailed vitamins, minerals, fatty acids, fluids, caffeine, and alcohol. Ingredient-level amounts can be edited, and the totals update deterministically. A model confidence label describes how distinctive the food identity looked; it is not a measured probability that every nutrient is correct.
+
+## Choose a meal-photo model
+
+Meal analysis uses your main AI provider. It can follow that provider's selected model or use a separate image-capable model from the same provider. Change it beside **Photo model** in the meal editor or under **Settings → AI → Meal photos and labels**. Changing the meal model does not change the model used for chat.
+
+Only models the active provider reports as image-capable are offered. Local AI can use an image-capable model discovered from Ollama, LM Studio, Unsloth Studio, or another compatible endpoint. A loopback endpoint stays on this device; LAN, remote, and cloud-tagged endpoints send the request to that machine or service.
+
+The first request to a cloud recipient asks for recipient-specific approval. See [Connect an AI provider](/ai-providers) and [Understand privacy in getbased](/guides/privacy).
+
+## Keep working during a slow analysis
+
+You can close the meal window and continue elsewhere in getbased while a photo analysis or benchmark is running. Reopen **Log meal** to return to it.
+
+- Select **Cancel analysis** to stop one meal request and choose another model without refreshing the page.
+- In a benchmark, cancel one model without stopping the others.
+- Canceled or failed benchmark models can be retried or replaced.
+- Keep the browser tab open. Reloading or closing it can discard in-memory work that has not been saved.
+
+Background work is pinned to the profile where it started and is not carried into another profile.
+
+## Compare meal estimates
+
+Open **Meal Benchmarks** from the meal editor. The benchmark has its own photo and label workspace, so you do not have to attach an image in **Log meal** first. Model selections and the workspace remain available when you move between the benchmark and meal editor during the session.
+
+Select active image-capable models from configured local and cloud providers, then run them against one shared set of images. **Known values** is collapsed until you need it. If you enter known ingredients, weight, energy, or macros, getbased scores returned estimates against those values using device-local deterministic math. You can also use one model as the comparison baseline, but that model is not ground truth.
+
+Benchmark results show identity, portions, core nutrients, detailed nutrient coverage, assumptions, runtime, token usage when available, and estimated provider cost. Choose **Use this estimate** to load one result into the editable meal review.
+
+<Note>
+  Meal Benchmarks evaluates agreement with the reference values you provide. It does not establish clinical accuracy, food safety, allergens, or the true composition of a meal.
+</Note>
+
+## Daily Nutrition, targets, and drinks
+
+The Daily Nutrition widget shows recorded seven-day averages and logging coverage. **Customize** lets you set targets for energy, protein, carbohydrate, fat, fiber, logged beverage volume, sugar, and sodium, then choose which nutrients appear on the widget.
+
+Protein can use a fixed gram target or a weight-aware preset. Weight-aware targets use the latest available wearable or manual body weight and show the source. Target colors grade recorded progress instead of displaying every bar in the same color, but partial logging can still make progress look lower than actual intake.
+
+Use the quick drink logger for water or another beverage. Total beverage volume and plain water are stored separately, so a coffee or other drink does not silently become plain water.
+
+## History and meal timing
+
+Open **History** and switch between individual **Meals** and aggregate **Trends**. Timeframes include **30D**, **3M**, **6M**, **1Y**, and **All**.
+
+Trends shows:
+
+- days with entries and coverage buckets;
+- recorded daily nutrient averages and target progress;
+- first and last logged meal times;
+- observed eating windows when a day has at least two logged meals;
+- observed fasting windows between the last logged meal on one day and the first logged meal on the next;
+- carbohydrate/fat composition where both values exist.
+
+An eating or fasting window describes the log, not a verified fasting protocol. Missing meals remain unknown. A day with one entry may still be an incomplete day.
+
+**Ask AI** prepares one editable, compact aggregate for the selected range. It includes coverage caveats and omits individual meal names, ingredients, notes, and photos. Meals & Nutrition must be enabled in **Manage → Context → Data sources** first.
+
+## Carb/fat composition and check-ins
+
+Fuel Mix Context describes the percentage of logged carbohydrate and fat energy for one meal or a period. There is no preferred center. It does not measure glucose, insulin, free fatty acids, substrate oxidation, metabolic flexibility, or Randle-cycle activity.
+
+After a meal, an optional two-to-three-hour check-in can record hunger and energy. Repeated check-ins may reveal a personal association, but they do not prove cause. Check-ins sync with the reviewed meal when Sync is enabled and are deliberately omitted from compact AI nutrition context.
+
+## Photo, storage, and sync behavior
+
+- Full-size selected photos stay in memory only while getbased prepares the AI request. They are sent to the selected AI provider only after you choose analysis and are not saved by getbased.
+- A reviewed meal can keep a small 240 px thumbnail plus filename, dimensions, and quality notes. Up to four thumbnails can be stored with one meal.
+- Local meal records are AES-GCM encrypted with a non-exportable device key even when optional profile passphrase encryption is off.
+- Reviewed meal data and small thumbnails join the profile's end-to-end-encrypted Sync payload when Sync is enabled. The relay does not receive full-size meal photos.
+- Single-profile JSON exports, full database bundles, folder backups, and restores use the same thumbnail-only meal boundary. Temporary password-protected profile-share links deliberately omit Meals & Nutrition. Legacy full images can be read during recovery but are stripped before the meal is stored again.
+- Deleting a meal creates a sync tombstone so it stays deleted on other devices.
+
+For the wider storage and recipient boundaries, see [Encryption](/guides/encryption), [Cross-device sync](/guides/cross-device-sync), and [Export and import](/guides/export-import).

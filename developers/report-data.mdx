@@ -1,0 +1,79 @@
+---
+title: "Report data contract"
+description: "Versioned, renderer-independent report snapshots shared by PDF rendering, practitioner summaries, and authorized local integrations."
+---
+
+# Report data contract
+
+The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.js` owns this contract. PDF/print HTML and the practitioner overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
+
+Use `collectReportData(options)` from `export-report.js` or the `export.js` facade for the active profile:
+
+```js
+const report = collectReportData({
+  preset: 'full',
+  dateRange: 'all',
+  sections: [
+    'flagged',
+    'categories',
+    'summary',
+    'trends',
+    'supplements',
+    'notes',
+    'genetics',
+    'context',
+  ],
+});
+```
+
+Check `schemaVersion` before depending on the shape. `REPORT_DATA_SCHEMA_VERSION` is currently `1`.
+
+## Snapshot shape
+
+The top-level record contains:
+
+- `schemaVersion` and `generatedAt`;
+- `scope`, including preset, selected date range, sections, categories, range mode, status basis, and display-unit profile;
+- minimized `profile` metadata;
+- selected `labs`, including results, flags, trends, and collection context;
+- selected `notes`, `supplements`, `genetics`, and context; and
+- `null` or empty values for report sections that were not selected.
+
+This is a report contract, not a complete profile backup. Meals & Nutrition records, OAuth connections, raw wearable rows, chat archives, and every other unselected profile surface remain outside it. Use the supported JSON/database export paths when complete portable profile data is required.
+
+## Lab result contract
+
+Every included marker result can carry:
+
+- collection date and draw-level context;
+- source-file and collection-context provenance when recorded;
+- the source report's original range and unit when an import snapshot matches;
+- numeric and formatted display values;
+- marker-level and dated value notes;
+- the range used for status, ranges displayed for the selected mode, and other available reference/optimal ranges; and
+- resolved range label, kind, source, and `low`, `normal`, `high`, or `unrated` status.
+
+`scope.rangeMode` records the user's display choice. `scope.statusBasis` makes the judging rule explicit. In **Both** mode, both reference and optimal ranges can be shown while optimal guidance judges status when available; reference is the fallback, and an eligible phase-specific reference range takes precedence.
+
+A result is `unrated` when no applicable bound exists. Do not convert missing context or an intentionally suppressed range into `normal`.
+
+## Data-minimization boundary
+
+Report sections are authorization and minimization inputs. `buildReportDataSnapshot()` includes labs only when a lab section was selected, includes notes/supplements/genetics/context only when their corresponding section was selected, and filters lab dates and categories before snapshot creation.
+
+The optional practitioner overview calls `formatReportDataForAgent()` over this same selected snapshot. That projection is deliberately bounded and lossy: it prioritizes latest abnormalities, representative markers, notable trends, and a limited number of context sections. The full structured snapshot remains the lossless interface for a local integration that the user has authorized.
+
+Do not let an HTML renderer or AI consumer re-read global application state. New consumers must receive the snapshot explicitly so the report builder's selection remains the controlling boundary.
+
+## Owners and verification
+
+| Concern | Owner |
+|---|---|
+| Pure snapshot schema, range/status resolution, agent projection | `js/export-report-data.js` |
+| Active profile collection, options, optional AI summary | `js/export-report.js` |
+| Printable HTML/PDF rendering | `js/export-report-html.js` |
+| Public facade | `js/export.js` |
+
+Run `tests/report-data.test.js` when the schema, range behavior, minimization, or agent projection changes. Run `tests/report-export-html-runtime.test.js` for renderer consumption and the directly related report-export Playwright cases for the builder/preview boundary.
+
+The source implementation is in [`js/export-report-data.js`](https://github.com/elkimek/get-based/blob/main/js/export-report-data.js).

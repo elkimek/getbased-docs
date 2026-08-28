@@ -89,7 +89,7 @@ Seven verdict prompts share a load-bearing hardware block. A camera-banding resu
 
 ## Provider requirements
 
-Verdicts require an AI provider configured in **Settings → AI**. Supported providers: OpenRouter, PPQ, Routstr, Venice, Local AI (Ollama / LM Studio / Jan / compatible endpoints), and Custom. Provider pricing and actual token use vary by prompt, context, model, and retry behavior. A downloaded model running on the user's own hardware has no provider fee; remote or cloud-tagged Local AI models may charge.
+Verdicts require an AI provider configured in **Settings → AI**. Supported providers: OpenRouter, PPQ, Routstr, Venice, Local AI (Ollama / LM Studio / Jan / Unsloth Studio / compatible endpoints), and Custom. Provider pricing and actual token use vary by prompt, context, model, and retry behavior. A downloaded model running on the user's own hardware has no provider fee; remote or cloud-tagged Local AI models may charge.
 
 ## Disabling verdicts
 
@@ -119,6 +119,7 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | **EMF assessment interpretation** | EMF assessment editor → Interpret | Synthesizes a room-by-room read of your EMF measurements with severity, source attribution, and mitigation recommendations. Manual trigger. |
 | **EMF comparison interpretation** | EMF editor → Compare two snapshots | Side-by-side delta read between two saved assessments — what got better, what got worse. Manual trigger. |
 | **Supplement mitochondrial context** | Current supplements and medications | **ask AI for context** opens a constrained question based on matched claim-level primary studies and the user's mitochondrial/energy biomarkers. Manual trigger. |
+| **Nutrition History Ask AI** | Body → Meals & Nutrition → History | Builds an editable 30-day, 3-month, 6-month, 1-year, or all-time aggregate from reviewed meals. The request receipt prevents the normal nutrition context block from being included twice. |
 
 ### Vision-AI surfaces (image-in)
 
@@ -129,6 +130,9 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | **Photo lab import** | Same drop-zone, accepts JPG / PNG / HEIC | Vision-extract path — same downstream as PDF, but starts from a phone snap of a printed lab report. |
 | **Custom-marker suggestion (from PDF)** | Inside the PDF import flow | When a parsed value can't be matched to a known marker, AI suggests a key + name + unit + reference range based on the surrounding PDF context. |
 | **Supplement/medication product review** | **Supplements & Meds → Review photos** | Reviews up to four product, Facts, directions, or COA images. Separates active ingredients, excipients/capsule materials, laboratory results, and warnings into a draft that the user must review and then save. |
+| **Meal photo analysis** | Body → Meals & Nutrition → Log meal | Sends up to four selected meal photos through the optional dedicated nutrition model route and returns an editable nutrient/component estimate. Running analysis may continue in the background or be canceled. |
+| **Nutrition-label analysis** | Body → Meals & Nutrition → Log meal | Extracts serving and nutrient facts from selected label images into the same review-first meal draft. |
+| **Meal benchmark** | Body → Meals & Nutrition → Meal benchmarks | Runs selected configured models independently against benchmark photos. Each model run can be canceled, retried, or replaced without interrupting the others; deterministic code scores reviewed estimates against known values. |
 | **Spectrum Classifier** | Light Tools → "What is this light?" | Camera-based light-source classifier (LED cool / LED warm / fluorescent / incandescent / daylight). Uses RGB ratios + flicker variance — the deterministic part is the classifier itself; the AI only kicks in for the verdict on the saved measurement (covered in Light & Sun above). |
 
 ## What is NOT AI (so you can trust the numbers)
@@ -150,24 +154,26 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **Custom marker creation, sidebar edits, chip-picker changes, manual-value entry** | Local data writes. No AI call fires; the AI sees them on the next chat turn. |
 | **Supplement/medication lifecycle, daily quantity math, contaminant grouping, and mitochondrial evidence matching** | Period/status rules, compatible-unit arithmetic, and claim-catalog lookup are deterministic. AI is used only for reviewed product extraction, requested context, or impact summaries. |
 | **Genome import, association/evidence/relevance labels, APOE, and mtDNA resolution** | Raw/report/manual parsing and catalog lookup are deterministic and local. **Ask AI** on a finding is an explicit editable prompt that supplies the scoped catalog baseline; it is not part of import or classification. |
+| **Nutrition totals, targets, timing, fasting windows, Fuel Mix, and response trends** | Computed from reviewed meal records in browser code. Target progress colors and meal-history charts do not come from a model. |
+| **Meal component arithmetic and benchmark scoring** | Component totals, known-value comparison, error percentages, and winner ranking are deterministic after the model estimates have been normalized. |
 
 ## What runs on-device vs cloud
 
 | Path | Where it runs |
 |---|---|
 | **Knowledge Base (Interpretive Lens default)** | On-device transformers.js + OPFS — your knowledge documents never leave the browser. |
-| **Local AI provider** (Ollama / LM Studio / Jan / compatible endpoints, configured in Settings → AI → Local AI) | Direct from the browser to the configured endpoint. Loopback runs stay on the device; LAN, remote, and cloud-tagged setups leave it. |
+| **Local AI provider** (Ollama / LM Studio / Jan / Unsloth Studio / compatible endpoints, configured in Settings → AI → Local AI) | Direct from the browser to the configured endpoint. Loopback runs stay on the device; LAN, remote, and cloud-tagged setups leave it. |
 | **PII obfuscation (compatible streaming sanitizer)** | Optional. It stays on-device only with a loopback endpoint and downloaded model, then passes the prepared content to the active provider. |
 | **Voice — On this device** | Downloaded Whisper and Kokoro models run in browser workers. Raw recordings are transient and model files are rebuildable caches. |
 | **Voice — compatible server / OpenRouter / PPQ / Venice / xAI / ElevenLabs** | The selected voice service receives only the recording being transcribed or assistant reply being synthesized. All are called directly from the browser; remote recipients require cloud-processing consent where applicable. **Same as chat** resolves supported AI accounts or falls back on-device. Private chat transports do not automatically cover ordinary voice endpoints. |
 | **Cloud providers** (PPQ / Routstr / OpenRouter / Venice / Custom) | The browser calls the selected endpoint directly after recipient-scoped consent. Venice Encrypted TEE Mode encrypts message content with ECDH + AES-GCM and requires Intel TDX DCAP plus signed NVIDIA NRAS checks, but Venice still sees request metadata. The checks do not prove TDX/GPU co-location, approved code measurements, or the source of every response. |
-| **Camera frames** (light tools, label scan) | Captured + processed in the browser, then either kept on-device (light-tools metric extraction) or sent as a single base64 image to the configured AI provider for the vision call (label scan, photo lab import). |
+| **Camera frames and selected images** (light tools, lab import, meal photo, nutrition label) | Prepared in the browser, then either kept on-device for light-tool metric extraction or sent to the configured AI provider for the requested vision call. Meals accept up to four images. Full-size meal images are request-only and are not saved; small reviewed thumbnails may be stored with the meal. |
 
 ## Caching + privacy notes
 
 - Every per-row verdict caches against a fingerprint of the underlying data. If nothing's changed, the cached verdict is returned without a fresh API call.
 - Import model-test records stay device-local and are stripped from sync payloads because timing, loaded state, and hardware metadata do not transfer meaningfully. See [AI model testing internals](/developers/ai-model-testing-internals).
-- The chat panel pulls from `buildLabContext()` — the assembled section block filtered by **Manage → Context → Data sources** (`contextSourceSettings`). Those switches gate Insight Context Cards, Supplements & Medications, Blood marker results, per-specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context for in-app AI, score context, and source-driven warnings.
+- The chat panel pulls from `buildLabContext()` — the assembled section block filtered by **Manage → Context → Data sources** (`contextSourceSettings`). Those switches gate Insight Context Cards, Supplements & Medications, Blood marker results, per-specialty lab groups, Genome tiers, Light & Sun, Meals & Nutrition, and Wearable recovery context for in-app AI, score context, and source-driven warnings.
 - Interpretive Lens and Knowledge Base live in the Answer grounding panel, separate from data-source gates. Agent Access is separate again: the browser pushes an encrypted gateway summary only after **Settings → Agent Access** is enabled, and that push calls `buildLabContext({ skipGroupFilter: true, ignoreContextToggles: true })` so external agents do not inherit the in-app Data sources switches.
 - Custom-marker creation, manual-value entry, sidebar edits, and chip-picker changes do NOT trigger AI calls — they update local data, AI sees them on the next chat turn or the next per-state verdict render.
 
@@ -178,4 +184,5 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 - [Light Tools](https://docs.getbased.health/guides/light-tools) — the measurement tool ecosystem
 - [AI Providers](https://docs.getbased.health/ai-providers) — how to configure a provider
 - [AI Chat](https://docs.getbased.health/guides/ai-chat) — the chat panel that complements the per-row verdicts
+- [Meals & Nutrition](/guides/meals-nutrition) — meal analysis, reviewed storage, trends, benchmarks, and AI context boundaries
 - [Supplements and medications](/guides/supplements-medications) — therapy lifecycle, reviewed product import, quality evidence, and AI boundaries

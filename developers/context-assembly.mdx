@@ -1,6 +1,6 @@
 ---
 title: "Context assembly"
-description: "How getbased assembles lab, profile, lens, and UI context for AI prompts."
+description: "How getbased assembles lab, profile, nutrition, wearable, lens, and UI context for AI prompts."
 ---
 
 {/* Synced during developer-docs migration. */}
@@ -18,11 +18,12 @@ How user-provided data becomes AI prompts. This is the core intelligence layer �
 
 ```
                            ┌─────────────────────────────────────────┐
-                           │           7 AI FEATURES                 │
+                           │              AI FEATURES                │
                            │                                         │
                            │  Chat  Focus  Health  PDF   Persona     │
                            │  Panel Card   Dots    Import Generator  │
                            │  Per-Marker AI   Correlation AI         │
+                           │  Meals & Nutrition analysis             │
                            └────────────┬────────────────────────────┘
                                         │
                                         ▼
@@ -69,7 +70,9 @@ Everything the AI can know about the user comes from these sources:
 │  MARKER SCHEMA              ├─ Menstrual Cycle                      │
 │  ├─ MARKER_SCHEMA           ├─ Supplements                          │
 │  └─ customMarkers           ├─ User Notes                           │
-│                             └─ Genetics (SNPs, if imported)         │
+│                             ├─ Genetics (SNPs, if imported)         │
+│                             ├─ Nutrition aggregates                 │
+│                             └─ Wearable recovery summary            │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -78,7 +81,7 @@ Lab context consumes the projected `getActiveData()` view, so user-selected cate
 
 ## buildLabContext() — The Central Serializer
 
-`buildLabContext()` in `lab-context.js` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead.
+`buildLabContext()` in `lab-context.js` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, Meals & Nutrition, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead. Meal-photo and nutrition-label extraction use their own narrow prompt contracts; they do not receive this full profile serializer.
 
 ### Output Structure
 
@@ -178,6 +181,13 @@ Lunch (12:30): salad with chicken
 Dinner (19:00): salmon, vegetables
 [/section:diet]
 
+[section:nutrition]
+## Meals & Nutrition
+Window: Last 30 days. Coverage: 25/30 days, 68 meals.
+Daily averages: 2,140 kcal; protein 128 g; carbohydrates 205 g; fat 76 g.
+Meal timing: first 08:05; last 19:20; eating window 11h 15m; fasting window 12h 45m.
+[/section:nutrition]
+
 ## Exercise & Movement
 Frequency: 4x/week. Types: weights, yoga. Intensity: moderate.
 
@@ -266,6 +276,7 @@ importedData (localStorage)
          │     ├─ detectPerimenopausePattern()             │
          │     └─ detectCycleIronAlerts()                  │
          ├─── .diet ───────────────────────────────────────┤
+         ├─── nutritionSummary ─ nutrition-summary-context.js ───┤
          ├─── .exercise ───────────────────────────────────┤
          ├─── .sleepRest ──────────────────────────────────┤  ← LIFESTYLE
          ├─── .lightCircadian ─── + getLatitudeFromLocation()
@@ -281,6 +292,14 @@ importedData (localStorage)
                                                        ▼
                                                   plain text block
 ```
+
+### Meals and Nutrition context
+
+`buildNutritionSummaryContext()` supplies a compact aggregate of reviewed meal history, capped at 2,600 characters. Normal AI context uses a 7-, 30-, or 90-day nutrition window selected per profile. It includes coverage, recorded daily averages, meal timing and fasting windows, sufficiently supported trends, and Fuel Mix signals; it omits meal names, ingredient lists, notes, photos, response check-ins, and provider response diagnostics.
+
+When the Meals & Nutrition source is enabled and reviewed history exists, the detailed nutrition block replaces the Diet card's typical-meal lines and contaminant scan so the same behavior is not represented twice. Other Diet & Digestion fields remain available.
+
+The Nutrition History **Ask AI** action can build an editable aggregate for **30D**, **3M**, **6M**, **1Y**, or **All**. Its request receipt suppresses the automatic nutrition block for that message, preventing duplicate context. Agent Access may include the same compact aggregate only after the separate external-sharing permission is enabled.
 
 ## Prompt Composition Per Feature
 

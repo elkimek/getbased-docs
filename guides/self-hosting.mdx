@@ -66,7 +66,7 @@ WITHINGS_CLIENT_SECRET=
 POLAR_CLIENT_ID=
 POLAR_CLIENT_SECRET=
 
-# Experimental self-host integrations — flag + client_id + secret required
+# Self-host-only integrations — flag + client_id + secret required
 ULTRAHUMAN_ENABLED=true
 ULTRAHUMAN_CLIENT_ID=
 ULTRAHUMAN_CLIENT_SECRET=
@@ -90,7 +90,23 @@ FITBIT_CLIENT_ID=
 
 At startup, the browser fetches active public `client_id` values and provider availability flags from `/api/proxy`. Google Health, WHOOP, and Ultrahuman are fail-closed: each is available only when its `*_ENABLED` value is exactly `true` and its client ID and secret are all present. Only the public client ID and availability flag reach the browser; each client secret stays on the server and is injected during token exchange and refresh.
 
-WHOOP and Ultrahuman are experimental self-host integrations. They are hidden on hosted deployments that have not enabled them. On `localhost`, their disabled setup rows remain visible so an operator can find the required configuration; **Connect** appears only after the server reports a complete, enabled setup.
+WHOOP is a supported self-host-only integration; Ultrahuman remains experimental. They are hidden on hosted deployments that have not enabled them. On `localhost`, disabled setup rows remain visible so an operator can find the required configuration; **Connect** appears only after the server reports a complete, enabled setup.
+
+### WHOOP developer program and operator responsibility
+
+WHOOP is not supported on the official hosted getbased app. Each independent deployment uses its own WHOOP membership and developer application. Start with WHOOP's [Developer Platform overview](https://developer.whoop.com/docs/developing/overview/), register the application in the WHOOP Developer Dashboard, configure the exact redirect URI, and complete any [app approval](https://developer.whoop.com/docs/developing/app-approval/) WHOOP requires before offering it to users.
+
+The application requests `read:profile`, `read:cycles`, `read:recovery`, `read:sleep`, `read:workout`, and `offline`. getbased uses WHOOP's current v2 profile, cycle, recovery, and sleep endpoints. WHOOP's v1 data API is no longer supported; keep deployments aligned with the [v1-to-v2 migration guide](https://developer.whoop.com/docs/developing/v1-v2-migration/) and [current API reference](https://developer.whoop.com/api/).
+
+WHOOP uses a confidential authorization-code flow. Keep `WHOOP_CLIENT_SECRET` server-side. Supply `WHOOP_CLIENT_ID` through environment configuration rather than committing it to the open-source fork; the active client ID must reach the browser for the authorization redirect, while the secret is injected only by `/api/proxy` for exchange and refresh.
+
+<Warning>
+  The self-host operator is the WHOOP application owner. Before enabling the integration, review the current [WHOOP API Terms of Use](https://developer.whoop.com/api-terms-of-use/) and ensure the deployment's consent, accessible support contact, privacy policy, security, retention/cache behavior, user access, deletion, and provider-side revocation process satisfy WHOOP and applicable law. Do not reuse or distribute another operator's developer credentials.
+</Warning>
+
+getbased presents a WHOOP-specific disclosure before redirecting to authorization. It explains the read scopes, self-host data path, device encryption, optional encrypted Sync/AI context, and deletion/revocation path. Do not remove or bypass that disclosure. A custom deployment must also publish its own accurate privacy policy and support contact.
+
+At runtime, WHOOP token exchange, refresh, and data requests pass through the deployment's same-origin `/api/proxy`; they never fall back to getbased-operated infrastructure. Tokens, raw daily rows, and WHOOP-specific local profile data are device-key encrypted. Tokens, raw rows, and the connection record stay device-local and out of backups and Sync; only allowlisted compact derived surfaces can participate in optional encrypted profile Sync or enabled AI/Agent context.
 
 <Warning>
   Google Health uses restricted, read-only OAuth scopes. The owner of each self-hosted Google Cloud project is responsible for the OAuth consent screen, verification, testing-user limits, and any Cloud App Security Assessment that Google requires. Do not reuse the official getbased OAuth project. See [Google Health setup](https://developers.google.com/health/setup) for current requirements.
@@ -134,7 +150,7 @@ A `vercel.json` is already present in the repo root — no extra configuration i
   </Step>
 
   <Step title="Set environment variables">
-    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. Google Health, WHOOP, and Ultrahuman each require their enable flag, client ID, and secret.
+    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. Google Health, WHOOP, and Ultrahuman each require their enable flag, client ID, and secret. For WHOOP, finish the developer-program, redirect, disclosure, and terms review above before enabling production access.
   </Step>
 
   <Step title="Deploy">
@@ -225,7 +241,7 @@ Do not expose the admin port or SQLite database volume publicly. Route `/self/*`
 
 ## Local AI with a self-hosted instance
 
-getbased supports Ollama, LM Studio, Jan, llama.cpp, and other OpenAI-compatible servers through **Settings → AI → Local AI**. Enter the server's base URL and getbased sends AI calls directly from the browser to that endpoint.
+getbased supports Ollama, LM Studio, Unsloth Studio, Jan, llama.cpp, and other OpenAI-compatible servers through **Settings → AI → Local AI**. Enter the server's base URL and getbased sends AI calls directly from the browser to that endpoint.
 
 Privacy depends on the address and model you choose. A loopback endpoint with a downloaded model keeps inference on the browser device. A LAN server moves requests to another machine, while a remote endpoint or Ollama `:cloud` model sends them off your network. getbased shows the detected execution location in the provider panel.
 

@@ -79,7 +79,9 @@ After confirmation, this context stays attached to that lab date, appears beside
 
 ### Unit normalization
 
-Common unit differences are normalized automatically. For example, enzymes reported as IU/L are mapped to U/L. The marker detail modal can also show alternate units when **Alternate Units** is enabled in **Settings → Display**.
+Common unit differences are normalized automatically. For example, enzymes reported as IU/L are mapped to U/L. Values are saved in each marker's canonical unit and projected through the profile selected in **Settings → Display → Lab units**: **International (SI)**, **Australia / NZ**, or **US**. The Australia/New Zealand profile covers common regional pathology-reporting units across the built-in marker catalog.
+
+The import review, tables, charts, marker details, reports, manual entry, and AI context use the same active projection. Changing profiles therefore changes presentation without rewriting imported values. The marker detail modal can also show a compatible secondary value when **Alternate Units** is enabled in **Settings → Display**.
 
 ## Batch import
 
