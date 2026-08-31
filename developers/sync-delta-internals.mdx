@@ -19,11 +19,23 @@ This page is the contributor contract for adding or changing a synced profile su
 | `sync-dirty-state.js` | Durable per-profile edit generations used to protect pending local work |
 | `sync-settings-state.js` | Separates configured, active, and paused state for the current browser |
 | `sync-lifecycle.js` | Starts, pauses, resumes, and disconnects the browser runtime without conflating those operations |
+| `sync-evolu8-candidate.js` | Evolu 8 default runtime facade, one-time Evolu 7 identity handoff, explicit V7 rollback, and superseded V8 database cleanup |
+| `sync-evolu8-identity-vault.js` | Durable browser-local owner ID and mnemonic handoff that avoids reopening the V7 worker during normal V8 startup |
 | `sync-backup-restore-state.js` | Marks restored profiles dirty and carries a durable publish-before-pull recovery list across reload |
 | `sync-profile-fields.js` | Shared deterministic profile-field allowlist for push and pull |
 | `sync-origin-state.js` | Tab-local committed timestamps used to suppress source-browser update notices |
 | `sync-relay-health.js` | Authoritative storage checks, quota warnings, and owner-signed relay maintenance |
 | `sync-diagnostics.js` | Debug snapshots, status panels, and copyable diagnostics |
+
+## Evolu 8 default and V7 identity handoff
+
+Evolu 8 is the default browser Sync client. Existing users keep the same mnemonic, owner ID, and encrypted relay history; there is no new Sync identity and no relay-side data migration.
+
+Evolu 8 cannot open Evolu 7's local SQLite database directly. On the first V8 start without a committed identity vault, `sync-evolu8-candidate.js` therefore opens the V7 client without relay transports, reads its owner mnemonic, derives the V8 owner, and refuses the handoff if the owner IDs differ. It attempts to commit the verified owner ID and mnemonic to `sync-evolu8-identity-vault.js` before starting the V8 database. A successful commit lets later normal starts avoid loading the V7 worker. If browser storage rejects the commit, the current start continues with the verified in-memory identity and the next start retries the V7 handoff.
+
+Keep the V7 bundle and bridge while browsers that have not run since the upgrade may still need this one-time handoff. The query parameter `?evolu-client=v7` is an explicit temporary operational rollback, not a user-facing migration step. Identity restore and reset also update the V7 owner lazily so rollback cannot reopen a different identity.
+
+Because V8 uses generation-named local databases for history resets, successful startup reclaims superseded generations only after it can take Evolu's exclusive database lock. An active database in another tab is skipped and retried on a later startup.
 
 ## Delta surface types
 
@@ -96,7 +108,7 @@ Before an inbound pull can merge remote scalar state, it flushes pending local w
 
 ## Existing-mnemonic restore ordering
 
-Joining a Sync identity must finish application state before navigation. Evolu's default `restoreAppOwner()` behavior can reload from inside its worker before the returned promise resolves. A first-time join previously reloaded while Sync still had provisional `persist: false` state, so the restored owner could not pull relay data.
+Joining a Sync identity must finish application state before navigation. The Evolu 7 worker's default `restoreAppOwner()` behavior can reload before the returned promise resolves. A first-time join previously reloaded while Sync still had provisional `persist: false` state, so the restored owner could not pull relay data. The Evolu 8 facade preserves the same application contract.
 
 For a user-entered existing mnemonic, `sync-identity.js` calls:
 
@@ -162,6 +174,8 @@ Before shipping sync changes:
 - verify disconnect/reset clears local Sync identity/history while pause preserves them;
 - verify an unreadable active or inactive profile cannot produce an empty push and stops compaction preflight;
 - verify existing-mnemonic restore persists the joined owner before the controlled reload;
+- verify a first V8 start derives the same owner ID from the V7 mnemonic, attempts the identity-vault commit before V8 starts, and safely retries after a persistence failure;
+- verify a normal V8 start with a valid identity vault does not load the V7 worker, while explicit V7 rollback and identity changes keep both owners aligned;
 - verify restored profiles clear stale planner state and are force-pushed before inbound tombstones;
 - verify source-tab notifications are suppressed without suppressing receiving devices;
 - check Settings → Data diagnostics for a useful label and no plaintext secrets;
