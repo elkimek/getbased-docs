@@ -15,6 +15,12 @@ Sync is powered by [Evolu](https://www.evolu.dev/), a local-first CRDT (Conflict
 
 The relay acts as a blind store-and-forward server. It holds encrypted blobs and forwards them to your other devices. It never sees your plaintext.
 
+### Existing Sync identities after the Evolu 8 upgrade
+
+getbased upgrades the Sync engine in each browser automatically. Your 24-word mnemonic and Sync identity do not change, and your profiles continue using the same encrypted relay history. Reload an older browser and let Sync finish; do not choose **Set up new sync** just because the app updated.
+
+The first start in a browser that has not opened getbased since the upgrade can take slightly longer while getbased transfers the existing identity into the new local Sync engine. Keep the tab open until the header dot turns green. Other connected devices can continue syncing during this browser-local migration.
+
 ## Set up sync on your first device
 
 <Steps>

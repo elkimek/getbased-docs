@@ -2031,7 +2031,9 @@ Not separately documented because their exports are best read from source — ke
 - `sync-tombstones.js` — remote profile delete propagation helpers, inbound tombstone application, batched-delete quarantine, and apply/reject pending tombstone actions for Settings.
 - `sync-messenger.js` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
 - `sync-environment.js` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
-- `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress Evolu's internal reload, persist enabled owner state, then perform one controlled reload.
+- `sync-evolu8-candidate.js` — Evolu 8 default runtime facade; performs the verified one-time Evolu 7 identity handoff, retains an explicit V7 rollback, keeps identities aligned during restore/reset, and safely reclaims superseded V8 database generations.
+- `sync-evolu8-identity-vault.js` — durable IndexedDB-backed owner ID and mnemonic handoff; valid commits let normal V8 startup avoid loading the V7 worker.
+- `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress the client's internal reload, persist enabled owner state, then perform one controlled reload.
 - `sync-settings-state.js` — persisted configured/active/paused state. `labcharts-sync-enabled` means an identity is configured; `labcharts-sync-paused` suppresses traffic without forgetting it.
 - `sync-lifecycle.js` — runtime start, identity-preserving pause/resume, explicit disconnect/reset, and backup-restore push preflight.
 - `sync-backup-restore-state.js` — durable restored-profile handoff; clears stale delta/cutover state, marks profiles dirty, and retains the retry list until a recovery push succeeds.
