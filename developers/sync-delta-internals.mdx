@@ -31,7 +31,7 @@ This page is the contributor contract for adding or changing a synced profile su
 
 Evolu 8 is the default browser Sync client. Existing users keep the same mnemonic, owner ID, and encrypted relay history; there is no new Sync identity and no relay-side data migration.
 
-Evolu 8 cannot open Evolu 7's local SQLite database directly. On the first V8 start without a committed identity vault, `sync-evolu8-candidate.js` therefore opens the V7 client without relay transports, reads its owner mnemonic, derives the V8 owner, and refuses the handoff if the owner IDs differ. It then commits the verified owner ID and mnemonic to `sync-evolu8-identity-vault.js` before starting the V8 database. Later normal starts read the vault and do not load the V7 worker.
+Evolu 8 cannot open Evolu 7's local SQLite database directly. On the first V8 start without a committed identity vault, `sync-evolu8-candidate.js` therefore opens the V7 client without relay transports, reads its owner mnemonic, derives the V8 owner, and refuses the handoff if the owner IDs differ. It attempts to commit the verified owner ID and mnemonic to `sync-evolu8-identity-vault.js` before starting the V8 database. A successful commit lets later normal starts avoid loading the V7 worker. If browser storage rejects the commit, the current start continues with the verified in-memory identity and the next start retries the V7 handoff.
 
 Keep the V7 bundle and bridge while browsers that have not run since the upgrade may still need this one-time handoff. The query parameter `?evolu-client=v7` is an explicit temporary operational rollback, not a user-facing migration step. Identity restore and reset also update the V7 owner lazily so rollback cannot reopen a different identity.
 
@@ -174,7 +174,7 @@ Before shipping sync changes:
 - verify disconnect/reset clears local Sync identity/history while pause preserves them;
 - verify an unreadable active or inactive profile cannot produce an empty push and stops compaction preflight;
 - verify existing-mnemonic restore persists the joined owner before the controlled reload;
-- verify a first V8 start derives the same owner ID from the V7 mnemonic and commits the identity vault before V8 starts;
+- verify a first V8 start derives the same owner ID from the V7 mnemonic, attempts the identity-vault commit before V8 starts, and safely retries after a persistence failure;
 - verify a normal V8 start with a valid identity vault does not load the V7 worker, while explicit V7 rollback and identity changes keep both owners aligned;
 - verify restored profiles clear stale planner state and are force-pushed before inbound tombstones;
 - verify source-tab notifications are suppressed without suppressing receiving devices;
