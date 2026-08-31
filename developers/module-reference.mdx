@@ -79,20 +79,24 @@ See [Laboratory terminology registry](/developers/marker-terminology) for the ma
 
 ### `adapters.js`
 
-Parser adapter registry for specialty lab detection and normalization. Single source of truth for all specialty marker definitions (OAT, fatty acids, Metabolomix+, BioStarks).
+Startup-safe parser adapter registry for specialty lab detection and normalization. It owns the shared specialty definitions; importer-only product catalogs such as Mosaic OAT/MOAT stay outside the startup graph.
 
 **Key exports:**
-- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (220 entries). Re-exported from `schema.js` as `SPECIALTY_MARKER_DEFS`
+- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (225 entries). Re-exported from `schema.js` as `SPECIALTY_MARKER_DEFS`
 - `getAllAdapterMarkers()` — returns merged marker map from all registered adapters
 - `detectProduct(fileName, pdfText)` — runs all adapter `detect()` functions, returns `{ adapter, product: { prefix, label } }` or `null`
 - `normalizeWithAdapter(adapter, markers, fileName, pdfText, product)` — dispatches to `adapter.normalize()` for post-AI marker key/category rewriting
 - `getAdapterByTestType(testType)` — looks up adapter by AI-returned test type string
 
-**Adapter registry:** array of `{ id, testTypes[], markers, detect?, normalize? }`:
-- `fattyAcids` — 29 markers, detects Spadia/ZinZino/OmegaQuant by filename/text, normalizes to product-prefixed categories under "Fatty Acids" sidebar group
-- `metabolomix` — no unique markers (reuses OAT + FA), detects Genova Metabolomix+ reports, routes FA add-on markers to `metabolomixFA` prefix
-- `oat` — 165 markers, no detect/normalize (AI handles OAT categorization directly)
+**Adapter registry:** array of `{ id, testTypes[], markers, productScoped?, detect?, normalize? }`:
+- `fattyAcids` — 34 markers, detects Spadia/ZinZino/OmegaQuant by filename/text, normalizes to product-prefixed categories under the **Fatty Acids** sidebar group
+- `metabolomix` — no unique startup markers; detects Genova Metabolomix+ and delegates importer-only normalization to stable `metabolomix*` categories
+- `mosaicOat` — no startup markers; detects Mosaic/Great Plains OAT and MOAT reports, then uses the lazy 77-definition OAT or 21-definition MOAT catalog
+- `oat` — 165 legacy/shared definitions; new imports are normalized to a laboratory-scoped marker space while existing legacy profiles remain readable
+- `gutStool` — 3 shared stool/gut-barrier markers
 - `biostarks` — 23 markers, detects BioStarks dried blood spot reports by filename/text, normalizes specialty markers (amino acids, serum FA, intracellular minerals, hormones, vitamins) while passing standard blood markers through to schema categories (hybrid import)
+
+`mosaic-oat-catalog.js` defines the importer-only Mosaic analyte order, aliases, sections, units, and OAT/MOAT marker metadata. `pdf-import-organic-acid-normalization.js` maps AI output into Mosaic, Metabolomix+, or lab-scoped OAT keys. Keep product identity in this deterministic post-AI layer; do not rely on model-generated category names to separate histories.
 
 **Window exports:** none
 

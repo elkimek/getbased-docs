@@ -76,7 +76,7 @@ A few tests run node-side (no browser) — pure-helper unit tests + node script 
 | `tests/test-a11y-axe.js` | Runtime locally installed axe-core 4.13 scan across every lens + Settings surfaces + EMF editor. Zero-baseline critical/serious CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
 | `tests/test-a11y-phase3.js` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
 | `tests/test-ai-verdict-engine-instance.js` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
-| `tests/test-adapters.js` | Adapter registry: structure, fatty acids, OAT, metabolomix, cross-adapter |
+| `tests/test-adapters.js` | Adapter registry: structure, fatty acids, Metabolomix+, Mosaic OAT/MOAT catalogs, aliases, product isolation, and cross-adapter behavior |
 | `tests/test-ai-verdict-engine.js` | Shared `js/ai-verdict-engine.js` factory: in-flight tracker, watchdog, fingerprint cache, JSON parse guards |
 | `tests/test-audit-fixes.js` | Regression coverage for the 2026-05-09 audit pass (multi-area follow-ups) |
 | `tests/test-audit.js` | Security audit: XSS escaping, marker-key allowlist guards, innerHTML sanitizer sweep, null/div-by-zero, focus trapping, CSP |

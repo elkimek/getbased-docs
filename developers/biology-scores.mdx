@@ -227,7 +227,7 @@ Keep that guide aligned with this implementation guide whenever score behavior, 
 When auditing docs alignment, verify these public claims against code before release:
 
 - score inventory: `SCORE_DEFINITIONS` currently contains 19 definitions;
-- specialty adapter counts: OAT/Metabolomix-style markers 165, fatty-acid reference markers 29, BioStarks markers 23;
+- specialty adapter counts: legacy/shared OAT and Metabolomix-style definitions 165, fatty-acid definitions 34, BioStarks markers 23, plus importer-only Mosaic catalogs with 77 OAT and 21 MOAT definitions;
 - Coverage Planner chat handoff opens a new chat thread and uses the same planner model as the static UI;
 - one context check unlocks all timeframe tabs, while each timeframe still filters the marker data used for scoring;
 - advanced/specialty-heavy domains add depth/confidence but do not lower baseline Biological Coherence merely because they are absent.

@@ -78,21 +78,21 @@ Once created, custom markers are treated identically to built-in markers through
 
 ## Specialty lab pipeline
 
-For non-blood tests (OAT, DUTCH, HTMA, fatty acids, and similar panels), the import AI assigns markers to test-type-prefixed categories (e.g. `oatNutritional`, `dutchHormones`) and adds a **group** field that determines Labs navigation placement. These groups appear as collapsible headers — for example, an OAT import creates categories like "Nutritional Markers" and "Microbial Overgrowth" organized under an **OAT** header.
+For non-blood tests (OAT, DUTCH, HTMA, fatty acids, and similar panels), the importer uses test- and product-specific categories and adds a **group** field that determines Labs navigation placement. Recognized Mosaic OAT, Mosaic MOAT, and Metabolomix+ reports are normalized after AI extraction into deterministic product keys. Other OAT reports use a laboratory-scoped prefix when the product name is available.
 
-When the app ships a built-in specialty adapter for a test type you have previously imported as custom markers, those markers are **auto-migrated** to the structured adapter — your historical data is preserved and gains the adapter's richer reference ranges and display names automatically.
+Existing custom-marker histories are preserved when a new product adapter ships; they are not silently merged into the new product namespace. On a later import, review the proposed mapping before deciding whether old and new results represent the same assay and product.
 
 ## Custom markers vs. specialty lab adapters
 
 | | Custom markers | Specialty lab adapters |
 |---|---|---|
 | Created by | You (manually or via PDF import AI) | Built into getbased for specific test types |
-| Coverage | Any marker you define | OAT (165 markers), fatty acids (Spadia, ZinZino, OmegaQuant), Metabolomix+, and more |
-| Reference ranges | From the lab report or what you enter | Curated per-marker from the test's reference methodology |
-| Grouping | Category you choose | Auto-organized by test type under collapsible headers |
-| Future-proof | Yes — auto-migrated when an adapter ships for your test | N/A |
+| Coverage | Any marker you define | Mosaic OAT, Mosaic MOAT, Metabolomix+, fatty acids (Spadia, ZinZino, OmegaQuant), and more |
+| Reference ranges | From the lab report or what you enter | The imported report's ranges, with built-in fallbacks only where the adapter defines them |
+| Grouping | Category you choose | Auto-organized by test and product under collapsible headers |
+| Future-proof | Preserved when a new adapter ships; never silently merged across products | Stable product keys for recognized reports |
 
-Use custom markers for anything not yet covered by a built-in adapter — omega-3 index, deuterium levels, functional medicine panels, home monitoring devices, or any specialist test. If getbased later ships an adapter for that test type, your data migrates automatically.
+Use custom markers for anything not yet covered by a built-in adapter — deuterium levels, functional medicine panels, home monitoring devices, or any specialist test. If getbased later ships an adapter for that test type, your existing data remains intact and the import review lets you verify future mappings.
 
 ## Deleting custom markers
 

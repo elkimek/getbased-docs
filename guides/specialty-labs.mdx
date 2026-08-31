@@ -1,24 +1,26 @@
 ---
 title: "Import specialty lab panels into getbased"
-description: "getbased supports OAT, DUTCH, HTMA, fatty acid panels, DEXA scans, and more — with auto-detection and a custom marker pipeline for any other lab."
+description: "Import OAT, Metabolomix+, fatty acid panels, DEXA scans, and other specialty labs with product-aware marker histories."
 ---
 
 Beyond standard blood work, getbased handles specialty lab tests. Import the PDF the same way you would any other report — use the header import button or drop it onto the app. The AI identifies the test type automatically and routes markers to the correct categories with your lab's stated reference ranges.
 
-## Supported test types
+## Recognized panels and products
 
-Four test types have dedicated built-in marker definitions. Every other specialty lab report goes through the generic custom marker pipeline, where the AI extracts marker names, units, and reference ranges directly from the PDF.
+The following panels have dedicated definitions or product-aware normalization. Other specialty reports still use the custom marker pipeline, where the AI extracts marker names, units, and reference ranges directly from the PDF.
 
 | Test type | Examples | Built-in markers |
 |---|---|---|
 | **DEXA scan** | Hologic, GE Lunar Prodigy | 17 markers across 2 categories |
-| **Metabolomix+** | Genova Metabolomix+ combo profiles | 165 markers across 10 categories. OAT-style energy, microbial, nutrient, and detox markers can support advanced Biology Scores when mapped. |
-| **Fatty acids** | Spadia, ZinZino BalanceTest, OmegaQuant | 29 reference markers. Compatible EPA/DHA/omega markers can support Lipid Membrane scoring. |
+| **Metabolomix+** | Genova Metabolomix+ combo profiles | Product-specific sections for organic acids, amino acids, fatty acids, elements, and oxidative stress. Compatible markers can support advanced Biology Scores. |
+| **Mosaic OAT** | Mosaic Diagnostics Organic Acids Test | 76 organic-acid analytes plus urine creatinine, organized by the report's detailed result sections. |
+| **Mosaic MOAT** | Mosaic Diagnostics Microbial Organic Acids Test | 20 microbial organic-acid analytes plus urine creatinine. |
+| **Fatty acids** | Spadia, ZinZino BalanceTest, OmegaQuant | 34 reference markers. Compatible EPA/DHA/omega markers can support Lipid Membrane scoring. |
 | **BioStarks** | Dried blood spot panels (AMR Labs SA) | 23 markers across 5 categories. Standard mapped markers can feed both Labs trends and Biology Scores. |
 
 **Generic support (custom marker pipeline)**
 
-Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mineral Analysis (HTMA), GI-MAP, standalone OAT, and any other structured lab report. The AI extracts everything directly from your PDF. No built-in definitions are needed.
+Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mineral Analysis (HTMA), GI-MAP, other OAT products, and any other structured lab report. The AI extracts everything directly from your PDF. Other OAT reports are scoped to the laboratory or product name when it is identifiable, so their histories do not silently merge with Mosaic or Genova results.
 
 ## How auto-detection works
 
@@ -26,11 +28,11 @@ Any other specialty lab can be imported — DUTCH hormone panels, Hair Tissue Mi
   <Step title="Drop your PDF">
     Drag the file onto the app or use the header import button. No special configuration is needed for specialty labs.
   </Step>
-  <Step title="AI identifies the test type">
-    The AI reads the report and detects whether it is blood work, a DEXA scan, an OAT panel, a DUTCH report, or another type.
+  <Step title="AI identifies the test and product">
+    The AI reads the report and detects whether it is blood work, a DEXA scan, an OAT panel, a DUTCH report, or another type. It also records the laboratory or exact product name when the report provides one.
   </Step>
   <Step title="Markers are mapped to specialty categories">
-    Specialty results are placed in test-type-specific categories to keep them separate from standard blood markers. These categories appear as collapsible groups in Labs navigation.
+    Specialty results are placed in test- and product-specific categories to keep them separate from standard blood markers and from similar panels made by other laboratories. These categories appear as collapsible groups in Labs navigation.
   </Step>
   <Step title="Reference ranges come from your PDF">
     Unlike standard blood markers that use built-in reference ranges, specialty markers use the ranges printed on your specific report.
@@ -93,20 +95,40 @@ Other fatty acid labs are also supported — the AI identifies the lab name from
 
 ## Metabolomix+
 
-Genova Metabolomix+ imports create multiple subcategories under an **OAT** group:
+Genova Metabolomix+ imports create product-specific subcategories under a **Metabolomix+** group:
 
-| Category | Markers | Examples |
-|---|---|---|
-| Microbial Overgrowth | 14 | Citramalic acid, HPHPA, arabinose |
-| Metabolic | 22 | Lactic, pyruvic, succinic, citric acid |
-| Neurotransmitters | 14 | HVA, VMA, quinolinic acid |
-| Nutritional & Detox | 24 | Methylmalonic, glutathione markers |
-| Amino Acids & Lipids | 18 | Urine amino acids, fatty acid metabolites |
-| Urine Amino Acids | 21 | Arginine, taurine, glycine |
-| Urine Amino Metabolites | 18 | Methylhistidine, sarcosine |
-| Toxic Elements | 18 | Lead, mercury, arsenic, cadmium |
-| Nutrient Elements | 14 | Selenium, zinc, calcium, magnesium |
-| Oxidative Stress | 2 | Lipid peroxides, 8-OHdG |
+| Category | Examples |
+|---|---|
+| Malabsorption & Dysbiosis | Citramalic acid, HPHPA, arabinose |
+| Vitamin Markers | Methylmalonic acid and other nutrient-related metabolites |
+| Branched-Chain Catabolites | Valine, leucine, and isoleucine catabolites |
+| Cellular Energy & Mitochondrial | Lactic, pyruvic, succinic, and citric acid |
+| Neurotransmitter Metabolites | HVA, VMA, quinolinic acid |
+| Toxin & Detoxification | Pyroglutamic and other detoxification markers |
+| Organic Acids | Additional organic-acid and fatty-acid oxidation metabolites |
+| Oxidative Stress | Lipid peroxides, 8-OHdG |
+| Amino Acids | Arginine, taurine, glycine |
+| Amino Acid Metabolites | Methylhistidine, sarcosine |
+| Essential & Metabolic Fatty Acids | Individual fatty acids, totals, and omega ratios when included |
+| Toxic Elements | Lead, mercury, arsenic, cadmium |
+| Nutrient Elements | Selenium, zinc, calcium, magnesium |
+
+## Organic acid tests
+
+getbased treats the laboratory product as part of an organic-acid marker's identity. A metabolite with the same name can therefore remain separate across **Mosaic OAT**, **Mosaic MOAT**, **Metabolomix+**, and another laboratory's OAT instead of sharing one chart or deletion history.
+
+| Product | Result organization |
+|---|---|
+| **Mosaic OAT** | Yeast/fungal, bacterial, Clostridia, oxalate, glycolytic, mitochondrial, neurotransmitter, pyrimidine/folate, ketone/fatty-acid oxidation, nutritional, detoxification, amino-acid, mineral, and fluid-intake sections |
+| **Mosaic MOAT** | Yeast/fungal, bacterial, Clostridia, additional indicators, and fluid intake |
+| **Metabolomix+** | The Genova-specific categories listed above, including optional fatty acids and elements |
+| **Other OAT products** | Laboratory-scoped categories derived from the product name and the report's sections |
+
+Reference ranges are always taken from the imported report because they can vary by product, method, and patient context. Re-importing a recognized product uses its stable product-specific marker keys so results from different dates build one history for that product.
+
+<Tip>
+  Check the product group in the import preview before confirming. If an unfamiliar OAT report does not clearly print a laboratory or product name, getbased uses a generic **Organic Acids** group rather than guessing that it is Mosaic or Genova.
+</Tip>
 
 ## BioStarks
 
@@ -128,8 +150,8 @@ If your specialty lab is not in the table above, the AI still extracts all resul
 
 These are created during import — no manual setup required. Specialty categories appear under collapsible group headers, and the collapse state is remembered across sessions.
 
-If you import the same test type again later, markers are matched to the existing definitions for trend tracking across results.
+If you import the same test and product again later, markers are matched to the existing definitions for trend tracking across results.
 
 <Warning>
-  Use the same AI model for all imports of a given specialty test type. Different models may generate different internal marker keys for the same test, which breaks trend tracking across dates. See the AI Providers guide for details on model consistency.
+  Recognized Mosaic OAT, Mosaic MOAT, and Metabolomix+ reports are normalized to stable product-specific keys after AI extraction. For unsupported specialty panels, using the same AI model and a consistent laboratory name still improves mapping consistency. Always review unfamiliar marker mappings before confirming.
 </Warning>

@@ -125,7 +125,7 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 
 | Surface | Where | What it does |
 |---|---|---|
-| **PDF lab import** | Drop a PDF on the dashboard or sidebar | Extracts text → obfuscates PII (regex + optional local-AI streaming sanitizer) → AI parses values + maps to schema markers. Specialty labs (OAT, fatty acids) flow through the custom-marker path. |
+| **PDF lab import** | Drop a PDF on the dashboard or sidebar | Extracts text → obfuscates PII (regex + optional local-AI streaming sanitizer) → AI parses values + maps to schema markers. Specialty labs then pass through deterministic product-aware normalization before custom-marker persistence. |
 | **Built-in model test** | Settings → Data → Test models on lab reports | Runs the production PDF parser against a synthetic 68-result reference report, preserving raw model output so deterministic scoring can compare it with the verified answer key. |
 | **Photo lab import** | Same drop-zone, accepts JPG / PNG / HEIC | Vision-extract path — same downstream as PDF, but starts from a phone snap of a printed lab report. |
 | **Custom-marker suggestion (from PDF)** | Inside the PDF import flow | When a parsed value can't be matched to a known marker, AI suggests a key + name + unit + reference range based on the surrounding PDF context. |
