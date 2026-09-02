@@ -174,56 +174,78 @@ The browser encrypts before upload, but the service still observes ordinary conn
 
 Cross-device sync uses a **relay** — a blind store-and-forward server that holds encrypted blobs. The relay never sees your plaintext data. By default, getbased connects to `wss://sync.getbased.health`. You can run your own.
 
+These instructions target [getbased-relay v2.0.0](https://github.com/elkimek/getbased-relay/releases/tag/v2.0.0). The v2 line uses Evolu 8 and adds replay-protected compaction plus an owner-proof verifier for the separate Agent Access context gateway.
+
 <Steps>
-  <Step title="Clone the relay">
-    [getbased-relay](https://github.com/elkimek/getbased-relay) wraps Evolu's sync protocol with configurable quotas, health checks, metrics, and owner-signed storage recovery.
+  <Step title="Clone a released relay">
+    Clone the repository and check out the immutable release tag:
 
     ```bash
     git clone https://github.com/elkimek/getbased-relay
     cd getbased-relay
+    git checkout v2.0.0
     ```
 
     Review `docker-compose.yml` before starting it. In particular, set `QUOTA_PER_OWNER_MB` to the encrypted-history allowance you want each Sync identity to have.
   </Step>
 
-  <Step title="Start the relay">
+  <Step title="Create the private verifier configuration">
+    The supplied Compose stack starts both the Evolu relay and the Agent Access context gateway. They share a private verifier socket and require a random internal credential.
+
     ```bash
-    docker compose up -d --build
+    cp .env.example .env
+    openssl rand -hex 32
     ```
 
-    The default compose file starts the WebSocket relay on port `4000`, the loopback-only owner self-service API on port `4003`, and persists the SQLite database in a Docker volume.
+    Paste the generated value into `.env` as `CONTEXT_VERIFIER_TOKEN`. Keep it private: it authenticates only the gateway-to-relay verifier call and is not an Evolu mnemonic, owner key, or Agent Access read token.
+  </Step>
+
+  <Step title="Start and verify the stack">
+    ```bash
+    docker compose up -d --build
+    docker compose ps
+    docker compose exec relay node -e "fetch('http://127.0.0.1:4002/health').then(async r => console.log(await r.text()))"
+    ```
+
+    Both `relay` and `context-gateway` should become healthy. The default Compose file binds the WebSocket relay to host loopback port `4000`, the context gateway to loopback port `4001`, and owner self-service to loopback port `4003`. Relay administration stays container-only on port `4002`.
+
+    Persistent state lives in separate relay-data and context-data volumes. The verifier uses a private socket volume; it does not expose owner keys or a public TCP listener.
   </Step>
 
   <Step title="Add TLS with Caddy">
     Install [Caddy](https://caddyserver.com/) and create `/etc/caddy/Caddyfile`:
 
-    ```
+    ```caddyfile
     sync.yourdomain.com {
+        handle /api/* {
+            reverse_proxy 127.0.0.1:4001 {
+                header_up X-Getbased-Client-IP {http.request.remote.host}
+            }
+        }
+
         handle /self/* {
             reverse_proxy 127.0.0.1:4003
         }
 
         handle {
-            reverse_proxy 127.0.0.1:4000 {
-                transport http {
-                    versions h1
-                }
-            }
+            reverse_proxy 127.0.0.1:4000
         }
     }
     ```
 
-    The `versions h1` directive is required — WebSocket upgrades need HTTP/1.1. Restart Caddy:
+    The `/api/*` route serves Agent Access and must overwrite `X-Getbased-Client-IP` from the actual connection peer so callers cannot choose their own rate-limit identity. `/self/*` serves owner-signed storage and compaction requests. The remaining path carries the Evolu WebSocket connection; Caddy handles the upgrade automatically.
+
+    Restart Caddy:
 
     ```bash
     systemctl restart caddy
     ```
 
-    Caddy provisions a TLS certificate via Let's Encrypt automatically.
+    Caddy provisions a TLS certificate automatically.
   </Step>
 
   <Step title="Point DNS">
-    Add an A record for `sync.yourdomain.com` pointing to your server's IP address.
+    Add an A or AAAA record for `sync.yourdomain.com` pointing to your server.
   </Step>
 
   <Step title="Point getbased at your relay">
@@ -232,11 +254,19 @@ Cross-device sync uses a **relay** — a blind store-and-forward server that hol
 </Steps>
 
 <Info>
-  A small Linux VPS with 1 CPU, 1 GB RAM, Docker, persistent storage, and a domain with TLS is sufficient for a personal relay. Monitor disk usage and keep regular backups of the relay volume.
+  The v2.0.0 Docker image pins Node.js 24.20.0 and installs `@evolu/common` 8.9.0 with `@evolu/nodejs` 3.2.0. A native, non-Docker deployment requires Node.js 24.20.0 or newer. Browser and relay adapters use independent package version streams; exact package numbers do not need to match, but they must share a supported Evolu protocol generation.
+</Info>
+
+<Info>
+  A small Linux VPS with 1 CPU, 1 GB RAM, Docker, persistent storage, and a domain with TLS is sufficient for a personal relay. Monitor disk usage and keep regular backups of both persistent data volumes.
 </Info>
 
 <Warning>
-Do not expose the admin port or SQLite database volume publicly. Route `/self/*` through the same TLS hostname as the WebSocket relay; those endpoints verify owner signatures and let the app report or rebuild only the caller's own encrypted history.
+  Before a major relay upgrade, record the current release and image, stop the stack, and back up the relay-data volume, context-data volume, and deployment configuration. Verify the archives before starting the new image. A safe rollback can require restoring the matching data backup; changing only the container image is not guaranteed to reverse an on-disk migration.
+</Warning>
+
+<Warning>
+  Do not expose the admin port, verifier socket, or database volumes publicly. Route `/api/*` and `/self/*` through the same TLS hostname with the boundaries shown above.
 </Warning>
 
 ## Local AI with a self-hosted instance
