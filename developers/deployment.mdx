@@ -5,7 +5,7 @@ description: "Production build, hosted service boundaries, self-host variables, 
 
 # Deployment
 
-The current official deployment separates the static browser app from two narrow VPS services. Vercel still builds and serves the app, compatibility redirects, diagnostics, and bounded transition adapters, but current official clients do not send wearable/CAMS traffic or new profile shares through the static app host.
+The current official deployment separates the static browser app from several narrow, independently deployed VPS services. Vercel still builds and serves the app, compatibility redirects, diagnostics, and bounded transition adapters, but current official clients do not send wearable/CAMS traffic or new profile shares through the static app host. Cross-device Sync and Agent Access use the dedicated relay stack.
 
 ## Production build
 
@@ -39,11 +39,30 @@ With no URL, the script accepts an existing readable catalog or copies the publi
 | `app.getbased.health` | Browser application, build identity, compatibility routes | Static files and ordinary request metadata |
 | `integrations.getbased.health` | Narrow compatibility endpoint at `/api/proxy` | Transient provider credentials/responses for approved operations; no intentional payload logging or persistence |
 | `shares.getbased.health` | Opaque encrypted profile envelopes at `/api/share` | Ciphertext plus expiry, deletion, abuse-control, and connection metadata; never the share password or profile plaintext |
-| `sync.getbased.health` | Evolu encrypted sync relay | Encrypted sync records and operational metadata |
+| `sync.getbased.health` | Evolu encrypted sync, owner self-service, and encrypted Agent Access context gateway | Encrypted sync records and Agent Context envelopes; owner/token mappings, quotas, and ordinary operational metadata |
 | `docs.getbased.health` | Mintlify documentation | Public documentation only |
 
 `js/proxy-runtime.js` routes official hosts to the integrations service and independent self-hosts to same-origin `/api/proxy`. `js/profile-share.js` routes current `vps1_...` links from official hosts directly to the share service while older IDs and self-hosted links remain same-origin.
 
+## Sync relay stack
+
+The operated sync stack is deployed from immutable [getbased-relay](https://github.com/elkimek/getbased-relay) release tags. Relay v2.0.0 uses `@evolu/common` 8.9.0, `@evolu/nodejs` 3.2.0, and a Docker image pinned to Node.js 24.20.0. Evolu source is installed from the locked npm dependencies; it is not vendored into the relay.
+
+The browser app and relay use independent adapter packages and version streams. The app currently uses `@evolu/common` 8.7.0 with `@evolu/web` 3.1.0, while the relay uses the versions above. They share the Evolu 8 protocol generation; matching package numbers are neither expected nor required. The app's `Sync compatibility` workflow pins the exact relay release commit and exercises both the Evolu 8 default client and the temporary Evolu 7 rollback client against a disposable real relay.
+
+The public TLS origin routes three surfaces while keeping private administration off the network:
+
+| Route | Internal destination | Boundary |
+|---|---:|---|
+| WebSocket fallback | Relay `:4000` | Encrypted Evolu CRDT traffic |
+| `/self/*` | Relay self-service `:4003` | Owner-signed storage reads and replay-protected compaction |
+| `/api/*` | Context gateway `:4001` | Encrypted Agent Context reads and writes |
+| Admin health/metrics | Container-only relay `:4002` | Operator access; never publicly routed |
+| Owner-proof verifier | Private Unix socket | Gateway receives only a yes/no proof result; no owner-key export |
+
+The reverse proxy must overwrite the gateway's dedicated client-IP header from the real connection peer. It must not trust a caller-supplied value. The relay database and context store use separate persistent volumes, and the gateway mounts only the verifier socket—not the relay database.
+
+Before a relay major upgrade, record the current release and image, stop the stack, and create verified backups of both data volumes and the deployment configuration. Keep the previous images available. Rollback may require restoring the matching data backup rather than changing only the image.
 ## Vercel routes that remain
 
 | Route | Current role |
