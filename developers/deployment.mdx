@@ -63,6 +63,7 @@ The public TLS origin routes three surfaces while keeping private administration
 The reverse proxy must overwrite the gateway's dedicated client-IP header from the real connection peer. It must not trust a caller-supplied value. The relay database and context store use separate persistent volumes, and the gateway mounts only the verifier socket—not the relay database.
 
 Before a relay major upgrade, record the current release and image, stop the stack, and create verified backups of both data volumes and the deployment configuration. Keep the previous images available. Rollback may require restoring the matching data backup rather than changing only the image.
+
 ## Vercel routes that remain
 
 | Route | Current role |
