@@ -101,7 +101,7 @@ In **Settings → Voice → Connections → OpenAI-compatible local server**, en
 
 Choose **Same as chat** to reuse OpenRouter, PPQ, or Venice when the active provider is connected in **Settings → AI**. You can also select one of those providers explicitly for voice. OpenRouter exposes compatible transcription and speech model choices; PPQ and Venice use their supported audio endpoints and voice catalogs.
 
-Routstr, Custom API, and Local AI do not currently supply the automatic voice path. **Same as chat** falls back to the browser models for those providers. To use your own compatible audio endpoint, select **Local voice server** separately.
+Routstr, Custom API, Local AI, and **CLI agents** do not currently supply the automatic voice path. **Same as chat** falls back to the browser models for those providers, even if a different cloud AI account is saved. CLI image support does not imply audio support. To send audio to another provider or compatible endpoint, choose that voice service explicitly; to use your own endpoint, select **Local voice server** separately.
 
 Expand the provider under **Settings → Voice → Connections**, paste a voice API key, then click **Save key** and **Test connection**. Refresh the voice list before choosing a hosted voice.
 

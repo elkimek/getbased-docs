@@ -31,6 +31,21 @@ getbased loads native ES modules during local development. Production deployment
 
 The quick local server loads source modules directly, so this path needs no `npm install` or compile step. Production deployments install dependencies and run `node scripts/build-production.mjs`; Vercel does this through the repository's existing build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
 
+## Optional CLI Companion
+
+The hosted app and self-hosted app both support [CLI agents](/guides/cli-agents). The Companion must run on the **browser user's computer**, not merely on a remote server hosting getbased. A static website cannot launch it.
+
+For development with the generated Companion download and normal lifecycle setup, use an application checkout with dependencies:
+
+```sh
+npm ci
+npm run dev-server -- 8000
+```
+
+This npm command builds the Companion bundle before starting the development server. Keep the same browser origin (including `localhost` versus `127.0.0.1` and port) to use existing local data. If port 8000 is occupied, stop your previous server normally; starting on another origin does not migrate its browser storage.
+
+For an independently running source Companion, use `npm run companion`. For login startup, use `npm run companion:install`. The public download runs with Node.js 20+ without a source checkout. A self-hosted HTTPS page outside the official allowlist needs its exact origin in the Companion's `GETBASED_AGENT_HOST_ALLOWED_ORIGINS`; never expose the loopback listener publicly to solve connection failures. See [Companion operation and security](/developers/cli-agent-providers#build-and-operate).
+
 ## Wearable OAuth apps
 
 The OAuth `client_id` values baked into the app belong to the maintainer's registered apps, which are authorized for `*.getbased.health` redirect URIs only. If you self-host under a different domain, the provider returns `invalid_client` when the bundled credentials are paired with your redirect URI.

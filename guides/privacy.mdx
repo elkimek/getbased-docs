@@ -39,12 +39,16 @@ Scanned PDFs, photos, and screenshots use image mode. Page images are sent to th
 Even with PII obfuscation active, the prepared text is sent to your configured AI provider. If you want the import to stay on one device, use loopback endpoints such as `localhost`, `127.0.0.1`, or `[::1]` with downloaded models for both the PII step and the main AI provider, and avoid image mode unless you have redacted the image yourself.
 </Note>
 
+## Original chat images
+
+For original **chat attachments**, the current path preserves the file bytes, including any EXIF metadata. Remove metadata and redact visible identifiers yourself before sending. This is distinct from PDF text obfuscation and from separately prepared image-import paths. Chat history retains thumbnails rather than full-resolution originals.
+
 ## Meal photos and nutrition estimates
 
 Meal-photo and nutrition-label analysis has a separate image boundary:
 
 - selected full-size images remain in memory until you choose analysis;
-- getbased sends them directly to the image-capable provider/model shown in the meal editor;
+- getbased sends them to the image-capable route shown in the meal editor: directly to an API/local-model endpoint, or through Companion for a supported local CLI;
 - cloud recipients require recipient-specific approval before the first meal request;
 - full-size images are not saved by getbased, added to Sync, or included in exports; and
 - a reviewed meal may store a small 240 px thumbnail plus bounded image metadata.
@@ -157,6 +161,14 @@ The share service can observe ordinary connection metadata and stores a keyed ab
 Anyone who has both the link and the password can import the shared profile until the link expires or you stop sharing it. See [Profile sharing](/guides/profile-sharing) for the full workflow and limitations.
 
 ## Agent Access
+
+### CLI providers are a separate connection
+
+**Settings → AI → CLI agents** sends your message and enabled health context through a loopback Companion to your chosen agent. The model may still be cloud-hosted. Local execution receives bounded getbased read/navigation/proposal tools, with profile/source checks and explicit **Apply** before health-data writes. A personal gateway receives the enabled chat snapshot but not the local tool credential; its own memory, tools, and retention policy remain under your gateway configuration.
+
+Hosted discovery credentials authorize chat only, not installing, pausing, updating, or uninstalling programs. Your agent's login stays under its own local configuration. Uploaded images use private temporary Companion storage and are cleaned up after a turn/cancellation; that does not promise deletion from the upstream agent/provider. Automatic voice stays on-device for CLI chat unless you explicitly choose another voice service. See [CLI agents](/guides/cli-agents).
+
+### Relay sharing
 
 Agent Access is opt-in and separate from cross-device sync. When enabled, your browser encrypts a compact agent context with `GETBASED_AGENT_CONTEXT_KEY`, then pushes only the encrypted envelope to the context gateway. `GETBASED_TOKEN` authorizes relay reads, but it is not the decryption key. Your local MCP client fetches the ciphertext and decrypts it locally. See [Connect getbased to external AI assistants](/guides/agent-access) for setup and revocation.
 

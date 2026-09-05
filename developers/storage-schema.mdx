@@ -19,7 +19,12 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | Key | Type | Purpose |
 |---|---|---|
 | `labcharts-profiles` | JSON array or passphrase ciphertext | Profile index: `[{ id, name, createdAt }]`; sensitive when passphrase protection is enabled |
-| `labcharts-ai-provider` | string | Active AI provider: `'openrouter'` \| `'routstr'` \| `'ppq'` \| `'venice'` \| `'ollama'` |
+| `labcharts-ai-provider` | string | Active AI provider: `'openrouter'` \| `'routstr'` \| `'ppq'` \| `'venice'` \| `'custom'` \| `'ollama'` \| `'codex-agent'` (CLI source; the UI tab is `cli`) |
+| `labcharts-chat-backend` | string | Direct versus CLI chat backend; use `agent-chat-settings.js` accessors rather than inferring from a saved API key |
+| `labcharts-agent-host-*` | device-scoped configuration/protected credential | Companion connection and agent/target model/effort selections; not portable CLI authentication |
+| `labcharts-agent-model-catalog-*` | cached metadata | Capability catalog owned by the exact agent and execution target; invalidate on target changes |
+| `labcharts-chat-panel-width`, `labcharts-chat-rail-width` | number string | Device-local desktop dimensions, clamped when applied |
+| `labcharts-chat-reasoning-effort-v1:{provider}:{model}` | string | Direct/local-model effort preference, with encoded provider/model components; CLI preferences use agent/target accessors instead |
 | `labcharts-openrouter-key` | protected string | OpenRouter API key; `d1:` device envelope without a passphrase or passphrase ciphertext when enabled |
 | `labcharts-routstr-key` | protected string | Routstr node session key; same credential-wrapping rule |
 | `labcharts-routstr-node` | string | Selected Routstr node URL (from Nostr discovery) |
@@ -75,7 +80,7 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-{profileId}-chatPersonalityDeleted` | JSON map (may be encrypted) | Persona deletion tombstones: `{ [customPersonaId]: deletedAtMs }` |
 | `labcharts-{profileId}-chatRailOpen` | string | `'true'` \| `'false'` — chat thread rail visibility |
 | `labcharts-{profileId}-chat` | JSON (may be encrypted) | Legacy chat history (migrated to threads on first load) |
-| `labcharts-{profileId}-chat-threads` | JSON array (may be encrypted) | Thread index with timestamps/count, persona, discussion state, and optional fork-source metadata |
+| `labcharts-{profileId}-chat-threads` | JSON array (may be encrypted) | Thread index with timestamps/count, persona, discussion state, optional fork-source metadata, bounded `projectName`, and `pinned`; projects use this index, not a separate plaintext store |
 | `labcharts-{profileId}-chat-t_{id}` | JSON array (may be encrypted) | Per-thread normalized user/assistant messages and persisted metadata |
 | `labcharts-{profileId}-chatDraft_{id}` | string (may be encrypted) | Device-local unsent composer text for one thread; excluded from Sync and backups |
 | `labcharts-{profileId}-contextHealth` | JSON | Cached AI health dots: `{ dots, summaries, fingerprints }` |
@@ -634,7 +639,7 @@ Each snapshot record:
 
 Maximum 5 snapshots are kept per profile. The oldest is pruned automatically on each new backup.
 
-Unsent `chatDraft_*` records are intentionally absent from full database, auto, folder, and single-profile backups. Sent conversations and custom personas are included.
+Unsent `chatDraft_*` records are intentionally absent from full database, auto, folder, and single-profile backups. Sent conversations, their project membership, and custom personas are included. Original chat images are not retained as a recoverable attachment archive; normalized thumbnails can be persisted. Agent executable installations and login state belong to the local agent/Companion and must be reconnected on another machine.
 
 ## Encryption and credential envelopes
 

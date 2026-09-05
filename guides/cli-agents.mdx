@@ -1,0 +1,96 @@
+---
+title: "Use an installed AI agent"
+sidebarTitle: "CLI agents"
+description: "Connect an installed agent through getbased Companion, choose models, and understand local and personal-gateway limits."
+---
+
+Use Codex, OpenCode, Hermes, Grok Build, or OpenClaw to answer inside getbased. The agent runs through a small program on your computer called **getbased Companion**. It uses the agent's existing configuration and sign-in; you do not paste that account's credentials into getbased.
+
+**CLI agents** is a provider option in **Settings → AI**. It is different from **Local**, which connects to model servers such as Ollama and LM Studio, and from [Agent Access](/guides/agent-access), which shares encrypted context with an assistant outside getbased.
+
+<Warning>
+Running an agent locally does not mean its model runs locally. The agent may send your message, enabled health context, and attachments to its configured cloud provider. Your provider's account, billing, usage limits, and policies still apply. This integration does not grant a subscription or bypass its restrictions.
+</Warning>
+
+## Connect from the hosted app
+
+You can keep using [the hosted app](https://app.getbased.health); you do not need to run a second copy of getbased or move your data to localhost.
+
+1. Install **Node.js 20 or later** and a supported agent on the same computer as your browser. Complete the agent's own sign-in and confirm it works outside getbased.
+2. Open **Settings → AI → CLI agents**. With no Companion running, choose **Copy connection command**.
+3. Review and run the command in Terminal on Linux/macOS or PowerShell on Windows. It downloads the Companion from the getbased site and runs it for that terminal session. It does not require a repository checkout or npm installation.
+4. Return to getbased and choose **Check connection**. Allow local-network access if your browser asks.
+5. Enable an available agent, then choose its execution target, model, and supported reasoning setting. Click the active agent's heading to collapse or reopen its options without deselecting it.
+
+A website cannot scan your installed programs or launch a stopped program by itself. Agent detection comes from the running Companion. **Installed**, **sign-in required**, **unavailable**, and **ready** are different states; a missing model catalog is not proof that an agent is usable.
+
+## Run temporarily or start at login
+
+The connection command is enough for temporary use. Keep its terminal open; closing it stops that temporary Companion. You do not have to install a desktop application.
+
+For automatic startup, use the downloaded bundle's `install` command:
+
+```sh
+node getbased-companion.mjs install
+```
+
+Run this from the directory containing the downloaded file, or supply its actual path. Use a trusted bundle from your getbased deployment, not a script from an unrelated site. The installer uses a current-user systemd service on Linux, LaunchAgent on macOS, or scheduled task on Windows. It does not require administrator access. Linux needs a working systemd user session.
+
+The same file supports `start`, `stop`, `restart`, `status`, and `uninstall`. Uninstall removes the service and runtime, but retains private pairing state for a later reinstall. It does not uninstall your agents or delete your getbased profile.
+
+<Note>
+Hosted browser discovery authorizes chat, not installation or lifecycle changes. Use the terminal to manage that Companion. Installation-authorized local development connections may show **Start automatically**, **Pause**, **Resume**, **Reconnect CLIs**, **Restart companion**, **Check for update**, and **Uninstall** in Settings. The downloadable headless Companion does not include a native tray icon.
+</Note>
+
+**Reconnect CLIs** resets the agent subprocess connections. **Restart companion** restarts the installed service. Neither replaces an outdated bundle: use the displayed one-time update command when getbased says **Update required**. A completely stopped Companion must be started outside the browser.
+
+## Choose models and reasoning
+
+Settings and the picker beside the chat microphone use the active provider's catalog. Search by model name; multi-provider agents can group models by their advertised provider. Switching agents and returning restores each agent's saved choices. Targets such as a personal gateway have separate selections.
+
+Only reported reasoning controls are offered. The scale runs from less to more effort; **Default** leaves the decision to the agent/model. Changing getbased's supported session setting does not require editing your global CLI configuration. Hermes local ACP currently inherits its own reasoning configuration because it does not expose a session-scoped effort control.
+
+An advertised model is not a guarantee of account entitlement. Refresh the catalog if a model is missing or fails, then check the agent's account and configuration. getbased excludes explicitly unavailable entries, but some providers report entitlement errors only when a request is made.
+
+## Connect a personal gateway
+
+Hermes and OpenClaw can offer a personal execution target as well as local execution. Choose it explicitly under the active agent's execution options.
+
+- **Hermes:** supported connections and profiles are discovered from Hermes Desktop. The Companion uses supported stored token authentication without exposing the gateway URL or secret to the browser. OAuth, encrypted Desktop credentials, and SSH-only connections are not automatically transferable.
+- **OpenClaw:** the personal target uses the gateway and default agent configured in OpenClaw.
+
+Personal targets preserve the gateway's own identity, memory, tools, and approval policy. They receive the enabled health-context snapshot with your chat message, but **do not receive getbased's local structured tools**. They are currently **text-chat only**: no image imports or background feature jobs. Resolve requests for external approvals or credentials in the agent's own application.
+
+Gateway catalogs are authoritative; getbased highlights the current/default model rather than mixing in generic recommendations from unrelated providers.
+
+## What works through an agent?
+
+| Task | Local agent execution | Personal gateway |
+|---|---|---|
+| Chat with enabled profile context | Yes | Yes |
+| Search the web | Depends on the adapter and agent | Depends on gateway configuration |
+| Exact health lookups and Knowledge Base search | Through scoped getbased tools | No local tool bridge |
+| Open supported getbased views | Through navigation tools | No local tool bridge |
+| Propose notes, meals, biometrics, supplements, or medications | Reviewable **Apply / Discard** cards | No local tool bridge |
+| Text-based AI features and report interpretation | When the selected route declares support | Not supported |
+| Photos and image-based imports | Only with advertised image support | Not supported |
+| Dictation and spoken replies | Separate getbased voice service | Separate getbased voice service |
+
+Local OpenClaw is currently text-only. Other adapters' image support depends on the discovered agent and model. **Follow chat assistant** in feature-model settings follows the selected CLI route; it does not silently use a previously selected cloud provider when that route cannot do the task.
+
+The agent can propose health-data changes, but only your **Apply** action saves them. Check values and units before applying a proposal or confirming an import. **Pause AI** stops both direct-provider and CLI-backed AI routes.
+
+Automatic voice stays **On this device** for CLI chat. To send audio to a cloud or compatible-server voice service, select that service explicitly in [Voice settings](/guides/voice).
+
+## Troubleshooting
+
+- **Companion not running:** run the connection command, or `start` for an installed service. Running only the hosted website is not enough.
+- **Update required:** replace/update the bundle; restarting the same old file cannot add missing capabilities.
+- **Agent installed but not ready:** finish sign-in in the agent, check its account access, then refresh discovery. Do not share sign-in files or pairing tokens in bug reports.
+- **Model or reasoning unavailable:** refresh the selected target's catalog. Use a supported value or its default; do not assume another agent's controls apply.
+- **Images unavailable:** select an image-capable local agent/model or another image-capable feature route. PDFs dropped into chat enter the reviewed import workflow, not an arbitrary agent filesystem.
+- **Hosted page cannot connect:** check the browser's local-network permission and firewall. Companion listens only on loopback; do not expose its port to the internet. A custom self-hosted origin needs explicit configuration described in [the developer guide](/developers/cli-agent-providers).
+
+Claude Agent is deliberately absent from default discovery. The retained operator-only adapter requires an explicit Console/API configuration; self-hosting alone does not enable consumer subscription use. See [the release gate](/developers/cli-agent-providers#claude-agent-release-gate).
+
+The Companion source is part of the [getbased application repository](https://github.com/elkimek/get-based), not a separate required product.

@@ -7,6 +7,8 @@ AI provider code touches health context, API keys, browser transport, private TE
 
 ## Provider map
 
+CLI agents are a distinct backend, not another `/chat/completions` endpoint. See [CLI agent provider internals](/developers/cli-agent-providers) for the Companion, structured tools, gateways, and lifecycle authorization.
+
 | Provider | Main path | Notes |
 |---|---|---|
 | OpenRouter | direct API / OAuth token | PKCE/state validation for OAuth; supports web search where model/provider allows |
@@ -18,6 +20,12 @@ AI provider code touches health context, API keys, browser transport, private TE
 | Local AI | direct browser request to a compatible endpoint | endpoint can be loopback, LAN, remote, or cloud-tagged; Ollama, LM Studio, and Unsloth Studio have identified adapter capabilities |
 
 ## Core modules
+
+The shared chat model picker (`chat-model-controls.js`, `chat-model-preferences.js`) follows the active provider and privacy mode immediately. Recommended groups are scoped to that catalog, not merged with other saved providers. `reasoning-capabilities.js` normalizes explicit reasoning metadata and narrow documented fallbacks; unsupported models must not get an invented effort control. The same selection is carried inside attested private transports when supported.
+
+OpenRouter supplies per-model controls, Venice supplies reasoning metadata, and PPQ/Routstr/Custom retain supported compatible metadata. Ollama and LM Studio can expose native thinking controls. Jan, Unsloth Studio, llama.cpp, and other compatible endpoints only get controls their metadata/serving contract supports. Built-in reasoning is not evidence of configurable effort.
+
+For non-chat feature calls use `ai-feature-routing.js` so CLI selection, global pause, text/image capability, and no-silent-fallback behavior remain consistent. Keep direct transport functions in the API modules; do not implement a second CLI dispatcher per feature.
 
 | Module | Role |
 |---|---|

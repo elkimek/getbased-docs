@@ -9,6 +9,8 @@ This page documents the instructions behind ordinary chat and the smaller AI tas
 
 ## Request composition
 
+CLI-backed chat uses the same enabled health-context baseline with an adapter-specific instruction envelope in [`agent-chat-context.js`](https://github.com/elkimek/get-based/blob/main/js/agent-chat-context.js). Local execution also declares the scoped tool contract from [`agent-tool-contract.js`](https://github.com/elkimek/get-based/blob/main/shared/agent-tool-contract.js). The agent may read approved context, navigate allowlisted views, or propose a reviewed change; instructions are not a substitute for runtime permission checks. Personal gateways receive the context snapshot but not the local tool credential. See [the complete routing boundary](/developers/cli-agent-providers#turn-and-data-flow).
+
 The system instruction for a normal chat turn is assembled in this order:
 
 ~~~text

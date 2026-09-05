@@ -164,6 +164,8 @@ For CAMS, set `UVDATA_UPSTREAM` explicitly on an independent self-host or choose
 
 ## Local development
 
+The production build also emits `getbased-companion.mjs` for the CLI-provider bootstrap. Serve that artifact alongside the app, but run Companion on each browser user's machine, not on the public web server. Hosted discovery grants chat-only credentials; the current service deliberately reserves lifecycle controls for installation-authorized local connections. Custom page origins require an explicit Companion allowlist. See [CLI agent build and security](/developers/cli-agent-providers#build-and-operate).
+
 `node dev-server.js` serves source modules and mirrors same-origin APIs:
 
 | Path | Behavior |

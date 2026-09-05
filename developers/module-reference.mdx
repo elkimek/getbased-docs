@@ -886,7 +886,9 @@ Chat public barrel and startup entry point. Importing this module installs `chat
 - `askAIAboutCorrelations()` — re-exported from `chat-marker-prompts.js`; opens chat with a selected-marker correlation prompt
 - Thread management: `createNewThread()`, `loadThread(id)`, `deleteThread(id)`, `renameThread(id)`
 
-**Window exports:** `sendChatMessage`, `setChatPersonality`, `openChatPanel`, `closeChatPanel`, `createNewThread`, `loadThread`, `deleteThread`, `renameThread`, `generateCustomPersonality`, `saveCustomPersonality`, `askAIAboutMarker`, `addImageAttachment`, `toggleHDMode`
+**Window exports:** `sendChatMessage`, `setChatPersonality`, `openChatPanel`, `closeChatPanel`, `createNewThread`, `loadThread`, `deleteThread`, `renameThread`, `generateCustomPersonality`, `saveCustomPersonality`, `askAIAboutMarker`, `addImageAttachment`. The original-resolution attachment flow replaces the old HD toggle.
+
+The v1.19.0 workspace adds `chat-layout.js` for resizing, `chat-model-controls.js` and `chat-model-preferences.js` for the provider-scoped model/effort picker, `chat-thread-list-view.js` for project/list markup, and `chat-message-avatars.js` for sender identity. Project persistence stays in the thread index. [CLI agent providers](/developers/cli-agent-providers#architecture-and-ownership) lists the separate Companion and agent-tool module owners.
 
 ---
 
