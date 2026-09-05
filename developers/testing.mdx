@@ -28,6 +28,10 @@ Use the matching `:build` command after editing authoring modules, then run the 
 
 ## The assert pattern
 
+For CLI-provider and chat-workspace changes, cover the [Companion verification checklist](/developers/cli-agent-providers#verification-checklist) and [chat ownership checks](/developers/chat-internals#change-scoped-verification). Test discovery-only versus installation-authorized credentials separately, unavailable models/targets, canceled uploads, profile switches before the first token, and source-toggle enforcement in tools. Use mocks for routine CI rather than real health records or paid inference. Native OS service installation and OS file dragging require separate platform checks.
+
+Cold-load budgets measure source-mode requests, compressed transfer, and decoded bytes; they are distinct from production chunk budgets. `cold-load-budget.spec.js` attaches the per-resource inventory for attribution. Record any deliberate feature cost explicitly instead of removing assertions or silently widening the budget. Exhaustive browser and combined-coverage runs belong in GitHub Actions, not an unapproved local full-matrix run.
+
 Browser-script fixture files define a local `assert` helper and collect results:
 
 ```js

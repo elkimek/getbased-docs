@@ -1,0 +1,111 @@
+---
+title: "CLI agent provider internals"
+sidebarTitle: "CLI agent providers"
+description: "Companion transports, adapter capabilities, profile-scoped tools, gateway boundaries, lifecycle authorization, and verification."
+---
+
+This contract documents the v1.19.0 implementation, Companion **1.2.2**, and browser protocol **5**. Capability declarations, not a version string alone, decide whether a route can execute a feature. The [user setup guide](/guides/cli-agents) covers installation and daily use.
+
+## Architecture and ownership
+
+The browser remains the health-data authority. A loopback Companion owns the agent processes and translates their native protocols into authenticated HTTP streams. This is not an OpenAI-compatible API shim and is not the separate [Agent Access relay](/developers/agent-access-relay).
+
+| Layer | Source owners in the application repository |
+|---|---|
+| Settings, setup commands, discovery UI | `js/settings-cli-agent-panel.js`, `js/agent-host-discovery.js` |
+| Connection and per-agent/target settings | `js/agent-chat-settings.js`, `js/agent-model-catalog.js` |
+| Chat transport and feature inference | `js/agent-chat-client.js`, `js/agent-chat-backend.js`, `js/agent-feature-inference.js` |
+| Capability-aware routing | `js/ai-execution-routing.js`, `js/ai-feature-routing.js`, `js/chat-backend-selection.js` |
+| Host and protocol | `server/agent-host-server.js`, `shared/agent-host-protocol.js`, `lib/agent-host-service.js` |
+| Tool schema and browser authority | `shared/agent-tool-contract.js`, `js/agent-tool-runtime.js`, `js/agent-tool-bindings.js`, `js/agent-drafts.js` |
+| Distribution and lifecycle | `bin/getbased-companion.js`, `scripts/build-companion-bundle.mjs`, `lib/companion-install.js`, platform installers, `lib/companion-runtime-control.js` |
+
+See [the source architecture note](https://github.com/elkimek/get-based/blob/main/docs/agent-chat-architecture.md) and [MODULE_MAP.md](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) for the full graph. Where older design prose differs from the current service authorization checks, the checks are authoritative.
+
+## Adapter boundaries
+
+| Adapter | Transport | Important boundary |
+|---|---|---|
+| Codex | `codex app-server` over stdio | Private home/thread store, copied CLI login state, dynamic getbased tools; shell, file, browser-control, plugin, and interactive permission surfaces disabled; hosted cached web search is separate |
+| OpenCode / Hermes / Grok Build | ACP sessions and a private turn-scoped MCP bridge | No client terminal/filesystem capabilities; permissions default to denial; only explicitly supported getbased tool permission requests can be allowed |
+| Claude Agent, opt-in | Non-interactive `stream-json` | Console/API auth gate, exact private MCP config, restricted permissions, temporary credential/instruction files |
+| OpenClaw local | Isolated `agent exec` | One-shot visible-history replay; text-only; temporary tool allowlist for web helpers and getbased MCP, no general shell/filesystem/session/messaging control |
+| Hermes personal | Authenticated gateway REST discovery and WebSocket chat | Exact gateway/profile target; separate getbased conversation session; gateway owns tools and approvals |
+| OpenClaw personal | Configured gateway through `openclaw agent` | Gateway identity, memory, and tools; isolated getbased session ID |
+
+Local image support must be reported by the adapter and selected model. Do not infer it merely from a familiar model name. Hermes ACP does not currently expose session-scoped reasoning; preserve its inherited setting rather than rendering a nonfunctional slider. OpenCode variants and other agents' reasoning catalogs are normalized only when advertised.
+
+Personal gateways receive bounded, enabled context in the chat instructions but no local MCP credential, structured tool bridge, image feature route, or background feature inference. Their tool policy cannot be constrained by the local adapter's allowlist. Unsupported approval, sudo, secret, or clarification requests fail with guidance to use the agent's own application.
+
+## Turn and data flow
+
+1. Snapshot profile, conversation, provider, execution target, model, and generation ownership.
+2. Verify connection, catalog availability, and the required text/image/structured-output capabilities before sending health data.
+3. Build the same bounded, user-enabled context snapshot used by direct chat. Local structured tools extend this snapshot; they do not replace it.
+4. Start or resume the adapter session and stream normalized text, activity, tool calls, completion, errors, and usage.
+5. Execute registered tools in the originating browser, checking that the originating profile is still active. Return only the bounded projection.
+6. Persist normalized messages, provider/agent metadata, session references where supported, and the context receipt. Include successful data-returning tools in that receipt, not failed or draft-only calls.
+
+The following tools form the current local bridge:
+
+| Access | Tools |
+|---|---|
+| Read | `getbased_lab_context`, `getbased_section`, `getbased_search_markers`, `getbased_marker_history`, `getbased_nutrition_summary`, `getbased_wearable_series`, `getbased_search_knowledge` |
+| Navigate | `getbased_navigate` — allowlisted views and marker details only |
+| Propose | `getbased_draft_note`, `getbased_draft_meal`, `getbased_draft_biometric`, `getbased_draft_supplement` |
+
+Drafts never commit through a tool call. The browser sanitizes the proposal, presents **Apply / Discard**, revalidates profile ownership on Apply, and uses existing sync-aware persistence helpers. There is no generic database write, raw IndexedDB/DOM access, arbitrary JavaScript, credential-reading, or shell tool.
+
+Source toggles apply to both baseline context and typed local reads. This deliberately differs from relay Agent Access's separately authorized full-context snapshot. A profile switch invalidates ongoing reads/navigation and stale async UI work. See [chat internals](/developers/chat-internals) for generation, search, import, and storage race guards.
+
+## Connection and lifecycle security
+
+- Bind only to loopback. Discovery probes the bounded port range **8324–8331**; an explicit operator port stays strict.
+- Official hosted origins and loopback development origins are allowlisted. Additional self-hosted origins require `GETBASED_AGENT_HOST_ALLOWED_ORIGINS` with exact, comma-separated origins. Never use a public bind or wildcard as a workaround.
+- Hosted discovery issues bounded, short-lived, origin-bound chat credentials. **These credentials cannot call lifecycle controls**, including pause/resume. `controlAuthorized: false` must remain visible to the UI's decision logic.
+- Installation controls require the persistent installation credential and the service's local/origin checks. Do not return that secret to hosted pages, transfer it across discovered endpoints, or equate advertised control capability with authorization.
+- The development server's private API peer check applies independently of its bind address. Its status probe uses numeric loopback and refuses redirects before sending the pairing token.
+- Executable updates use the fixed official HTTPS Companion bundle URL, refuse redirects, enforce a timeout and streamed size cap, and validate the candidate before replacement. Lifecycle operations reject active work where required. Updating and restarting are separate operations.
+- Images uploaded to `/v1/uploads` are authenticated, validated and bounded, placed in a private temporary workspace, and removed after the turn or cancellation. Session tool credentials are private and turn-scoped. Error responses must not serialize arbitrary CLI stderr, paths, or secrets.
+- File-size checks and reads use the same open descriptor; bounded reads loop to EOF with a sentinel byte past the cap. A single `read()` is not guaranteed to fill its buffer.
+
+Gateway non-loopback connections require HTTPS; loopback tunnels may use HTTP. Hermes Desktop credentials are consumed in the Companion, never returned to the browser. Unsupported encrypted, OAuth, or SSH credentials are not extracted or decrypted as a fallback. Native agent logs, remote memory, and retention remain under the selected agent/provider's policies.
+
+## Build and operate
+
+From an application checkout:
+
+```sh
+npm ci
+npm run dev-server -- 8000
+```
+
+The npm prehook builds the ignored single-file bundle; the development server owns its Companion and watches host-source changes. `npm run companion` runs a standalone source Companion; `npm run companion:install` builds and installs it for login startup. The production build also emits `getbased-companion.mjs` for hosted setup. Do not tell a hosted user to run an npm script without a checkout.
+
+The distributed file needs Node.js 20+. Linux uses a systemd user service, macOS a LaunchAgent, and Windows a least-privilege user scheduled task with a hidden launcher. Installation captures executable paths rather than relying on an interactive shell PATH. Windows command wrappers are validated and paths escaped. The headless bundle has no native tray GUI.
+
+`GETBASED_AGENT_HOST_PORT`, `GETBASED_AGENT_HOST_ALLOWED_ORIGINS`, and executable overrides are advanced operator controls, not required onboarding fields. Keep tokens out of examples, logs, issues, and command-line arguments. Do not synchronize machine-local host endpoints or credentials as portable agent account setup.
+
+### Claude Agent release gate
+
+Default discovery omits Claude Agent. The retained adapter requires `GETBASED_ENABLE_CLAUDE_AGENT=api-console` and official CLI authentication using `claude auth login --console`. The installer preserves that explicit operator opt-in. This is the implemented distribution gate, not legal clearance for third-party consumer-subscription routing; self-hosting alone does not waive provider terms. Preserve the gate unless the project's approval and distribution policy changes.
+
+## Models, feature routes, and voice
+
+Catalog ownership is the exact agent/target pair. Discard responses that arrive after either changes. Direct catalogs remain isolated by provider and privacy mode. Exclude explicit unavailable entries; do not promise entitlement for entries without an availability signal. Personal gateways highlight their current/default model rather than importing generic recommended families.
+
+`Follow chat assistant` resolves the current CLI route and its capabilities for feature labels and dispatch. Unsupported routes fail clearly instead of falling back to stale direct-provider settings. All affected features should use the feature dispatcher, not call the direct API facade unconditionally. Keep each feature's existing schema, consent boundary, review, and cancellation behavior.
+
+CLI adapters expose no standardized audio transport. Automatic STT/TTS falls back on-device for CLI chat and must not pick a different saved cloud provider. Explicit voice selections remain independent; only the resulting transcript enters the chat request.
+
+## Verification checklist
+
+Run change-scoped unit and browser tests locally; GitHub Actions owns the exhaustive browser/combined-coverage matrix. Do not run high-write suites without the repository's required approval.
+
+- Exercise discovery, origin restrictions, persistent versus discovery authorization, stale endpoints, old capabilities, occupied ports, and stopped-service recovery.
+- Test adapter catalog/target changes, unavailable models, effort persistence, image capability rejection, cancellation, and bounded upload cleanup without paid inference.
+- Test read/navigation profile binding, sanitized proposals and explicit Apply, history restoration, decryption failure, switching profiles during silent responses, and late search/import callbacks.
+- Verify startup resources separately from production bundle budgets and preserve measured per-resource diagnostics.
+- Before claiming platform readiness, perform actual Windows/macOS service lifecycle and native file-drop checks. Browser emulation and Linux tests are not substitutes.
+
+The merged CI result is a point-in-time release check, not proof that every upstream model entitlement, native installer, personal gateway, or future agent version behaves identically.

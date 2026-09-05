@@ -4,7 +4,9 @@ sidebarTitle: "AI providers"
 description: "Connect cloud, private-enclave, crypto-paid, custom, local, and remote compatible AI backends, then compare their lab-import accuracy and speed."
 ---
 
-getbased supports several AI provider paths for PDF import, meal-photo and nutrition-label analysis, chat, and dashboard AI features: OpenRouter, PPQ, Routstr, Venice, Custom API, and Local AI. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch between providers at any time in **Settings → AI** without losing any data. AI requests go directly from your browser to the selected provider or compatible endpoint; getbased does not retry them through its servers. Supported credentials are wrapped with a browser-specific device key when passphrase encryption is off and with your passphrase-derived key when it is on.
+getbased supports OpenRouter, PPQ, Routstr, Venice, Custom API, Local AI, and **CLI agents** for chat and supported AI features. Some providers also expose private or encrypted modes, such as PPQ Private TEE and Venice Encrypted TEE Mode. You can switch in **Settings → AI** without losing your data. Direct-provider requests go from the browser to the selected endpoint without a getbased relay fallback. CLI routes go through your local Companion to the selected agent or personal gateway. Supported browser credentials are wrapped with a device key when passphrase encryption is off and with your passphrase-derived key when it is on.
+
+Already use an installed agent? [Connect it through Companion](/guides/cli-agents). **Local** means a compatible model server; **CLI agents** means an agent harness with its own configuration and account. Neither label guarantees on-device inference.
 
 <Note>
 Voice uses a separate service chosen in **Settings → Voice**. **Same as chat** can reuse a connected OpenRouter, PPQ, or Venice account and otherwise falls back on-device. You can also select on-device voice, a compatible voice server, one of those AI accounts, xAI, or ElevenLabs independently from the provider that generates chat answers. See [Use voice in AI chat](/guides/voice).
@@ -42,6 +44,11 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
 ## Set up a provider
 
 <Tabs>
+  <Tab title="CLI agents">
+    Open **Settings → AI → CLI agents**, run the displayed **Copy connection command** on the same computer as your browser, and choose **Check connection**. Enable an available Codex, OpenCode, Hermes, Grok Build, or OpenClaw agent. Node.js 20+ and an installed, configured agent are required; the hosted app can use this connection without moving your data to localhost.
+
+    The Companion reuses the agent's existing sign-in. Models and supported reasoning choices are available in Settings and beside the chat microphone. Images and non-chat features require declared adapter/model capabilities; personal gateways are text-chat only. Read [CLI setup, automatic startup, privacy, and troubleshooting](/guides/cli-agents) before connecting.
+  </Tab>
   <Tab title="OpenRouter">
     OpenRouter is the easiest way to get started. It gives you access to 200+ models — Claude, GPT, Gemini, DeepSeek, Grok, Qwen, and more — with a single account. Pay with a card or USDC. Supports web search in chat.
 
@@ -270,16 +277,18 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
 
 ## Recommended models
 
-All providers show a tiered model dropdown with two groups:
+The Settings and chat model pickers scope choices to the active provider and privacy mode. Search is available for long catalogs. Supported catalogs show curated groups:
 
 - **Recommended** — the latest, most capable models for lab interpretation, sorted first
 - **Other** — all remaining available models
 
-Recommended models are chosen for accuracy with medical and scientific data. You can use any model, but recommended ones produce the most reliable results.
+Recommendations are starting points, not a guarantee of clinical accuracy, entitlement, or suitability for a particular report. Check results and compare models on your own task.
 
-The current recommendation families include Claude Sonnet/Opus 5, GPT 5.6 and 5.4, Gemini 3.7/3.6/3.5 Flash, GLM 5.3 Flash, Kimi K3, and current Grok 4 variants where a provider offers them. Availability and exact IDs vary by provider. GLM 5.3 Flash is included across OpenRouter, PPQ, Routstr, Custom-compatible discovery, and supported private catalogs.
+Recommendation families and exact IDs change with the catalog. Use the in-app list rather than a fixed list in this guide. CLI catalogs are scoped further to the selected agent and execution target; personal gateways identify their current/default model instead of importing recommendations from unrelated providers. Explicitly unavailable entries are excluded, but an agent may only discover an account restriction when it sends a request.
 
-Meal-photo selectors are separate: they show only models reported as image-capable and can follow the main model or use a dedicated route. Use [Meal Benchmarks](/guides/meals-nutrition#compare-meal-estimates) to compare those models on the same images.
+When the active model exposes reasoning controls, adjust them in Settings or in the chat picker. Unsupported controls stay unavailable rather than guessing from a model name. A model can reason internally without offering a separate effort setting. Supported settings also pass through the selected private/TEE transport; a reasoning slider does not add privacy protection.
+
+Meal-photo selectors are separate: they show only models reported as image-capable and can follow the chat assistant or use a dedicated route. Following a CLI assistant uses its actual selected model and capability, not the last direct-provider model. If the route cannot process images, select a compatible feature route explicitly. Use [Meal Benchmarks](/guides/meals-nutrition#compare-meal-estimates) to compare those models on the same images.
 
 <Warning>
   **Use the same model for all your imports.** When you import a lab PDF, the AI generates marker keys (like `biochemistry.glucose`) to map results. Different models may generate slightly different keys for the same marker, which can cause the same biomarker to appear as two separate entries in your charts. Pick a model and stick with it. If you do switch, getbased runs a pre-flight check before each import and warns you if your model has changed since the last import.
@@ -299,6 +308,7 @@ AI providers usually charge for input and output tokens, and image-capable model
 |---|---|
 | Built-in cloud provider | Current provider/model price; shown when usage and pricing are available |
 | Custom or hosted compatible endpoint | Determined by that endpoint |
+| CLI agent or personal gateway | Existing agent account, subscription limits, or configured API billing; usage reporting depends on the adapter |
 | Downloaded model on this device or your own server | No per-request provider fee; hardware and electricity costs remain |
 
 <Tip>

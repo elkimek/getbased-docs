@@ -16,31 +16,17 @@ How user-provided data becomes AI prompts. This is the core intelligence layer �
 
 ## The Big Picture
 
-```
-                           ┌─────────────────────────────────────────┐
-                           │              AI FEATURES                │
-                           │                                         │
-                           │  Chat  Focus  Health  PDF   Persona     │
-                           │  Panel Card   Dots    Import Generator  │
-                           │  Per-Marker AI   Correlation AI         │
-                           │  Meals & Nutrition analysis             │
-                           └────────────┬────────────────────────────┘
-                                        │
-                                        ▼
-                              ┌──────────────────┐
-                              │  callClaudeAPI() │  ← single entry point
-                              │     api.js       │
-                              └────────┬─────────┘
-                                       │
-              ┌──────────┬──────┴──────┬──────────┬──────────┐
-              ▼          ▼             ▼          ▼          ▼
-         OpenRouter   Routstr        PPQ       Venice     Local AI
-         (OpenAI)     (OpenAI)    (OpenAI)    (OpenAI)   (OpenAI)
-         via shared   via shared  via shared  via shared  via shared
-         helper       helper      helper      helper      helper
+```text
+Chat / AI features
+  └─ enabled profile context + feature-specific instructions
+       └─ capability-aware execution routing
+            ├─ direct: API facade → cloud/private/custom/local model endpoint
+            └─ CLI: loopback Companion → selected agent
+                 ├─ local execution: scoped getbased tools + supported features
+                 └─ personal gateway: enabled context, text-chat only
 ```
 
-Every AI call passes the same shape: `{ system, messages, maxTokens, onStream? }`. The caller assembles the prompt; the router just delivers it.
+Feature callers keep the familiar `{ system, messages, maxTokens, onStream? }` shape through `callAssistantFeatureAI()` in `ai-feature-routing.js`. The direct API facade remains the provider transport, but is no longer the sole entry point for all inference. Chat selects its matching backend and preserves generation ownership. See [CLI agent provider internals](/developers/cli-agent-providers).
 
 In-app AI context is filtered by **Manage → Context → Data sources**. Those per-profile settings live in `importedData.contextSourceSettings` and are read through `context-source-registry.js` / `lab-context.js`. Agent Access is intentionally different: the gateway push is controlled by **Settings → Agent Access** and builds its encrypted summary with `ignoreContextToggles: true`.
 

@@ -12,6 +12,8 @@ Agent Access is an opt-in feature that lets an AI assistant you configure read y
 
 ## How it works
 
+Looking to use an installed agent **inside getbased chat**? Use **Settings → AI → CLI agents** and [the Companion guide](/guides/cli-agents) instead. That path does not require relay Agent Access or Sync, and its health tools respect the in-app Data sources switches. The relay-sharing permission described on this page is separate.
+
 When you enable Agent Access, getbased encrypts a text summary of your labs, context cards, supplements, goals, and notes in your browser, then pushes the encrypted envelope to the **context gateway**. Your agent authenticates to the gateway with a read-only token, fetches ciphertext, and decrypts it locally with your separate Agent Context key.
 
 ```

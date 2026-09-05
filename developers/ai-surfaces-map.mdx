@@ -159,6 +159,8 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 
 ## What runs on-device vs cloud
 
+CLI-backed features use `ai-feature-routing.js` and the capability-aware execution route instead of bypassing the selected assistant through a direct-provider call. Local CLI agents receive the same enabled context plus scoped getbased tools; personal gateways receive context but are text-chat only. Image support does not imply audio support, and automatic voice remains on-device for CLI chat. See [CLI agent providers](/developers/cli-agent-providers) for the dispatch and approval contract.
+
 | Path | Where it runs |
 |---|---|
 | **Knowledge Base (Interpretive Lens default)** | On-device transformers.js + OPFS — your knowledge documents never leave the browser. |

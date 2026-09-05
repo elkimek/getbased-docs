@@ -71,7 +71,7 @@ Each folder backup is a full snapshot of your getbased database:
 - Device-local AI model-test history
 - Eligible wearable IndexedDB rows. OAuth tokens and always-device-encrypted WHOOP and Google Health raw rows are excluded; other device-local daily rows follow the active passphrase state.
 
-Unsent per-conversation chat drafts stay only in the working browser and are not included in snapshots, folder backups, or manual exports. Sent messages and custom personas are included.
+Unsent per-conversation chat drafts stay only in the working browser and are not included in snapshots, folder backups, or manual exports. Sent messages, conversation project names/membership, and custom personas are included. Original chat image files, downloaded voice models, and an installed Companion or agent login are not portable chat backup contents; reconnect local agents on each computer.
 
 With passphrase protection off, browser-device `d1:` credential envelopes are omitted because their non-exportable key cannot move to another browser. With protection on, supported credentials can be restored only with the same passphrase and included encryption salt. Wearable OAuth tokens are never backed up, so reconnect providers after moving browsers.
 

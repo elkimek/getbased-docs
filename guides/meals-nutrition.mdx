@@ -29,7 +29,7 @@ The review separates energy and macros from detailed vitamins, minerals, fatty a
 
 ## Choose a meal-photo model
 
-Meal analysis uses your main AI provider. It can follow that provider's selected model or use a separate image-capable model from the same provider. Change it beside **Photo model** in the meal editor or under **Settings → AI → Meal photos and labels**. Changing the meal model does not change the model used for chat.
+Meal analysis can **Follow chat assistant** or use a configured image-capable route. Change it beside **Photo model** in the meal editor or under **Settings → AI → Meal photos and labels**. Following a CLI assistant uses that agent's selected model only when it declares image support; it does not fall back to the previous direct provider. Personal gateways and text-only adapters cannot run meal-photo jobs. Choose an image-capable feature route explicitly in that case. Changing the meal model does not change the model used for chat.
 
 Only models the active provider reports as image-capable are offered. Local AI can use an image-capable model discovered from Ollama, LM Studio, Unsloth Studio, or another compatible endpoint. A loopback endpoint stays on this device; LAN, remote, and cloud-tagged endpoints send the request to that machine or service.
 

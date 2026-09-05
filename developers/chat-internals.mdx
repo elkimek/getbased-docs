@@ -21,6 +21,9 @@ Chat is a profile-scoped workflow built from small ES modules rather than one pa
 | Transcript and scroll | `chat-render.js`, `chat-render-range.js`, `chat-scroll.js`, `chat-stream-status.js` |
 | Message actions, edits, and forks | `chat-actions.js`, `chat-message-edit.js`, `chat-message-action-attrs.js` |
 | Conversation index and search | `chat-threads.js`, `chat-history.js`, `chat-thread-search.js` |
+| Project markup, pointer moves, and organization | `chat-thread-list-view.js`, `chat-threads.js`, `chat-thread-search.js` |
+| Desktop sizing, model selection, and sender identity | `chat-layout.js`, `chat-model-controls.js`, `chat-model-preferences.js`, `chat-message-avatars.js` |
+| Attachments and import routing | `chat-images.js`, `image-utils.js`, `import-file-input.js` |
 | Personas | `chat-personalities.js`, `chat-personality-editor.js`, `chat-personality-storage.js`, `chat-personality-merge.js` |
 | Discussion mode | `chat-discussion-*.js` modules |
 | Persisted recommendation disclosure | `chat-recommendation-disclosure.js`, `chat-render.js` |
@@ -42,6 +45,8 @@ Thread switches save the visible draft before changing state and restore the des
 
 ## Send and response flow
 
+Direct providers and local agents share the enabled context snapshot. CLI transport, local structured tools, and the personal-gateway boundary are documented in [CLI agent providers](/developers/cli-agent-providers). Do not assume a CLI exposes shell access or that a gateway receives the local tool bridge.
+
 For a normal turn, `chat-send.js`:
 
 1. snapshots the active thread and provider state;
@@ -51,9 +56,19 @@ For a normal turn, `chat-send.js`:
 5. streams into a thread-bound DOM node and screen-reader status; and
 6. persists the final assistant message, usage, provider/model metadata, context disclosure, knowledge-base sources, and recommendation state.
 
-`CHAT_RESPONSE_MAX_TOKENS` is 16,384. `callChatAPIWithContinuation()` can make up to two automatic continuation calls when provider metadata or the response shape indicates truncation. Usage from all parts is merged. A still-truncated result is persisted with `truncated: true`.
+For direct chat, `CHAT_RESPONSE_MAX_TOKENS` is 16,384. `callChatAPIWithContinuation()` can make up to two automatic continuation calls when provider metadata or the response shape indicates truncation. Usage from all parts is merged. A still-truncated result is persisted with `truncated: true`. Agent transports normalize their own completion and usage signals; do not assume the direct API continuation loop controls them.
 
 Stopping aborts the active request and keeps a non-empty partial response with `stopped: true`. The regular action bar then offers **Retry**. Recommendations always persist collapsed; `recNew` supplies a finite attention cue only for the first or materially changed set of recommendation slots.
+
+Generation ownership covers silent starts as well as streaming. `isChatStreaming()` releases stale generation state after a profile switch; late deltas, completion, persistence, and `finally` cleanup must remain bound to the originating generation. Thread loads, searches, project dialogs, summaries, and dropped-file reads also use profile/thread/revision checks. Failed persistence must not leave a successful-looking in-memory project or summary change.
+
+## Composer files and presentation
+
+The plus menu routes readable supported image files into the message queue only if the active model declares image support. PDFs and other files go through `handleImportInputChange()` and normal reviewed import handlers. The browser captures dropped-file access during the drop event; if the OS/browser denies reading, a picker recovery dialog is shown rather than pretending the file was imported.
+
+Chat original images are not recompressed or stripped of metadata. Queue limits are five images for direct providers, four for agents, and 18 MiB total. History retains bounded thumbnails, while full originals remain request-time data. CLI uploads additionally pass the authenticated Companion's type/size validation and temporary-file cleanup. Preserve these distinctions in privacy copy.
+
+Desktop resizing persists bounded device-local widths and updates the dashboard's available width, including when the conversation rail changes. Compact mobile layouts do not inherit an unusable desktop width. Waiting phrases are decorative, not tool receipts. Sender avatars use the active profile image/initial or the selected persona/agent branding; default analyst labels are suppressed unless participant identity is needed. Treat all names, model labels, and image URLs as untrusted rendering inputs.
 
 ## Markdown and model-output safety
 
@@ -86,7 +101,9 @@ labcharts-{profileId}-chat-t_{threadId}
 
 `chat-thread-search.js` filters names immediately, then debounces message-body search by 250 ms. It decrypts each thread on demand, caches results per active profile, displays at most 30 message matches, and delegates thread switching and bounded-range reveal back to the owners.
 
-`chat-message-edit.js` permits **Edit & retry** only for the latest visible user message, only while no response is streaming, and only when the message has no images. The send preparation trims the current history before that message, then the normal send path appends the edited text and replacement response.
+`chat-message-edit.js` permits **Edit** only for the latest visible user message, only while no response is streaming, and only when the message has no images. The inline editor resends through the normal send path, which trims history before that message and appends the revised text and replacement response. User messages do not repeat copy/retry actions; assistant response actions remain available.
+
+Projects are not a separate database: normalized `projectName` (up to 60 characters) and `pinned` live on thread-index records. Creating a project creates a conversation in that project. Rename updates its member threads; delete clears membership without deleting the chats. Moving into a project removes separate pinning. Project choices have a non-drag menu alternative, and pointer drop destinations use fixed DOM attributes rather than parsing arbitrary dropped data. Save failures roll back mutations; profile changes invalidate pending dialogs.
 
 A fork is non-destructive. **Fork to new chat** copies normalized history through the selected assistant response and creates a new thread with `forkedFromThreadId` and `forkedFromMessageIndex`. The new transcript shows a source notice and link when the original still exists.
 
@@ -110,7 +127,7 @@ Single-profile JSON export serializes normalized threads, messages, the selected
 
 Optional Cross-device Sync collects:
 
-- the thread index and per-thread messages;
+- the thread index (including project names, membership, and pinning) and per-thread messages;
 - thread deletion tombstones;
 - the active personality ID;
 - custom persona records; and

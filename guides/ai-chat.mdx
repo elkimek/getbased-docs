@@ -15,12 +15,14 @@ Click the **chat bubble** on desktop or the mobile chat button on smaller screen
 
 On desktop, the panel slides open beside the current view so charts, cards, and lenses remain usable while chat is open.
 
+Drag the chat panel's edge to resize it, or drag the divider beside the conversation list to resize that list. The dashboard adjusts alongside the panel rather than being covered by the resized chat. Width preferences are kept on this device and clamped to the available screen space.
+
 To expand the chat to full screen, click the **⛶** button in the chat header. Click it again to return to side-by-side mode. Your preference is saved between sessions.
 
 Press **Escape** to close the panel.
 
 <Note>
-If no AI provider is configured, the chat panel shows a setup guide instead of the conversation view. Click **Connect with OpenRouter** for one-click OAuth setup — no API key needed.
+If no AI provider is configured, chat offers setup choices. **Connect with OpenRouter** uses OAuth; **CLI agents** lets you connect an installed agent through Companion. See [AI provider setup](/ai-providers) and [CLI agents](/guides/cli-agents).
 </Note>
 
 ## Write and recover a draft
@@ -32,6 +34,8 @@ getbased saves the unfinished text separately for each conversation. You can swi
 Drafts are device-local: they do not sync to another device and are not included in backups or exports. When [local encryption](/guides/encryption) is enabled, draft storage is encrypted with the rest of the sensitive profile data.
 
 ## Talk and listen in chat
+
+The **+** menu groups **Add photos**, **Import health file**, and **Manage AI context**. The model picker sits beside the microphone: search the active provider's catalog and change supported reasoning effort without opening Settings. Model changes appear immediately for the next request; previous replies keep their recorded provider/model identity.
 
 Tap the **microphone** beside the composer to dictate a message. Tap it again to stop; getbased places the transcript in the composer so you can review and edit it before sending.
 
@@ -119,44 +123,48 @@ On mobile, tap the hamburger icon in the chat header to open the thread list.
 
 Conversations are not automatically deleted when you create new ones. Delete conversations you no longer want from the rail.
 
+Create a project in the conversation list to group a topic. Drag a conversation onto the project's heading/group, or use the conversation menu's existing project choices when using a keyboard or touch. Drag to **Drop here for no project** to remove the grouping. Project menus offer **Rename project** and **Delete project**; deleting a project keeps its conversations outside the project. Moving a pinned chat into a project removes its separate pinned placement.
+
+Projects are conversation organization, not filesystem folders or extra AI instructions. Their names and membership are stored with the profile's conversation index, included in chat exports/backups and optional encrypted Sync. Local storage follows your data-protection setting; grouping chats does not turn encryption on by itself.
+
 Every assistant reply has **Fork to new chat**. A fork copies the conversation through that reply, keeps the original unchanged, and shows a link back to the source conversation.
 
-Your latest text-only question has **Edit & retry**. Editing it replaces that question and its response in the current conversation, then sends the revised text again. Earlier questions should be forked instead, and messages with images cannot be edited because the original full-size attachments may no longer be available.
+Your latest text-only question has **Edit**. Saving the inline edit sends the revised question again and replaces its following response in the current conversation. Earlier questions should be forked instead, and messages with images cannot be edited because the original full-size attachments may no longer be available. User messages no longer repeat separate copy and retry buttons; assistant replies retain their response actions.
 
 <Tip>
 Starting a new conversation is the single biggest way to reduce history-related token costs. A fresh conversation still includes your enabled profile context, but it does not send messages from an older conversation.
 </Tip>
 
-## Image attachments
+## Photos and health-file imports
 
 Attach images to any chat message — photos of lab reports, supplement labels, food logs, or anything else you want the AI to see.
 
 **Three ways to attach:**
 
 <Steps>
-  <Step title="Click the paperclip">
-    Click the **paperclip** button in the chat input area and select a file.
+  <Step title="Use the plus menu">
+    Choose **+ → Add photos** to attach an image, or **Import health file** to open the reviewed import workflow.
   </Step>
   <Step title="Paste from clipboard">
     Press **Ctrl+V** (or **Cmd+V** on Mac) to paste an image directly.
   </Step>
   <Step title="Drag and drop">
-    Drag an image file onto the chat input area.
+    Drop files over the chat conversation or input area. Supported images become attachments when the selected chat model can see images; other files enter the regular import workflow.
   </Step>
 </Steps>
 
-Up to **5 images per message**. Supported formats: JPEG, PNG, GIF, WebP.
+Direct chat accepts up to **5 images per message**; CLI chat accepts up to **4**. The combined limit is **18 MB**. Supported image formats are JPEG, PNG, GIF, and WebP. The selected model and adapter must report image support.
 
-The **HD** button next to the paperclip toggles between standard (1024 px) and high-resolution (2048 px) quality. Standard mode is sufficient for most lab reports; use HD for fine print or dense tables.
+There is no HD toggle. Chat sends original image bytes and dimensions within the size limit; prepare a smaller or redacted copy yourself when needed. Only small thumbnails are retained in chat history, not the original full-resolution image files.
 
-Before sending, getbased analyzes each image and warns you if it detects blur, low light, overexposure, or low resolution — catching bad photos before they consume tokens.
+PDFs, spreadsheets, and text exports are routed to getbased's existing import handlers, not sent as arbitrary agent file attachments. The file still needs to be supported by that importer, and extracted health records go through the normal review before saving. [Read about lab import](/guides/pdf-import).
 
 <Note>
-All EXIF metadata (GPS location, camera model, timestamps, device serial numbers) is stripped from images before they leave your browser. Only pixel data reaches your AI provider.
+Original chat images may contain EXIF metadata such as location or camera information as well as visible personal details. Chat does not strip that metadata. Remove it or redact the image before attaching if you do not want to share it with the selected provider/agent.
 </Note>
 
 <Warning>
-The paperclip and HD buttons only appear when your active model supports vision (image input). If you don't see them, switch to a vision-capable model in **Settings → AI**.
+If the browser cannot read a native dropped file, getbased offers a file-picker recovery dialog. Choose the file through **+** instead. Operating-system/browser drag-and-drop permissions can differ, so a working file picker does not prove native dragging will work on every platform.
 </Warning>
 
 ## Web search
@@ -171,6 +179,8 @@ Web search injects search results into the AI's context, significantly increasin
 Web search is available with **OpenRouter**, **PPQ**, and **Venice**. The toggle is hidden when you are using other providers. If **PPQ Private TEE Mode** or **Venice Encrypted TEE Mode** is active, web search is disabled so encrypted/private prompts are not sent into external search tooling.
 </Note>
 
+CLI agents can use their adapter's supported web tools independently of this direct-provider toggle. Personal gateways use their own tool policy. This does not give a local agent general browser, shell, or filesystem control through getbased. See [agent capabilities](/guides/cli-agents#what-works-through-an-agent).
+
 ## Read the encrypted-chat badge
 
 When a private or encrypted provider mode is selected, the chat header shows a lock beside the model name. A plain **🔒** means the mode is selected but a verified session has not yet supplied details. After Venice establishes a session, **🔒 TEE + GPU** means the required Intel confidential-computing and NVIDIA GPU checks both passed. **🔒 failed** means a required check failed and the encrypted request was stopped.
@@ -183,9 +193,11 @@ See [Privacy and data handling](/guides/privacy#venice-encrypted-tee-mode) for w
 
 While the AI is generating a response, a **Stop** button appears in the chat input area. Click it to halt generation mid-stream — useful when the AI is heading in the wrong direction and you want to rephrase your question.
 
-The partial response is saved and marked **[stopped]**. Choose **Retry** to replace that response by sending the same question again, or use **Edit & retry** on your question to change it first.
+The partial response is saved and marked **[stopped]**. Choose **Retry** to replace that response by sending the same question again, or use **Edit** on your latest text-only question to change it first.
 
-When a provider ends an otherwise incomplete response at its output limit, getbased automatically asks it to continue up to two times and joins the parts into one message. If the result is still truncated, chat marks it **[output limit reached]** and you can send “continue” yourself.
+Before the first response text arrives, short waiting phrases rotate. They are presentation cues, not a record of tools actually running. Your profile avatar identifies your messages; an agent icon or selected persona identifies the assistant. Custom personas and discussion participants retain their names, while the default analyst label is not repeated above every reply.
+
+For direct-provider chat, when a provider ends an otherwise incomplete response at its output limit, getbased can ask it to continue up to two times and join the parts into one message. If the result is still truncated, chat marks it **[output limit reached]** and you can send “continue” yourself. CLI execution follows the adapter's own completion behavior.
 
 ## Helpful suggestions
 
@@ -235,7 +247,7 @@ Every message sends your enabled profile context plus recent eligible conversati
 <Tip>
 **Cost-saving tips:**
 - Start new threads often — resetting history is the biggest lever
-- Use standard image mode unless you need fine detail
+- Crop or reduce an image yourself if a smaller input is sufficient
 - Run a downloaded model on your own hardware through Ollama, LM Studio, Unsloth Studio, or another compatible server for chat without provider fees
 - Venice offers free-tier models with no per-token charges
 </Tip>

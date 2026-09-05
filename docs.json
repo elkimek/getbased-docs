@@ -121,6 +121,7 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
+              "guides/cli-agents",
               "guides/ai-prompts",
               "guides/voice",
               "guides/ai-model-testing",
@@ -180,6 +181,7 @@
             "pages": [
               "developers/ai-surfaces-map",
               "developers/ai-provider-internals",
+              "developers/cli-agent-providers",
               "developers/ai-model-testing-internals",
               "developers/agent-access-relay",
               "developers/lens-local-internals",
