@@ -19,7 +19,7 @@ Modules live under `js/`. The app has hundreds of focused top-level JavaScript m
 `schema.js` is the stable compatibility facade for the modular biomarker catalog, range registries, unit conversions, pricing, and environment thresholds. Category definitions and immutable marker identities are authored in category modules under `marker-schema/`, composed by `marker-schema/index.js`, and generated into `marker-schema.js`; contributors must not edit the generated file directly.
 
 **Key exports:**
-- `MARKER_SCHEMA` — 196 core entries across 19 categories, including the 22-entry `calculatedRatios` category
+- `MARKER_SCHEMA` — 197 core entries across 19 categories, including the 22-entry `calculatedRatios` category
 - `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for canonical→US compatibility; schema-wide profile resolution lives in `unit-profiles.js`
 - `OPTIMAL_RANGES` — keyed by `"category.markerKey"`: `{ optimalMin, optimalMax, optimalMin_f?, optimalMax_f? }`
 - `PHASE_RANGES` — keyed by `"category.markerKey"`: `{ menstrual: { min, max }, follicular: {...}, ovulatory: {...}, luteal: {...} }` — covers `hormones.estradiol`, `hormones.progesterone`, `hormones.lh`, and `hormones.fsh`

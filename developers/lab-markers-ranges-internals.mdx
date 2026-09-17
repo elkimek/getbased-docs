@@ -9,7 +9,7 @@ This page owns the contracts that connect the marker schema, imported laboratory
 
 ## Schema ownership
 
-The core schema currently contains 196 markers across 19 categories, including 22 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
+The core schema currently contains 197 markers across 19 categories, including 22 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
 
 The schema is split under `js/marker-schema/`. `schema.js` is the public composition layer; category files own marker metadata, and `schema-environment.js` owns reference, optimal, guidance, and source metadata. Keep category placement clinically legible: insulin, for example, is `diabetes.insulin` under **Glucose & Insulin Metabolism**, not Hormones or Biochemistry.
 
@@ -22,7 +22,7 @@ Renames and category moves must preserve the stable identity and add an alias mi
 
 ## Unit-profile boundary
 
-Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.js` projects all 196 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
+Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.js` projects all 197 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
 
 `getActiveData()` applies the projection after calculations and range resolution. Tables, charts, marker details, reports, manual entry, and AI context consume that same result. Manual entry and import review accept compatible regional and secondary units and convert them back to canonical storage. Custom markers retain their user-supplied canonical unit.
 
