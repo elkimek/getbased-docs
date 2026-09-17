@@ -152,6 +152,14 @@ PhenoAge and Bortz Age are hidden calculated components. Biological Age combines
 
 See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for range precedence, all calculation formulas, collection-context ownership, phase gates, and alias migration requirements.
 
+## Durable import and restore boundary
+
+`import-commit-validation.js` rejects duplicate canonical mappings and blank/non-finite values before mutation. Compatible custom values and range bounds convert together; raw per-file snapshots retain source units. Specialty marker identities stay separate.
+
+IndexedDB writes commit on transaction completion, not merely request success. Reads propagate failure, and failed marker edits/JSON imports roll back rather than leaving partially applied state. Restore merges entries by marker and retains unrelated same-date results, collection-context ownership, timestamps and deletion metadata.
+
+Import snapshots are historical evidence; entries are the live projection. Preserve source links through edits. Repair an older missing link only when one matching snapshot establishes provenance; do not guess between multiple files.
+
 ## The `data` parameter pattern
 
 The first `getActiveData()` call for a changed input set clones and processes the schema; matching calls reuse the active-data cache. Views should still accept an optional `data` parameter so one projection can feed a complete render and so dependencies remain explicit:

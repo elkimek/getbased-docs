@@ -28,7 +28,9 @@ A website cannot scan your installed programs or launch a stopped program by its
 
 The connection command is enough for temporary use. Keep its terminal open; closing it stops that temporary Companion. You do not have to install a desktop application.
 
-For automatic startup, use the downloaded bundle's `install` command:
+Once connected, use the Companion management controls in **Settings → AI** to enable **Start automatically**, pause/resume, reconnect agents, restart, update or uninstall. If embedded management is unavailable, **Manage Companion** opens the local management page. These controls require a running, compatible Companion.
+
+For terminal-based installation, use the downloaded bundle's `install` command:
 
 ```sh
 node getbased-companion.mjs install
@@ -39,10 +41,10 @@ Run this from the directory containing the downloaded file, or supply its actual
 The same file supports `start`, `stop`, `restart`, `status`, and `uninstall`. Uninstall removes the service and runtime, but retains private pairing state for a later reinstall. It does not uninstall your agents or delete your getbased profile.
 
 <Note>
-Hosted browser discovery authorizes chat, not installation or lifecycle changes. Use the terminal to manage that Companion. Installation-authorized local development connections may show **Start automatically**, **Pause**, **Resume**, **Reconnect CLIs**, **Restart companion**, **Check for update**, and **Uninstall** in Settings. The downloadable headless Companion does not include a native tray icon.
+The hosted app's chat connection and the local management page use separate permissions. Management runs through Companion on your computer; the hosted page does not receive its installation credential. The downloadable headless Companion does not include a native tray icon.
 </Note>
 
-**Reconnect CLIs** resets the agent subprocess connections. **Restart companion** restarts the installed service. Neither replaces an outdated bundle: use the displayed one-time update command when getbased says **Update required**. A completely stopped Companion must be started outside the browser.
+**Reconnect CLIs** resets the agent subprocess connections. **Restart companion** restarts the installed service. Neither replaces an outdated bundle: use **Check for update** or the displayed one-time update command when getbased says **Update required**. A completely stopped Companion must be started outside the browser.
 
 ## Choose models and reasoning
 
@@ -59,7 +61,7 @@ Hermes and OpenClaw can offer a personal execution target as well as local execu
 - **Hermes:** supported connections and profiles are discovered from Hermes Desktop. The Companion uses supported stored token authentication without exposing the gateway URL or secret to the browser. OAuth, encrypted Desktop credentials, and SSH-only connections are not automatically transferable.
 - **OpenClaw:** the personal target uses the gateway and default agent configured in OpenClaw.
 
-Personal targets preserve the gateway's own identity, memory, tools, and approval policy. They receive the enabled health-context snapshot with your chat message, but **do not receive getbased's local structured tools**. They are currently **text-chat only**: no image imports or background feature jobs. Resolve requests for external approvals or credentials in the agent's own application.
+Personal targets preserve the gateway's own identity, memory, tools, and approval policy. They receive the enabled health-context snapshot with your chat message, but **do not receive getbased's local structured tools**. The Hermes personal route can also run **text-only explanations**, including Biology Score interpretations, when Companion advertises that capability. The OpenClaw personal route currently does not advertise text-feature support. They do not support image imports or feature jobs requiring the local tool bridge. Resolve requests for external approvals or credentials in the agent's own application.
 
 Gateway catalogs are authoritative; getbased highlights the current/default model rather than mixing in generic recommendations from unrelated providers.
 
@@ -72,7 +74,7 @@ Gateway catalogs are authoritative; getbased highlights the current/default mode
 | Exact health lookups and Knowledge Base search | Through scoped getbased tools | No local tool bridge |
 | Open supported getbased views | Through navigation tools | No local tool bridge |
 | Propose notes, meals, biometrics, supplements, or medications | Reviewable **Apply / Discard** cards | No local tool bridge |
-| Text-based AI features and report interpretation | When the selected route declares support | Not supported |
+| Text-based AI features and report interpretation | When the selected route declares support | When the target advertises text-feature support; update Companion first |
 | Photos and image-based imports | Only with advertised image support | Not supported |
 | Dictation and spoken replies | Separate getbased voice service | Separate getbased voice service |
 

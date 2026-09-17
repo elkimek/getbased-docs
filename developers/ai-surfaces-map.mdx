@@ -113,6 +113,8 @@ The ten Light & Sun verdicts above are one corner of the app's AI surface. Below
 | **Interpretive Lens** | Dashboard top, "Lens" pill | Routes a focused query through your knowledge base (research papers, notes, books). Uses the on-device transformers.js RAG by default, or an external server you configure. |
 | **Focus Card** | Dashboard, top of the page | A 3–5 sentence "what to focus on right now" rollup synthesized across your goals + recent biomarker drift + active light/wearable signals. Auto-fires when its fingerprint changes. |
 | **Context-card AI assessment** | 9 health-context cards | A reported-facts summary, health dot, and short marker-linked tip per stale card. Demo profiles use bundled results; Local AI can refresh edited demos automatically, while cloud/paid demo refresh requires session-only consent. |
+| **Biology Score interpretations** | Insight → Biology Scores | Automatic missing/stale assessments use bounded shared batches and saved input fingerprints. Independent short summaries and full explanations describe deterministic scores. Saved comparison variants survive reloads, backups and sync; a card refresh updates that card, while Coherence refresh updates the group. See [Biology Scores](/guides/biology-scores). |
+| **Report AI overview** | PDF report builder | Initially selected when a compatible AI route is available. **Generate AI overview & preview** sends the selected report snapshot; uncheck AI to preview without a new request. The overview remains labeled as AI-generated after editing. See [Health reports](/guides/health-reports). |
 | **Guided chat setup** | First-time visitors, before any data | A chat-shaped setup flow for profile basics, optional provider choice, extra context, context cards, and import routing. The deterministic setup UI does not itself spend tokens. |
 | **Custom persona draft** | Chat personality picker → New Personality | Generates a 400–500 word editable persona draft from a person, archetype, or communication style. It receives no lab context. |
 | **Custom-marker description** | Marker detail modal, when AI is configured | One-sentence (≤30 words) explanation of what the marker measures + why it matters clinically. Cached per-marker so it only fires the first time. |
@@ -159,7 +161,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 
 ## What runs on-device vs cloud
 
-CLI-backed features use `ai-feature-routing.js` and the capability-aware execution route instead of bypassing the selected assistant through a direct-provider call. Local CLI agents receive the same enabled context plus scoped getbased tools; personal gateways receive context but are text-chat only. Image support does not imply audio support, and automatic voice remains on-device for CLI chat. See [CLI agent providers](/developers/cli-agent-providers) for the dispatch and approval contract.
+CLI-backed features use `ai-feature-routing.js` and the capability-aware execution route instead of bypassing the selected assistant through a direct-provider call. Local CLI agents receive the same enabled context plus scoped getbased tools; personal gateways receive context and may advertise text-only feature support, but do not receive the local tool bridge. Image support does not imply audio support, and automatic voice remains on-device for CLI chat. See [CLI agent providers](/developers/cli-agent-providers) for the dispatch and approval contract.
 
 | Path | Where it runs |
 |---|---|

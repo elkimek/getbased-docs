@@ -516,6 +516,10 @@ Custom marker `markerId` is also additive. New definitions receive an opaque ID 
 
 Curated single-profile exports, full database bundles, folder backups, automatic snapshots, encrypted shares, and cross-device sync preserve these fields. See [Marker model and category placement](/developers/marker-model) for placement validation and the mutation boundary.
 
+### Biology Score interpretation records
+
+`importedData.biologyScoreAI` holds per-score summaries, full text, material fingerprints, timestamps and bounded comparison variants. `biologyScoreContextAI` holds context review/suggestions. Preserve both in single-profile exports, backups and Sync; merge variants with `mergeBiologyScoreAIRecords()` rather than replacing the entire record with a stale top-level value. See [Biology Scores persistence](/developers/biology-scores#persistence-and-sync).
+
 ### Lab import and range compatibility
 
 `importSnapshots[]` is the historical per-file source of truth; `entries[]` is the current live projection. Active adopted lab ranges are chosen by collection date and then import time. Collection-context ownership is tracked per field so deleting or re-reviewing one same-date report can restore another report's value instead of clearing unrelated context.

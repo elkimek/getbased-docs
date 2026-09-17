@@ -198,20 +198,24 @@ When adding a provider or browser runtime, review the CSP, direct-CORS requireme
 
 ## Service worker
 
-`service-worker.js` imports `version.js` and builds the cache name as `labcharts-v${APP_VERSION}`. Production uses that semver name. Preview and local builds append the sanitized `/api/commit` cache key or SHA so two deployments with the same app version do not share a cache.
+Each deployed build has an identity derived from its commit and deployment ID, embedded in `version.js` and the worker by the production builder. New builds use separate caches even when the user-facing `APP_VERSION` is unchanged. Semver labels are for releases and changelogs; a version bump is not required to deliver every patch.
 
-The install step precaches the complete app shell with bounded concurrency and retries; installation fails if a required entry cannot be fetched. Routing then follows these rules:
+While visible, the app checks for updates every five minutes and on return. It installs the new app shell in the background and offers **Reload / Later** only when that build is ready. Choosing Later keeps the current build running. A failed download leaves the active build usable. Initial installation does not produce a false update prompt.
+
+Required shell assets are precached with bounded concurrency/retries, including offline settings artwork and the bundled Fitbit fallback icon. Keep this inventory aligned with production build output.
 
 | Request | Strategy |
 |---|---|
-| AI/provider and other classified cross-origin requests | Network only, outside service-worker response handling so streams remain direct |
+| AI/provider and classified cross-origin requests | Network only; streams remain direct |
 | Same-origin `/api/*` | Network only |
-| Production same-origin app assets | Current-version cache first, then network |
+| Production same-origin app assets | Current-build cache first, then network |
 | Preview/local same-origin app assets | Network first, then current cache |
-| Navigation | Cached route when present, with `/app` or `index.html` as offline fallback |
+| Navigation | Cached route when present, with app-shell fallback |
 | Explicit update probe | Network first |
 
-Activation deletes older `labcharts-v*` caches. Local development normally unregisters the worker; use `/app?dev-sw=1` only for an intentional local offline check.
+Activation cleans obsolete app caches. Version 1.19.3 provides the migration signal for older version-based clients. Local development normally unregisters the worker; use `/app?dev-sw=1` only for deliberate offline verification.
+
+For release tags, do not move historical tags that happen to share a semver label. The repository already uses descriptive tags such as `v1.19.0-cli-agents` to disambiguate its older history.
 
 ## PWA manifest
 

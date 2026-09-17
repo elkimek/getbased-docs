@@ -133,7 +133,9 @@ Optional Cross-device Sync collects:
 - custom persona records; and
 - custom persona deletion tombstones.
 
-Inbound thread merge is last-write-wins by `updatedAt`, with message count as an equal-timestamp tiebreaker. A short active-profile freshness lock protects just-edited local chat from stale inbound records. Persona records merge independently by ID and timestamp, so a conflict in one persona does not replace the whole array.
+Push and pull share chat merge rules. Thread metadata and message bodies have separate clocks: renaming, pinning or moving a thread must not advance the body clock; message edits do. Recover a missing body using its original message timestamp rather than allowing a newer metadata edit to hide it. Opening an incomplete history must not persist an empty replacement.
+
+Chat-only differences trigger reconciliation for active and inactive profiles after startup settles. Preserve available remote chats before replacing a profile snapshot, retain deletion tombstones beyond 200 threads, and skip a malformed duplicate replica without blocking valid pushes. Persona records continue to merge independently by ID and timestamp.
 
 ## Import safety limits
 

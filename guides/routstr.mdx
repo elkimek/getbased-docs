@@ -83,6 +83,12 @@ Routstr wallet state is stored in your browser profile:
   Seed phrases, Cashu tokens, and Routstr session keys are bearer-sensitive. Do not paste them into support chats, AI prompts, screenshots, or public bug reports.
 </Warning>
 
+## Multiple saved mint balances
+
+Selecting a node does not require emptying a balance held at another mint. Choose a mint accepted by the node, then return to a saved mint to deposit, withdraw or export its tokens. Balances and pending recovery records retain their mint ownership; they are not one interchangeable pool.
+
+Payment confirmation and verified spendable balance are separate states. An invoice paid while its mint is inactive remains recoverable against that mint. Supported mints use payment notifications, with paced fallback checks and shared cooldowns where needed. Inactive mints are not continuously polled, and another browser tab can take over monitoring when necessary.
+
 ## Recovery behavior
 
 getbased keeps recovery state for the common failure cases:

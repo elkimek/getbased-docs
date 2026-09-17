@@ -155,6 +155,10 @@ The self-hosted `/api/proxy` fails closed for CAMS when `UVDATA_UPSTREAM` is emp
 
 For a multi-instance Vercel deployment, also configure a suitable proxy limiter with `PROXY_RATE_LIMIT_BLOB_TOKEN`, or explicitly accept the weaker per-instance fallback with `PROXY_ALLOW_INSTANCE_RATE_LIMIT=1`. `PROXY_RATE_LIMIT_MAX`, `PROXY_RATE_LIMIT_WINDOW_MS`, and `PROXY_UPSTREAM_TIMEOUT_MS` tune the shared proxy bounds. `PROXY_POSTAL_QUEUE_MAX` optionally caps queued Nominatim postal lookups per instance from 1 to 64; the default is 8.
 
+## App updates
+
+Deploy the production build so its embedded build identity and service-worker assets stay aligned. Updates download quietly; **Reload / Later** appears after installation succeeds. A failed update keeps the current app usable. Build identity, not a semver bump for every fix, distinguishes cache generations. See [Deployment](/developers/deployment#service-worker).
+
 ## Deploying to Vercel
 
 A `vercel.json` is already present in the repo root — no extra configuration is needed.

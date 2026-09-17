@@ -847,11 +847,11 @@ Data export, import, and reset.
 
 ### `export-report-data.js`, `export-report.js`, and `export-report-html.js`
 
-Report data is resolved once into a versioned, renderer-independent snapshot. `export-report-data.js` owns the pure schema, per-date range/status/provenance records, section minimization, and bounded agent projection. `export-report.js` owns active-state collection and the optional practitioner overview. `export-report-html.js` consumes the prepared snapshot for printable output and must not re-resolve report facts independently.
+Report data is resolved once into a versioned, renderer-independent snapshot. `export-report-data.js` owns the pure schema, per-date range/status/provenance records, section minimization, and bounded agent projection. `export-report.js` owns active-state collection and the optional AI overview. `export-report-html.js` consumes the prepared snapshot for printable output and must not re-resolve report facts independently.
 
 **Key exports:** `REPORT_DATA_SCHEMA_VERSION`, `buildReportDataSnapshot()`, `formatReportDataForAgent()`, `buildPreparedReportPayload()`, `collectReportData()`, `buildReportAgentContext()`, `generateReportAISummary()`, `exportPDFReport()`, and `buildReportHTML()`.
 
-See [Report data contract](/developers/report-data).
+`export-report-builder.js` owns templates and scope selection; the report sections, aggregate summaries and progress helpers keep the selected snapshot consistent through generation and preview. See [Report data contract](/developers/report-data) and [Health reports](/guides/health-reports).
 
 ---
 
@@ -1327,11 +1327,11 @@ Settings → Agent Access renderer and action handler. It owns the enable/disabl
 
 ### `feedback.js`
 
-In-app feedback modal.
+In-app feedback modal with a recoverable full-report preview. Closing and reopening preserves the current page/profile draft; switching profiles clears it. Reloads, backups and sync do not preserve feedback drafts. Built-in range suggestions use the selected display units and public catalog bounds. See [Feedback and range suggestions](/guides/feedback).
 
 **Key exports:**
 - `openFeedbackModal()` / `closeFeedbackModal()`
-- `submitFeedback()` — validates and submits feedback (bug report or feature request)
+- `submitFeedback()` — validates the form and prepares a public GitHub issue draft; submission happens on GitHub
 
 **Window exports:** `openFeedbackModal`, `closeFeedbackModal`, `submitFeedback`
 

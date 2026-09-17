@@ -7,6 +7,14 @@ getbased sync is local-first CRDT storage plus app-level delta surfaces. The rel
 
 This page is the contributor contract for adding or changing a synced profile surface.
 
+## Recent convergence safeguards
+
+Clean manual sync, reconnect and tab resume use a dirty-aware pull path. Pending local edits still flush first; unconditional reconnect pushes must not republish stale scalar state with fresh timestamps. Serialize forced pulls and clone merge baselines so asynchronous overlays cannot mutate active data before persistence.
+
+Delayed save callbacks use the latest active or stored profile, skip already committed dirty generations and re-read when a newer save arrives during storage access. Chat-only changes also reconcile after startup, across active and inactive profiles; see [Chat backup and Sync](/developers/chat-internals#backup-and-sync).
+
+Biology Score context/explanation records merge by material and timestamp, preserving bounded variants through snapshot and delta overlays. A stale delta must not undo a completed local assessment.
+
 ## Core modules
 
 | Module | Role |

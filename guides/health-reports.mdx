@@ -1,0 +1,56 @@
+---
+title: "Create a health report"
+sidebarTitle: "Health reports"
+description: "Choose a concise PDF summary or detailed records, control what you share, and optionally add a clearly labeled AI overview."
+---
+
+Use a health report to share a selected snapshot of your records or prepare questions for a conversation. Reports are separate from [JSON exports and backups](/guides/export-import): a PDF is readable, but it is not a restorable copy of your profile.
+
+## Choose a starting template
+
+Open the profile, then use the PDF export control to open the report builder.
+
+| Template | Starting selection |
+|---|---|
+| **Health summary** | All available lab groups, medicines, personal context and selected Genome findings, across all dates. |
+| **Full health report** | Every data section across all dates, summarized first. |
+| **Nutrition and lifestyle** | Three months of nutrition, hydration, body, light and environment, with medicines and personal context. |
+| **Lab results only** | Lab groups, ranges, flags and trends; other sections start off. |
+
+Templates set sections and dates. Your range choice, questions, detail preference and AI choice remain under your control. “Full” does not automatically expose all notes, all genetic findings or every historical row.
+
+## Select the scope
+
+- **Date range:** current dashboard range, last three or six months, last year, or all dates.
+- **Result ranges:** lab/reference, optimal, or both. This changes only the report, not your main dashboard setting.
+- **Include in the report:** labs, supplements/medications, Genome, personal context, nutrition/hydration, body/wearables, sun/light, environment and timeline notes.
+- **Lab categories:** choose all, flagged groups or a custom set. A report without lab results does not need a lab category.
+- **Personal context and notes:** review the selected material before sharing.
+- **Genome findings:** risk associations, risks and traits, traits only, or all findings including protective and reference calls. The selected genotype is interpreted using the current catalog.
+- **Reason for sharing / questions:** optional text that appears at the start and guides an AI overview if you generate one.
+
+In **Optimal** and **Both**, flags use applicable optimal guidance with reference fallback; eligible phase-specific reference ranges take precedence. A flag against an optimal target is not the same as a laboratory reference abnormality. If your report has no applicable range, the result remains unrated.
+
+## Keep it concise or add detail
+
+**Concise summary** presents the key results, latest/prior lab comparisons and recorded averages. Nutrition and body summaries describe the available records and coverage; days without records are not proof of zero intake or activity.
+
+**Include detailed records** adds selected histories and full notes as an appendix. It does not override section, date, note or Genome exclusions. References are clickable where supplied. Values follow your selected display units.
+
+## Decide whether to include AI
+
+**Include AI overview** is selected initially when a compatible AI connection is available and not paused. The primary button then says **Generate AI overview & preview**. Turn the checkbox off to compile a preview without making a new AI request.
+
+When enabled, getbased prepares the selected report facts and questions, asks for any required processing/destination approval, and sends a bounded projection to your selected AI connection. CLI or personal-gateway routes must advertise the required text-feature capability. The app does not silently send the report to an unrelated fallback provider.
+
+The overview is descriptive, with **Record overview**, **Recorded highlights**, **Recorded context** and **Discussion focus** sections. It is labeled as AI-generated, with available provider/model attribution. You can edit or remove it before sharing. Edited AI text retains its AI-origin disclosure.
+
+Generation shows progress. If it fails or you decline approval, you can retry or use **Preview without AI**. Changing report options invalidates the old overview; changing profiles or closing/cancelling prevents a stale result from being exported into a different report.
+
+## Preview, print and share
+
+Review the generated browser preview, then print or save it as PDF. Check the profile, dates, units, selected sections, questions, reference sources and any AI text before sending it to someone else.
+
+Keep in mind that the output may contain the personal context and notes you selected. It is not an encrypted share link. If you want a recipient to import a profile instead, use [Profile sharing](/guides/profile-sharing).
+
+For developer integrations, see the [Report data contract](/developers/report-data). The [prompt catalog](/developers/system-prompts-insights#prompt-insight-report-summary) shows the instruction used for the optional overview.

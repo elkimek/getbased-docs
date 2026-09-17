@@ -4,7 +4,7 @@ sidebarTitle: "CLI agent providers"
 description: "Companion transports, adapter capabilities, profile-scoped tools, gateway boundaries, lifecycle authorization, and verification."
 ---
 
-This contract documents the v1.19.0 implementation, Companion **1.2.2**, and browser protocol **5**. Capability declarations, not a version string alone, decide whether a route can execute a feature. The [user setup guide](/guides/cli-agents) covers installation and daily use.
+This contract reflects the current app, Companion **1.3.1**, and browser protocol **5**. Capability declarations, not a version string alone, decide whether a route can execute a feature. The [user setup guide](/guides/cli-agents) covers installation and daily use.
 
 ## Architecture and ownership
 
@@ -35,7 +35,7 @@ See [the source architecture note](https://github.com/elkimek/get-based/blob/mai
 
 Local image support must be reported by the adapter and selected model. Do not infer it merely from a familiar model name. Hermes ACP does not currently expose session-scoped reasoning; preserve its inherited setting rather than rendering a nonfunctional slider. OpenCode variants and other agents' reasoning catalogs are normalized only when advertised.
 
-Personal gateways receive bounded, enabled context in the chat instructions but no local MCP credential, structured tool bridge, image feature route, or background feature inference. Their tool policy cannot be constrained by the local adapter's allowlist. Unsupported approval, sudo, secret, or clarification requests fail with guidance to use the agent's own application.
+Personal gateways receive bounded, enabled context in the chat instructions but no local MCP credential, structured tool bridge, or image feature route. Text-only feature inference is available only when the target advertises `supportsTextFeatureJobs`. Their tool policy cannot be constrained by the local adapter's allowlist. Unsupported approval, sudo, secret, or clarification requests fail with guidance to use the agent's own application.
 
 ## Turn and data flow
 
@@ -58,12 +58,19 @@ Drafts never commit through a tool call. The browser sanitizes the proposal, pre
 
 Source toggles apply to both baseline context and typed local reads. This deliberately differs from relay Agent Access's separately authorized full-context snapshot. A profile switch invalidates ongoing reads/navigation and stale async UI work. See [chat internals](/developers/chat-internals) for generation, search, import, and storage race guards.
 
+## Text-only gateway features
+
+A personal target may advertise `supportsTextFeatureJobs` while keeping `supportsFeatureJobs` and `supportsLocalTools` false. Accept this capability for text-only explanations such as Biology Scores; do not infer image or tool-enabled feature support from it. Hermes gateway messages carry system and user instructions through the supported text transport. Feature requests remain tied to the originating profile/assessment.
+
+A browser connected to an older Companion can show an explicit update-required message. Update the bundle and refresh discovery; restarting an unchanged old bundle does not add the capability. Current capability fields remain authoritative over the version label.
+
 ## Connection and lifecycle security
 
 - Bind only to loopback. Discovery probes the bounded port range **8324–8331**; an explicit operator port stays strict.
 - Official hosted origins and loopback development origins are allowlisted. Additional self-hosted origins require `GETBASED_AGENT_HOST_ALLOWED_ORIGINS` with exact, comma-separated origins. Never use a public bind or wildcard as a workaround.
 - Hosted discovery issues bounded, short-lived, origin-bound chat credentials. **These credentials cannot call lifecycle controls**, including pause/resume. `controlAuthorized: false` must remain visible to the UI's decision logic.
-- Installation controls require the persistent installation credential and the service's local/origin checks. Do not return that secret to hosted pages, transfer it across discovered endpoints, or equate advertised control capability with authorization.
+- Hosted Settings can embed the loopback management page at `/manage/embed` when advertised, or offer **Manage Companion** to open it separately. That local page uses a separate management authorization; it does not upgrade the hosted chat credential.
+- Installation controls require the persistent installation credential or the supported local management authorization, plus the service's local/origin checks. Do not return that secret to hosted pages, transfer it across discovered endpoints, or equate advertised control capability with authorization.
 - The development server's private API peer check applies independently of its bind address. Its status probe uses numeric loopback and refuses redirects before sending the pairing token.
 - Executable updates use the fixed official HTTPS Companion bundle URL, refuse redirects, enforce a timeout and streamed size cap, and validate the candidate before replacement. Lifecycle operations reject active work where required. Updating and restarting are separate operations.
 - Images uploaded to `/v1/uploads` are authenticated, validated and bounded, placed in a private temporary workspace, and removed after the turn or cancellation. Session tool credentials are private and turn-scoped. Error responses must not serialize arbitrary CLI stderr, paths, or secrets.

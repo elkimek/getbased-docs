@@ -23,7 +23,7 @@ Chat / AI features
             ├─ direct: API facade → cloud/private/custom/local model endpoint
             └─ CLI: loopback Companion → selected agent
                  ├─ local execution: scoped getbased tools + supported features
-                 └─ personal gateway: enabled context, text-chat only
+                 └─ personal gateway: enabled context, supported text-only jobs
 ```
 
 Feature callers keep the familiar `{ system, messages, maxTokens, onStream? }` shape through `callAssistantFeatureAI()` in `ai-feature-routing.js`. The direct API facade remains the provider transport, but is no longer the sole entry point for all inference. Chat selects its matching backend and preserves generation ownership. See [CLI agent provider internals](/developers/cli-agent-providers).
