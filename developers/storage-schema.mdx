@@ -20,7 +20,7 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 |---|---|---|
 | `labcharts-profiles` | JSON array or passphrase ciphertext | Profile index: `[{ id, name, createdAt }]`; sensitive when passphrase protection is enabled |
 | `labcharts-ai-provider` | string | Active AI provider: `'openrouter'` \| `'routstr'` \| `'ppq'` \| `'venice'` \| `'custom'` \| `'ollama'` \| `'codex-agent'` (CLI source; the UI tab is `cli`) |
-| `labcharts-chat-backend` | string | Direct versus CLI chat backend; use `agent-chat-settings.js` accessors rather than inferring from a saved API key |
+| `labcharts-chat-backend` | string | Direct versus CLI chat backend; use `agent-chat-settings.ts` accessors rather than inferring from a saved API key |
 | `labcharts-agent-host-*` | device-scoped configuration/protected credential | Companion connection and agent/target model/effort selections; not portable CLI authentication |
 | `labcharts-agent-model-catalog-*` | cached metadata | Capability catalog owned by the exact agent and execution target; invalidate on target changes |
 | `labcharts-chat-panel-width`, `labcharts-chat-rail-width` | number string | Device-local desktop dimensions, clamped when applied |
@@ -516,6 +516,10 @@ Custom marker `markerId` is also additive. New definitions receive an opaque ID 
 
 Curated single-profile exports, full database bundles, folder backups, automatic snapshots, encrypted shares, and cross-device sync preserve these fields. See [Marker model and category placement](/developers/marker-model) for placement validation and the mutation boundary.
 
+### Biology Score interpretation records
+
+`importedData.biologyScoreAI` holds per-score summaries, full text, material fingerprints, timestamps and bounded comparison variants. `biologyScoreContextAI` holds context review/suggestions. Preserve both in single-profile exports, backups and Sync; merge variants with `mergeBiologyScoreAIRecords()` rather than replacing the entire record with a stale top-level value. See [Biology Scores persistence](/developers/biology-scores#persistence-and-sync).
+
 ### Lab import and range compatibility
 
 `importSnapshots[]` is the historical per-file source of truth; `entries[]` is the current live projection. Active adopted lab ranges are chosen by collection date and then import time. Collection-context ownership is tracked per field so deleting or re-reviewing one same-date report can restore another report's value instead of clearing unrelated context.
@@ -643,7 +647,7 @@ Unsent `chatDraft_*` records are intentionally absent from full database, auto, 
 
 ## Encryption and credential envelopes
 
-When passphrase protection is enabled, `crypto.js` derives one non-exportable AES-256-GCM key with PBKDF2-SHA256, 600,000 iterations, and the global `labcharts-encryption-salt`. Sensitive localStorage values use a passphrase ciphertext envelope. The protected patterns include profile blobs and index, imported data, chat/thread/draft/persona state, provider and voice credentials, Local AI and Knowledge Base secrets, Cashu mnemonic, weather credentials, and extension-declared encrypted keys/prefixes.
+When passphrase protection is enabled, `crypto.ts` derives one non-exportable AES-256-GCM key with PBKDF2-SHA256, 600,000 iterations, and the global `labcharts-encryption-salt`. Sensitive localStorage values use a passphrase ciphertext envelope. The protected patterns include profile blobs and index, imported data, chat/thread/draft/persona state, provider and voice credentials, Local AI and Knowledge Base secrets, Cashu mnemonic, weather credentials, and extension-declared encrypted keys/prefixes.
 
 Non-sensitive display preferences, selected model IDs, and rebuildable caches remain plaintext. The profile index is not in that group: it is protected when passphrase encryption is on so profile names are not deliberately exposed.
 
@@ -665,7 +669,7 @@ Profile sharing is opt-in and uses hosted storage only after the user confirms u
 
 Current official `vps1_...` records are sent directly to the dedicated profile-share service and stored in its bounded SQLite object store. The database also contains expiry/deletion maintenance records and rotating HMAC-derived abuse-control identifiers based on caller network metadata. It does not store the raw share password or decrypted profile. Cleanup runs at startup, hourly, after creation, and on expired reads; the operated database has no retained backup.
 
-The Vercel `api/share.js` path is now a bounded transition adapter for older Blob records. Before the configured cutover it can use the legacy store; during the no-more-than-31-day transition it redirects new writes, serves live old reads/deletes, and redirects misses; after the deadline it redirects all supported requests. Existing envelopes are not migrated or copied. Local development uses the same logical record shape in a process-local map.
+The Vercel `api/share.ts` path is now a bounded transition adapter for older Blob records. Before the configured cutover it can use the legacy store; during the no-more-than-31-day transition it redirects new writes, serves live old reads/deletes, and redirects misses; after the deadline it redirects all supported requests. Existing envelopes are not migrated or copied. Local development uses the same logical record shape in a process-local map.
 
 ```js
 {

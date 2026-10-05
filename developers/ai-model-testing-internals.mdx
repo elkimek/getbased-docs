@@ -9,16 +9,16 @@ The model-testing feature instruments the real lab-import pipeline. It records e
 
 | Module | Role |
 |---|---|
-| `js/import-benchmarks.js` | Starts, updates, finishes, persists, recovers, and deletes model-test records |
-| `js/import-reference-benchmark.js` | Loads the bundled fixture, runs the real parser, and scores raw and reconciled output |
-| `js/settings-import-benchmark-controller.js` | Owns the modal lifecycle, reference-test action, selection, comparison, and deletion |
-| `js/settings-data.js` | Normalizes saved records and renders cards, metrics, discrepancies, and comparison tables |
-| `js/pdf-import.js` | Captures timings and diagnostics during normal imports |
-| `js/pdf-import-commit.js` | Finalizes review-quality metrics when the user confirms an import |
-| `js/sync-payload.js` | Removes device-local benchmark arrays from outbound sync payloads |
-| `js/sync-pull-merge.js` | Preserves local benchmark arrays during inbound merges |
+| `js/import-benchmarks.ts` | Starts, updates, finishes, persists, recovers, and deletes model-test records |
+| `js/import-reference-benchmark.ts` | Loads the bundled fixture, runs the real parser, and scores raw and reconciled output |
+| `js/settings-import-benchmark-controller.ts` | Owns the modal lifecycle, reference-test action, selection, comparison, and deletion |
+| `js/settings-data.ts` | Normalizes saved records and renders cards, metrics, discrepancies, and comparison tables |
+| `js/pdf-import.ts` | Captures timings and diagnostics during normal imports |
+| `js/pdf-import-commit.ts` | Finalizes review-quality metrics when the user confirms an import |
+| `js/sync-payload.ts` | Removes device-local benchmark arrays from outbound sync payloads |
+| `js/sync-pull-merge.ts` | Preserves local benchmark arrays during inbound merges |
 
-The bundled assets are `data/import-benchmark-reference-us-v2.pdf` and `data/import-benchmark-reference-us-v2.gold.json`. `scripts/generate-import-reference-pdf.mjs` regenerates the PDF from the manifest.
+The bundled assets are `data/import-benchmark-reference-us-v2.pdf` and `data/import-benchmark-reference-us-v2.gold.json`. `scripts/generate-import-reference-pdf.mts` regenerates the PDF from the manifest.
 
 ## Record lifecycle
 
@@ -108,9 +108,9 @@ Run the full suite after changing this surface:
 ./run-tests.sh
 ```
 
-The primary browser contract is `tests/playwright/import-benchmarks.spec.js`. It covers modal behavior, same-input gating, cloud-provider identity, raw-versus-corrected scoring, exact discrepancy review, background completion, normal-import capture, deletion, secret scrubbing, sync exclusion, and fixture integrity.
+The primary browser contract is `tests/playwright/import-benchmarks.spec.ts`. It covers modal behavior, same-input gating, cloud-provider identity, raw-versus-corrected scoring, exact discrepancy review, background completion, normal-import capture, deletion, secret scrubbing, sync exclusion, and fixture integrity.
 
-Local runtime metadata depends on the provider adapter contract covered by `tests/api-provider-contracts.test.js` and `tests/test-provider-local-ai-runtime.js`.
+Local runtime metadata depends on the provider adapter contract covered by `tests/api-provider-contracts.test.ts` and `tests/test-provider-local-ai-runtime.ts`.
 
 When changing the reference manifest, regenerate the PDF and run the fixture-integrity tests:
 
@@ -119,4 +119,4 @@ node scripts/generate-import-reference-pdf.mjs
 ./run-tests.sh
 ```
 
-The generated PDF and gold manifest are application assets. Keep them in `service-worker.js`, bump `version.js` when required by the app release process, and review both files in the same change.
+The generated PDF and gold manifest are application assets. Keep their runtime URLs in the precache inventory authored in `service-worker.ts`, and check the production build and offline behavior. Build identity invalidates changed assets; update `version.ts` and release notes only for an intentional versioned release.

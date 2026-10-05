@@ -9,7 +9,7 @@ Light & Sun uses separate prompts because its inputs have different evidence qua
 
 ## Shared verdict engine
 
-All ten prompts use [`createAIVerdict()`](https://github.com/elkimek/get-based/blob/main/js/ai-verdict-engine.js):
+All ten prompts use [`createAIVerdict()`](https://github.com/elkimek/get-based/blob/main/js/ai-verdict-engine.ts):
 
 ~~~json
 {
@@ -36,7 +36,7 @@ The dot is an AI presentation summary unless the prompt explicitly says it refle
 
 ## `light.hardware-guardrails`
 
-Seven prompt families splice this shared block verbatim from [`js/lighting-hardware-caveats.js`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.js):
+Seven prompt families splice this shared block verbatim from [`js/lighting-hardware-caveats.ts`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.ts):
 
 <AccordionGroup>
   <Accordion title="Shared lighting-hardware guardrails">
@@ -58,7 +58,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-measurement"></span>
   <Accordion title="light.measurement — saving a supported Light Tool result">
-    Source: [`js/light-tools-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.js). Context: the single saved measurement plus source, calibration, room, timing, and quality fields that exist for its tool type.
+    Source: [`js/light-tools-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.ts). Context: the single saved measurement plus source, calibration, room, timing, and quality fields that exist for its tool type.
 
     ~~~text
     You interpret a single environmental light measurement (lux / flicker / sleep-darkness / CCT / spectrum / glass-transmission / multi-room audit).
@@ -85,7 +85,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-today"></span>
   <Accordion title="light.today — opening the daily view with logged data">
-    Source: [`js/light-today-ai.js`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.js). Context: the selected day, Sun/device sessions, tool results, environment, explicit deterministic warnings, recent patterns, and relevant goals.
+    Source: [`js/light-today-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.ts). Context: the selected day, Sun/device sessions, tool results, environment, explicit deterministic warnings, recent patterns, and relevant goals.
 
     ~~~text
     You summarize a single day of a user's logged light. Focus on what stands out now: timing, source, indoor environment, explicit safety flags, and one useful next step.
@@ -116,7 +116,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-room"></span>
   <Accordion title="light.room — viewing a room with enough entered data">
-    Source: [`js/light-env-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.js). Context: one room, associated measurements, source/timing answers, screen protection, and evidence quality.
+    Source: [`js/light-env-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.ts). Context: one room, associated measurements, source/timing answers, screen protection, and evidence quality.
 
     ~~~text
     You evaluate a single room from a user's Light Environment audit and give a circadian-friendliness verdict.
@@ -147,7 +147,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-device-session"></span>
   <Accordion title="light.device-session — requesting a completed device-session verdict">
-    Source: [`js/light-device-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.js). Context: the completed session, device class, selected mode, firing peaks, modeled dose fields, distance quality, eye state, and deterministic safety flags.
+    Source: [`js/light-device-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.ts). Context: the completed session, device class, selected mode, firing peaks, modeled dose fields, distance quality, eye state, and deterministic safety flags.
 
     ~~~text
     You evaluate a single light-therapy DEVICE session (panel / SAD lamp / dawn simulator / UVB phototherapy / handheld PBM).
@@ -181,7 +181,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-screen"></span>
   <Accordion title="light.screen — viewing a configured screen record">
-    Source: [`js/light-screen-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.js). Context: device type, room, entered after-sunset hours, protection/tint settings, and sleep-position answers.
+    Source: [`js/light-screen-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.ts). Context: device type, room, entered after-sunset hours, protection/tint settings, and sleep-position answers.
 
     ~~~text
     You evaluate a single SCREEN device (phone, tablet, laptop, monitor, TV, e-reader) and its circadian impact.
@@ -212,7 +212,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-weekly-pattern"></span>
   <Accordion title="light.weekly-pattern — opening the seven-day review">
-    Source: [`js/light-channels-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.js). Context: current and previous seven-day Sun/device logging patterns and internal channel summaries.
+    Source: [`js/light-channels-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.ts). Context: current and previous seven-day Sun/device logging patterns and internal channel summaries.
 
     ~~~text
     You summarize a user's logged light pattern for the past 7 days and compare it with the previous 7 days. Keep sunlight and devices separate. A device may deliver a targeted wavelength, but it is not full-spectrum sunlight.
@@ -245,7 +245,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-audit"></span>
   <Accordion title="light.audit — saving a frozen multi-room audit">
-    Source: [`js/light-audit-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.js). Context: snapshot rooms, screens, and nearby measurements within the audit's documented date window.
+    Source: [`js/light-audit-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.ts). Context: snapshot rooms, screens, and nearby measurements within the audit's documented date window.
 
     ~~~text
     You evaluate a frozen snapshot of a user's entire indoor light environment (multiple rooms + screens + tool measurements taken within ±30 days). Return one verdict that synthesizes the whole snapshot.
@@ -280,7 +280,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-sun-session"></span>
   <Accordion title="light.sun-session — requesting a completed Sun-session verdict">
-    Source: [`js/sun-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.js). Context: one completed session's modeled signals, solar phase, MED state, weather/body/eye fields, and supplied cautions.
+    Source: [`js/sun-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.ts). Context: one completed session's modeled signals, solar phase, MED state, weather/body/eye fields, and supplied cautions.
 
     ~~~text
     You evaluate a single sun/light exposure session for a user tracking their own biology.
@@ -308,7 +308,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-onboarding"></span>
   <Accordion title="light.onboarding — completing Light & Sun setup">
-    Source: [`js/sun-onboarding-ai.js`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.js). Context: saved setup answers, including skin-model reference, location, eyewear, protection, and lighting environment when present.
+    Source: [`js/sun-onboarding-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.ts). Context: saved setup answers, including skin-model reference, location, eyewear, protection, and lighting environment when present.
 
     ~~~text
     You synthesize a user's Light & Sun setup answers into a brief contextual read of how their skin type + location + lighting environment shape what matters most for them. The output frames the user's situation rather than prescribing a step-by-step plan.
@@ -335,7 +335,7 @@ The following blocks show the application-authored system instruction in runtime
 
   <span id="prompt-light-indoor-burden"></span>
   <Accordion title="light.indoor-burden — viewing the live indoor screening">
-    Source: [`js/light-burden-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.js). Context: current rooms, stated daylight, after-sunset timing, screens, heuristic screening values, and evidence quality.
+    Source: [`js/light-burden-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.ts). Context: current rooms, stated daylight, after-sunset timing, screens, heuristic screening values, and evidence quality.
 
     ~~~text
     You evaluate a user's LIVE indoor-light screening picture: rooms, stated daylight, after-sunset timing, screens, and measurement quality.
@@ -381,6 +381,6 @@ The following blocks show the application-authored system instruction in runtime
 
 ## Focused verification
 
-The shared engine is covered by [`tests/test-ai-verdict-engine.js`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine.js) and [`tests/test-ai-verdict-engine-instance.js`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine-instance.js). Feature-specific suites include [`tests/test-sun.js`](https://github.com/elkimek/get-based/blob/main/tests/test-sun.js) and the Light/room/device analysis tests discoverable by their source identifier.
+The shared engine is covered by [`tests/test-ai-verdict-engine.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine.ts) and [`tests/test-ai-verdict-engine-instance.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-ai-verdict-engine-instance.ts). Feature-specific suites include [`tests/test-sun.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-sun.ts) and the Light/room/device analysis tests discoverable by their source identifier.
 
 Prompt changes must be checked against the deterministic Sun model and [Sun spectrum model](/developers/sun-spectrum-model). The model-generated dot never gets to redefine the calculation.

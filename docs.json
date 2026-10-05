@@ -77,7 +77,8 @@
               "quickstart",
               "guides/dashboard",
               "guides/privacy",
-              "ai-providers"
+              "ai-providers",
+              "guides/feedback"
             ]
           },
           {
@@ -136,6 +137,7 @@
           {
             "group": "Data, Sync & Backup",
             "pages": [
+              "guides/health-reports",
               "guides/profile-sharing",
               "guides/cross-device-sync",
               "guides/encryption",

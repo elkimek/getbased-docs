@@ -143,7 +143,7 @@ Your file is processed in the browser first. Extracted text goes through regex o
 
 ## What gets extracted
 
-The core schema contains 196 markers across 19 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
+The core schema contains 197 markers across 19 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
 
 - **Biochemistry** — glucose, liver enzymes, kidney markers, electrolytes
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, progesterone, LH, and FSH
@@ -158,6 +158,16 @@ The core schema contains 196 markers across 19 categories, plus specialty-panel 
 Markers not in the built-in schema are created automatically as custom markers and tracked alongside built-in markers.
 
 Supported lab-reported ratios and indices are normalized into **Calculated Ratios**. The app uses the report's direct value for that date and computes a fallback only when the direct value is absent, avoiding duplicate FIB-4, anion-gap, or ratio cards.
+
+## Saving, edits and overlapping reports
+
+Import confirmation validates mappings and finite numeric values before saving. Two rows cannot silently map to the same canonical marker in one confirmed import. Compatible custom-marker values and their bounds convert together into the stored unit; incompatible units need correction rather than a misleading unit relabel.
+
+Per-file snapshots retain original report evidence while the live entry reflects the selected/confirmed values. Editing a value preserves its source link where recorded. Deleting or re-reviewing one file keeps unrelated same-date results and collection context from other files. Older source links are repaired only when a single matching snapshot establishes the source.
+
+A storage failure is reported instead of claiming the import or edit was saved. JSON restore merges at marker level, preserving unrelated results on the same date. If results appear missing, check the dashboard date filter, including **All**, before reimporting.
+
+In the review modal, Escape closes an open unit picker first rather than discarding the review.
 
 ## Common questions
 

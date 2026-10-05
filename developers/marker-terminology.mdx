@@ -24,7 +24,7 @@ Primary references are the [LOINC international overview](https://loinc.org/inte
 
 ## Runtime isolation
 
-Mappings are authored under `js/marker-terminology/` and generated into `js/marker-terminology.js`. The registry is deliberately not imported by:
+Mappings are authored under `js/marker-terminology/` and generated into `js/marker-terminology.ts`. The registry is deliberately not imported by:
 
 - the marker schema or application startup;
 - PDF or JSON import;
@@ -80,7 +80,7 @@ After editing a terminology source module, run:
 ```bash
 npm run marker-terminology:build
 npm run marker-terminology:check
-npm test -- tests/marker-terminology.test.js
+npm test -- tests/marker-terminology.test.ts
 ```
 
 The build rejects unknown marker IDs, unsupported or malformed codes, duplicate terminology/code pairs, incomplete context, missing UCUM units, non-HTTPS sources, and invalid verification dates.

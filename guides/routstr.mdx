@@ -83,6 +83,12 @@ Routstr wallet state is stored in your browser profile:
   Seed phrases, Cashu tokens, and Routstr session keys are bearer-sensitive. Do not paste them into support chats, AI prompts, screenshots, or public bug reports.
 </Warning>
 
+## Multiple saved mint balances
+
+Selecting a node does not require emptying a balance held at another mint. Choose a mint accepted by the node, then return to a saved mint to deposit, withdraw or export its tokens. Balances and pending recovery records retain their mint ownership; they are not one interchangeable pool.
+
+Payment confirmation and verified spendable balance are separate states. An invoice paid while its mint is inactive remains recoverable against that mint. Supported mints use payment notifications, with paced fallback checks and shared cooldowns where needed. Inactive mints are not continuously polled, and another browser tab can take over monitoring when necessary.
+
 ## Recovery behavior
 
 getbased keeps recovery state for the common failure cases:
@@ -91,6 +97,10 @@ getbased keeps recovery state for the common failure cases:
 - if a node deposit fails, the app keeps a recoverable pending deposit token;
 - if a node refund returns a Cashu token, the app saves it before trying to receive it into the wallet;
 - if local proof state is lost, seed restore can recover unspent proofs from the mint.
+
+Saved node refunds show the original node and token mint. **Check refund recovery** lists these records separately from the active node balance; an old refund does not block an unrelated node account or a later session. Retry recovery against the saved record. The app receives the token at its original mint even if you have selected another wallet mint.
+
+Keep recovery tokens until the app confirms completion. An unknown quote or spent-proof response can require reconciliation; it is not a reason to delete saved recovery data or reset your wallet.
 
 ## Practical caveats
 

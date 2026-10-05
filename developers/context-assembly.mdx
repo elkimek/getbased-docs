@@ -23,12 +23,12 @@ Chat / AI features
             ├─ direct: API facade → cloud/private/custom/local model endpoint
             └─ CLI: loopback Companion → selected agent
                  ├─ local execution: scoped getbased tools + supported features
-                 └─ personal gateway: enabled context, text-chat only
+                 └─ personal gateway: enabled context, supported text-only jobs
 ```
 
-Feature callers keep the familiar `{ system, messages, maxTokens, onStream? }` shape through `callAssistantFeatureAI()` in `ai-feature-routing.js`. The direct API facade remains the provider transport, but is no longer the sole entry point for all inference. Chat selects its matching backend and preserves generation ownership. See [CLI agent provider internals](/developers/cli-agent-providers).
+Feature callers keep the familiar `{ system, messages, maxTokens, onStream? }` shape through `callAssistantFeatureAI()` in `ai-feature-routing.ts`. The direct API facade remains the provider transport, but is no longer the sole entry point for all inference. Chat selects its matching backend and preserves generation ownership. See [CLI agent provider internals](/developers/cli-agent-providers).
 
-In-app AI context is filtered by **Manage → Context → Data sources**. Those per-profile settings live in `importedData.contextSourceSettings` and are read through `context-source-registry.js` / `lab-context.js`. Agent Access is intentionally different: the gateway push is controlled by **Settings → Agent Access** and builds its encrypted summary with `ignoreContextToggles: true`.
+In-app AI context is filtered by **Manage → Context → Data sources**. Those per-profile settings live in `importedData.contextSourceSettings` and are read through `context-source-registry.ts` / `lab-context.ts`. Agent Access is intentionally different: the gateway push is controlled by **Settings → Agent Access** and builds its encrypted summary with `ignoreContextToggles: true`.
 
 ## Data Sources
 
@@ -67,7 +67,7 @@ Lab context consumes the projected `getActiveData()` view, so user-selected cate
 
 ## buildLabContext() — The Central Serializer
 
-`buildLabContext()` in `lab-context.js` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, Meals & Nutrition, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead. Meal-photo and nutrition-label extraction use their own narrow prompt contracts; they do not receive this full profile serializer.
+`buildLabContext()` in `lab-context.ts` is the single function that converts profile data into a plain-text block. For in-app callers it respects Context source toggles: Insight Context Cards, Supplements & Medications, Blood marker results, specialty lab groups, Genome tiers, Light & Sun, Meals & Nutrition, and Wearable recovery context can each be omitted. Agent Access calls the same serializer with `skipGroupFilter: true` and `ignoreContextToggles: true` after its own external-sharing permission is enabled. The Focus Card uses the lighter `buildFocusContext()` instead. Meal-photo and nutrition-label extraction use their own narrow prompt contracts; they do not receive this full profile serializer.
 
 ### Output Structure
 
@@ -203,7 +203,7 @@ Started cold plunges in January
 
 ### Genome context tiers
 
-`lab-context.js` wraps enabled Genome output in `[section:genetics]`. The three source controls map to independent `buildGeneticsContext()` options:
+`lab-context.ts` wraps enabled Genome output in `[section:genetics]`. The three source controls map to independent `buildGeneticsContext()` options:
 
 | Source control | Option | Output |
 |---|---|---|
@@ -410,7 +410,7 @@ Requests structured JSON for only the stale (changed) cards. JSON.parse is wrapp
 └──────────────────────────────────────────────────────┘
 ```
 
-The implementation lives in `context-card-health-dots.js`; `context-cards.js` keeps compatibility exports and owns the visible enable/disable controls. Normal profiles can recalculate stale cards whenever AI is available. Demo profiles follow a stricter policy:
+The implementation lives in `context-card-health-dots.ts`; `context-cards.ts` keeps compatibility exports and owns the visible enable/disable controls. Normal profiles can recalculate stale cards whenever AI is available. Demo profiles follow a stricter policy:
 
 - Bundled summaries, dots, and tips are seeded into the per-profile cache at demo import, so ordinary exploration uses no inference.
 - A non-cloud Ollama/local model recalculates stale demo cards automatically.
@@ -423,7 +423,7 @@ The cache stores a fingerprint per card. A fingerprint includes lab entries, the
 
 `buildLabContext()` distinguishes unanswered values from explicit answers. Falsy/absent fields are omitted, but stored strings such as `none` and `normal` are meaningful evidence and must be serialized. In particular, the Diet & Digestion block includes explicit negative symptom answers and normal appetite, while Light & Circadian includes `skinType`.
 
-This formatter is shared by in-app AI and `sync-messenger.js`. The in-app path honors source toggles. Agent Access calls it with `ignoreContextToggles: true` because external sharing is controlled by the separate Agent Access permission; the plaintext output is then encrypted into the gateway envelope.
+This formatter is shared by in-app AI and `sync-messenger.ts`. The in-app path honors source toggles. Agent Access calls it with `ignoreContextToggles: true` because external sharing is controlled by the separate Agent Access permission; the plaintext output is then encrypted into the gateway envelope.
 
 ### 4. PDF Import (`parseLabPDFWithAI`)
 
@@ -541,7 +541,7 @@ Each AI feature has independent caching to avoid redundant API calls:
 
 9. **Context source gates**: In-app Chat, Biology Score context, and source-driven warnings respect `contextSourceSettings`. Current Focus uses its own compact serializer and currently honors the lab, insight-card, supplements, and specialty-lab group gates it imports directly. Agent Access does not reuse the in-app gates; it has a separate Settings permission and pushes an encrypted full-profile summary only when enabled.
 
-10. **Bounded therapy projection**: `supplement-context.js` owns therapy selection and formatting. Compact context has a 6,500-character ceiling, detail mode has 12,000, and Biology Score records have 4,500. Compact mode selects current records or periods overlapping the lab range; a therapy-specific query can select bounded history. Quality-result AI toggles are respected in every projection, passing duplicate potency rows default out, and detailed methods/limits appear only in detail mode.
+10. **Bounded therapy projection**: `supplement-context.ts` owns therapy selection and formatting. Compact context has a 6,500-character ceiling, detail mode has 12,000, and Biology Score records have 4,500. Compact mode selects current records or periods overlapping the lab range; a therapy-specific query can select bounded history. Quality-result AI toggles are respected in every projection, passing duplicate potency rows default out, and detailed methods/limits appear only in detail mode.
 
 11. **Explicit collection context only**: `[section:labCollectionContext]` includes known sample time, fasting state, cycle day, and recorded phase by lab date. Missing fields stay omitted. The serializer does not reinterpret processing/report time as collection time or infer fasting from the clock, ordered tests, or marker values.
 
@@ -565,7 +565,7 @@ When evaluating context assembly changes, assess these 5 dimensions:
 
 Changes are verified through 4 layers:
 
-1. **Source inspection** — `test-audit.js` assertions read source code and verify structural properties (function existence, string patterns, section ordering)
+1. **Source inspection** — `test-audit.ts` assertions read source code and verify structural properties (function existence, string patterns, section ordering)
 2. **DOM verification** — Browser tests check that rendered output includes expected elements
 3. **Manual console check** — `window.buildLabContext()` in browser console to inspect actual output
 4. **Cross-feature check** — Verify that Chat, Focus Card, and Health Dots all receive appropriate context
@@ -620,7 +620,7 @@ Each entry documents:
 **Robustness**
 - JSON.parse try-catch guard in `loadContextHealthDots()` — malformed AI responses degrade gracefully (gray dots on stale cards, cached good data preserved)
 
-**Files modified**: `js/chat.js`, `js/constants.js`, `js/views.js`, `js/context-cards.js`, `js/pdf-import.js`, `service-worker.js` (v50→v51), `test-audit.js`
+**Files modified**: `js/chat.ts`, `js/constants.ts`, `js/views.ts`, `js/context-cards.ts`, `js/pdf-import.ts`, `service-worker.ts` (v50→v51), `test-audit.ts`
 
 ### 2026-02b — Staleness Signals + Absent Field Awareness + Gate Broadening
 
@@ -637,7 +637,7 @@ Each entry documents:
 - Lifestyle Context: two bullets teaching AI that missing fields = user didn't provide (not assumed default), and missing sections = user hasn't filled that area
 
 **Auto-gating with `hasCardContent()`** (v53)
-- Replaced 7 hand-written card gates with generic `hasCardContent(obj)` from `js/utils.js`
+- Replaced 7 hand-written card gates with generic `hasCardContent(obj)` from `js/utils.ts`
 - Returns `true` if any field has content: strings non-empty, arrays non-empty, `note` field trimmed
 - Cards using auto-gate: diagnoses, diet, exercise, sleep, stress, loveLife, environment
 - Light & Circadian keeps custom `lc || autoLat` gate (external latitude injection)
@@ -650,16 +650,16 @@ Each entry documents:
 - Love Life: added `relationship`, `satisfaction`, `frequency`, `orgasm` to gate
 - Environment: added `climate`, `waterConcerns`, `emf`, `emfMitigation`, `homeLight`, `toxins`, `building` to gate
 
-**Files modified**: `js/utils.js`, `js/chat.js`, `js/constants.js`, `js/views.js`, `js/changelog.js`, `service-worker.js` (v52→v53), `test-audit.js`, `test-changelog.js`
+**Files modified**: `js/utils.ts`, `js/chat.ts`, `js/constants.ts`, `js/views.ts`, `js/changelog.ts`, `service-worker.ts` (v52→v53), `test-audit.ts`, `test-changelog.ts`
 
 ### 2026-03 — Change History
 
 **Context card change tracking** (`buildLabContext`)
-- `importedData.changeHistory` populated by `recordChange()` in `context-cards.js` whenever a card save detects a field value change
+- `importedData.changeHistory` populated by `recordChange()` in `context-cards.ts` whenever a card save detects a field value change
 - New `## Context Change Timeline` section (17) appended to `buildLabContext()` output, showing human-readable diffs between consecutive snapshots per field
 - Enables temporal correlation: AI can connect a diet change on March 1 to a lab shift on March 15
 
-**Files modified**: `js/state.js`, `js/profile.js`, `js/context-cards.js`, `js/cycle.js`, `js/chat.js`, `js/export.js`, `tests/test-change-history.js`
+**Files modified**: `js/state.ts`, `js/profile.ts`, `js/context-cards.ts`, `js/cycle.ts`, `js/chat.ts`, `js/export.ts`, `tests/test-change-history.ts`
 
 ### 2026-03b — Section Tags
 
@@ -670,35 +670,35 @@ Each entry documents:
 - New `[index]` block listing available lab category keys
 - No change to content within sections — tags are additive
 
-**Files modified**: `js/chat.js`, `tests/test-prelab.js`
+**Files modified**: `js/chat.ts`, `tests/test-prelab.ts`
 
 ## Source Files
 
 | File | Key Functions |
 |---|---|
-| `js/utils.js` | `hasCardContent()` — generic empty-card gate for context assembly |
-| `js/chat-system-prompt.js` | `CHAT_SYSTEM_PROMPT` — sectioned base chat instruction |
-| `js/context-source-registry.js` | `CONTEXT_SOURCE_IDS`, profile-scoped source toggles, lab-group slug helpers |
-| `js/context-card-dashboard-ai.js` | Manage → Context modal, Answer grounding cards, Data sources UI |
-| `js/context-card-health-dots.js` | Card summaries/dots/tips, per-card fingerprints and cache, demo live-AI policy |
-| `js/context-cards.js` | Card rendering facade, save/refresh lifecycle, demo AI confirmation controls |
-| `js/lab-context.js` | `buildLabContext()` — central serializer (full context) |
-| `js/lab-context-collection.js` | Date-scoped collection-time, fasting, cycle-day, and recorded-phase context section |
-| `js/lab-context-change-timeline.js` | Context-card and profile-context history section |
-| `js/lab-context-wearables.js` | Wearable summary sections and structured sleep-context mismatch warnings |
-| `js/supplement-context.js` | Period-aware compact/detail therapy context, quality-evidence boundaries, and hard character limits |
-| `js/supplement-medication-domain.js` | Status, period overlap, schedule exposure, stable IDs, and compatibility migration |
-| `js/supplement-quality.js` | Per-result AI inclusion and conservative source-quality aggregation |
-| `js/supplement-warnings.js` | Claim-level mitochondrial primary-study context |
-| `js/sync-messenger.js` | Agent Access context push, encrypted gateway envelope, `ignoreContextToggles` external-sharing path |
-| `js/chat-send.js` | `sendChatMessage()` — chat prompt composition |
-| `js/chat-marker-prompts.js` | `askAIAboutMarker()` — per-marker prompt (effective ranges + trend) |
-| `js/marker-context-ranges.js` | Age-, sex-, and collection-time-aware range resolvers |
-| `js/chat-personalities.js` | `generateCustomPersonality()` — persona generator prompt |
-| `js/views.js` | `buildFocusContext()` — lightweight focus card context (~200-400 tokens) |
-| `js/views.js` | `loadFocusCard()` — focus card prompt (health-goals-aware) |
-| `js/context-cards.js` | `recordChange(field)` — compatibility facade for timestamped context snapshots |
-| `js/pdf-import.js` | `parseLabPDFWithAI()` — PDF import prompt (filename included) |
-| `js/pdf-import.js` | `buildMarkerReference()` — marker schema serializer |
-| `js/api.js` | `callClaudeAPI()` — provider router |
-| `js/data.js` | `getActiveData()` — data pipeline (feeds buildLabContext) |
+| `js/utils.ts` | `hasCardContent()` — generic empty-card gate for context assembly |
+| `js/chat-system-prompt.ts` | `CHAT_SYSTEM_PROMPT` — sectioned base chat instruction |
+| `js/context-source-registry.ts` | `CONTEXT_SOURCE_IDS`, profile-scoped source toggles, lab-group slug helpers |
+| `js/context-card-dashboard-ai.ts` | Manage → Context modal, Answer grounding cards, Data sources UI |
+| `js/context-card-health-dots.ts` | Card summaries/dots/tips, per-card fingerprints and cache, demo live-AI policy |
+| `js/context-cards.ts` | Card rendering facade, save/refresh lifecycle, demo AI confirmation controls |
+| `js/lab-context.ts` | `buildLabContext()` — central serializer (full context) |
+| `js/lab-context-collection.ts` | Date-scoped collection-time, fasting, cycle-day, and recorded-phase context section |
+| `js/lab-context-change-timeline.ts` | Context-card and profile-context history section |
+| `js/lab-context-wearables.ts` | Wearable summary sections and structured sleep-context mismatch warnings |
+| `js/supplement-context.ts` | Period-aware compact/detail therapy context, quality-evidence boundaries, and hard character limits |
+| `js/supplement-medication-domain.ts` | Status, period overlap, schedule exposure, stable IDs, and compatibility migration |
+| `js/supplement-quality.ts` | Per-result AI inclusion and conservative source-quality aggregation |
+| `js/supplement-warnings.ts` | Claim-level mitochondrial primary-study context |
+| `js/sync-messenger.ts` | Agent Access context push, encrypted gateway envelope, `ignoreContextToggles` external-sharing path |
+| `js/chat-send.ts` | `sendChatMessage()` — chat prompt composition |
+| `js/chat-marker-prompts.ts` | `askAIAboutMarker()` — per-marker prompt (effective ranges + trend) |
+| `js/marker-context-ranges.ts` | Age-, sex-, and collection-time-aware range resolvers |
+| `js/chat-personalities.ts` | `generateCustomPersonality()` — persona generator prompt |
+| `js/views.ts` | `buildFocusContext()` — lightweight focus card context (~200-400 tokens) |
+| `js/views.ts` | `loadFocusCard()` — focus card prompt (health-goals-aware) |
+| `js/context-cards.ts` | `recordChange(field)` — compatibility facade for timestamped context snapshots |
+| `js/pdf-import.ts` | `parseLabPDFWithAI()` — PDF import prompt (filename included) |
+| `js/pdf-import.ts` | `buildMarkerReference()` — marker schema serializer |
+| `js/api.ts` | `callClaudeAPI()` — provider router |
+| `js/data.ts` | `getActiveData()` — data pipeline (feeds buildLabContext) |

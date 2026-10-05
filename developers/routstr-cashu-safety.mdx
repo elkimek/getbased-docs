@@ -10,12 +10,12 @@ Routstr/Cashu code is money-path code. Treat changes here differently from ordin
 
 Use this page before changing any of:
 
-- `js/cashu-wallet.js`
-- `js/provider-wallet-runtime.js`
-- `js/provider-wallet-panels.js`
-- `js/provider-wallet-funding-recovery.js`
-- `js/nostr-discovery.js`
-- Routstr provider key, model, or balance handling in `js/api.js`
+- `js/cashu-wallet.ts`
+- `js/provider-wallet-runtime.ts`
+- `js/provider-wallet-panels.ts`
+- `js/provider-wallet-funding-recovery.ts`
+- `js/nostr-discovery.ts`
+- Routstr provider key, model, or balance handling in `js/api.ts`
 - wallet IndexedDB schema or proof storage
 - `cashu-ts` upgrades or migration code
 - Cashu token receive, send, export, or restore
@@ -38,9 +38,9 @@ The only value a real-funds canary may print is the Lightning invoice that an op
 
 - `pendingDeposit` must be saved before sending a node deposit token.
 - `pendingDeposit` must survive node rejection or network failure until the token is recovered or explicitly cleared.
-- `pendingWithdraw` must be saved before importing a node refund token.
-- `pendingWithdraw` must be cleared only after successful receive.
-- A new pending withdraw token must not overwrite an existing pending withdraw token.
+- Node refunds must be journaled before the request, with the original node/session identity; returned tokens are saved before wallet receive.
+- Refund recovery is completed only after the receive and durable proof reconciliation succeed.
+- A new refund must not overwrite another session's saved recovery record. Wallet outgoing-token and Lightning-withdrawal journals remain separate from node refunds.
 
 ### Do not replace existing Routstr sessions
 
@@ -55,7 +55,7 @@ Do not fall back from top-up failure to create. That can create a new key and st
 
 ### Keep the wallet facade stable
 
-`js/cashu-wallet.js` is the app's compatibility facade. Library upgrades should happen behind this facade without forcing a wallet reset.
+`js/cashu-wallet.ts` is the app's compatibility facade. Library upgrades should happen behind this facade without forcing a wallet reset.
 
 Upgrades must preserve:
 
@@ -68,6 +68,22 @@ Upgrades must preserve:
 - Routstr node key and selected node;
 - JSON-safe proof rows, even if the Cashu library uses richer Amount objects internally.
 
+## Mint ownership and durable recovery
+
+- Keep proofs, pending quotes and recovery records associated with their originating mint. Switching the active mint must not hide or spend another mint's proofs as if they belonged to the new one.
+- Show mint-specific balances and retain inactive-mint funding recovery. A paid invoice is not a credited balance until verified proofs are durably saved.
+- Journal outbound transfers, receives, minting and melts before irreversible calls. Persist recovered proofs and cleanup together so a lost response or interrupted browser can resume without losing the recovery record.
+- Coordinate wallet mutations and funding checks across tabs. Shared receipts and rate-limit cooldowns prevent duplicated work; notification subscriptions use paced polling as a fallback.
+- Stop background funding checks when their UI is inactive. Rejected quotes pause automatic retries without discarding recoverable state; an explicit recheck may resume them.
+
+The facade delegates persistence to `cashu-wallet-store.ts` and transfer operations to `cashu-wallet-transfers.ts`. Keep failure-injection coverage for lost responses, failed storage writes, mint switching and concurrent tabs when touching these paths.
+
+### Node-session refund ownership
+
+`routstr-node-payments.ts` stores node refunds under session-scoped recovery identities, with the original node URL, session key, generation, and token. Retry must validate that identity rather than use whichever node is currently selected. `provider-wallet-refund-recovery.ts` displays saved refunds separately, including their token mint.
+
+Receive and proof reconciliation use the token's mint. Old refunds do not block unrelated node accounts or a later session, but an unresolved operation within the same session must still be recovered before another refund request. Switching mints preserves mint-bound receipts and quotes; checking them must use their recorded mint, not the active picker value. A spent-proof response alone is not evidence that recovered value was durably credited: retain the receipt until reconciliation proves completion.
+
 ## Required test layers
 
 Run tests in this order. Do not run real-funds tests until the no-money layers pass.
@@ -75,18 +91,12 @@ Run tests in this order. Do not run real-funds tests until the no-money layers p
 ### 1. Runtime wallet tests
 
 ```bash
-npx vitest run tests/cashu-wallet-runtime.test.js --reporter=dot
+npm test -- tests/cashu-wallet-runtime.test.ts --reporter=dot
 ```
 
 This covers the core wallet and recovery invariants without browser UI or real money.
 
-Current expected result:
-
-```text
-11 passed
-```
-
-The exact count may grow, but failures in this file block real-funds testing.
+Run the focused test files for the changed wallet modules as well. Failures in the affected runtime tests block real-funds testing; a historical test count is not an acceptance criterion.
 
 ### 2. Browser Routstr wallet test
 
@@ -206,9 +216,9 @@ A Routstr/Cashu change should not ship if any of these are true:
 - real-funds canary leaves unexplained pending state;
 - test logs contain seed phrases, Cashu tokens, or `sk-...` keys.
 
-## Current baseline before Cashu TS upgrade
+## Historical baseline before Cashu TS upgrade
 
-The current baseline was tested with a 1000 sat canary before the Cashu TS migration work:
+The following historical baseline was tested with a 1000 sat canary before the Cashu TS migration work:
 
 - wallet funding recovered: 1000 sats;
 - first node deposit: `/v1/balance/create`;
@@ -222,7 +232,7 @@ The current baseline was tested with a 1000 sat canary before the Cashu TS migra
 - pending withdraw: false;
 - Routstr key present: false.
 
-Use this as the regression baseline for the Cashu TS migration. The post-migration canary should show the same shape, with only tiny explained fee differences.
+This is historical migration evidence, not a claim that the current release has just passed a real-funds canary. Repeat an explicitly authorized canary for the version under review when required.
 
 ## User docs
 

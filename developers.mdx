@@ -5,7 +5,7 @@ description: "Developer guide index for getbased: architecture, data model, AI s
 
 # Developer documentation
 
-getbased uses native ES modules during local development and a Rolldown production build for hosted deployments. npm also provides tests, type checks, architecture checks, Playwright, and deployment tooling.
+getbased is authored in TypeScript and compiled with TypeScript 7. Local development loads the emitted JavaScript as native ES modules; hosted deployments use Rolldown bundles. Source-checkout development requires Node.js 24 and dependencies installed with `npm ci`. npm also provides tests, type checks, architecture checks, Playwright, and deployment tooling.
 
 If you are new here, start with [CONTRIBUTING.md](https://github.com/elkimek/get-based/blob/main/CONTRIBUTING.md) for setup, local runs, tests, and PR guidelines. Use this section when you need implementation details that are too technical for the user guides.
 
@@ -14,7 +14,7 @@ If you are new here, start with [CONTRIBUTING.md](https://github.com/elkimek/get
 | Page | Use it for |
 |---|---|
 | [Architecture](/developers/architecture) | How the source-module graph, startup phases, lazy features, and production bundles fit together |
-| [Module Reference](/developers/module-reference) | Finding the JS module that owns a feature or window binding |
+| [Module Reference](/developers/module-reference) | Finding the TypeScript module that owns a feature or window binding |
 | [Cross-Module Patterns](/developers/cross-module-patterns) | Shared patterns: window exports, state access, dependency boundaries |
 
 ## Data model and sync
@@ -71,4 +71,4 @@ When adding a user-visible feature, update both sides in this repo:
 - the user guide that explains what the feature does and how to use it;
 - the developer page that explains storage, sync, privacy, tests, and owner modules.
 
-Do not create a second long-lived docs surface in the app repository. The app repo may keep executable tests and temporary notes; durable docs belong here.
+Public guides belong here. The app repository keeps `AGENTS.md`, `ARCHITECTURE.md`, the generated `MODULE_MAP.md`, and maintained engineering contracts alongside executable checks. Task progress, checkpoints, and audit logs stay in its ignored `.local-notes/` directory.

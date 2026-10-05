@@ -90,6 +90,12 @@ Open **Settings → Data → Cross-device sync** to manage the current browser:
 
 Use disconnect/reset only when you intend to remove the identity from this browser or troubleshoot by starting its Sync state again. To reconnect it to the same identity, choose **Join existing device** and restore the saved mnemonic. Choose **Set up new sync** only when you intend to create a separate identity and reconnect your other devices to it.
 
+## Chat recovery after an update
+
+Use the same Sync identity on your devices, update/reload the app, and keep them open while Sync settles. The app reconciles chat-only differences as well as health-data changes, including inactive profiles. Renaming or moving a conversation does not make an older message body overwrite a newer one. Deletion records prevent an old offline copy from simply resurrecting a removed thread.
+
+If one device has the only remaining copy of a conversation, export it before resetting storage. Reconciliation can recover records that still exist on a device or in the encrypted relay history; it cannot reconstruct messages absent from every copy.
+
 ## What syncs
 
 The following data flows across all paired devices:
@@ -100,6 +106,7 @@ The following data flows across all paired devices:
 - Agent Access state — enabled flag, relay profile metadata, read token, Agent Context key, and the selected wearable daily-series window
 - Chat threads, messages, custom personalities, and persona deletion records
 - Display preferences — unit system, range mode, chart overlays
+- Saved Biology Score explanations, comparison variants and context-review state
 
 Changing a marker's category syncs as a small profile customization. It never changes the marker keys stored in lab entries, so another device can apply the same visual placement without rewriting values, import provenance, notes, or history.
 

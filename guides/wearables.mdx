@@ -188,7 +188,7 @@ If you self-host getbased, register your own OAuth app with each provider and se
 | `GOOGLE_HEALTH_CLIENT_ID` | Google Health | Requires your deployment's confidential Web OAuth client. |
 | `GOOGLE_HEALTH_CLIENT_SECRET` | Google Health | Keep server-side; never expose it in browser code or public docs. |
 
-Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. For a custom hostname that is not already listed, add the same URI to the provider's `oauth.redirectUris` entry in `js/wearable-adapters.js` in your fork. Apple Health is file-import only and requires no credentials on any install.
+Register your actual redirect URI (for example, `http://localhost:8000/app` for local dev and your production hostname) in each provider's developer portal. For a custom hostname that is not already listed, add the same URI to the provider's `oauth.redirectUris` entry in `js/wearable-adapters.ts` in your fork. Apple Health is file-import only and requires no credentials on any install.
 
 <Note>
 When provider variables are set, the app picks them up at startup and uses your `client_id` for authorization and token exchange. Google Health, WHOOP, and Ultrahuman stay disabled unless their `*_ENABLED=true` flag and both OAuth credential variables are present. The browser receives only public client IDs and availability flags; secrets stay behind `/api/proxy`.
@@ -217,7 +217,7 @@ Google Health requests three restricted, read-only scopes: activity and fitness,
     Large Apple Health exports can be 100 MB or more for multi-year history. Parsing runs entirely in your browser — no server is involved — so expect 30–60 seconds for large files.
   </Accordion>
   <Accordion title="WHOOP is not in the connect list or returns host access unavailable">
-    WHOOP is self-host only and hidden on an unconfigured hosted domain. Confirm that `WHOOP_ENABLED=true`, `WHOOP_CLIENT_ID`, and `WHOOP_CLIENT_SECRET` are all present on the server, that the redirect URI matches both WHOOP and `js/wearable-adapters.js`, then restart the deployment. `localhost` shows the disabled setup row before configuration. An existing connection remains removable when host access is unavailable, but sync and reconnect pause.
+    WHOOP is self-host only and hidden on an unconfigured hosted domain. Confirm that `WHOOP_ENABLED=true`, `WHOOP_CLIENT_ID`, and `WHOOP_CLIENT_SECRET` are all present on the server, that the redirect URI matches both WHOOP and `js/wearable-adapters.ts`, then restart the deployment. `localhost` shows the disabled setup row before configuration. An existing connection remains removable when host access is unavailable, but sync and reconnect pause.
   </Accordion>
   <Accordion title="Ultrahuman is not in the connect list">
     Ultrahuman remains an experimental self-host integration and is hidden on an unconfigured hosted domain. Set `ULTRAHUMAN_ENABLED=true` with `ULTRAHUMAN_CLIENT_ID` and `ULTRAHUMAN_CLIENT_SECRET`, then restart the deployment. `localhost` shows the disabled setup row before configuration.

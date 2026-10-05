@@ -8,29 +8,30 @@ description: "How the native-module getbased app is structured, started, tested,
 
 # Architecture
 
-## Native modules in development, production bundles in deployment
+## TypeScript authoring and JavaScript runtime
 
-Local development loads the source as native ES modules (`<script type="module">`), so most UI work remains edit → reload. Hosted deployments run the Rolldown production build: it collapses the static startup graph into a hashed entry bundle while preserving feature-level lazy chunks.
+Edit canonical `.ts` and `.mts` sources. TypeScript 7 emits ignored `.js` and `.mjs` siblings at the existing runtime paths. Local development loads these emitted native ES modules; production uses Rolldown to bundle the startup graph and retain lazy feature chunks. The browser does not load TypeScript directly.
 
-That does **not** mean the repo has no tooling. The current repository uses npm for tests, type checks, Playwright, Vercel helpers, and a deploy-time catalog fetch. The practical development workflow is:
-
-1. Edit a file
-2. Reload the browser for quick local feedback
-3. Run the relevant checks before committing
-
-Common change-scoped commands:
+Use Node.js 24. `npm ci` installs dependencies and compiles through `prepare`; `npm run dev-server`, `npm test`, and the production build/check commands also compile first. With a server already running, compile after source edits before reloading. Direct Node and Playwright commands need the same compilation step.
 
 ```bash
-npm run dev-server
-npm run typecheck
-npm run typecheck:checkjs
+npm ci
+npm run dev-server -- 8000
+# After editing sources while the server is running:
+npm run typescript:build
+npm run typecheck:migration
+npm run typecheck:migration-tests
 npm run architecture:check
 npm run quality
-npm test -- tests/<relevant-test>.test.js
-npx playwright test tests/playwright/<relevant-spec>.spec.js
+npm test -- tests/<relevant-test>.test.ts
+npx playwright test tests/playwright/<relevant-spec>.spec.ts
 ```
 
-The production build is deployment machinery, not the authoring format: source modules remain the ownership boundary and the generated [`MODULE_MAP.md`](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) records their direct imports. GitHub Actions owns the exhaustive browser and combined-coverage matrix.
+Keep `.js` and `.mjs` specifiers in source imports, dynamic imports, worker URLs, HTML scripts, and runtime commands. For example, `import './data.js'` in `profile.ts` resolves to the authored TypeScript for checking and to emitted JavaScript at runtime. Do not edit or commit emitted siblings. Third-party vendor bundles retain their own source formats.
+
+The production and test compiler projects are separate and strict. The app, server, worker, and editor projects also retain their environment-specific safety checks; migration completion does not permit weakened flags or suppression comments. See the app's [source and compiler contract](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md#typescript-migration-source-contract).
+
+Source modules remain the ownership boundary. Regenerate [`MODULE_MAP.md`](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) when modules or imports change. GitHub Actions owns the exhaustive browser and combined-coverage matrix.
 
 ## File layout
 
@@ -39,211 +40,215 @@ index.html          — HTML structure only; script/CSS includes; SEO meta tags
 styles.css          — Core CSS: tokens, base resets, shared components, responsive/touch rules
 css/app-shell.css   — App chrome: header, sidebar navigation, footer, mobile shell, profile and sync controls
 css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, Meals & Nutrition, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
-api/share.js        — bounded legacy Blob → standalone share-service transition adapter
-api/proxy.js        — same-origin compatibility endpoint for self-hosts and legacy clients
-api/commit.js       — current deployed commit/version helper
-server/compat-proxy-server.js — dedicated operated compatibility service entry point
-server/profile-share-server.js — dedicated opaque-envelope SQLite service entry point
+api/share.ts        — bounded legacy Blob → standalone share-service transition adapter
+api/proxy.ts        — same-origin compatibility endpoint for self-hosts and legacy clients
+api/commit.ts       — current deployed commit/version helper
+server/compat-proxy-server.ts — dedicated operated compatibility service entry point
+server/profile-share-server.ts — dedicated opaque-envelope SQLite service entry point
 manifest.json       — PWA manifest (installable as a native app)
-service-worker.js   — PWA cache strategies, API bypass rules
+service-worker.ts   — PWA cache strategies, API bypass rules
 data/
   demo-female.json  — Female demo profile (Sarah)
   demo-male.json    — Male demo profile (Alex)
 
 tests/
-  test-*.js         — Vitest-wrapped helper fixtures and browser-script fixtures
+  *.test.ts / test-*.ts — Native unit tests and compiled legacy fixtures
   playwright/       — Playwright browser specs and browser-script runner
-  verify-modules.js — Module integrity assertions
+  verify-modules.ts — Module integrity assertions
 
 js/
-  main.js           — Thin module entry point
-  app-feature-modules.js — Startup-loaded feature group coordinator/window exports
-  app-foundation-modules.js — Startup-loaded foundation/privacy side-effect imports
-  app-health-data-modules.js — Startup-loaded Health & Data feature side-effect imports
-  app-light-sun-modules.js — Startup-loaded Light & Sun feature side-effect imports
-  app-data-io-modules.js — Startup-loaded import/export feature side-effect imports
-  app-ai-interaction-modules.js — Startup-loaded AI/chat/settings feature side-effect imports
-  app-ui-shell-modules.js — Startup-loaded UI shell feature side-effect imports
-  app-event-listeners.js — App-wide modal, keyboard, shortcut, and refresh wiring
-  startup-orchestrator.js — Startup global wiring and phase ordering
-  startup-foundation.js — Encryption, meteo cache, broadcast, and folder backup bootstrap
-  startup-profile.js — Profile migration, active-profile load, and display-state bootstrap
-  startup-oauth-callbacks.js — Wearable/OpenRouter callback routing during startup
-  startup-maintenance.js — Wearable startup services and post-profile maintenance jobs
-  startup-ui.js    — First-render UI bootstrap after profile/OAuth startup
-  emf-facade.js    — Lazy window facade for the EMF assessment module
+  main.ts           — Thin module entry point
+  app-feature-modules.ts — Compatibility composition for foundation, cold loaders, and UI shell
+  app-foundation-modules.ts — Startup-loaded foundation/privacy side-effect imports
+  health-data-loader.ts — Route- and data-aware lazy health feature loading
+  app-health-data-modules.ts — Explicit full health feature composition
+  light-sun-loader.ts — Lazy Light & Sun behavior, UI, and stylesheet loading
+  app-light-sun-modules.ts — Full Light & Sun feature composition
+  import-loader.ts / export-loader.ts — Lazy import and export entry points
+  chat-loader.ts / app-ai-interaction-modules.ts — First-use Chat loading and composition
+  app-ui-shell-modules.ts — Startup-loaded UI shell feature side-effect imports
+  app-event-listeners.ts — App-wide modal, keyboard, shortcut, and refresh wiring
+  startup-orchestrator.ts — Startup global wiring and phase ordering
+  startup-foundation.ts — Encryption, meteo cache, broadcast, and folder backup bootstrap
+  startup-profile.ts — Profile migration, active-profile load, and display-state bootstrap
+  startup-oauth-callbacks.ts — Wearable/OpenRouter callback routing during startup
+  startup-maintenance.ts — Wearable startup services and post-profile maintenance jobs
+  startup-ui.ts    — First-render UI bootstrap after profile/OAuth startup
+  emf-runtime.ts  — Configured lazy EMF module and stylesheet entry points
   marker-schema/    — Authored core category definitions, stable order, and immutable built-in marker identities
-  marker-schema.js  — Generated runtime marker catalog; never edit directly
-  schema.js         — Compatibility facade for the marker catalog, ranges, conversions, identities, and thresholds
-  custom-marker-identity.js — Stable custom:* identity creation and legacy migration
-  marker-placement.js — Storage-independent visual category placement engine
-  marker-terminology/ / marker-terminology.js — Optional terminology sources and generated registry
-  constants.js      — Option arrays, CHAT_PERSONALITIES, fake data, COUNTRY_LATITUDES
-  chat-system-prompt.js — Lazy Chat-only base analyst instruction
-  state.js          — Single shared mutable state object
-  utils.js          — escapeHTML, hashString, getStatus, formatValue, showNotification, linearRegression
-  theme.js          — Theme get/set/toggle, getChartColors, time format helpers
-  api.js            — AI provider routing, OpenRouter, PPQ, Routstr, Venice, Local AI, Custom API, private modes, model management
-  api-transport.js  — shared AI API fetch retry/timeouts and streaming read stall guard
-  api-local.js      — Local AI prompt/context planning and adapter orchestration
-  local-ai-provider-registry.js — normalized Ollama, LM Studio, Unsloth Studio, and generic compatible-endpoint adapter registry
-  local-ai-discovery.js / local-ai-lifecycle.js — cached capability discovery and same-machine model handoff
-  profile.js        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
-  data.js           — Cached getActiveData() projection, unit conversion, date range, and persistence
-  data-calculated-markers.js — Direct-result-first ratios, indices, fluid balance, and biological-age calculations
-  marker-analysis.js / marker-context-ranges.js — Effective dated ranges, statuses, trends, and context resolvers
-  cycle-draw-phases.js — Recorded per-draw cycle phase normalization
-  pii.js            — PII obfuscation: local AI (OpenAI-compatible) + regex fallback, diff viewer
-  charts.js         — Chart.js plugins (5), createLineChart, destroyAllCharts
-  notes.js          — Note editor: open/save/delete
-  supplements.js    — Supplement/medication editor orchestration, persistence, and lifecycle actions
-  supplement-medication-domain.js — Stable identity, period/status rules, schedule exposure, units, compatibility migration
-  supplement-form-ui.js / supplement-import-controller.js — Structured editor and reviewed link/photo import workflow
-  supplement-import-draft.js / supplement-quality.js — Strict source normalization, evidence merging, and quality-result semantics
-  supplement-context.js / supplement-warnings.js — Bounded AI projections and claim-level mitochondrial evidence
-  supplement-dashboard.js / supplement-impact.js — Current dashboard, historical overlays, and lab-impact analysis
-  nutrition-context.js / nutrition.js — Lazy Meals & Nutrition facade, feature composition, dashboard/Body entry points, and context integration
-  nutrition-analysis.js / nutrition-ai-settings.js — Multimodal meal/label extraction, schemas, dedicated vision route, and provider/model selection
-  nutrition-store.js / nutrition-sync-sanitize.js — Device-encrypted meal cache, thumbnail-only profile mirror, reconciliation, archives, and tombstones
-  nutrition-summary.js / nutrition-summary-context.js — Coverage-aware windows, history, timing/fasting, targets inputs, and bounded aggregate AI context
-  nutrition-benchmark-workspace.js / nutrition-comparison*.js — Independent benchmark source, per-model request lifecycle, deterministic comparison, and result handoff
-  wearables.js      — Wearable dashboard strip, source picker, inline manual log forms, window facade
-  wearables-detail-modal.js — Wearable metric detail modal, chart, manual entries, focus trap
-  wearables-formatters.js / wearables-manual-form-ui.js — Shared wearable UI helpers
-  cycle.js          — Menstrual cycle helpers, editor, dashboard rendering
-  context-cards.js  — context card dashboard facade, save/refresh lifecycle, demo AI controls
-  context-card-health-dots.js — summaries, health-dot AI, cache fingerprints, demo-provider safeguards
-  context-card-summaries.js — card definitions, filled-state helpers, summaries
-  context-card-editor-ui.js — shared context editor modal and field controls
-  context-cards-runtime.js — storage-safe history recording and navigation callback bridge
-  context-card-medical-history-editor.js — Medical History editor, conditions, and family history
-  context-card-lifestyle-editors.js — cold-safe lifestyle editor facade
-  context-card-lifestyle-editors-impl.js — main diet, sleep, exercise, stress, relationship, and environment editors
-  context-card-lifestyle-special-editors.js — light, goals, interpretive lens, and diet contaminant modal
-  pdf-import.js     — PDF/image/text import pipeline, AI analysis, confirm/save merge
-  pdf-import-preflight.js / pdf-import-progress.js — import preflight prompts and progress/status UI
-  pdf-import-ai-utils.js — import stream fallback, reading/writing progress estimates, performance persistence, and truncation-safe parsing helpers
-  pdf-import-marker-normalization.js — shared AI marker sanitization, adapter normalization, specialty guards
-  pdf-import-organic-acid-normalization.js / mosaic-oat-catalog.js — lazy product-scoped OAT normalization and Mosaic OAT/MOAT catalogs
-  pdf-import-marker-mapping.js / pdf-import-ratio-units.js — canonical alias matching, importable calculations, and ratio convention metadata
-  pdf-import-unit-conversions.js / pdf-import-review-formatting.js — review-safe unit conversion and responsive unit/range controls
-  pdf-import-commit.js — Snapshot-aware live values, direct calculations, adopted ranges, and collection-context ownership
-  pdf-import-persistence.js — imported-data snapshot, rollback, refresh, remove, and rename save flows
-  pdf-import-review.js — import review modal rendering, row filtering/mapping UI state
-  import-benchmarks.js / import-reference-benchmark.js — device-local import diagnostics and verified sample scoring
-  import-file-input.js — lazy file-picker import binding and import routing
-  import-drop-zone.js — lazy import drop-zone binding shared by page shells
-  export.js         — JSON export/import (single, per-client, database bundle), PDF report, clearAllData
-  profile-share.js  — Password-protected single-profile share links, official VPS routing, active link management, deep-link import
-  proxy-runtime.js  — Official dedicated-origin vs independent same-origin compatibility routing
-  app-extension-runtime.js — Single trusted build-time edition extension contract; core defaults to no-op
-  app-extension-bootstrap.js — Public/self-host build bootstrap; edition builds may replace it at composition time
-  unique-id.js      — Web-Crypto-only collision-resistant identifiers; fails closed when unavailable
-  chat.js           — Chat public barrel and entry point
-  chat-window-bindings.js — Chat callback wiring and legacy window exports
-  chat-marker-prompts.js — Per-marker and selected-correlation AI prompt builders
-  chat-continuation.js — Response limit detection and automatic continuation
-  chat-prompt-context.js — shared persona, system-prompt, history-tagging, and source helpers
-  chat-panel.js — panel lifecycle, layout, focus, and active-thread restoration
-  chat-composer.js / chat-draft-storage.js — growing composer and per-thread device-local drafts
-  chat-send.js / chat-stream-status.js — thread-bound streaming sends and concise live status
-  chat-render.js / chat-render-range.js / chat-scroll.js — bounded transcript rendering and user-owned scroll state
-  chat-actions.js / chat-message-edit.js — message actions, latest-turn edit-and-retry, and linked forks
-  chat-personalities.js — personality selection, header state, and persona workflow facade
-  chat-personality-editor.js — custom persona dialog and official-host agreement policy
-  chat-personality-storage.js / chat-personality-merge.js — encrypted persona persistence, tombstones, and per-item Sync merge
-  chat-storage-safety.js — normalized bounds for imported, restored, and synced chat records
-  chat-recommendation-disclosure.js — collapsed recommendation discovery and finite new-content cue
-  chat-discussion.js — Multi-persona discussion public barrel
-  chat-discussion-flow.js — Multi-persona discussion public user-action handlers
-  chat-discussion-callbacks.js — Multi-persona discussion callback bridge
-  chat-discussion-lifecycle.js — Multi-persona discussion cleanup and completion helpers
-  chat-discussion-turns.js — Multi-persona discussion turn execution helpers
-  chat-discussion-round-runner.js — Multi-persona discussion round execution loop
-  chat-discussion-round-prompts.js — Multi-persona discussion prompt helpers
-  chat-discussion-round-request.js — Multi-persona discussion API request helpers
-  chat-discussion-round-state.js — Multi-persona discussion round persistence helpers
-  chat-discussion-round-view.js — Multi-persona discussion live message DOM helpers
-  chat-discussion-state.js — Multi-persona discussion persona/thread state helpers
-  chat-discussion-picker.js — Multi-persona discussion persona picker controls
-  chat-discussion-ui.js — Multi-persona discussion button and continuation controls
-  chat-empty-state.js — Empty chat and onboarding message renderer
-  chat-nudge.js      — Chat FAB nudge badge and dismissal state
-  chat-threads.js / chat-history.js — thread index CRUD and per-thread message persistence
-  chat-thread-search.js — rail name/message search, bounded-range reveal, and match highlighting
-  client-list.js    — Client List modal: search/sort/filter profiles, inline CRUD, archive/flag/pin
-  dna.js / dna-runtime.js — lazy Genome orchestration, persistence, AI context, and shell dependencies
-  dna-parser.js / dna-genotype.js / dna-file-detection.js — raw/report parsing and strand-aware catalog matching
-  dna-evidence.js / dna-mtdna.js / dna-ui.js — evidence contract, maternal-line model, and Genome presentation
-  recommendations.js — Supplement & lifestyle recommendations, lazy catalog, 3 touchpoints
-  cashu-wallet.js   — In-app Cashu eCash wallet: BIP-39 seed, IndexedDB proofs, Lightning fund/withdraw
-  nostr-discovery.js — Nostr relay queries for Routstr nodes (Kind 38421), health checks, caching
-  settings.js       — Settings modal shell: profile, display, AI providers, privacy, security
-  settings-import-benchmark-controller.js — model-test modal lifecycle, selection, comparison, and deletion
-  settings-sync-panel.js — cold Settings Sync/Agent facade and in-place placeholder hydration
-  settings-sync-panel-impl.js — Cross-device Sync setup, mnemonic, relay status, and recovery UI
-  sync-settings-state.js / sync-lifecycle.js — Configured/active/paused state and identity-preserving pause/resume orchestration
-  sync-backup-restore-state.js — Restore-safe dirty/snapshot reset and publish-before-pull handoff
-  settings-agent-access-panel.js — Agent Access state, setup payload, token/key, and wearable-series controls
-  feedback.js       — Feedback modal (bug reports, feature requests)
-  tour.js           — Guided tour spotlight engine (app tour + cycle tour)
-  nav.js            — Sidebar, date range filter, chart layers dropdown
-  views-router.js   — route validation, last-view persistence, scroll-anchor navigation
-  dashboard-view-composition.js — dashboard route/widget/control wiring
-  dashboard-page-view.js — dashboard route shell, empty-state onboarding, widget page composition
-  lens-pages.js     — Labs, Genome, Body, Insight, and Recommendations page renderers
-  lens-page-shell.js — shared lens header, widget chrome, ordering, dashboard toggles
-  dashboard-widgets.js — dashboard widget registry, defaults, widget prefs
-  dashboard-widget-controls.js — widget picker, layout actions, drag/reorder controls
-  dashboard-widget-renderers.js — dashboard widget body renderers and recommendation helpers
-  recommendation-actions.js — recommendation modal/chat/save/dismiss handlers
-  category-page-view.js — category route shell, view switching, card-order preservation
-  category-view-renderers.js — category chart cards, table/heatmap shells, fatty-acid renderers
-  category-customization.js — category/marker rename helpers and category icon picker
-  light-page-view.js — Light & Sun page shell, Light Today strip, dashboard Light pills
-  light-channel-view.js — Light channel pill rows, detail panels, citations, suggestions
-  sun-body-silhouette.js — anatomical sun-session body picker, region-map hit testing, selection overlay
-  light-device-session-modal.js — log/start light therapy device session modal
-  light-tool-camera.js — shared camera lock, row-banding, aiming guide, and lux calibration helpers
-  light-tool-camera-modals.js — camera-backed Light tool modal flows injected from light-tools.js
-  views.js          — route wiring and compatibility exports
-  crypto.js         — passphrase and device-key AES-GCM storage; BroadcastChannel data-change notifications only
-  backup.js          — IndexedDB auto-backup, folder backup (File System Access API), backup restore
-  backup-chat-storage.js — raw thread index/message collection for complete locked backups
-  lab-context.js     — buildLabContext() central AI context serializer
-  lab-context-collection.js — explicit per-draw time, fasting, cycle-day, and recorded-phase section
-  lab-context-change-timeline.js — profile-context history serializer
-  lab-context-wearables.js — wearable summaries and sleep-context mismatch flags
-  markdown.js        — renderMarkdown() block-aware parser (extracted from chat.js)
-  provider-panels.js — AI provider settings behavior: selection, validation, model dropdown refresh, balances
-  provider-panel-renderers.js — Settings → AI provider panel markup for OpenRouter, Routstr, Venice, PPQ, Custom, and Local AI
+  marker-schema.ts  — Generated TypeScript marker catalog; never edit directly
+  schema.ts         — Compatibility facade for the marker catalog, ranges, conversions, identities, and thresholds
+  custom-marker-identity.ts — Stable custom:* identity creation and legacy migration
+  marker-placement.ts — Storage-independent visual category placement engine
+  marker-terminology/ / marker-terminology.ts — Optional terminology sources and generated registry
+  constants.ts      — Option arrays, CHAT_PERSONALITIES, fake data, COUNTRY_LATITUDES
+  chat-system-prompt.ts — Lazy Chat-only base analyst instruction
+  state.ts          — Single shared mutable state object
+  utils.ts          — escapeHTML, hashString, getStatus, formatValue, showNotification, linearRegression
+  theme.ts          — Theme get/set/toggle, getChartColors, time format helpers
+  api.ts            — AI provider routing, OpenRouter, PPQ, Routstr, Venice, Local AI, Custom API, private modes, model management
+  api-transport.ts  — shared AI API fetch retry/timeouts and streaming read stall guard
+  api-local.ts      — Local AI prompt/context planning and adapter orchestration
+  local-ai-provider-registry.ts — normalized Ollama, LM Studio, Unsloth Studio, and generic compatible-endpoint adapter registry
+  local-ai-discovery.ts / local-ai-lifecycle.ts — cached capability discovery and same-machine model handoff
+  profile.ts        — Profile CRUD, sex/DOB/location, migrateProfileData, profile dropdown
+  data.ts           — Cached getActiveData() projection, unit conversion, date range, and persistence
+  data-calculated-markers.ts — Direct-result-first ratios, indices, fluid balance, and biological-age calculations
+  marker-analysis.ts / marker-context-ranges.ts — Effective dated ranges, statuses, trends, and context resolvers
+  cycle-draw-phases.ts — Recorded per-draw cycle phase normalization
+  pii.ts            — PII obfuscation: local AI (OpenAI-compatible) + regex fallback, diff viewer
+  charts.ts         — Chart.js plugins (5), createLineChart, destroyAllCharts
+  notes.ts          — Note editor: open/save/delete
+  supplements.ts    — Supplement/medication editor orchestration, persistence, and lifecycle actions
+  supplement-medication-domain.ts — Stable identity, period/status rules, schedule exposure, units, compatibility migration
+  supplement-form-ui.ts / supplement-import-controller.ts — Structured editor and reviewed link/photo import workflow
+  supplement-import-draft.ts / supplement-quality.ts — Strict source normalization, evidence merging, and quality-result semantics
+  supplement-context.ts / supplement-warnings.ts — Bounded AI projections and claim-level mitochondrial evidence
+  supplement-dashboard.ts / supplement-impact.ts — Current dashboard, historical overlays, and lab-impact analysis
+  nutrition-context.ts / nutrition.ts — Lazy Meals & Nutrition facade, feature composition, dashboard/Body entry points, and context integration
+  nutrition-analysis.ts / nutrition-ai-settings.ts — Multimodal meal/label extraction, schemas, dedicated vision route, and provider/model selection
+  nutrition-store.ts / nutrition-sync-sanitize.ts — Device-encrypted meal cache, thumbnail-only profile mirror, reconciliation, archives, and tombstones
+  nutrition-summary.ts / nutrition-summary-context.ts — Coverage-aware windows, history, timing/fasting, targets inputs, and bounded aggregate AI context
+  nutrition-benchmark-workspace.ts / nutrition-comparison*.ts — Independent benchmark source, per-model request lifecycle, deterministic comparison, and result handoff
+  wearables.ts      — Wearable dashboard strip, source picker, inline manual log forms, window facade
+  wearables-detail-modal.ts — Wearable metric detail modal, chart, manual entries, focus trap
+  wearables-formatters.ts / wearables-manual-form-ui.ts — Shared wearable UI helpers
+  cycle.ts          — Menstrual cycle helpers, editor, dashboard rendering
+  context-cards.ts  — context card dashboard facade, save/refresh lifecycle, demo AI controls
+  context-card-health-dots.ts — summaries, health-dot AI, cache fingerprints, demo-provider safeguards
+  context-card-summaries.ts — card definitions, filled-state helpers, summaries
+  context-card-editor-ui.ts — shared context editor modal and field controls
+  context-cards-runtime.ts — storage-safe history recording and navigation callback bridge
+  context-card-medical-history-editor.ts — Medical History editor, conditions, and family history
+  context-card-lifestyle-editors.ts — cold-safe lifestyle editor facade
+  context-card-lifestyle-editors-impl.ts — main diet, sleep, exercise, stress, relationship, and environment editors
+  context-card-lifestyle-special-editors.ts — light, goals, interpretive lens, and diet contaminant modal
+  pdf-import.ts     — PDF/image/text import pipeline, AI analysis, confirm/save merge
+  pdf-import-preflight.ts / pdf-import-progress.ts — import preflight prompts and progress/status UI
+  pdf-import-ai-utils.ts — import stream fallback, reading/writing progress estimates, performance persistence, and truncation-safe parsing helpers
+  pdf-import-marker-normalization.ts — shared AI marker sanitization, adapter normalization, specialty guards
+  pdf-import-organic-acid-normalization.ts / mosaic-oat-catalog.ts — lazy product-scoped OAT normalization and Mosaic OAT/MOAT catalogs
+  pdf-import-marker-mapping.ts / pdf-import-ratio-units.ts — canonical alias matching, importable calculations, and ratio convention metadata
+  pdf-import-unit-conversions.ts / pdf-import-review-formatting.ts — review-safe unit conversion and responsive unit/range controls
+  pdf-import-commit.ts — Snapshot-aware live values, direct calculations, adopted ranges, and collection-context ownership
+  pdf-import-persistence.ts — imported-data snapshot, rollback, refresh, remove, and rename save flows
+  pdf-import-review.ts — import review modal rendering, row filtering/mapping UI state
+  import-benchmarks.ts / import-reference-benchmark.ts — device-local import diagnostics and verified sample scoring
+  import-file-input.ts — lazy file-picker import binding and import routing
+  import-drop-zone.ts — lazy import drop-zone binding shared by page shells
+  export.ts         — JSON export/import (single, per-client, database bundle), PDF report, clearAllData
+  profile-share.ts  — Password-protected single-profile share links, official VPS routing, active link management, deep-link import
+  proxy-runtime.ts  — Official dedicated-origin vs independent same-origin compatibility routing
+  app-extension-runtime.ts — Single trusted build-time edition extension contract; core defaults to no-op
+  app-extension-bootstrap.ts — Public/self-host build bootstrap; edition builds may replace it at composition time
+  unique-id.ts      — Web-Crypto-only collision-resistant identifiers; fails closed when unavailable
+  chat.ts           — Chat public barrel and entry point
+  chat-window-bindings.ts — Chat callback wiring and legacy window exports
+  chat-marker-prompts.ts — Per-marker and selected-correlation AI prompt builders
+  chat-continuation.ts — Response limit detection and automatic continuation
+  chat-prompt-context.ts — shared persona, system-prompt, history-tagging, and source helpers
+  chat-panel.ts — panel lifecycle, layout, focus, and active-thread restoration
+  chat-composer.ts / chat-draft-storage.ts — growing composer and per-thread device-local drafts
+  chat-send.ts / chat-stream-status.ts — thread-bound streaming sends and concise live status
+  chat-render.ts / chat-render-range.ts / chat-scroll.ts — bounded transcript rendering and user-owned scroll state
+  chat-actions.ts / chat-message-edit.ts — message actions, latest-turn edit-and-retry, and linked forks
+  chat-personalities.ts — personality selection, header state, and persona workflow facade
+  chat-personality-editor.ts — custom persona dialog and official-host agreement policy
+  chat-personality-storage.ts / chat-personality-merge.ts — encrypted persona persistence, tombstones, and per-item Sync merge
+  chat-storage-safety.ts — normalized bounds for imported, restored, and synced chat records
+  chat-recommendation-disclosure.ts — collapsed recommendation discovery and finite new-content cue
+  chat-discussion.ts — Multi-persona discussion public barrel
+  chat-discussion-flow.ts — Multi-persona discussion public user-action handlers
+  chat-discussion-callbacks.ts — Multi-persona discussion callback bridge
+  chat-discussion-lifecycle.ts — Multi-persona discussion cleanup and completion helpers
+  chat-discussion-turns.ts — Multi-persona discussion turn execution helpers
+  chat-discussion-round-runner.ts — Multi-persona discussion round execution loop
+  chat-discussion-round-prompts.ts — Multi-persona discussion prompt helpers
+  chat-discussion-round-request.ts — Multi-persona discussion API request helpers
+  chat-discussion-round-state.ts — Multi-persona discussion round persistence helpers
+  chat-discussion-round-view.ts — Multi-persona discussion live message DOM helpers
+  chat-discussion-state.ts — Multi-persona discussion persona/thread state helpers
+  chat-discussion-picker.ts — Multi-persona discussion persona picker controls
+  chat-discussion-ui.ts — Multi-persona discussion button and continuation controls
+  chat-empty-state.ts — Empty chat and onboarding message renderer
+  chat-nudge.ts      — Chat FAB nudge badge and dismissal state
+  chat-threads.ts / chat-history.ts — thread index CRUD and per-thread message persistence
+  chat-thread-search.ts — rail name/message search, bounded-range reveal, and match highlighting
+  client-list.ts    — Client List modal: search/sort/filter profiles, inline CRUD, archive/flag/pin
+  dna.ts / dna-runtime.ts — lazy Genome orchestration, persistence, AI context, and shell dependencies
+  dna-parser.ts / dna-genotype.ts / dna-file-detection.ts — raw/report parsing and strand-aware catalog matching
+  dna-evidence.ts / dna-mtdna.ts / dna-ui.ts — evidence contract, maternal-line model, and Genome presentation
+  recommendations.ts — Supplement & lifestyle recommendations, lazy catalog, 3 touchpoints
+  cashu-wallet.ts   — In-app Cashu eCash wallet: BIP-39 seed, IndexedDB proofs, Lightning fund/withdraw
+  nostr-discovery.ts — Nostr relay queries for Routstr nodes (Kind 38421), health checks, caching
+  settings.ts       — Settings modal shell: profile, display, AI providers, privacy, security
+  settings-import-benchmark-controller.ts — model-test modal lifecycle, selection, comparison, and deletion
+  settings-sync-panel.ts — cold Settings Sync/Agent facade and in-place placeholder hydration
+  settings-sync-panel-impl.ts — Cross-device Sync setup, mnemonic, relay status, and recovery UI
+  sync-settings-state.ts / sync-lifecycle.ts — Configured/active/paused state and identity-preserving pause/resume orchestration
+  sync-backup-restore-state.ts — Restore-safe dirty/snapshot reset and publish-before-pull handoff
+  settings-agent-access-panel.ts — Agent Access state, setup payload, token/key, and wearable-series controls
+  feedback.ts       — Feedback modal (bug reports, feature requests)
+  tour.ts           — Guided tour spotlight engine (app tour + cycle tour)
+  nav.ts            — Sidebar, date range filter, chart layers dropdown
+  views-router.ts   — route validation, last-view persistence, scroll-anchor navigation
+  dashboard-view-composition.ts — dashboard route/widget/control wiring
+  dashboard-page-view.ts — dashboard route shell, empty-state onboarding, widget page composition
+  lens-pages.ts     — Labs, Genome, Body, Insight, and Recommendations page renderers
+  lens-page-shell.ts — shared lens header, widget chrome, ordering, dashboard toggles
+  dashboard-widgets.ts — dashboard widget registry, defaults, widget prefs
+  dashboard-widget-controls.ts — widget picker, layout actions, drag/reorder controls
+  dashboard-widget-renderers.ts — dashboard widget body renderers and recommendation helpers
+  recommendation-actions.ts — recommendation modal/chat/save/dismiss handlers
+  category-page-view.ts — category route shell, view switching, card-order preservation
+  category-view-renderers.ts — category chart cards, table/heatmap shells, fatty-acid renderers
+  category-customization.ts — category/marker rename helpers and category icon picker
+  light-page-view.ts — Light & Sun page shell, Light Today strip, dashboard Light pills
+  light-channel-view.ts — Light channel pill rows, detail panels, citations, suggestions
+  sun-body-silhouette.ts — anatomical sun-session body picker, region-map hit testing, selection overlay
+  light-device-session-modal.ts — log/start light therapy device session modal
+  light-tool-camera.ts — shared camera lock, row-banding, aiming guide, and lux calibration helpers
+  light-tool-camera-modals.ts — camera-backed Light tool modal flows injected from light-tools.ts
+  views.ts          — route wiring and compatibility exports
+  crypto.ts         — passphrase and device-key AES-GCM storage; BroadcastChannel data-change notifications only
+  backup.ts          — IndexedDB auto-backup, folder backup (File System Access API), backup restore
+  backup-chat-storage.ts — raw thread index/message collection for complete locked backups
+  lab-context.ts     — buildLabContext() central AI context serializer
+  lab-context-collection.ts — explicit per-draw time, fasting, cycle-day, and recorded-phase section
+  lab-context-change-timeline.ts — profile-context history serializer
+  lab-context-wearables.ts — wearable summaries and sleep-context mismatch flags
+  markdown.ts        — renderMarkdown() block-aware parser (extracted from chat.ts)
+  provider-panels.ts — AI provider settings behavior: selection, validation, model dropdown refresh, balances
+  provider-panel-renderers.ts — Settings → AI provider panel markup for OpenRouter, Routstr, Venice, PPQ, Custom, and Local AI
 ```
 
 ## Entry points
 
-```
+```text
 index.html
   └── <script type="module" src="js/main.js">
-        └── imports all other modules (directly or transitively)
+        └── emitted JavaScript module graph
 ```
 
-That is the development entry point. The hosted artifact rewrites it to the hashed Rolldown entry generated by `scripts/build-production.mjs`; dynamically imported features remain separate lazy chunks.
+The authored entry is `js/main.ts`; the HTML keeps the emitted `js/main.js` URL. The hosted artifact rewrites it to the hashed Rolldown entry generated by `scripts/build-production.mts`.
 
-`main.js` imports startup-loaded feature modules from `app-feature-modules.js` and starts `startup-orchestrator.js`. Foundation/privacy imports are grouped behind `app-foundation-modules.js`; Health & Data startup feature imports are grouped behind `app-health-data-modules.js`; Light & Sun startup feature imports are grouped behind `app-light-sun-modules.js`; import/export startup feature imports are grouped behind `app-data-io-modules.js`; AI/chat/settings startup feature imports are grouped behind `app-ai-interaction-modules.js`; UI shell startup feature imports are grouped behind `app-ui-shell-modules.js`. The orchestrator installs startup globals, the lazy EMF facade, app-wide event listeners, and the refresh callback, then registers the `DOMContentLoaded` sequence. Encryption unlock, meteo cache hydration, cross-tab broadcast, and folder backup setup are delegated to `startup-foundation.js`; profile migration, cache warmup, and active-profile data loading are delegated to `startup-profile.js`; wearable/OpenRouter callback routing lives in `startup-oauth-callbacks.js`; wearable runtime config/scheduler boot and non-blocking post-profile maintenance live in `startup-maintenance.js`; initial theme/sidebar/navigation/sync/changelog/header/chat/file-input UI bootstrap lives in `startup-ui.js`.
+`main.ts` installs extension, foundation, cold health/Light loaders, UI shell hooks, and delegated shell actions, then calls `startApp()` from `startup-orchestrator.ts`. Startup installs global event and refresh wiring, initializes encryption/storage foundation and profile data, runs post-profile maintenance and OAuth callbacks, renders the UI, invokes the edition startup hook, and restores pending import review state. It reports failure without silently replacing unreadable profile data.
+
+Feature loaders keep expensive behavior out of the cold graph. Health modules load according to route and persisted data; `chat-loader.ts` loads `app-ai-interaction-modules.ts` on first use. Import, export, settings, sharing, and EMF have their own loader or runtime boundaries. `emf-runtime.ts` receives its module loader and host callbacks through `app-shell-hooks.ts` and loads the EMF module and stylesheet together. The composition modules remain useful grouping boundaries; they are not all eager imports of `main.ts`.
 
 ## Trusted build-time extension boundary
 
-`app-extension-runtime.js` supports one trusted extension selected while composing an edition build. Public and self-hosted builds install the `core` no-op adapter through `app-extension-bootstrap.js`. This is not a runtime plugin marketplace or a mechanism for loading arbitrary remote code.
+`app-extension-runtime.ts` supports one trusted extension selected while composing an edition build. Public and self-hosted builds install the `core` no-op adapter through `app-extension-bootstrap.ts`. This is not a runtime plugin marketplace or a mechanism for loading arbitrary remote code.
 
 The contract exposes bounded hooks for Settings and onboarding slots/actions, AI provider ownership/authorization/transport/options/errors, voice request authorization and playback policy, extra sync keys/encrypted prefixes/conflict resolution/post-apply refresh, and startup. An extension must have a stable ID. If an active extension owns an AI request but does not provide a successful authorization hook, the call fails closed before transport.
 
 ## Marker catalog and placement boundary
 
-The marker catalog uses an authoring → generated runtime → compatibility facade chain. Category modules under `js/marker-schema/` are the source of truth, `scripts/build-marker-schema.mjs` generates `js/marker-schema.js`, and long-lived consumers continue to import from `js/schema.js`. This keeps a large catalog maintainable without forcing a broad import-graph refactor.
+The marker catalog uses an authored TypeScript → generated TypeScript → emitted JavaScript chain. Category modules under `js/marker-schema/` are the source of truth, `scripts/build-marker-schema.mts` generates `js/marker-schema.ts`, and long-lived consumers continue to use the `js/schema.ts` compatibility facade through its `./schema.js` runtime specifier. This keeps a large catalog maintainable without forcing a broad import-graph refactor.
 
-Marker storage and display are separate boundaries. Profile values and companion metadata remain keyed by native `category.markerKey`; immutable `gb:marker:*` and `custom:*` IDs let `marker-placement.js` apply a per-profile visual category only after `getActiveData()` completes calculations and unit conversion. Renderers may use `displayCategoryKey`, but mutations must resolve through `storageDotKey`.
+Marker storage and display are separate boundaries. Profile values and companion metadata remain keyed by native `category.markerKey`; immutable `gb:marker:*` and `custom:*` IDs let `marker-placement.ts` apply a per-profile visual category only after `getActiveData()` completes calculations and unit conversion. Renderers may use `displayCategoryKey`, but mutations must resolve through `storageDotKey`.
 
-Units follow the same projection rule. `unit-profiles.js` maps canonical marker storage into the profile's International/SI (`EU`), Australia/New Zealand (`ANZ`), or US display units after calculation and range resolution. Import review and manual entry convert compatible selected units back to canonical values. Individual renderers must not carry their own regional conversion tables.
+Units follow the same projection rule. `unit-profiles.ts` maps canonical marker storage into the profile's International/SI (`EU`), Australia/New Zealand (`ANZ`), or US display units after calculation and range resolution. Import review and manual entry convert compatible selected units back to canonical values. Individual renderers must not carry their own regional conversion tables.
 
 The terminology registry follows a separate authoring and generation path. It is optional metadata and is intentionally outside startup, persistence, import/export, backup, sharing, and sync. See [Marker model and category placement](/developers/marker-model) and [Laboratory terminology registry](/developers/marker-terminology).
 
@@ -252,83 +257,28 @@ The terminology registry follows a separate authoring and generation path. It is
 The sidebar has three conceptual groups:
 
 - Home: `dashboard`, the customizable cross-lens overview.
-- Lenses: `labs`, `genome`, `body`, `light`, `insight`, and `recommendations`. `views-router.js` validates and dispatches these routes. Dashboard route/widget wiring is composed in `dashboard-view-composition.js`, with the dashboard shell rendered through `dashboard-page-view.js`; lab category routes render through `category-page-view.js`; Labs, Genome, Body, Insight, and Recommendations pages are rendered through `lens-pages.js`; shared lens page chrome and ordering live in `lens-page-shell.js`; the Light page shell lives in `light-page-view.js`, while channel pills and drill-down panels live in `light-channel-view.js`.
+- Lenses: `labs`, `genome`, `body`, `light`, `insight`, and `recommendations`. `views-router.ts` validates and dispatches these routes. Dashboard route/widget wiring is composed in `dashboard-view-composition.ts`, with the dashboard shell rendered through `dashboard-page-view.ts`; lab category routes render through `category-page-view.ts`; Labs, Genome, Body, Insight, and Recommendations pages are rendered through `lens-pages.ts`; shared lens page chrome and ordering live in `lens-page-shell.ts`; the Light page shell lives in `light-page-view.ts`, while channel pills and drill-down panels live in `light-channel-view.ts`.
 - Tools: focused utilities such as compare dates, correlations, knowledge base, custom markers, and EMF assessment entry points.
 
 The dashboard is not a replacement for lens pages. It is a user-composed overview made from lens/tool widgets. Default widgets are ordered for a new user as: Biological Coherence, Current Focus, Current Priority, Quick Markers, Key Trends, Recommended Next Steps, Profile Context, Biometrics Overview, Biological Age, Metabolic Flexibility, and Cycle when available. Users can reorder, hide, reset, clear, and add widgets. Lens pages expose Add/Remove Dashboard toggles for widgets that can appear in the overview.
 
-Recommendations have both a dashboard widget and a dedicated `recommendations` route. The page aggregates data-linked recommendation candidates from Labs, Body, Light, and Genome signals, while product option rendering and affiliate disclosure remain owned by `recommendations.js`.
+Recommendations have both a dashboard widget and a dedicated `recommendations` route. The page aggregates data-linked recommendation candidates from Labs, Body, Light, and Genome signals, while product option rendering and affiliate disclosure remain owned by `recommendations.ts`.
 
-## 6-layer dependency graph
+## Dependency direction
 
-Modules in a higher layer may import from lower layers. Modules in the same layer must not import from each other — cross-layer calls within the same layer use `window.fn()` to avoid circular dependencies.
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  L1 — Foundation                                                    │
-│  marker-schema.js   schema.js   constants.js   state.js   utils.js │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  L2 — Core Services                                                 │
-│  theme.js   api.js                                                  │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  L3 — Data & Profile                                                │
-│  profile.js   data.js   pii.js                                     │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  L4 — Domain Modules                                                │
-│  charts.js   notes.js   supplements.js   cycle.js   context-cards.js│
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  L5 — Feature Modules                                               │
-│  pdf-import.js  export.js  profile-share.js  chat.js  settings.js    │
-│  feedback.js    nav.js                                              │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  L6 — Orchestration                                                 │
-│  dashboard-widgets.js  dashboard-widget-controls.js                 │
-│  dashboard-widget-renderers.js  lens-page-shell.js                    │
-│  dashboard-page-view.js  category-page-view.js  light-page-view.js      │
-│  views.js  main.js  tour.js                                             │
-│  changelog.js                                                       │
-└─────────────────────────────────────────────────────────────────────┘
+```text
+entry and composition
+        ↓
+UI and workflow orchestration
+        ↓
+feature/domain services
+        ↓
+foundation, storage adapters, and pure utilities
 ```
 
-### Circular dependency avoidance
+Foundation and storage code must not import feature UI. When a service needs a host action, inject a narrow callback through a configuration, runtime, or hook seam. Window exports remain compatibility entry points for existing handlers; they are not a general substitute for explicit dependencies.
 
-The main tension is between `views.js` (the compatibility/router facade) and modules like `data.js` and `charts.js` (which view modules depend on but which also need to trigger re-renders). Two mechanisms break cycles:
-
-**`registerRefreshCallback(fn)` in `data.js`** — `app-event-listeners.js` registers the refresh function at startup, so `data.js` can trigger re-renders without importing `views.js`:
-
-```js
-// app-event-listeners.js
-import { state } from './state.js';
-import { registerRefreshCallback } from './data.js';
-import { buildSidebar } from './nav.js';
-
-registerRefreshCallback(() => {
-  buildSidebar();
-  window.navigate(state.currentView || 'dashboard');
-});
-```
-
-**`window.fn()` calls** — functions exposed via `Object.assign(window, {...})` are callable from any module without creating an import edge:
-
-```js
-// cycle.js can call views.js functions without importing views.js
-window.showDashboard();
-```
+The current module graph has no dependency cycles. `npm run architecture:check` enforces zero cycle ceilings and the repository's explicit boundary rules. The [architecture contract](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md) owns these rules; the generated [module map](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) records actual imports. The module reference groups ownership areas rather than defining a second set of layer restrictions.
 
 ## External dependencies
 
@@ -337,13 +287,13 @@ Bundled locally under `vendor/`:
 | Library | Version | Purpose |
 |---|---|---|
 | Chart.js | 4.4.7 | Line charts, bar charts |
-| pdf.js | 4.10.38 (legacy ESM) | PDF text extraction; loaded lazily via `js/pdfjs-loader.js` with `isEvalSupported: false` pinned for defense-in-depth |
+| pdf.js | 4.10.38 (legacy ESM) | PDF text extraction; loaded lazily via `js/pdfjs-loader.ts` with `isEvalSupported: false` pinned for defense-in-depth |
 | Mammoth | 1.8.0 | DOCX text extraction |
 | JSZip | 3.10.1 | ZIP import handling |
 | Cashu TS | 4.9.0 | Routstr wallet operations |
 | qrcode-generator | 1.4.4 | Local QR rendering |
 | Tinfoil + EHBP | 1.2.1 + 0.3.2 | Verified private transport for supported PPQ/Routstr models |
-| venice-e2ee + Phala DCAP QVL | 0.5.3 + 0.6.1 | Venice encrypted-message, TDX, and NVIDIA evidence verification |
+| venice-e2ee + Phala DCAP QVL | 0.5.3 + 0.6.2 | Venice encrypted-message, TDX, and NVIDIA evidence verification |
 | Evolu | `@evolu/common` 8.7.0 + `@evolu/web` 3.1.0 | Local-first encrypted sync storage; Evolu 7 remains bundled as a lazy identity handoff and rollback bridge |
 | Inter, Outfit, JetBrains Mono, VT323 | unversioned vendored assets | Local font files for body, headings, data, and display accents; inventory-checked but not version-advisory monitored |
 

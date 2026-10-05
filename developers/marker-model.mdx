@@ -17,27 +17,29 @@ This separation lets a user organize markers without rewriting health data. It a
 
 ## Schema authoring and generation
 
-The marker catalog is authored as category modules under `js/marker-schema/`. `js/marker-schema/index.js` composes those modules in stable category order. `scripts/build-marker-schema.mjs` generates `js/marker-schema.js`, and `js/schema.js` remains the stable compatibility facade used by the rest of the application.
+The marker catalog is authored as category modules under `js/marker-schema/`. `js/marker-schema/index.ts` composes those modules in stable category order. `scripts/build-marker-schema.mts` generates `js/marker-schema.ts`, and `js/schema.ts` remains the stable compatibility facade used by the rest of the application.
 
 ```text
-js/marker-schema/<category>.js
-js/marker-schema/identities.js
+js/marker-schema/<category>.ts + identities.ts
              │
              ▼
-js/marker-schema/index.js
-             │ npm run marker-schema:build
+js/marker-schema/index.ts
+             │ marker-schema generator
              ▼
-js/marker-schema.js        generated runtime catalog
+js/marker-schema.ts        generated TypeScript catalog
+             │ TypeScript 7 compilation
+             ▼
+js/marker-schema.js        emitted runtime catalog
              │
              ▼
-js/schema.js               stable public facade
+js/schema.js               runtime compatibility facade
 ```
 
-Do not edit `js/marker-schema.js` directly. Make changes in the authoring modules, preserve the intentional category order in `index.js`, then regenerate the artifact.
+Do not edit `js/marker-schema.ts` directly. Make changes in the authoring modules, preserve the intentional category order in `index.ts`, then regenerate the artifact.
 
 ## Built-in marker identity
 
-Every built-in marker has an immutable `gb:marker:*` ID authored in `js/marker-schema/identities.js`. The generated catalog provides both forward and reverse resolution:
+Every built-in marker has an immutable `gb:marker:*` ID authored in `js/marker-schema/identities.ts`. The generated catalog provides both forward and reverse resolution:
 
 - `getBuiltinMarkerId(dotKey)` resolves a current or legacy storage location to its stable ID.
 - `getBuiltinMarkerDotKey(markerId)` returns the current storage location.
@@ -79,7 +81,7 @@ markerPlacements: {
 }
 ```
 
-`js/marker-placement.js` owns migration, validation, resolution, and final projection. Moving a marker back to its native category removes the redundant assignment.
+`js/marker-placement.ts` owns migration, validation, resolution, and final projection. Moving a marker back to its native category removes the redundant assignment.
 
 The placement engine accepts a destination only when:
 
@@ -127,9 +129,9 @@ For schema or identity changes:
 ```bash
 npm run marker-schema:build
 npm run marker-schema:check
-npm test -- tests/marker-schema-contract.test.js tests/marker-identity.test.js
+npm test -- tests/marker-schema-contract.test.ts tests/marker-identity.test.ts
 ```
 
-For placement changes, run the focused identity, data, persistence, sync, and UI tests that match the diff. The principal suites are `tests/marker-placement.test.js`, `tests/marker-placement-data.test.js`, `tests/marker-placement-editing.test.js`, `tests/custom-marker-identity.test.js`, `tests/custom-marker-export-boundaries.test.js`, and `tests/playwright/marker-placement-ui.spec.js`.
+For placement changes, run the focused identity, data, persistence, sync, and UI tests that match the diff. The principal suites are `tests/marker-placement.test.ts`, `tests/marker-placement-data.test.ts`, `tests/marker-placement-editing.test.ts`, `tests/custom-marker-identity.test.ts`, `tests/custom-marker-export-boundaries.test.ts`, and `tests/playwright/marker-placement-ui.spec.ts`.
 
 See [Data pipeline](/developers/data-pipeline), [Storage schema](/developers/storage-schema), and [Sync and delta internals](/developers/sync-delta-internals) for the surrounding contracts.

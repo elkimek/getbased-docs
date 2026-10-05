@@ -8,87 +8,30 @@ description: "Window exports, circular dependency avoidance, and shared state pa
 
 # Cross-Module Patterns
 
-getbased is a zero-build ES module app. Because there is no bundler, circular imports fail at runtime. These patterns are how the codebase avoids them.
+getbased is authored in TypeScript and compiled to JavaScript ES modules. Local development loads those emitted modules directly; production uses Rolldown bundles. Keep runtime imports ending in `.js` and use explicit dependencies and configured callbacks to avoid cycles. The architecture checker rejects new dependency cycles.
 
----
+## Compatibility handlers and delegated actions
 
-## Window exports — for HTML onclick handlers
+Existing inline HTML handlers call functions exposed on `window`. Some modules retain `Object.assign(window, {...})` as a compatibility surface. Static shell controls also use delegated actions installed by `shell-actions.ts`, and lazy features expose loader or runtime entry points.
 
-Inline HTML `onclick` attributes can only call functions on `window`. Each module exposes its handler functions at the bottom using `Object.assign`:
+When changing a handler, preserve its public name and availability at the time the control becomes usable. Do not install competing owners for the same compatibility export. Prefer feature-owned delegates and narrow typed callbacks for new wiring; do not expand global exports simply to avoid designing a dependency boundary.
 
-```js
-// bottom of cycle.js
-Object.assign(window, {
-  openMenstrualCycleEditor,
-  saveMenstrualCycle,
-  addPeriod,
-  deletePeriod,
-  startCycleTour,
-});
-```
+## Cross-module calls and runtime seams
 
-The HTML then just uses the function name directly:
+Use a normal ES-module import for an allowed dependency:
 
-```html
-<button onclick="openMenstrualCycleEditor()">Edit Cycle</button>
-```
-
-**Rule:** Every function referenced in an `onclick` attribute anywhere in `index.html` must be in a `window` export in exactly one module. Never put the same function in two modules' window exports.
-
----
-
-## Cross-module calls — `window.fn()` for circular dep avoidance
-
-When module A needs to call a function from module B, but B also imports from A (creating a cycle), use `window.fn()` instead of a static import:
-
-```js
-// chat.js needs to open a marker modal that lives in views.js.
-// Importing views.js from chat.js would create a heavy UI cycle, so call
-// the window export instead:
-window.showDetailModal(markerKey);
-```
-
-The key rule: **`window.fn()` is only for calls that would create a cycle.** For everything else, use normal ES module imports.
-
-```js
-// Normal import — fine, no cycle risk
+```ts
 import { showNotification } from './utils.js';
 import { state } from './state.js';
-import { getActiveData } from './data.js';
-
-// window call — only when necessary
-window.showDetailModal(markerKey);   // views.js from chat.js (would be circular)
 ```
 
----
+When a lower-level service needs a higher-level UI action, inject a callback through a small configuration or runtime seam. Existing `window` calls remain compatibility paths, but the target direction is composition → UI/workflow → domain service → foundation/storage. See the [architecture contract](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md#target-dependency-direction-inside-js).
 
-## `registerRefreshCallback()` — decoupled refresh triggering
+## Decoupled refresh triggering
 
-`data.js` exports `registerRefreshCallback(fn)` so that modules in lower layers can trigger a full dashboard re-render without importing `views.js` directly.
+`data.ts` exposes `registerRefreshCallback()` so data code can request a refresh without importing the view/router graph. `startup-orchestrator.ts` calls `registerAppRefreshCallback()` from `app-event-listeners.ts`; that callback rebuilds the sidebar, navigates to `state.currentView` through its configured dependency, and updates the chat nudge.
 
-`main.js` wires this up at init time, after all modules have loaded:
-
-```js
-// main.js
-import { state } from './state.js';
-import { registerRefreshCallback } from './data.js';
-import { buildSidebar } from './nav.js';
-
-// Register so data.js can refresh the current route without importing views.js
-registerRefreshCallback(() => {
-  buildSidebar();
-  window.navigate(state.currentView || 'dashboard');
-});
-```
-
-Then anywhere in `data.js` or modules that `data.js` calls:
-
-```js
-// data.js — internally stored and called when needed
-if (_refreshCallback) _refreshCallback();
-```
-
-This is the only mechanism for lower-layer modules to trigger a view update.
+This is one specific refresh seam. Other features have their own configured runtime callbacks; do not route every UI operation through a global service locator.
 
 ---
 
@@ -108,13 +51,13 @@ el.innerHTML = `
 
 Safe values (hardcoded strings, enum results, numbers from your own code) do not need escaping, but when in doubt, escape it.
 
-**Never use `innerHTML` with concatenated user input without `escapeHTML`.** The shared `renderMarkdown()` function in `markdown.js` validates URLs against an allowlist (`http`, `https`, `mailto`) before rendering link tags; chat renderers call that shared boundary rather than implementing their own Markdown path.
+**Never use `innerHTML` with concatenated user input without `escapeHTML`.** The shared `renderMarkdown()` function in `markdown.ts` validates URLs against an allowlist (`http`, `https`, `mailto`) before rendering link tags; chat renderers call that shared boundary rather than implementing their own Markdown path.
 
 ---
 
-## State access — import `state` from `state.js`
+## State access — import `state` from `state.ts`
 
-`state.js` exports a single shared mutable object. Any module that needs to read or write application state imports it directly:
+`state.ts` exports a single shared mutable object. Any module that needs to read or write application state imports it directly:
 
 ```js
 import { state } from './state.js';
@@ -163,7 +106,7 @@ This prevents redundant pipeline runs when multiple views refresh simultaneously
 
 ## Debug mode
 
-`isDebugMode()` in `utils.js` reads the `labcharts-debug` localStorage flag. All `console.warn` and `console.error` calls in production are gated behind this:
+`isDebugMode()` in `utils.ts` reads the `labcharts-debug` localStorage flag. All `console.warn` and `console.error` calls in production are gated behind this:
 
 ```js
 if (isDebugMode()) console.warn('PII diff:', replacements);

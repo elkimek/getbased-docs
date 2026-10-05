@@ -8,23 +8,23 @@ description: "Reference map for the getbased native ES modules and compatibility
 
 # Module Reference
 
-Modules live under `js/`. The app has hundreds of focused top-level JavaScript modules. This page is a guided implementation map, not a promise that every small hook, delegate, or helper file has its own long section. It is grouped by layer; lower layers have no dependencies on higher ones.
+Modules live under `js/`. The app has hundreds of focused TypeScript modules, compiled to JavaScript by TypeScript 7. This page is a guided implementation map, not a promise that every small hook, delegate, or helper file has its own long section. It is grouped by ownership area. Follow the app architecture contract for dependency direction; `.ts` filenames identify authored source, while imports and browser URLs retain `.js` runtime specifiers.
 
 ---
 
 ## Layer 1 — Foundation
 
-### `schema.js` and `marker-schema/`
+### `schema.ts` and `marker-schema/`
 
-`schema.js` is the stable compatibility facade for the modular biomarker catalog, range registries, unit conversions, pricing, and environment thresholds. Category definitions and immutable marker identities are authored in category modules under `marker-schema/`, composed by `marker-schema/index.js`, and generated into `marker-schema.js`; contributors must not edit the generated file directly.
+`schema.ts` is the stable compatibility facade for the modular biomarker catalog, range registries, unit conversions, pricing, and environment thresholds. Category definitions and immutable marker identities are authored in category modules under `marker-schema/`, composed by `marker-schema/index.ts`, and generated into `marker-schema.ts`; contributors must not edit the generated file directly.
 
 **Key exports:**
-- `MARKER_SCHEMA` — 196 core entries across 19 categories, including the 22-entry `calculatedRatios` category
-- `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for canonical→US compatibility; schema-wide profile resolution lives in `unit-profiles.js`
+- `MARKER_SCHEMA` — 197 core entries across 19 categories, including the 22-entry `calculatedRatios` category
+- `UNIT_CONVERSIONS` — keyed by `"category.markerKey"`: `{ type: 'multiply', factor, unit }` for canonical→US compatibility; schema-wide profile resolution lives in `unit-profiles.ts`
 - `OPTIMAL_RANGES` — keyed by `"category.markerKey"`: `{ optimalMin, optimalMax, optimalMin_f?, optimalMax_f? }`
 - `PHASE_RANGES` — keyed by `"category.markerKey"`: `{ menstrual: { min, max }, follicular: {...}, ovulatory: {...}, luteal: {...} }` — covers `hormones.estradiol`, `hormones.progesterone`, `hormones.lh`, and `hormones.fsh`
 - `CONTEXT_REFERENCE_RANGES` / `CONTEXT_OPTIMAL_RANGES` — age-, sex-, and date-resolved guidance consumed by the active-data pipeline
-- `SPECIALTY_MARKER_DEFS` — re-exported from `adapters.js` as `ADAPTER_MARKERS`. Used by `migrateProfileData()` and `buildMarkerReference()`
+- `SPECIALTY_MARKER_DEFS` — re-exported from `adapters.ts` as `ADAPTER_MARKERS`. Used by `migrateProfileData()` and `buildMarkerReference()`
 - `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, and `resolveBuiltinMarkerDotKey()` — immutable `gb:marker:*` IDs plus current and legacy location compatibility exports
 - `CHIP_COLORS` — status → CSS color string
 - `MODEL_PRICING` — AI model pricing metadata, keyed by provider/model
@@ -33,9 +33,9 @@ Modules live under `js/`. The app has hundreds of focused top-level JavaScript m
 
 ---
 
-### `marker-schema/index.js` and `marker-schema.js`
+### `marker-schema/index.ts` and `marker-schema.ts`
 
-`marker-schema/index.js` is the authoring composition root. It imports the category source modules in stable order and exports the catalog inputs. `scripts/build-marker-schema.mjs` turns those inputs into the generated runtime module `marker-schema.js`; contributors must not edit the generated file directly.
+`marker-schema/index.ts` is the authoring composition root. It imports the category source modules in stable order and exports the catalog inputs. `scripts/build-marker-schema.mts` turns those inputs into the generated TypeScript catalog `marker-schema.ts`, which the compiler emits as the runtime `marker-schema.js`; contributors must not edit the generated file directly.
 
 **Key generated exports:** `MARKER_SCHEMA`, `BUILTIN_MARKER_IDENTITIES`, `BUILTIN_MARKER_DOT_KEY_ALIASES`, `getBuiltinMarkerId()`, `getBuiltinMarkerDotKey()`, `resolveBuiltinMarkerDotKey()`, `CUSTOM_MARKER_ID_PREFIX`, and `isCustomMarkerId()`.
 
@@ -43,15 +43,15 @@ See [Marker model and category placement](/developers/marker-model) for the auth
 
 ---
 
-### `unit-profiles.js` and `secondary-unit-conversions.js`
+### `unit-profiles.ts` and `secondary-unit-conversions.ts`
 
-Schema-wide display-unit projection over canonical marker storage. `unit-profiles.js` resolves every built-in marker for `EU` (International/SI), `ANZ` (Australia/New Zealand), and `US`; markers without a numeric difference use an identity projection. `secondary-unit-conversions.js` supplies compatible input and alternate clinical units. Import, manual entry, active data, ranges, reports, and AI context must use these central contracts rather than renderer-specific conversions.
+Schema-wide display-unit projection over canonical marker storage. `unit-profiles.ts` resolves every built-in marker for `EU` (International/SI), `ANZ` (Australia/New Zealand), and `US`; markers without a numeric difference use an identity projection. `secondary-unit-conversions.ts` supplies compatible input and alternate clinical units. Import, manual entry, active data, ranges, reports, and AI context must use these central contracts rather than renderer-specific conversions.
 
 **Key exports:** `UNIT_PROFILE_IDS`, `UNIT_PROFILE_LABELS`, `ANZ_UNIT_OVERRIDES`, `normalizeUnitProfile()`, `getUnitProfileLabel()`, `resolveMarkerUnitProfile()`, `convertCanonicalToDisplay()`, `convertDisplayToCanonical()`, `getMarkerInputUnits()`, `convertUnitInputToCanonical()`, `convertCanonicalToInputUnit()`, and `auditUnitProfileCoverage()`.
 
 ---
 
-### `custom-marker-identity.js`
+### `custom-marker-identity.ts`
 
 Creates and migrates category-independent `custom:*` IDs while preserving existing custom-marker dot keys. Legacy IDs are deterministic and migration is idempotent so offline devices converge.
 
@@ -59,7 +59,7 @@ Creates and migrates category-independent `custom:*` IDs while preserving existi
 
 ---
 
-### `marker-placement.js`
+### `marker-placement.ts`
 
 Pure marker placement engine and storage/display boundary. It validates visual category assignments, keeps unknown metadata forward-compatible, applies placement as the final active-data projection, and resolves mutation keys back to immutable storage locations.
 
@@ -67,7 +67,7 @@ Pure marker placement engine and storage/display boundary. It validates visual c
 
 ---
 
-### `marker-terminology.js`
+### `marker-terminology.ts`
 
 Generated, optional mapping registry for LOINC, NPU, NČLP, and UCUM metadata. It is not part of application startup, profile persistence, import/export, backup, sharing, or sync.
 
@@ -77,12 +77,12 @@ See [Laboratory terminology registry](/developers/marker-terminology) for the ma
 
 ---
 
-### `adapters.js`
+### `adapters.ts`
 
 Startup-safe parser adapter registry for specialty lab detection and normalization. It owns the shared specialty definitions; importer-only product catalogs such as Mosaic OAT/MOAT stay outside the startup graph.
 
 **Key exports:**
-- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (225 entries). Re-exported from `schema.js` as `SPECIALTY_MARKER_DEFS`
+- `ADAPTER_MARKERS` — flat object keyed by `"category.markerKey"`: `{ name, unit, refMin, refMax, categoryLabel, icon, group, singlePoint? }` (225 entries). Re-exported from `schema.ts` as `SPECIALTY_MARKER_DEFS`
 - `getAllAdapterMarkers()` — returns merged marker map from all registered adapters
 - `detectProduct(fileName, pdfText)` — runs all adapter `detect()` functions, returns `{ adapter, product: { prefix, label } }` or `null`
 - `normalizeWithAdapter(adapter, markers, fileName, pdfText, product)` — dispatches to `adapter.normalize()` for post-AI marker key/category rewriting
@@ -96,13 +96,13 @@ Startup-safe parser adapter registry for specialty lab detection and normalizati
 - `gutStool` — 3 shared stool/gut-barrier markers
 - `biostarks` — 23 markers, detects BioStarks dried blood spot reports by filename/text, normalizes specialty markers (amino acids, serum FA, intracellular minerals, hormones, vitamins) while passing standard blood markers through to schema categories (hybrid import)
 
-`mosaic-oat-catalog.js` defines the importer-only Mosaic analyte order, aliases, sections, units, and OAT/MOAT marker metadata. `pdf-import-organic-acid-normalization.js` maps AI output into Mosaic, Metabolomix+, or lab-scoped OAT keys. Keep product identity in this deterministic post-AI layer; do not rely on model-generated category names to separate histories.
+`mosaic-oat-catalog.ts` defines the importer-only Mosaic analyte order, aliases, sections, units, and OAT/MOAT marker metadata. `pdf-import-organic-acid-normalization.ts` maps AI output into Mosaic, Metabolomix+, or lab-scoped OAT keys. Keep product identity in this deterministic post-AI layer; do not rely on model-generated category names to separate histories.
 
 **Window exports:** none
 
 ---
 
-### `constants.js`
+### `constants.ts`
 
 Static arrays and string constants used across modules.
 
@@ -116,7 +116,7 @@ Static arrays and string constants used across modules.
 
 ---
 
-### `chat-system-prompt.js`
+### `chat-system-prompt.ts`
 
 Chat-only source of truth for the base analyst instruction. Keeping it in the lazy Chat graph prevents prompt text from increasing the initial application bundle.
 
@@ -126,7 +126,7 @@ Chat-only source of truth for the base analyst instruction. Keeping it in the la
 
 ---
 
-### `state.js`
+### `state.ts`
 
 Single shared mutable state object. Import `state` to read or write. No logic.
 
@@ -180,7 +180,7 @@ Single shared mutable state object. Import `state` to read or write. No logic.
 
 ---
 
-### `utils.js`
+### `utils.ts`
 
 Shared pure utility functions.
 
@@ -201,17 +201,17 @@ Shared pure utility functions.
 
 ## Layer 2 — Core Services
 
-### `modal-lifecycle.js`
+### `modal-lifecycle.ts`
 
-Shared modal backdrop, focus-trap, and body-scroll lock helpers. Owns the cross-module scroll-lock registry used by Light & Sun modals; `sun.js` re-exports the legacy names for compatibility.
+Shared modal backdrop, focus-trap, and body-scroll lock helpers. Owns the cross-module scroll-lock registry used by Light & Sun modals; `sun.ts` re-exports the legacy names for compatibility.
 
 **Key exports:**
 - `wireBackdropClose(overlay, closeFn?)` / `_wireBackdropClose(overlay, closeFn?)` — backdrop click close wiring with inside-click guard
 - `trapModalFocus(overlay)` — locks background scroll, restores focus/overflow on removal, and handles Escape close
 
-**Window exports:** none directly; `sun.js` still exposes compatibility globals.
+**Window exports:** none directly; `sun.ts` still exposes compatibility globals.
 
-### `theme.js`
+### `theme.ts`
 
 Theme management and Chart.js color helpers.
 
@@ -227,7 +227,7 @@ Theme management and Chart.js color helpers.
 
 ---
 
-### `hardware.js`
+### `hardware.ts`
 
 GPU detection and model fitness advisor for Local AI settings. Pure functions, no DOM manipulation.
 
@@ -239,11 +239,11 @@ GPU detection and model fitness advisor for Local AI settings. Pure functions, n
 - `getUpgradeSuggestion(modelDetails, hardware)` — returns a pull recommendation if no installed model is "recommended" tier
 - `saveHardwareOverride(vram)` / `getHardwareOverride()` — manual VRAM override in localStorage
 
-**Window exports:** none (imported by `settings.js`)
+**Window exports:** none (imported by `settings.ts`)
 
 ---
 
-### `api.js`
+### `api.ts`
 
 AI provider routing and model management. All AI calls flow through `callClaudeAPI`.
 
@@ -253,7 +253,7 @@ AI provider routing and model management. All AI calls flow through `callClaudeA
 - `callRoutstrAPI(opts)` — Routstr via `callOpenAICompatibleAPI`
 - `callPPQAPI(opts)` — PPQ via `callOpenAICompatibleAPI`
 - `callVeniceAPI(opts)` — Venice AI via `callOpenAICompatibleAPI`
-- `callOpenAICompatibleLocalAPI(opts)` — compatibility re-export for Local AI request planning and adapter inference in `api-local.js`
+- `callOpenAICompatibleLocalAPI(opts)` — compatibility re-export for Local AI request planning and adapter inference in `api-local.ts`
 - `callOpenAICompatibleAPI(endpoint, key, model, providerName, opts, extraHeaders)` — shared OpenAI-format helper
 - `getAIProvider()` / `setAIProvider(provider)` — `'openrouter'` | `'routstr'` | `'ppq'` | `'venice'` | `'ollama'` (internal key for Local)
 - `hasAIProvider()` — returns `true` if any provider is configured; gates AI features
@@ -267,15 +267,15 @@ AI provider routing and model management. All AI calls flow through `callClaudeA
 
 ---
 
-### `api-transport.js`
+### `api-transport.ts`
 
-Shared AI API transport helpers used by `api.js`.
+Shared AI API transport helpers used by `api.ts`.
 
 **Key exports:**
 - `fetchWithRetry(url, options, config)` — wraps fetch with request timeout, transient network retry, and 429 backoff
 - `createProxyFetch(shouldUseProxy)` — compatibility fetch selector used by the shared OpenAI-format helper. Current Custom API calls pass `false`, so Custom validation, model discovery, and chat are browser-direct and do not fall back to a relay.
 
-### `app-extension-runtime.js` and `app-extension-bootstrap.js`
+### `app-extension-runtime.ts` and `app-extension-bootstrap.ts`
 
 Neutral single-extension boundary for trusted edition builds. The public/self-host bootstrap installs no extension, leaving the independently runnable core behavior unchanged. This is a build-time adapter contract, not dynamic plugin loading.
 
@@ -283,7 +283,7 @@ Neutral single-extension boundary for trusted edition builds. The public/self-ho
 
 An extension requires a stable ID. Active extension-owned AI transport fails closed when `authorizeRequest` is absent or does not return `true`.
 
-### `unique-id.js`
+### `unique-id.ts`
 
 Creates collision-resistant local record IDs with `crypto.randomUUID()` or `crypto.getRandomValues()`. `createUniqueId(prefix?)` throws when Web Crypto is unavailable instead of persisting a weak fallback identifier.
 - `readWithStallTimeout(reader, label, timeoutMs?)` — guards one streaming read; Local AI uses the extended allowance only before its first token
@@ -299,14 +299,14 @@ Local AI uses a normalized adapter layer so compatible endpoints work without hi
 
 **Key modules and exports:**
 
-- `local-ai-provider-registry.js` — `LOCAL_AI_PROVIDER_ADAPTERS`, `getLocalAiProviderAdapter()`, capability lookup, and detection precedence
-- `local-ai-provider-ollama.js` — native discovery, streaming inference, context override, performance diagnostics, and unload
-- `local-ai-provider-lmstudio.js` — native discovery/model enrichment, guarded unload/load-at-context, streaming compatible generation, native fallback, and truncation diagnostics
-- `local-ai-provider-openai-compatible.js` — generic `/v1/models` discovery and `/v1/chat/completions` inference
-- `local-ai-provider-shared.js` — base URL normalization, execution-location classification, compatible-model normalization, and secret redaction
-- `local-ai-discovery.js` — short-lived discovery cache and loaded-model metadata updates
-- `api-local.js` — prompt-token estimation, context/output replanning after a native load, adapter selection, and normalized inference diagnostics
-- `local-ai-lifecycle.js` — memory-only runtime handoff and best-effort model release across same-machine endpoints
+- `local-ai-provider-registry.ts` — `LOCAL_AI_PROVIDER_ADAPTERS`, `getLocalAiProviderAdapter()`, capability lookup, and detection precedence
+- `local-ai-provider-ollama.ts` — native discovery, streaming inference, context override, performance diagnostics, and unload
+- `local-ai-provider-lmstudio.ts` — native discovery/model enrichment, guarded unload/load-at-context, streaming compatible generation, native fallback, and truncation diagnostics
+- `local-ai-provider-openai-compatible.ts` — generic `/v1/models` discovery and `/v1/chat/completions` inference
+- `local-ai-provider-shared.ts` — base URL normalization, execution-location classification, compatible-model normalization, and secret redaction
+- `local-ai-discovery.ts` — short-lived discovery cache and loaded-model metadata updates
+- `api-local.ts` — prompt-token estimation, context/output replanning after a native load, adapter selection, and normalized inference diagnostics
+- `local-ai-lifecycle.ts` — memory-only runtime handoff and best-effort model release across same-machine endpoints
 
 See [AI provider internals](/developers/ai-provider-internals#local-ai-adapter-contract) for the capability and lifecycle contract.
 
@@ -314,13 +314,13 @@ See [AI provider internals](/developers/ai-provider-internals#local-ai-adapter-c
 
 ### Import model-testing modules
 
-`import-benchmarks.js` captures durable, device-local diagnostics around production PDF/image imports. `import-reference-benchmark.js` runs and scores the bundled reference report. `settings-import-benchmark-controller.js` and the benchmark helpers in `settings-data.js` own the user-facing history and comparison UI.
+`import-benchmarks.ts` captures durable, device-local diagnostics around production PDF/image imports. `import-reference-benchmark.ts` runs and scores the bundled reference report. `settings-import-benchmark-controller.ts` and the benchmark helpers in `settings-data.ts` own the user-facing history and comparison UI.
 
 See [AI model testing internals](/developers/ai-model-testing-internals) for record statuses, scoring layers, same-input comparison, persistence, and fixture maintenance.
 
 ---
 
-### `cashu-wallet.js`
+### `cashu-wallet.ts`
 
 In-app Cashu eCash wallet for decentralized AI payments. Proofs stored in IndexedDB, BIP-39 seed encrypted in localStorage.
 
@@ -343,7 +343,7 @@ In-app Cashu eCash wallet for decentralized AI payments. Proofs stored in Indexe
 
 ---
 
-### `nostr-discovery.js`
+### `nostr-discovery.ts`
 
 Discovers Routstr AI nodes via Nostr relays (Kind 38421 events).
 
@@ -358,7 +358,7 @@ Discovers Routstr AI nodes via Nostr relays (Kind 38421 events).
 
 ## Layer 3 — Data & Profile
 
-### `profile.js`
+### `profile.ts`
 
 Profile lifecycle and settings persistence.
 
@@ -377,7 +377,7 @@ Profile lifecycle and settings persistence.
 
 ---
 
-### `data.js`
+### `data.ts`
 
 The central data pipeline. Every view gets its data from `getActiveData()`.
 
@@ -386,29 +386,29 @@ The central data pipeline. Every view gets its data from `getActiveData()`.
 - `invalidateActiveDataCache()` — clears the projection cache after a tracked mutation
 - `saveImportedData()` — persists `state.importedData` to localStorage (or encrypted store), triggers backup
 - `filterDatesByRange(data, options?)` — returns a date-filtered projection without mutating the cached active dataset
-- `registerRefreshCallback(fn)` — registers the refresh function from `app-event-listeners.js`
+- `registerRefreshCallback(fn)` — registers the refresh function from `app-event-listeners.ts`
 - `getFocusCardFingerprint()` — hash of lab/profile inputs relevant to the Focus card
-- Compatibility re-exports from `marker-analysis.js` keep existing `window.*` helper access stable.
+- Compatibility re-exports from `marker-analysis.ts` keep existing `window.*` helper access stable.
 
-**Window exports:** `saveImportedData`, `clearAllData` (via export.js), `filterDatesByRange`
+**Window exports:** `saveImportedData`, `clearAllData` (via export.ts), `filterDatesByRange`
 
 ---
 
 ### Lab marker projection helpers
 
-- `data-calculated-markers.js` — direct-result-first calculated ratios, indices, free water deficit, PhenoAge, Bortz Age, combined Biological Age, and dated calculation guidance.
-- `marker-context-ranges.js` — whole-age-at-draw, sex/age band selection, collection-time parsing, and cortisol range resolution.
-- `cycle-draw-phases.js` — normalization of explicit recorded phase, phase detail, cycle day, and recorded/predicted source.
-- `marker-range-suggestions.js` — privacy-safe public issue payload and gating to untouched built-in ranges.
-- `profile-marker-alias-migrations.js` — canonical dotKey migrations across values, snapshots, custom markers, ranges, notes, labels, and date-scoped manual metadata.
+- `data-calculated-markers.ts` — direct-result-first calculated ratios, indices, free water deficit, PhenoAge, Bortz Age, combined Biological Age, and dated calculation guidance.
+- `marker-context-ranges.ts` — whole-age-at-draw, sex/age band selection, collection-time parsing, and cortisol range resolution.
+- `cycle-draw-phases.ts` — normalization of explicit recorded phase, phase detail, cycle day, and recorded/predicted source.
+- `marker-range-suggestions.ts` — privacy-safe public issue payload and gating to untouched built-in ranges.
+- `profile-marker-alias-migrations.ts` — canonical dotKey migrations across values, snapshots, custom markers, ranges, notes, labels, and date-scoped manual metadata.
 
 See [Lab markers and range internals](/developers/lab-markers-ranges-internals) for precedence and invariants.
 
 ---
 
-### `marker-analysis.js`
+### `marker-analysis.ts`
 
-Read-only marker range, status, and trend helpers. This module owns pure marker analysis so chart, dashboard, AI context, and export code do not need to import the storage/sync-heavy `data.js` when they only need derived marker calculations.
+Read-only marker range, status, and trend helpers. This module owns pure marker analysis so chart, dashboard, AI context, and export code do not need to import the storage/sync-heavy `data.ts` when they only need derived marker calculations.
 
 **Key exports:**
 - `getEffectiveRange(marker)` — returns `{ min, max }` respecting `state.rangeMode`
@@ -422,11 +422,11 @@ Read-only marker range, status, and trend helpers. This module owns pure marker 
 - `detectTrendAlerts(data)` — sudden-change (25% of ref range, 2+ values) and linear-regression (slope >0.02, R²>0.5 for 4+ points) alerts
 - `getKeyTrendMarkers(filteredData)` — dashboard key-trend selection
 
-**Window exports:** none directly; `data.js` keeps compatibility exports.
+**Window exports:** none directly; `data.ts` keeps compatibility exports.
 
 ---
 
-### `pii.js`
+### `pii.ts`
 
 Two-path PII obfuscation for PDF text before AI submission, with streaming review modal.
 
@@ -443,7 +443,7 @@ Two-path PII obfuscation for PDF text before AI submission, with streaming revie
 
 ---
 
-### `image-utils.js`
+### `image-utils.ts`
 
 Shared image utilities for chat attachments and PDF image fallback.
 
@@ -462,7 +462,7 @@ Shared image utilities for chat attachments and PDF image fallback.
 
 ## Layer 4 — Domain Modules
 
-### `charts.js`
+### `charts.ts`
 
 Chart.js configuration and all custom plugins.
 
@@ -480,7 +480,7 @@ Chart.js configuration and all custom plugins.
 
 ---
 
-### `notes.js`
+### `notes.ts`
 
 Standalone note management (independent of lab entries).
 
@@ -495,7 +495,7 @@ Standalone note management (independent of lab entries).
 
 ### Supplement and medication modules
 
-The feature is split by responsibility. `supplements.js` orchestrates the editor and persistence; `supplement-medication-domain.js` owns identity, lifecycle, periods, schedules, quantities, units, and additive migration; `supplement-form-ui.js` and `supplement-import-controller.js` own the structured form and reviewed import workflow; `supplement-dashboard.js` and `supplement-impact.js` own current display and historical analysis; `supplement-quality.js`, `supplement-context.js`, and `supplement-warnings.js` own evidence and bounded projections.
+The feature is split by responsibility. `supplements.ts` orchestrates the editor and persistence; `supplement-medication-domain.ts` owns identity, lifecycle, periods, schedules, quantities, units, and additive migration; `supplement-form-ui.ts` and `supplement-import-controller.ts` own the structured form and reviewed import workflow; `supplement-dashboard.ts` and `supplement-impact.ts` own current display and historical analysis; `supplement-quality.ts`, `supplement-context.ts`, and `supplement-warnings.ts` own evidence and bounded projections.
 
 **Key exports:**
 - `openSupplementsEditor(index?)` — opens the supplement editor modal
@@ -521,7 +521,7 @@ The feature is split by responsibility. `supplements.js` orchestrates the editor
 
 ### Meals and Nutrition modules
 
-The feature is lazy-loaded through `nutrition-context.js`. `nutrition-analysis.js` and `nutrition-ai-settings.js` own image-capable provider routing and editable extraction; `nutrition-store.js` owns the device-encrypted IndexedDB cache and timestamp-aware profile mirror; `nutrition-summary.js` owns coverage-aware windows and history; the benchmark modules own independent photos and per-model cancel/retry behavior.
+The feature is lazy-loaded through `nutrition-context.ts`. `nutrition-analysis.ts` and `nutrition-ai-settings.ts` own image-capable provider routing and editable extraction; `nutrition-store.ts` owns the device-encrypted IndexedDB cache and timestamp-aware profile mirror; `nutrition-summary.ts` owns coverage-aware windows and history; the benchmark modules own independent photos and per-model cancel/retry behavior.
 
 **Key exports:**
 - `openNutritionModule()` / `openNutritionHistoryModule()` — lazy Body/dashboard routes
@@ -538,7 +538,7 @@ See [Meals and Nutrition internals](/developers/nutrition-internals) for the dat
 
 ---
 
-### `cycle.js`
+### `cycle.ts`
 
 Menstrual cycle tracking, helpers, and dashboard rendering.
 
@@ -558,7 +558,7 @@ Menstrual cycle tracking, helpers, and dashboard rendering.
 
 ---
 
-### `context-cards.js`
+### `context-cards.ts`
 
 Health-context card rendering and lifecycle facade. It owns the grid, save-and-refresh flow, context notes, demo live-AI confirmation controls, card-tip launchers, and compatibility exports for the split editor, summary, dashboard-AI, and health-dot modules.
 
@@ -570,13 +570,13 @@ Health-context card rendering and lifecycle facade. It owns the grid, save-and-r
 - `openPersonalizeAIPicker()` — 2-card picker (Lens / Knowledge Base) shown when both are unset
 - `openDataProtectionPicker()` — 3-card picker (Encryption / Sync / Auto-backup) with configured cards grayed out
 - `triggerDNAFilePicker()` — programmatic file input trigger that routes through `window.handleDNAFile`; used by the genetics empty-state stub
-- `loadContextHealthDots()` — compatibility facade for stale-card assessment in `context-card-health-dots.js`
+- `loadContextHealthDots()` — compatibility facade for stale-card assessment in `context-card-health-dots.ts`
 - `getCardFingerprint(key)` — djb2 hash of lab data, card data, shared notes/lens, sex, and DOB for cache invalidation
-- Per-card editor functions: `openDiagnosesEditor`, `openDietEditor`, `openExerciseEditor`, `openSleepRestEditor`, `openLightCircadianEditor`, `openStressEditor`, `openLoveLifeEditor`, `openEnvironmentEditor`, `openHealthGoalsEditor`; Medical History helpers come from `context-card-medical-history-editor.js`, and lifestyle editors come through the cold-safe `context-card-lifestyle-editors.js` facade
+- Per-card editor functions: `openDiagnosesEditor`, `openDietEditor`, `openExerciseEditor`, `openSleepRestEditor`, `openLightCircadianEditor`, `openStressEditor`, `openLoveLifeEditor`, `openEnvironmentEditor`, `openHealthGoalsEditor`; Medical History helpers come from `context-card-medical-history-editor.ts`, and lifestyle editors come through the cold-safe `context-card-lifestyle-editors.ts` facade
 - Matching save/clear functions for all nine context areas are re-exported from their owning editor modules
-- `selectCtxOption(el, group, multi)` — compatibility re-export from `context-card-editor-ui.js`
+- `selectCtxOption(el, group, multi)` — compatibility re-export from `context-card-editor-ui.ts`
 - `getSelectedOption(group)` — reads selected value from a `.ctx-btn-group`
-- Summary helpers such as `getDietSummary()` and `getEnvironmentSummary()` — compatibility re-exports from `context-card-summaries.js`
+- Summary helpers such as `getDietSummary()` and `getEnvironmentSummary()` — compatibility re-exports from `context-card-summaries.ts`
 - `debounceContextNotes()` — auto-saves the free-form context notes textarea
 - `recordChange(field)` — snapshots a context field and appends a timestamped entry to `importedData.changeHistory` (dedup: same-day overwrite, identical skip, 200 cap)
 
@@ -584,17 +584,17 @@ Health-context card rendering and lifecycle facade. It owns the grid, save-and-r
 
 ---
 
-### `context-card-health-dots.js`
+### `context-card-health-dots.ts`
 
 AI-backed profile summaries, colored health dots, and short marker-linked tips for context cards. It fingerprints and caches each card independently, sends only stale cards, normalizes model output, and falls back to gray on malformed or failed responses. Demo profiles use bundled precomputed insights; local models can refresh them automatically, while cloud or paid models require in-memory consent bound to the current demo profile, provider, and model.
 
 **Key exports:** `getDemoContextAIMode()`, `enableDemoContextLiveAI()`, `disableDemoContextLiveAI()`, `applyDotColor()`, `applyAISummary()`, `applyAIProfileSummary()`, `getCardFingerprint()`, `loadContextHealthDots()`, `refreshAllHealthDots()`.
 
-**Window exports:** none directly; compatibility functions are exposed through `context-cards.js`.
+**Window exports:** none directly; compatibility functions are exposed through `context-cards.ts`.
 
 ---
 
-### `context-card-summaries.js`
+### `context-card-summaries.ts`
 
 Context card metadata, filled-state checks, dashboard summary strings, and the EMF assessment launcher/summary. Kept side-effect-light so card rendering, chat/onboarding callers, and tests can share one source of truth without pulling in every editor modal.
 
@@ -604,7 +604,7 @@ Context card metadata, filled-state checks, dashboard summary strings, and the E
 
 ---
 
-### `context-card-editor-ui.js`
+### `context-card-editor-ui.ts`
 
 Shared context editor modal shell and field-control render/read helpers used by the 9 card editors.
 
@@ -614,7 +614,7 @@ Shared context editor modal shell and field-control render/read helpers used by 
 
 ---
 
-### `context-card-medical-history-editor.js`
+### `context-card-medical-history-editor.ts`
 
 Medical History editor module for personal conditions and family history. Owns the condition autocomplete, relative allowlist, add/delete flows, modal rendering, note sync, and save/clear handlers for `importedData.diagnoses`.
 
@@ -624,9 +624,9 @@ Medical History editor module for personal conditions and family history. Owns t
 
 ---
 
-### `context-card-lifestyle-editors.js`
+### `context-card-lifestyle-editors.ts`
 
-Cold-safe facade for all lifestyle context editors. It keeps the small diet-contaminant badge path available during dashboard render, lazy-loads `context-card-lifestyle-editors-impl.js` on first editor action, retries a failed module fetch once with a fixed alternate URL, and forwards the save/change callbacks owned by `context-cards.js`.
+Cold-safe facade for all lifestyle context editors. It keeps the small diet-contaminant badge path available during dashboard render, lazy-loads `context-card-lifestyle-editors-impl.ts` on first editor action, retries a failed module fetch once with a fixed alternate URL, and forwards the save/change callbacks owned by `context-cards.ts`.
 
 **Key exports:** `configureLifestyleContextEditors()`, `renderDietContaminantsBadge()`, `openDietEditor()`, `saveDiet()`, `clearDiet()`, `openSleepRestEditor()`, `saveSleepRest()`, `clearSleepRest()`, `openLightCircadianEditor()`, `saveLightCircadian()`, `clearLightCircadian()`, `openExerciseEditor()`, `saveExercise()`, `clearExercise()`, `openStressEditor()`, `saveStress()`, `clearStress()`, `openLoveLifeEditor()`, `saveLoveLife()`, `clearLoveLife()`, `openEnvironmentEditor()`, `saveEnvironment()`, `clearEnvironment()`, `openHealthGoalsEditor()`, `renderHealthGoalsModal()`, `addHealthGoal()`, `deleteHealthGoal()`, `closeHealthGoals()`, `clearHealthGoals()`, `openInterpretiveLensEditor()`, `saveInterpretiveLens()`, `clearInterpretiveLens()`, `showDietContaminantsModal()`.
 
@@ -634,19 +634,19 @@ Cold-safe facade for all lifestyle context editors. It keeps the small diet-cont
 
 ---
 
-### `context-card-lifestyle-editors-impl.js`
+### `context-card-lifestyle-editors-impl.ts`
 
-Main editor implementation for Diet & Digestion, Sleep & Rest, Exercise, Stress, Love Life & Relationships, and Environment. It renders the current option sets, progressive detail sections, SI/US hydration labels, diet contaminant badge, and save/clear handlers. Light, goals, interpretive lens, and the contaminant detail modal are delegated to `context-card-lifestyle-special-editors.js` and re-exported.
+Main editor implementation for Diet & Digestion, Sleep & Rest, Exercise, Stress, Love Life & Relationships, and Environment. It renders the current option sets, progressive detail sections, SI/US hydration labels, diet contaminant badge, and save/clear handlers. Light, goals, interpretive lens, and the contaminant detail modal are delegated to `context-card-lifestyle-special-editors.ts` and re-exported.
 
 **Window exports:** none; called through the cold-safe lifestyle facade.
 
 ---
 
-### `context-card-lifestyle-special-editors.js`
+### `context-card-lifestyle-special-editors.ts`
 
 Specialized editors for Light & Circadian, prioritized Health Goals, Interpretive Lens, and diet contaminant details. It mirrors relevant Light setup values and keeps Health Goals sorted by priority.
 
-**Window exports:** none; re-exported through the lifestyle editor modules and `context-cards.js`.
+**Window exports:** none; re-exported through the lifestyle editor modules and `context-cards.ts`.
 
 ---
 
@@ -654,18 +654,18 @@ Specialized editors for Light & Circadian, prioritized Health Goals, Interpretiv
 
 ### Genome modules
 
-The Genome feature is a lazy-loaded 10-module family. `dna.js` is the public orchestration barrel; parsing, evidence, UI, mtDNA, and shell integration remain separated by responsibility.
+The Genome feature is a lazy-loaded 10-module family. `dna.ts` is the public orchestration barrel; parsing, evidence, UI, mtDNA, and shell integration remain separated by responsibility.
 
-- `dna-actions.js` — delegated Genome action handlers.
-- `dna-evidence.js` — association/evidence/relevance labels, ranking, focused Ask AI prompts, publication labels, and privacy-safe catalog issue links.
-- `dna-file-detection.js` — provider, annotated-report, 23andMe MT/Y, and Living DNA motherline classification.
-- `dna-genotype.js` — allele/repeat normalization and strand-aware catalog matching.
-- `dna-mtdna.js` — mutation parsing, parent/subclade resolution, mitochondrial climate-adaptation context, preview, persistence, and manual haplogroup entry.
-- `dna-parser.js` — Web Worker raw-file parser plus deterministic annotated/clinical report extraction.
-- `dna-runtime-bridge.js` — cold-safe function registry used before the Genome bundle is loaded.
-- `dna-runtime.js` — lazy stylesheet, pending-import, shell refresh, profile, and chat dependencies.
-- `dna-ui.js` — Genome section, raw/report/manual entry, association groups, evidence controls, and import previews.
-- `dna.js` — catalog loading, persistence, APOE resolution, re-import merge rules, AI context assembly, and public bridge registration.
+- `dna-actions.ts` — delegated Genome action handlers.
+- `dna-evidence.ts` — association/evidence/relevance labels, ranking, focused Ask AI prompts, publication labels, and privacy-safe catalog issue links.
+- `dna-file-detection.ts` — provider, annotated-report, 23andMe MT/Y, and Living DNA motherline classification.
+- `dna-genotype.ts` — allele/repeat normalization and strand-aware catalog matching.
+- `dna-mtdna.ts` — mutation parsing, parent/subclade resolution, mitochondrial climate-adaptation context, preview, persistence, and manual haplogroup entry.
+- `dna-parser.ts` — Web Worker raw-file parser plus deterministic annotated/clinical report extraction.
+- `dna-runtime-bridge.ts` — cold-safe function registry used before the Genome bundle is loaded.
+- `dna-runtime.ts` — lazy stylesheet, pending-import, shell refresh, profile, and chat dependencies.
+- `dna-ui.ts` — Genome section, raw/report/manual entry, association groups, evidence controls, and import previews.
+- `dna.ts` — catalog loading, persistence, APOE resolution, re-import merge rules, AI context assembly, and public bridge registration.
 
 **Key exports:**
 
@@ -682,11 +682,11 @@ The Genome feature is a lazy-loaded 10-module family. `dna.js` is the public orc
 - `handleDNAFile(file)` / `handleSnpReportFile(file)` — preview and confirm flows for raw exports and report files.
 - `parseMtDNAMutations()` / `resolveHaplogroup()` / `detectMtDNAMismatch()` — maternal marker parsing, specific-subclade resolution, and mitochondrial climate-adaptation latitude context.
 
-The lazy public surface is registered through `configureDnaModuleBridge()`. Shell and dashboard callers use `health-data-loader.js` or `dna-runtime-bridge.js`; Genome functions are no longer installed as a broad set of `window` globals.
+The lazy public surface is registered through `configureDnaModuleBridge()`. Shell and dashboard callers use `health-data-loader.ts` or `dna-runtime-bridge.ts`; Genome functions are no longer installed as a broad set of `window` globals.
 
 ---
 
-### `pdf-import.js`
+### `pdf-import.ts`
 
 PDF/image/text-to-lab-data import pipeline and confirm/save merge logic.
 
@@ -695,15 +695,15 @@ PDF/image/text-to-lab-data import pipeline and confirm/save merge logic.
 - `parseLabPDFWithAI(pdfText, fileName, onProgress)` — sends text + `buildMarkerReference()` to AI, extracts explicit collection time and fasting status, reports reading/writing phases, rejects truncated output, and maps complete results to marker keys
 - `handleImageFile(file)` — imports lab reports from JPG/PNG/WebP images via AI image pipeline
 - `handleBatchPDFs(files)` — sequential multi-file import with per-file confirm/skip
-- `showImportPreview(parsed)` — re-export from `pdf-import-review.js`
+- `showImportPreview(parsed)` — re-export from `pdf-import-review.ts`
 - `confirmImport(parsed)` — merges parsed data into `importedData.entries`
-- `setupDropZone()` — legacy eager drop-zone binding retained for compatibility; page shells use `import-drop-zone.js` so the PDF import module stays lazy-loaded
+- `setupDropZone()` — legacy eager drop-zone binding retained for compatibility; page shells use `import-drop-zone.ts` so the PDF import module stays lazy-loaded
 
 **Window exports:** `confirmImport`, `skipImport`, `importNextPDF`, `syncImportStatusFab`, `handleImportStatusClick`, `isImportRunning`
 
 ---
 
-### `pdf-import-preflight.js`
+### `pdf-import-preflight.ts`
 
 Pre-AI import checks for duplicate PDF hashes, previous-model mismatch prompts, and unsupported specialty-test warnings.
 
@@ -711,11 +711,11 @@ Pre-AI import checks for duplicate PDF hashes, previous-model mismatch prompts, 
 - `runPreflightChecks(pdfText, fileName)` — returns `false` when the user cancels before token-spending import work starts
 - `normalizeImportModelId(id)` — shared model ID canonicalization for cross-provider import mismatch checks
 
-**Window exports:** none directly; `pdf-import.js` calls this during PDF/batch import.
+**Window exports:** none directly; `pdf-import.ts` calls this during PDF/batch import.
 
 ---
 
-### `pdf-import-progress.js`
+### `pdf-import-progress.ts`
 
 Import progress bar, header import-button status, and batch progress rendering.
 
@@ -723,13 +723,13 @@ Import progress bar, header import-button status, and batch progress rendering.
 - `showImportProgress(step, fileName)` / `hideImportProgress(reason)` — render and clear the import progress UI
 - `showBatchImportProgress(step, fileName, current, total)` — render per-file batch progress
 - `updateImportProgressPct(pct, stageLabel?)` — streaming AI progress and reading/writing phase-label hook
-- `syncImportStatusFab()` / `handleImportStatusClick()` / `isImportRunning()` — status bridge used by `pdf-import.js` window exports; the legacy function name now syncs the header import button
+- `syncImportStatusFab()` / `handleImportStatusClick()` / `isImportRunning()` — status bridge used by `pdf-import.ts` window exports; the legacy function name now syncs the header import button
 
-**Window exports:** via `pdf-import.js`
+**Window exports:** via `pdf-import.ts`
 
 ---
 
-### `pdf-import-ai-utils.js`
+### `pdf-import-ai-utils.ts`
 
 Shared AI-import transport helpers.
 
@@ -742,29 +742,29 @@ Shared AI-import transport helpers.
 
 ---
 
-### `pdf-import-marker-normalization.js`
+### `pdf-import-marker-normalization.ts`
 
 Shared AI marker normalization for PDF text import and image import.
 
 **Key exports:**
 - `normalizeParsedImportMarkers(parsed, options)` — sanitizes AI marker keys, runs product/test-type adapters, applies specialty guard rules, reconciles marker mappings, and returns `{ testType, markers }`
 
-**Window exports:** none directly; `pdf-import.js` calls this after AI JSON parsing.
+**Window exports:** none directly; `pdf-import.ts` calls this after AI JSON parsing.
 
 ---
 
 ### PDF import marker and unit helpers
 
-- `pdf-import-marker-mapping.js` — canonical schema/custom/specialty matching, alias resolution, allowed calculated destinations, and the `buildMarkerReference()` prompt catalog.
-- `pdf-import-ratio-units.js` — importable calculated-marker allowlist and SI-versus-conventional convention metadata for unitless report ratios.
-- `pdf-import-unit-conversions.js` — valid-unit lists plus round-trip display/SI conversion for recognized and custom markers.
-- `pdf-import-review-formatting.js` — responsive unit controls, viewport-safe picker positioning, and range formatting used by the review modal.
+- `pdf-import-marker-mapping.ts` — canonical schema/custom/specialty matching, alias resolution, allowed calculated destinations, and the `buildMarkerReference()` prompt catalog.
+- `pdf-import-ratio-units.ts` — importable calculated-marker allowlist and SI-versus-conventional convention metadata for unitless report ratios.
+- `pdf-import-unit-conversions.ts` — valid-unit lists plus round-trip display/SI conversion for recognized and custom markers.
+- `pdf-import-review-formatting.ts` — responsive unit controls, viewport-safe picker positioning, and range formatting used by the review modal.
 
 These helpers keep the modal presentation separate from normalization and commit semantics. A unit change must convert the value and range together; it must not relabel unchanged numeric data.
 
 ---
 
-### `pdf-import-persistence.js`
+### `pdf-import-persistence.ts`
 
 Durable imported-data persistence helpers for PDF import flows.
 
@@ -773,11 +773,11 @@ Durable imported-data persistence helpers for PDF import flows.
 - `refreshImportedDataViews()` — rebuilds sidebar/header and restores the current route after imported data changes
 - `removeImportedEntry(date)` / `renameImportedEntryDate(oldDate)` — entry delete and date-edit mutations with tombstones, immediate sync save, rollback, and success refresh
 
-**Window exports:** via `pdf-import.js`
+**Window exports:** via `pdf-import.ts`
 
 ---
 
-### `pdf-import-review.js`
+### `pdf-import-review.ts`
 
 Import review modal rendering and interaction state.
 
@@ -789,11 +789,11 @@ Import review modal rendering and interaction state.
 - `getPendingImport()` / `getExcludedImportIndices()` — narrow state access used by `confirmImport()`
 - `showImportPreviewAsync(result, current, total)` — batch import preview promise bridge
 
-**Window exports:** via `pdf-import.js`
+**Window exports:** via `pdf-import.ts`
 
 ---
 
-### `pdf-import-commit.js`
+### `pdf-import-commit.ts`
 
 Snapshot-aware import commit, re-review, deletion, range adoption, and collection-context ownership.
 
@@ -803,20 +803,20 @@ Snapshot-aware import commit, re-review, deletion, range adoption, and collectio
 - `collectionContextSources` tracks `sampleTime` and `fasting` independently so same-date snapshot removal restores the newest remaining owner;
 - mutation paths maintain marker/snapshot tombstones and roll back on durable-save failure.
 
-**Window exports:** via `pdf-import.js` and import-history controls.
+**Window exports:** via `pdf-import.ts` and import-history controls.
 
 ---
 
-### `import-drop-zone.js`
+### `import-drop-zone.ts`
 
-Lazy drop-zone event binding shared by Dashboard, Labs, and mobile dashboard shells. It imports `loadPdfImport()` from `import-loader.js`, classifies dropped files only after interaction, and routes JSON, lab PDFs/images, text imports, and DNA files to the same handlers used by the file input path.
+Lazy drop-zone event binding shared by Dashboard, Labs, and mobile dashboard shells. It imports `loadPdfImport()` from `import-loader.ts`, classifies dropped files only after interaction, and routes JSON, lab PDFs/images, text imports, and DNA files to the same handlers used by the file input path.
 
 **Key exports:**
 - `setupDropZone()` — idempotently binds click, drag, and drop handlers to `#drop-zone`
 
 ---
 
-### `import-file-input.js`
+### `import-file-input.ts`
 
 Lazy file-picker import binding for the hidden `#pdf-input`. It shares `loadPdfImport()` with the drop-zone path, classifies files on change, clears stale selections on failure, and routes JSON, lab PDFs/images, text imports, and DNA files through the import/DNA handlers exposed on `window`.
 
@@ -826,7 +826,7 @@ Lazy file-picker import binding for the hidden `#pdf-input`. It shares `loadPdfI
 
 ---
 
-### `export.js`
+### `export.ts`
 
 Data export, import, and reset.
 
@@ -845,17 +845,17 @@ Data export, import, and reset.
 
 ---
 
-### `export-report-data.js`, `export-report.js`, and `export-report-html.js`
+### `export-report-data.ts`, `export-report.ts`, and `export-report-html.ts`
 
-Report data is resolved once into a versioned, renderer-independent snapshot. `export-report-data.js` owns the pure schema, per-date range/status/provenance records, section minimization, and bounded agent projection. `export-report.js` owns active-state collection and the optional practitioner overview. `export-report-html.js` consumes the prepared snapshot for printable output and must not re-resolve report facts independently.
+Report data is resolved once into a versioned, renderer-independent snapshot. `export-report-data.ts` owns the pure schema, per-date range/status/provenance records, section minimization, and bounded agent projection. `export-report.ts` owns active-state collection and the optional AI overview. `export-report-html.ts` consumes the prepared snapshot for printable output and must not re-resolve report facts independently.
 
 **Key exports:** `REPORT_DATA_SCHEMA_VERSION`, `buildReportDataSnapshot()`, `formatReportDataForAgent()`, `buildPreparedReportPayload()`, `collectReportData()`, `buildReportAgentContext()`, `generateReportAISummary()`, `exportPDFReport()`, and `buildReportHTML()`.
 
-See [Report data contract](/developers/report-data).
+`export-report-builder.ts` owns templates and scope selection; the report sections, aggregate summaries and progress helpers keep the selected snapshot consistent through generation and preview. See [Report data contract](/developers/report-data) and [Health reports](/guides/health-reports).
 
 ---
 
-### `profile-share.js`
+### `profile-share.ts`
 
 Encrypted single-profile share links. The module creates a profile export through the module-only `buildClientExportObject()` helper, encrypts it in the browser with a password, posts only the ciphertext envelope to `/api/share`, and imports shared profiles from `#share/{id}` deep links after local password decryption. Shared envelopes require at least 100,000 PBKDF2-SHA256 iterations; the normal generated value is 600,000.
 
@@ -875,84 +875,84 @@ On official hosts, new `vps1_...` IDs route directly to `https://shares.getbased
 
 ---
 
-### `chat.js`
+### `chat.ts`
 
-Chat public barrel and startup entry point. Importing this module installs `chat-window-bindings.js` and re-exports the public helpers from the feature modules. The composer/draft, bounded transcript, scroll, edit/fork, recommendation-disclosure, persona persistence, and discussion-round modules keep durable state and high-churn UI behavior out of the public barrel. See [Chat internals](/developers/chat-internals) for the end-to-end ownership, storage, Sync, and backup contract.
+Chat public barrel and startup entry point. Importing this module installs `chat-window-bindings.ts` and re-exports the public helpers from the feature modules. The composer/draft, bounded transcript, scroll, edit/fork, recommendation-disclosure, persona persistence, and discussion-round modules keep durable state and high-churn UI behavior out of the public barrel. See [Chat internals](/developers/chat-internals) for the end-to-end ownership, storage, Sync, and backup contract.
 
 **Key exports:**
-- `sendChatMessage()` — re-exported from `chat-send.js` for existing callers
-- `renderChatMessages()` — re-exported from `chat-render.js` for existing callers
-- `askAIAboutMarker(markerKey)` — re-exported from `chat-marker-prompts.js`; opens chat with a marker-specific prompt
-- `askAIAboutCorrelations()` — re-exported from `chat-marker-prompts.js`; opens chat with a selected-marker correlation prompt
+- `sendChatMessage()` — re-exported from `chat-send.ts` for existing callers
+- `renderChatMessages()` — re-exported from `chat-render.ts` for existing callers
+- `askAIAboutMarker(markerKey)` — re-exported from `chat-marker-prompts.ts`; opens chat with a marker-specific prompt
+- `askAIAboutCorrelations()` — re-exported from `chat-marker-prompts.ts`; opens chat with a selected-marker correlation prompt
 - Thread management: `createNewThread()`, `loadThread(id)`, `deleteThread(id)`, `renameThread(id)`
 
 **Window exports:** `sendChatMessage`, `setChatPersonality`, `openChatPanel`, `closeChatPanel`, `createNewThread`, `loadThread`, `deleteThread`, `renameThread`, `generateCustomPersonality`, `saveCustomPersonality`, `askAIAboutMarker`, `addImageAttachment`. The original-resolution attachment flow replaces the old HD toggle.
 
-The v1.19.0 workspace adds `chat-layout.js` for resizing, `chat-model-controls.js` and `chat-model-preferences.js` for the provider-scoped model/effort picker, `chat-thread-list-view.js` for project/list markup, and `chat-message-avatars.js` for sender identity. Project persistence stays in the thread index. [CLI agent providers](/developers/cli-agent-providers#architecture-and-ownership) lists the separate Companion and agent-tool module owners.
+The v1.19.0 workspace adds `chat-layout.ts` for resizing, `chat-model-controls.ts` and `chat-model-preferences.ts` for the provider-scoped model/effort picker, `chat-thread-list-view.ts` for project/list markup, and `chat-message-avatars.ts` for sender identity. Project persistence stays in the thread index. [CLI agent providers](/developers/cli-agent-providers#architecture-and-ownership) lists the separate Companion and agent-tool module owners.
 
 ---
 
-### `chat-window-bindings.js`
+### `chat-window-bindings.ts`
 
-Chat callback wiring and legacy `window.*` compatibility exports. Owns `_resumeAI`, configures `chat-discussion.js`, `chat-onboarding.js`, and `chat-panel.js` callbacks, and exposes the chat handlers needed by inline HTML and cross-module `window.fn()` call sites.
+Chat callback wiring and legacy `window.*` compatibility exports. Owns `_resumeAI`, configures `chat-discussion.ts`, `chat-onboarding.ts`, and `chat-panel.ts` callbacks, and exposes the chat handlers needed by inline HTML and cross-module `window.fn()` call sites.
 
-**Key exports:** none; loaded for side effects by `chat.js`.
+**Key exports:** none; loaded for side effects by `chat.ts`.
 
 **Window exports:** `sendChatMessage`, `renderChatMessages`, `setChatPersonality`, `openChatPanel`, `closeChatPanel`, discussion handlers, onboarding handlers, summary handlers, action-bar handlers, and per-marker Ask AI handlers.
 
 ---
 
-### `chat-marker-prompts.js`
+### `chat-marker-prompts.ts`
 
 Per-marker and selected-correlation chat prompt builders. Owns `askAIAboutMarker()` and `askAIAboutCorrelations()`, including phase-aware marker values, effective reference ranges, latest status, and trend text before opening the chat panel with a prefilled prompt.
 
 **Key exports:** `askAIAboutMarker`, `askAIAboutCorrelations`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline Ask AI buttons.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline Ask AI buttons.
 
 ---
 
-### `chat-send.js`
+### `chat-send.ts`
 
-Direct chat send and streaming state. Owns `sendChatMessage()`, Enter-key handling, thread-bound abort state, send-button icon mode, typewriter trickle, image attachment payload injection, API message assembly, usage footnotes, live EMF/product recommendation injection, and partial-message persistence on abort. It delegates textarea/draft behavior to `chat-composer.js`, concise assistive status to `chat-stream-status.js`, continuation handling to `chat-continuation.js`, and collapsed recommendation state to `chat-recommendation-disclosure.js`.
+Direct chat send and streaming state. Owns `sendChatMessage()`, Enter-key handling, thread-bound abort state, send-button icon mode, typewriter trickle, image attachment payload injection, API message assembly, usage footnotes, live EMF/product recommendation injection, and partial-message persistence on abort. It delegates textarea/draft behavior to `chat-composer.ts`, concise assistive status to `chat-stream-status.ts`, continuation handling to `chat-continuation.ts`, and collapsed recommendation state to `chat-recommendation-disclosure.ts`.
 
 **Key exports:** `sendChatMessage`, `handleChatKeydown`, `isChatStreaming`, `createTypewriter`, `getChatAbortController`, `setChatAbortController`, `setSendButtonMode`, `updateSendButtonState`
 
-**Window exports:** `updateSendButtonState` is assigned by this module for `chat-images.js`; other user-facing handlers are assigned by `chat-window-bindings.js`.
+**Window exports:** `updateSendButtonState` is assigned by this module for `chat-images.ts`; other user-facing handlers are assigned by `chat-window-bindings.ts`.
 
 ---
 
-### `chat-render.js`
+### `chat-render.ts`
 
-Chat transcript rendering. Owns `renderChatMessages()` for persisted messages, latest-turn and fork action placement, lens-source disclosures, assistant footnotes, image badges, EMF hints, and persisted recommendation sections. It renders only the range supplied by `chat-render-range.js`, delegates scroll ownership to `chat-scroll.js`, and reveals earlier batches without truncating stored history.
+Chat transcript rendering. Owns `renderChatMessages()` for persisted messages, latest-turn and fork action placement, lens-source disclosures, assistant footnotes, image badges, EMF hints, and persisted recommendation sections. It renders only the range supplied by `chat-render-range.ts`, delegates scroll ownership to `chat-scroll.ts`, and reveals earlier batches without truncating stored history.
 
 **Key exports:** `renderChatMessages`, `showEarlierChatMessages`, `revealChatMessage`, `_getNoDataPrompts`, `_renderLensSources`
 
-**Window exports:** `renderChatMessages` is assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+**Window exports:** `renderChatMessages` is assigned by `chat-window-bindings.ts` for existing inline handlers and cross-module callbacks.
 
 ---
 
-### `chat-empty-state.js`
+### `chat-empty-state.ts`
 
 Empty chat and chat-first onboarding message composition. Owns the profile setup bubble, paused-AI prompt, explicit provider quiz entry state, no-lab optional setup cards, no-data prompt selection, and the default empty prompt buttons used before a real thread has messages.
 
 **Key exports:** `renderEmptyChatState`, `_getNoDataPrompts`
 
-**Window exports:** none; called by `chat-render.js`.
+**Window exports:** none; called by `chat-render.ts`.
 
 ---
 
-### `chat-panel.js`
+### `chat-panel.ts`
 
-Chat panel chrome and entry-state helpers. Owns open/close/fullscreen behavior, persisted fullscreen preference, web-search toggle persistence/visibility, and composer disabled state. It imports thread/history/personality helpers directly, delegates FAB nudge dismissal to `chat-nudge.js`, and receives the active-discussion restore callback through `configureChatPanel()` to avoid importing `chat-discussion.js`.
+Chat panel chrome and entry-state helpers. Owns open/close/fullscreen behavior, persisted fullscreen preference, web-search toggle persistence/visibility, and composer disabled state. It imports thread/history/personality helpers directly, delegates FAB nudge dismissal to `chat-nudge.ts`, and receives the active-discussion restore callback through `configureChatPanel()` to avoid importing `chat-discussion.ts`.
 
-**Key exports:** `configureChatPanel`, `toggleChatPanel`, `toggleChatFullscreen`, `openChatPanel`, `closeChatPanel`, `updateChatInputState`, `getChatWebSearchEnabled`, `setChatWebSearchEnabled`, `refreshWebSearchToggle`; also re-exports `setChatNudge` and `updateChatNudge` from `chat-nudge.js` for compatibility.
+**Key exports:** `configureChatPanel`, `toggleChatPanel`, `toggleChatFullscreen`, `openChatPanel`, `closeChatPanel`, `updateChatInputState`, `getChatWebSearchEnabled`, `setChatWebSearchEnabled`, `refreshWebSearchToggle`; also re-exports `setChatNudge` and `updateChatNudge` from `chat-nudge.ts` for compatibility.
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and cross-module callbacks.
 
 ---
 
-### `chat-composer.js`
+### `chat-composer.ts`
 
 Growing textarea and active-thread draft coordinator. It binds visible input to `{ profileId, threadId }`, restores drafts after async thread switches, clears a sent draft, and prevents a late decrypt from writing into a newly selected thread.
 
@@ -962,7 +962,7 @@ Growing textarea and active-thread draft coordinator. It binds visible input to 
 
 ---
 
-### `chat-draft-storage.js`
+### `chat-draft-storage.ts`
 
 Device-local draft cache and 300 ms debounced persistence. Draft keys use the sensitive storage wrapper but are intentionally excluded from Sync and every backup/export path. Its ordered write chain prevents a pending save from resurrecting a cleared draft.
 
@@ -972,59 +972,59 @@ Device-local draft cache and 300 ms debounced persistence. Draft keys use the se
 
 ---
 
-### `chat-render-range.js`, `chat-scroll.js`, and `chat-stream-status.js`
+### `chat-render-range.ts`, `chat-scroll.ts`, and `chat-stream-status.ts`
 
-Transcript-scale and interaction helpers. `chat-render-range.js` exposes the latest 120 records and expands in 120-record batches; `chat-scroll.js` follows streaming only while the user remains near the latest message; `chat-stream-status.js` emits concise ARIA status changes without making every streamed token a live-region update.
+Transcript-scale and interaction helpers. `chat-render-range.ts` exposes the latest 120 records and expands in 120-record batches; `chat-scroll.ts` follows streaming only while the user remains near the latest message; `chat-stream-status.ts` emits concise ARIA status changes without making every streamed token a live-region update.
 
 **Window exports:** none.
 
 ---
 
-### `chat-nudge.js`
+### `chat-nudge.ts`
 
 Chat FAB nudge badge state. Owns nudge stage persistence, per-profile dismissal, badge/pulse DOM updates, and the profile/API/data/context card readiness check used by startup, settings, onboarding, DNA import, and panel-open flows.
 
 **Key exports:** `setChatNudge`, `dismissCurrentChatNudge`, `updateChatNudge`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and cross-module callbacks.
 
 ---
 
-### `chat-onboarding.js`
+### `chat-onboarding.ts`
 
-Chat-first onboarding helpers. Owns the provider quiz render helper, onboarding progress crumbs, profile/location/cycle/supplement handlers, lab-import CTA behavior, context-card nudge callback, and prompt CTA helper. It receives `renderChatMessages`, `sendChatMessage`, `closeChatPanel`, and nudge callbacks from `chat-window-bindings.js` through `configureChatOnboarding()` so it can update the shared chat UI without importing chat UI modules directly.
+Chat-first onboarding helpers. Owns the provider quiz render helper, onboarding progress crumbs, profile/location/cycle/supplement handlers, lab-import CTA behavior, context-card nudge callback, and prompt CTA helper. It receives `renderChatMessages`, `sendChatMessage`, `closeChatPanel`, and nudge callbacks from `chat-window-bindings.ts` through `configureChatOnboarding()` so it can update the shared chat UI without importing chat UI modules directly.
 
 **Key exports:** `configureChatOnboarding`, `useChatPrompt`, `requestOnboardingLabImportProvider`, `startOnboardingLabImport`, `_renderOnboardCrumbs`, `_renderProviderQuiz`, `_countFilledCards`, `setChatProfileSex`, `saveChatProfile`, `saveChatLocation`, `onboardHeightUnitChanged`, `saveChatPeriod`, `addChatSupplement`, `removeChatSupplement`, `setProviderQuizBranch`, `backToProviderQuiz`, `skipProviderSetup`, `skipOnboardingExtras`, `showCycleNoMensesOptions`, `showCyclePeriodEntry`, `saveCycleStatus`, `_updatePeriodBtn`, `onContextCardSaved`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and `context-cards.js` callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and `context-cards.ts` callbacks.
 
 ---
 
-### `chat-discussion.js`
+### `chat-discussion.ts`
 
-Multi-persona discussion public barrel. Re-exports discussion flow handlers from `chat-discussion-flow.js`, callback configuration from `chat-discussion-callbacks.js`, UI compatibility helpers from `chat-discussion-ui.js`, and persona/thread state helpers from `chat-discussion-state.js`.
+Multi-persona discussion public barrel. Re-exports discussion flow handlers from `chat-discussion-flow.ts`, callback configuration from `chat-discussion-callbacks.ts`, UI compatibility helpers from `chat-discussion-ui.ts`, and persona/thread state helpers from `chat-discussion-state.ts`.
 
 **Key exports:** `configureChatDiscussion`, `getThreadPersonaCount`, `updateDiscussButton`, `getCurrentDiscussionState`, `sendDiscussionUserTurn`, `restoreDiscussionContinuePrompt`, `showDiscussContinuePrompt`, `removeDiscussContinuePrompt`, `cleanupDiscussionState`, `startDiscussion`, `startDiscussionFromPicker`, `continueDiscussion`, `endDiscussion`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and `chat-threads.js` callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and `chat-threads.ts` callbacks.
 
-### `chat-discussion-flow.js`
+### `chat-discussion-flow.ts`
 
-Multi-persona discussion public user-action handlers. Owns manual-message entry, Continue, Discuss, and picker-start actions. It delegates cleanup/completion to `chat-discussion-lifecycle.js`, turn execution to `chat-discussion-turns.js`, and picker/prompt DOM through `chat-discussion-ui.js`.
+Multi-persona discussion public user-action handlers. Owns manual-message entry, Continue, Discuss, and picker-start actions. It delegates cleanup/completion to `chat-discussion-lifecycle.ts`, turn execution to `chat-discussion-turns.ts`, and picker/prompt DOM through `chat-discussion-ui.ts`.
 
 **Key exports:** `sendDiscussionUserTurn`, `restoreDiscussionContinuePrompt`, `showDiscussContinuePrompt`, `cleanupDiscussionState`, `startDiscussion`, `startDiscussionFromPicker`, `continueDiscussion`, `endDiscussion`
 
-**Window exports:** none directly; `chat-discussion.js` re-exports the public handlers and `chat-window-bindings.js` assigns the compatibility handlers.
+**Window exports:** none directly; `chat-discussion.ts` re-exports the public handlers and `chat-window-bindings.ts` assigns the compatibility handlers.
 
-### `chat-discussion-lifecycle.js`
+### `chat-discussion-lifecycle.ts`
 
 Discussion cleanup and completion helpers. Owns active-discussion restore, continuation prompt persistence, transient UI cleanup, explicit end lifecycle, original-persona restore, Discuss button/header refresh, and post-round Continue prompt handoff.
 
 **Key exports:** `restoreDiscussionContinuePrompt`, `showDiscussContinuePrompt`, `cleanupDiscussionState`, `endDiscussion`, `finishDiscussionRound`
 
-**Window exports:** none directly; `chat-discussion-flow.js` re-exports the public lifecycle handlers.
+**Window exports:** none directly; `chat-discussion-flow.ts` re-exports the public lifecycle handlers.
 
-### `chat-discussion-turns.js`
+### `chat-discussion-turns.ts`
 
 Discussion turn execution helpers. Owns continuation round dispatch, first debate turn dispatch, single joined-persona turn dispatch, joined-persona marker insertion, thread-bound discussion state persistence, and round completion handoff.
 
@@ -1032,15 +1032,15 @@ Discussion turn execution helpers. Owns continuation round dispatch, first debat
 
 **Window exports:** none.
 
-### `chat-discussion-callbacks.js`
+### `chat-discussion-callbacks.ts`
 
-Discussion callback bridge. Owns `configureChatDiscussion()` and the callback wrappers that let discussion rounds reuse chat-send streaming state, send-button mode, transcript rendering, and typewriter behavior without importing `chat-send.js`.
+Discussion callback bridge. Owns `configureChatDiscussion()` and the callback wrappers that let discussion rounds reuse chat-send streaming state, send-button mode, transcript rendering, and typewriter behavior without importing `chat-send.ts`.
 
 **Key exports:** `configureChatDiscussion`, `getChatAbortController`, `setChatAbortController`, `renderChatMessages`, `setSendButtonMode`, `createDiscussionTypewriter`
 
-**Window exports:** none directly; `chat-discussion.js` re-exports `configureChatDiscussion` for `chat-window-bindings.js`.
+**Window exports:** none directly; `chat-discussion.ts` re-exports `configureChatDiscussion` for `chat-window-bindings.ts`.
 
-### `chat-discussion-round-runner.js`
+### `chat-discussion-round-runner.ts`
 
 Discussion round execution loop. Owns sequential per-persona API calls, progress and assistive status, pause/abort state, origin-thread persistence, typewriter updates, usage footnotes, partial-response preservation, and targeted failure records. It returns the remaining participants so resume and per-participant retry do not replay successful responses.
 
@@ -1048,7 +1048,7 @@ Discussion round execution loop. Owns sequential per-persona API calls, progress
 
 **Window exports:** none.
 
-### `chat-discussion-round-prompts.js`
+### `chat-discussion-round-prompts.ts`
 
 Discussion round prompt helpers. Owns the default follow-up prompt, initial-analysis prompt, joined-persona prompt, auto-message shape, joined-persona marker shape, and the first-turn versus rebuttal prompt selection logic.
 
@@ -1056,7 +1056,7 @@ Discussion round prompt helpers. Owns the default follow-up prompt, initial-anal
 
 **Window exports:** none.
 
-### `chat-discussion-round-request.js`
+### `chat-discussion-round-request.ts`
 
 Discussion round API request helpers. Owns lab-context and lens enrichment, active personality prompt assembly, provider/model/web-search snapshots, tagged history messages, assistant message metadata, and usage tracking for multi-persona rounds.
 
@@ -1064,7 +1064,7 @@ Discussion round API request helpers. Owns lab-context and lens enrichment, acti
 
 **Window exports:** none.
 
-### `chat-discussion-round-state.js`
+### `chat-discussion-round-state.ts`
 
 Thread-bound discussion round persistence helpers. Owns origin-thread activity checks, discussion metadata writes, active-thread repaint handoff, and off-thread history persistence during streaming rounds.
 
@@ -1072,7 +1072,7 @@ Thread-bound discussion round persistence helpers. Owns origin-thread activity c
 
 **Window exports:** none.
 
-### `chat-discussion-round-view.js`
+### `chat-discussion-round-view.ts`
 
 Live discussion round DOM helpers. Owns typing indicators, persona labels, streamed assistant message nodes, final markdown replacement, usage footnotes, and active-thread-only error rendering for multi-persona rounds.
 
@@ -1080,15 +1080,15 @@ Live discussion round DOM helpers. Owns typing indicators, persona labels, strea
 
 **Window exports:** none.
 
-### `chat-discussion-ui.js`
+### `chat-discussion-ui.ts`
 
-Multi-persona discussion button and continuation prompt controls. Owns the Discuss button visibility/add-persona state and transient state handoff used by `continueDiscussion()` and `endDiscussion()`. Re-exports picker helpers from `chat-discussion-picker.js` so existing discussion flow imports stay stable.
+Multi-persona discussion button and continuation prompt controls. Owns the Discuss button visibility/add-persona state and transient state handoff used by `continueDiscussion()` and `endDiscussion()`. Re-exports picker helpers from `chat-discussion-picker.ts` so existing discussion flow imports stay stable.
 
 **Key exports:** `updateDiscussButton`, `showDiscussContinuePrompt`, `removeDiscussContinuePrompt`, `removeDiscussPersonaPicker`, `readDiscussPersonaPickerSelection`, `showDiscussPersonaPicker`
 
-**Window exports:** none directly; `chat-discussion.js` wraps/re-exports public controls and `chat-window-bindings.js` assigns the compatibility handlers.
+**Window exports:** none directly; `chat-discussion.ts` wraps/re-exports public controls and `chat-window-bindings.ts` assigns the compatibility handlers.
 
-### `chat-discussion-picker.js`
+### `chat-discussion-picker.ts`
 
 Multi-persona discussion picker controls. Owns persona picker markup, active-persona locking, one-at-a-time participant addition, request-count/charge disclosure, keyboard dismissal, checkbox limiting, and picker selection reads.
 
@@ -1096,27 +1096,27 @@ Multi-persona discussion picker controls. Owns persona picker markup, active-per
 
 **Window exports:** none.
 
-### `chat-discussion-state.js`
+### `chat-discussion-state.ts`
 
 Multi-persona discussion state helpers. Owns per-thread active discussion detection, history fallback persona collection, current-thread lookup, unique assistant-persona counts, and current-thread discussion lifecycle metadata.
 
 **Key exports:** `getThreadPersonaCount`, `collectDiscussionPersonas`, `getCurrentThread`, `clearCurrentDiscussionThreadState`, `reopenCurrentDiscussionThread`, `getCurrentDiscussionState`
 
-**Window exports:** none directly; `chat-discussion.js` re-exports the public count/state helpers and `chat-window-bindings.js` assigns them.
+**Window exports:** none directly; `chat-discussion.ts` re-exports the public count/state helpers and `chat-window-bindings.ts` assigns them.
 
 ---
 
-### `chat-personalities.js`
+### `chat-personalities.ts`
 
-Personality selection and workflow facade. It renders the picker and chat header, invokes the dedicated custom-persona dialog, streams an editable generated draft, persists through `chat-personality-storage.js`, and updates the active thread's personality metadata.
+Personality selection and workflow facade. It renders the picker and chat header, invokes the dedicated custom-persona dialog, streams an editable generated draft, persists through `chat-personality-storage.ts`, and updates the active thread's personality metadata.
 
 **Key exports:** `getActivePersonality`, `getCustomPersonalities`, `loadCustomPersonalities`, `saveCustomPersonalities`, `getCustomPersonality`, `setChatPersonality`, `loadChatPersonality`, `updateChatHeaderTitle`, `updateChatHeaderModel`, `updatePersonalityBar`, `togglePersonalityBar`, `generateCustomPersonality`, `saveCustomPersonality`, `startNewCustomPersonality`, `editCustomPersonality`, `deleteCustomPersonality`.
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and cross-module callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and cross-module callbacks.
 
 ---
 
-### `chat-personality-editor.js`
+### `chat-personality-editor.ts`
 
 Custom persona modal and host policy. The official `getbased.health` host requires a versioned acknowledgement that a persona is an AI-generated interpretation and cannot be used to impersonate or imply endorsement. Self-hosted origins receive the responsibility notice without a required checkbox.
 
@@ -1126,7 +1126,7 @@ Custom persona modal and host policy. The official `getbased.health` host requir
 
 ---
 
-### `chat-personality-storage.js` and `chat-personality-merge.js`
+### `chat-personality-storage.ts` and `chat-personality-merge.ts`
 
 Encrypted-wrapper persistence, synchronous decrypted cache, deletion tombstones, and deterministic per-persona Sync merge. Persona updates resolve by `updatedAt`/`createdAt`; a tombstone at least as new as the record removes it without replacing unrelated personas.
 
@@ -1136,67 +1136,67 @@ Encrypted-wrapper persistence, synchronous decrypted cache, deletion tombstones,
 
 ---
 
-### `chat-history.js`
+### `chat-history.ts`
 
-Thread-aware chat message persistence and clearing. The module owns the legacy storage key helper, encrypted/plain thread message load/save, thread metadata updates, saved-summary cleanup, and the clear-history confirmation flow. It uses `window.renderChatMessages?.()` and `window.updateDiscussButton?.()` callbacks for repaint/discussion hooks that would otherwise create a `chat.js` import cycle.
+Thread-aware chat message persistence and clearing. The module owns the legacy storage key helper, encrypted/plain thread message load/save, thread metadata updates, saved-summary cleanup, and the clear-history confirmation flow. It uses `window.renderChatMessages?.()` and `window.updateDiscussButton?.()` callbacks for repaint/discussion hooks that would otherwise create a `chat.ts` import cycle.
 
 **Key exports:** `getChatStorageKey`, `loadChatHistory`, `saveChatHistory`, `clearChatHistory`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers and `chat-threads.js` callbacks.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers and `chat-threads.ts` callbacks.
 
 ---
 
-### `chat-threads.js`
+### `chat-threads.ts`
 
 Conversation index CRUD, active-thread switching, linked fork creation, rail rendering, and thread deletion tombstones. `pruneOldThreads()` is a compatibility no-op. An existing index that cannot be decrypted or parsed blocks writes and new-chat creation rather than replacing saved conversations with an empty index.
 
 **Key exports:** `loadChatThreads`, `saveChatThreadIndex`, `ensureActiveThread`, `createNewThread`, `createForkedThread`, `switchToThread`, `deleteThread`, `renameThread`, `renderThreadList`, and the search compatibility exports.
 
-**Window exports:** assigned through `chat-window-bindings.js` where legacy callers still require them.
+**Window exports:** assigned through `chat-window-bindings.ts` where legacy callers still require them.
 
 ---
 
-### `chat-thread-search.js`
+### `chat-thread-search.ts`
 
-Thread rail message-content search and match highlighting. It owns the debounced per-thread content search, encrypted/plain message reads, result rendering, cache invalidation, jump-to-result behavior, and in-message mark/highlight cleanup while receiving thread key, rail render, and switch callbacks from `chat-threads.js`.
+Thread rail message-content search and match highlighting. It owns the debounced per-thread content search, encrypted/plain message reads, result rendering, cache invalidation, jump-to-result behavior, and in-message mark/highlight cleanup while receiving thread key, rail render, and switch callbacks from `chat-threads.ts`.
 
 **Key exports:** `configureChatThreadSearch`, `filterThreadList`, `invalidateThreadContentCache`, `jumpToSearchResult`
 
-**Window exports:** re-exported and assigned by `chat-threads.js` for existing inline handlers.
+**Window exports:** re-exported and assigned by `chat-threads.ts` for existing inline handlers.
 
 ---
 
-### `chat-actions.js`
+### `chat-actions.ts`
 
-Chat message action rendering and delegated handlers. It owns Retry/Regenerate, Copy, Listen, context details, responsive overflow actions, discussion pause/resume/retry controls, and callbacks into latest-message editing and linked forks. Voice actions cross the lazy boundary through `voice-loader.js`.
+Chat message action rendering and delegated handlers. It owns Retry/Regenerate, Copy, Listen, context details, responsive overflow actions, discussion pause/resume/retry controls, and callbacks into latest-message editing and linked forks. Voice actions cross the lazy boundary through `voice-loader.ts`.
 
 **Key exports:** `configureChatMessageActionDeps`, `installChatMessageActionDelegates`, `buildActionBar`, `buildUserActionBar`, `buildForkSourceNotice`, `regenerateLastMessage`, `copyMessage`, `toggleContextDetails`.
 
-**Window exports:** assigned by the module directly and re-exported by `chat.js` for existing inline handlers.
+**Window exports:** assigned by the module directly and re-exported by `chat.ts` for existing inline handlers.
 
 ---
 
-### `chat-message-edit.js`
+### `chat-message-edit.ts`
 
 Latest-turn inline editor and non-destructive assistant-reply forks. Edit-and-retry is limited to the latest visible text-only user message while no response is streaming; fork creation copies normalized history through the selected assistant message into a linked thread.
 
 **Key exports:** `configureChatMessageEditDeps`, `getLatestUserMessageIndex`, `beginChatMessageEdit`, `cancelChatMessageEdit`, `submitChatMessageEdit`, `prepareChatMessageEditSend`, `forkChatFromMessage`.
 
-**Window exports:** none; `chat-actions.js` receives callbacks.
+**Window exports:** none; `chat-actions.ts` receives callbacks.
 
 ---
 
-### `chat-recommendation-disclosure.js` and `chat-storage-safety.js`
+### `chat-recommendation-disclosure.ts` and `chat-storage-safety.ts`
 
-`chat-recommendation-disclosure.js` persists related suggestions collapsed and marks only the first or materially changed slot set as new. `chat-storage-safety.js` normalizes untrusted chat, thread, persona, tombstone, discussion/fork, usage, and image shapes before import, restore, or Sync apply.
+`chat-recommendation-disclosure.ts` persists related suggestions collapsed and marks only the first or materially changed slot set as new. `chat-storage-safety.ts` normalizes untrusted chat, thread, persona, tombstone, discussion/fork, usage, and image shapes before import, restore, or Sync apply.
 
 **Window exports:** none.
 
 ---
 
-### `chat-icons.js`
+### `chat-icons.ts`
 
-Shared chat SVG icon strings and icon-button DOM helper extracted from `chat.js`. Keeps action buttons and streaming send/stop button state changes using the same symbols without keeping SVG construction code in the chat orchestration module.
+Shared chat SVG icon strings and icon-button DOM helper extracted from `chat.ts`. Keeps action buttons and streaming send/stop button state changes using the same symbols without keeping SVG construction code in the chat orchestration module.
 
 **Key exports:** `CHAT_ICON_COPY`, `CHAT_ICON_REFRESH`, `CHAT_ICON_EDIT`, `CHAT_ICON_X`, `setIconButtonContent`
 
@@ -1204,7 +1204,7 @@ Shared chat SVG icon strings and icon-button DOM helper extracted from `chat.js`
 
 ---
 
-### `chat-attestation.js`
+### `chat-attestation.ts`
 
 Private-transport attestation display helpers shared by the chat header and assistant-message cost footnotes. Tinfoil uses **🔒 verified** after its full policy passes. Venice uses **🔒 TEE + GPU** after its required DCAP and signed NRAS checks pass, while the tooltip keeps code-measurement, co-location, and response-source limits visible.
 
@@ -1214,7 +1214,7 @@ Private-transport attestation display helpers shared by the chat header and assi
 
 ---
 
-### `chat-continuation.js`
+### `chat-continuation.ts`
 
 Response limit detection and automatic continuation wrapper for chat and discussion calls. Centralizes token-headroom constants, incomplete-response heuristics, continuation prompt construction, and usage merging.
 
@@ -1224,7 +1224,7 @@ Response limit detection and automatic continuation wrapper for chat and discuss
 
 ---
 
-### `chat-prompt-context.js`
+### `chat-prompt-context.ts`
 
 Pure prompt/message helpers shared by direct chat sends and multi-persona discussion rounds. Centralizes persona prompt additions, cross-persona API-message tagging, web-search/E2EE system hints, system-prompt assembly, and persisted lens-source serialization.
 
@@ -1234,37 +1234,37 @@ Pure prompt/message helpers shared by direct chat sends and multi-persona discus
 
 ---
 
-### `chat-summaries.js`
+### `chat-summaries.ts`
 
-Conversation summary generation, saved-summary profile storage, and summary modal actions extracted from `chat.js`.
+Conversation summary generation, saved-summary profile storage, and summary modal actions extracted from `chat.ts`.
 
 **Key exports:** `summarizeThread`, `renderSavedSummaries`, `viewSavedSummary`, `deleteSavedSummary`, `closeSummaryModal`, `copySummary`, `downloadSummary`, `printSummary`
 
-**Window exports:** assigned by `chat-window-bindings.js` for existing inline handlers.
+**Window exports:** assigned by `chat-window-bindings.ts` for existing inline handlers.
 
 ---
 
 ### Voice subsystem
 
-Voice is a first-use chat subsystem rather than part of the startup bundle. `voice-loader.js` keeps microphone capture and speech dependencies cold until the user records, listens, or enables automatic reading. It binds each pending action to the active chat thread and message so late transcription or speech work cannot update a stale conversation.
+Voice is a first-use chat subsystem rather than part of the startup bundle. `voice-loader.ts` keeps microphone capture and speech dependencies cold until the user records, listens, or enables automatic reading. It binds each pending action to the active chat thread and message so late transcription or speech work cannot update a stale conversation.
 
 **Chat orchestration:**
 
-- `voice-controller.js` owns microphone state, transcript insertion, per-message playback, automatic reading, cancellation, and thread/message identity checks.
-- `voice-capture.js`, `voice-player.js`, `voice-audio.js`, and `voice-text.js` own ephemeral recording, progressive audio playback, PCM/WAV handling, and safe speech-text normalization/chunking.
-- `voice-service.js` and `voice-provider-registry.js` select the configured STT/TTS provider without coupling chat controls to provider implementations.
+- `voice-controller.ts` owns microphone state, transcript insertion, per-message playback, automatic reading, cancellation, and thread/message identity checks.
+- `voice-capture.ts`, `voice-player.ts`, `voice-audio.ts`, and `voice-text.ts` own ephemeral recording, progressive audio playback, PCM/WAV handling, and safe speech-text normalization/chunking.
+- `voice-service.ts` and `voice-provider-registry.ts` select the configured STT/TTS provider without coupling chat controls to provider implementations.
 
 **Provider paths:**
 
-- `voice-provider-browser-local.js` runs downloaded Whisper STT and Kokoro TTS through `voice-local-stt-worker.js`, `voice-local-tts-worker.js`, and the serialized `voice-local-engine.js` worker controller.
-- `voice-provider-local-server.js` calls OpenAI-compatible `/v1/audio/transcriptions`, `/v1/audio/speech`, and `/v1/models` endpoints directly from the browser.
-- `voice-provider-ai-cloud.js` supplies the xAI adapter plus the OpenRouter, PPQ, and Venice audio paths; `voice-provider-elevenlabs.js` supplies ElevenLabs. Both use `voice-provider-cloud-shared.js` for browser-direct calls after cloud-processing consent.
-- `voice-provider-catalog.js` owns capability and execution-location metadata; `voice-model-catalog.js` pins local models, voices, languages, download sizes, and CPU/WebGPU modes.
+- `voice-provider-browser-local.ts` runs downloaded Whisper STT and Kokoro TTS through `voice-local-stt-worker.ts`, `voice-local-tts-worker.ts`, and the serialized `voice-local-engine.ts` worker controller.
+- `voice-provider-local-server.ts` calls OpenAI-compatible `/v1/audio/transcriptions`, `/v1/audio/speech`, and `/v1/models` endpoints directly from the browser.
+- `voice-provider-ai-cloud.ts` supplies the xAI adapter plus the OpenRouter, PPQ, and Venice audio paths; `voice-provider-elevenlabs.ts` supplies ElevenLabs. Both use `voice-provider-cloud-shared.ts` for browser-direct calls after cloud-processing consent.
+- `voice-provider-catalog.ts` owns capability and execution-location metadata; `voice-model-catalog.ts` pins local models, voices, languages, download sizes, and CPU/WebGPU modes.
 
 **Settings and storage:**
 
-- `settings-voice-panel.js`, `settings-voice-view.js`, `settings-voice-model-controller.js`, and `settings-voice-hardware.js` own the **Settings → Voice** UI, downloads, connection tests, voice catalogs, and hardware guidance.
-- `voice-settings-schema.js` is the authority for device-local, syncable, secret, and backup keys. `voice-settings-storage.js` validates preferences and delegates secret writes to encrypted provider storage.
+- `settings-voice-panel.ts`, `settings-voice-view.ts`, `settings-voice-model-controller.ts`, and `settings-voice-hardware.ts` own the **Settings → Voice** UI, downloads, connection tests, voice catalogs, and hardware guidance.
+- `voice-settings-schema.ts` is the authority for device-local, syncable, secret, and backup keys. `voice-settings-storage.ts` validates preferences and delegates secret writes to encrypted provider storage.
 - Downloaded model assets and fetched voice catalogs are rebuildable caches. They are not sync payloads or backup data.
 
 **Network boundary:** cloud voice is direct browser transport. Do not document or restore the removed `/api/voice` relay without a new reviewed privacy and consent design.
@@ -1275,9 +1275,9 @@ Voice is a first-use chat subsystem rather than part of the startup bundle. `voi
 
 ---
 
-### `settings.js`
+### `settings.ts`
 
-Settings modal shell with profile, display, AI, Voice, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.js`, Voice rendering and actions to `settings-voice-panel.js`, wearables rows to `wearables-settings-panel.js`, sync controls to `settings-sync-panel.js`, and Agent Access rendering/actions to `settings-agent-access-panel.js`.
+Settings modal shell with profile, display, AI, Voice, privacy, data, wearables, and Agent Access tabs. Delegates AI provider panels to `provider-panels.ts`, Voice rendering and actions to `settings-voice-panel.ts`, wearables rows to `wearables-settings-panel.ts`, sync controls to `settings-sync-panel.ts`, and Agent Access rendering/actions to `settings-agent-access-panel.ts`.
 
 **Key exports:**
 - `openSettingsModal()` / `closeSettingsModal()`
@@ -1289,13 +1289,13 @@ Settings modal shell with profile, display, AI, Voice, privacy, data, wearables,
 
 ---
 
-### `settings-sync-panel.js`
+### `settings-sync-panel.ts`
 
-Cold facade for the Cross-device Sync and Agent Access settings graph. A first Settings render returns marked loading placeholders and starts `settings-sync-panel-impl.js`; when the import resolves, the facade replaces both placeholders in place so the real controls appear without closing and reopening Settings. Action calls use the same loader and retry boundary.
+Cold facade for the Cross-device Sync and Agent Access settings graph. A first Settings render returns marked loading placeholders and starts `settings-sync-panel-impl.ts`; when the import resolves, the facade replaces both placeholders in place so the real controls appear without closing and reopening Settings. Action calls use the same loader and retry boundary.
 
 **Key exports:**
 - `renderSyncSection()` — renders the Settings → Data sync panel
-- `renderMessengerSection()` — compatibility export that renders the Settings → Agent Access panel through `settings-agent-access-panel.js`
+- `renderMessengerSection()` — compatibility export that renders the Settings → Agent Access panel through `settings-agent-access-panel.ts`
 - `hydrateSettingsSyncPanel()` — forwards post-paint mnemonic and relay hydration after the implementation loads
 - `showSyncSetupModal()` — loads the implementation and opens the setup wizard
 
@@ -1303,9 +1303,9 @@ Cold facade for the Cross-device Sync and Agent Access settings graph. A first S
 
 ---
 
-### `settings-sync-panel-impl.js`
+### `settings-sync-panel-impl.ts`
 
-Loaded implementation for the Settings → Data sync section. It owns setup/restore UI, mnemonic and relay controls, diagnostics entry points, and Agent Access delegation. Existing-mnemonic joins call the controlled restore path in `sync-identity.js`.
+Loaded implementation for the Settings → Data sync section. It owns setup/restore UI, mnemonic and relay controls, diagnostics entry points, and Agent Access delegation. Existing-mnemonic joins call the controlled restore path in `sync-identity.ts`.
 
 **Key exports:** `configureSettingsSyncPanelDeps`, `renderSyncSection`, `renderMessengerSection`, `showSyncSetupModal`, `closeSyncSetup`, `closeRestoreMnemonicDialog`, `hydrateSettingsSyncPanel`.
 
@@ -1313,7 +1313,7 @@ Loaded implementation for the Settings → Data sync section. It owns setup/rest
 
 ---
 
-### `settings-agent-access-panel.js`
+### `settings-agent-access-panel.ts`
 
 Settings → Agent Access renderer and action handler. It owns the enable/disable state, synced Agent Access metadata, read-only relay token display, local context-key display, wearable daily-series window, and the one-paste setup-command builder for supported MCP clients.
 
@@ -1325,19 +1325,19 @@ Settings → Agent Access renderer and action handler. It owns the enable/disabl
 
 ---
 
-### `feedback.js`
+### `feedback.ts`
 
-In-app feedback modal.
+In-app feedback modal with a recoverable full-report preview. Closing and reopening preserves the current page/profile draft; switching profiles clears it. Reloads, backups and sync do not preserve feedback drafts. Built-in range suggestions use the selected display units and public catalog bounds. See [Feedback and range suggestions](/guides/feedback).
 
 **Key exports:**
 - `openFeedbackModal()` / `closeFeedbackModal()`
-- `submitFeedback()` — validates and submits feedback (bug report or feature request)
+- `submitFeedback()` — validates the form and prepares a public GitHub issue draft; submission happens on GitHub
 
 **Window exports:** `openFeedbackModal`, `closeFeedbackModal`, `submitFeedback`
 
 ---
 
-### `nav.js`
+### `nav.ts`
 
 Sidebar navigation, profile switcher, and mobile sidebar shell.
 
@@ -1354,9 +1354,9 @@ Sidebar navigation, profile switcher, and mobile sidebar shell.
 
 ## Layer 6 — Orchestration
 
-### `views-router.js`
+### `views-router.ts`
 
-Route validation, per-profile last-view persistence, mobile tab sync handoff, and element-anchor scroll preservation. `views.js` creates the concrete navigator by passing render handlers into `createNavigate()`.
+Route validation, per-profile last-view persistence, mobile tab sync handoff, and element-anchor scroll preservation. `views.ts` creates the concrete navigator by passing render handlers into `createNavigate()`.
 
 **Key exports:**
 - `createNavigate({ routeHandlers, syncMobileBottomNav })` — builds the app-level `navigate()` function without importing page renderers
@@ -1365,36 +1365,36 @@ Route validation, per-profile last-view persistence, mobile tab sync handoff, an
 
 ---
 
-### `lens-pages.js`
+### `lens-pages.ts`
 
-Dedicated page renderers for Labs, Genome, Body, Insight, and Recommendations. The module receives dashboard, recommendation, and lens shell helper functions from `views.js` through `createLensPageHandlers()` so page rendering can move out of the main views module without creating new import cycles.
+Dedicated page renderers for Labs, Genome, Body, Insight, and Recommendations. The module receives dashboard, recommendation, and lens shell helper functions from `views.ts` through `createLensPageHandlers()` so page rendering can move out of the main views module without creating new import cycles.
 
 **Key exports:**
 - `createLensPageHandlers(deps)` — returns `showLabs`, `showGenomeLens`, `showBodyLens`, `showInsightLens`, and `showRecommendations`
 
 ---
 
-### `dashboard-page-view.js`
+### `dashboard-page-view.ts`
 
-Dashboard route shell and page-level dashboard orchestration. `dashboard-view-composition.js` creates it with `createDashboardPageView()` after wiring dashboard widget renderers, controls, and registry helpers, so the dashboard route can live outside the main compatibility module without importing the widget control layer directly.
+Dashboard route shell and page-level dashboard orchestration. `dashboard-view-composition.ts` creates it with `createDashboardPageView()` after wiring dashboard widget renderers, controls, and registry helpers, so the dashboard route can live outside the main compatibility module without importing the widget control layer directly.
 
 **Key exports:**
 - `createDashboardPageView(deps)` — returns `showDashboard(data?)`; owns the populated dashboard shell, empty welcome/demo state, import drop-zone setup calls, mobile dashboard handoff, focus-card hydration, context-dot hydration, and first-visit tour triggers
 
 ---
 
-### `dashboard-view-composition.js`
+### `dashboard-view-composition.ts`
 
-Dashboard route, widget, mobile handoff, marker-modal, and lens-shell composition wiring. `views.js` creates this layer once and keeps compatibility facades, while this module wires `dashboard-page-view.js`, `dashboard-widgets.js`, `dashboard-widget-controls.js`, `dashboard-widget-renderers.js`, and mobile dashboard dependencies together.
+Dashboard route, widget, mobile handoff, marker-modal, and lens-shell composition wiring. `views.ts` creates this layer once and keeps compatibility facades, while this module wires `dashboard-page-view.ts`, `dashboard-widgets.ts`, `dashboard-widget-controls.ts`, `dashboard-widget-renderers.ts`, and mobile dashboard dependencies together.
 
 **Key exports:**
 - `createDashboardViewComposition(deps)` — returns `showDashboard`, dashboard widget control handlers, recommendation helpers, and dashboard render helpers needed by lens pages and recommendation actions
 
 ---
 
-### `lens-page-shell.js`
+### `lens-page-shell.ts`
 
-Shared lens page chrome and ordering helpers used by `views.js` and `lens-pages.js`. The module owns lens headers, reorderable page widget wrappers, per-profile lens widget order persistence, page-section move controls, dashboard add/remove toggles, and the delegated action attributes/listener used by shared lens chrome.
+Shared lens page chrome and ordering helpers used by `views.ts` and `lens-pages.ts`. The module owns lens headers, reorderable page widget wrappers, per-profile lens widget order persistence, page-section move controls, dashboard add/remove toggles, and the delegated action attributes/listener used by shared lens chrome.
 
 **Key exports:**
 - `configureLensPageShell(deps)` — injects dashboard widget visibility helpers without importing dashboard modules directly
@@ -1405,9 +1405,9 @@ Shared lens page chrome and ordering helpers used by `views.js` and `lens-pages.
 
 ---
 
-### `dashboard-widgets.js`
+### `dashboard-widgets.ts`
 
-Dashboard widget registry and persistence helpers. `dashboard-view-composition.js` supplies renderer functions from `dashboard-widget-renderers.js` to `createDashboardWidgetRegistry()` so widget metadata, defaults, availability gates, per-profile widget preferences, custom marker widget IDs, and visible-entry generation can live outside the main views module.
+Dashboard widget registry and persistence helpers. `dashboard-view-composition.ts` supplies renderer functions from `dashboard-widget-renderers.ts` to `createDashboardWidgetRegistry()` so widget metadata, defaults, availability gates, per-profile widget preferences, custom marker widget IDs, and visible-entry generation can live outside the main views module.
 
 **Key exports:**
 - `createDashboardWidgetRegistry(renderers, opts?)` — returns dashboard widget definitions plus preference/order helpers
@@ -1417,27 +1417,27 @@ Dashboard widget registry and persistence helpers. `dashboard-view-composition.j
 
 ---
 
-### `dashboard-widget-controls.js`
+### `dashboard-widget-controls.ts`
 
-Dashboard widget picker, widget chrome, layout actions, and drag/reorder controls. `dashboard-view-composition.js` creates the control layer with registry, marker, and biometrics dependencies; `views.js` re-exports the public handlers for existing `window.*` integrations.
+Dashboard widget picker, widget chrome, layout actions, and drag/reorder controls. `dashboard-view-composition.ts` creates the control layer with registry, marker, and biometrics dependencies; `views.ts` re-exports the public handlers for existing `window.*` integrations.
 
 **Key exports:**
 - `createDashboardWidgetControls(deps)` — returns render helpers and dashboard widget action handlers
 
 ---
 
-### `dashboard-widget-renderers.js`
+### `dashboard-widget-renderers.ts`
 
-Dashboard widget body renderers and shared recommendation helpers. `dashboard-view-composition.js` creates the renderer layer with Light helper and mobile-summary dependencies, then passes the returned renderers to `dashboard-widgets.js`, `dashboard-widget-controls.js`, and `lens-pages.js`.
+Dashboard widget body renderers and shared recommendation helpers. `dashboard-view-composition.ts` creates the renderer layer with Light helper and mobile-summary dependencies, then passes the returned renderers to `dashboard-widgets.ts`, `dashboard-widget-controls.ts`, and `lens-pages.ts`.
 
 **Key exports:**
 - `createDashboardWidgetRenderers(deps)` — returns dashboard body renderers, dashboard context builders, biometrics helpers, custom marker renderer support, and recommendation helper functions
 
 ---
 
-### `category-view-renderers.js`
+### `category-view-renderers.ts`
 
-Category chart card, table, heatmap, and fatty-acid profile renderers. `category-page-view.js` calls these helpers for category route content, while `views.js` imports and re-exports them so existing module and `window.*` integrations stay stable.
+Category chart card, table, heatmap, and fatty-acid profile renderers. `category-page-view.ts` calls these helpers for category route content, while `views.ts` imports and re-exports them so existing module and `window.*` integrations stay stable.
 
 **Key exports:**
 - `renderChartCard(id, marker, dateLabels)` — renders one category/dashboard marker card and registers it for the detail modal
@@ -1446,9 +1446,9 @@ Category chart card, table, heatmap, and fatty-acid profile renderers. `category
 
 ---
 
-### `category-page-view.js`
+### `category-page-view.ts`
 
-Category route shell and view-mode orchestration. The module owns `showCategory()`, `switchView()`, category card sorting, range-toggle order preservation, chart hydration, and chart-card recommendation loading. It depends on `category-view-renderers.js` for HTML fragments and keeps `views.js` as a thin router/compatibility facade.
+Category route shell and view-mode orchestration. The module owns `showCategory()`, `switchView()`, category card sorting, range-toggle order preservation, chart hydration, and chart-card recommendation loading. It depends on `category-view-renderers.ts` for HTML fragments and keeps `views.ts` as a thin router/compatibility facade.
 
 **Key exports:**
 - `showCategory(categoryKey, data?)` — renders the category header, view tabs, date/layer controls, chart grid, empty marker affordances, and saved table/heatmap mode
@@ -1456,51 +1456,51 @@ Category route shell and view-mode orchestration. The module owns `showCategory(
 
 ---
 
-### `category-customization.js`
+### `category-customization.ts`
 
-Category and marker display override helpers. The module owns category rename, marker rename/revert, the emoji picker, and category icon override persistence while `views.js` keeps compatibility exports and injects navigation via `configureCategoryCustomization()`.
+Category and marker display override helpers. The module owns category rename, marker rename/revert, the emoji picker, and category icon override persistence while `views.ts` keeps compatibility exports and injects navigation via `configureCategoryCustomization()`.
 
 **Key exports:**
-- `configureCategoryCustomization(deps)` — injects the app-level `navigate()` function without importing `views.js`
+- `configureCategoryCustomization(deps)` — injects the app-level `navigate()` function without importing `views.ts`
 - `renameCategory(categoryKey)` / `renameMarker(id)` / `revertMarkerName(id)` — persist display-name overrides into `importedData.categoryLabels` and `importedData.markerLabels`
 - `showEmojiPicker(anchorEl, callback, opts?)` — shared category/custom-marker emoji picker used by category views and the marker creation modal
 - `changeCategoryIcon(categoryKey)` — persists `importedData.categoryIcons` overrides and mirrors custom marker category icon metadata
 
 ---
 
-### `category-order.js`
+### `category-order.ts`
 
 Shared, DOM-independent ordering for lab navigation and category controls. `getLabCategoryEntriesInSidebarOrder()` keeps regular categories first and preserves schema order within specialty groups so the placement picker and sidebar agree.
 
 ---
 
-### `marker-detail-placement.js`
+### `marker-detail-placement.ts`
 
-Marker-detail category picker and persistence controller. It lists only destinations accepted by `marker-placement.js`, groups categories present in the profile before other compatible categories, preserves sidebar order, serializes per-profile mutations, and provides restore-to-native behavior.
+Marker-detail category picker and persistence controller. It lists only destinations accepted by `marker-placement.ts`, groups categories present in the profile before other compatible categories, preserves sidebar order, serializes per-profile mutations, and provides restore-to-native behavior.
 
 **Key exports:** `configureMarkerDetailPlacement()`, `getMarkerPlacementChoices()`, `renderMarkerPlacementSummary()`, `openMarkerPlacementModal()`, `saveMarkerPlacement()`, and `restoreMarkerPlacement()`.
 
 ---
 
-### `views.js`
+### `views.ts`
 
-Tool page routing and compatibility exports. Dashboard composition lives in `dashboard-view-composition.js`; dashboard route shell lives in `dashboard-page-view.js`; dashboard widget body renderers live in `dashboard-widget-renderers.js`; recommendation action handlers live in `recommendation-actions.js`; category route orchestration lives in `category-page-view.js`; category card/table/heatmap renderers live in `category-view-renderers.js`; category display overrides live in `category-customization.js`; the Light page shell lives in `light-page-view.js`; Light channel pills and drill-down panels live in `light-channel-view.js`; shared lens page chrome lives in `lens-page-shell.js`; public navigation and lens page functions remain exported here for compatibility, backed by `views-router.js` and delegated to route modules where applicable.
+Tool page routing and compatibility exports. Dashboard composition lives in `dashboard-view-composition.ts`; dashboard route shell lives in `dashboard-page-view.ts`; dashboard widget body renderers live in `dashboard-widget-renderers.ts`; recommendation action handlers live in `recommendation-actions.ts`; category route orchestration lives in `category-page-view.ts`; category card/table/heatmap renderers live in `category-view-renderers.ts`; category display overrides live in `category-customization.ts`; the Light page shell lives in `light-page-view.ts`; Light channel pills and drill-down panels live in `light-channel-view.ts`; shared lens page chrome lives in `lens-page-shell.ts`; public navigation and lens page functions remain exported here for compatibility, backed by `views-router.ts` and delegated to route modules where applicable.
 
 **Key exports:**
-- `navigate(section, params)` — router facade created from `views-router.js`; calls the appropriate render function
-- `showDashboard(data?)` - compatibility facade backed by `dashboard-view-composition.js` and `dashboard-page-view.js`; renders the customizable widget dashboard whose default widget order starts with Biological Coherence, Current Focus, Current Priority, Quick Markers, Key Trends, Recommended Next Steps, Profile Context, Biometrics Overview, Biological Age, Metabolic Flexibility, and Cycle when available
-- `showLabs(data?)`, `showGenomeLens()`, `showBodyLens()`, `showInsightLens(data?)`, `showRecommendations(data?)` - compatibility facades delegated to `lens-pages.js`
-- `showCategory(categoryKey, data?)` - compatibility facade imported from `category-page-view.js`
-- `showLight(data?)`, `renderLightTodayStrip()`, `renderLightChannelsLive()` - compatibility facades imported from `light-page-view.js`
+- `navigate(section, params)` — router facade created from `views-router.ts`; calls the appropriate render function
+- `showDashboard(data?)` - compatibility facade backed by `dashboard-view-composition.ts` and `dashboard-page-view.ts`; renders the customizable widget dashboard whose default widget order starts with Biological Coherence, Current Focus, Current Priority, Quick Markers, Key Trends, Recommended Next Steps, Profile Context, Biometrics Overview, Biological Age, Metabolic Flexibility, and Cycle when available
+- `showLabs(data?)`, `showGenomeLens()`, `showBodyLens()`, `showInsightLens(data?)`, `showRecommendations(data?)` - compatibility facades delegated to `lens-pages.ts`
+- `showCategory(categoryKey, data?)` - compatibility facade imported from `category-page-view.ts`
+- `showLight(data?)`, `renderLightTodayStrip()`, `renderLightChannelsLive()` - compatibility facades imported from `light-page-view.ts`
 - `showCompare(data?)` / `showCorrelations(data?)` - focused tool pages
-- Dashboard widget controls: compatibility facades backed by `dashboard-widget-controls.js`, including `openDashboardWidgetPicker()`, `toggleDashboardOrganizeMode()`, `resetDashboardWidgets()`, `clearDashboardWidgets()`, `addDashboardWidgetFromLens()`, and `removeDashboardWidgetFromLens()`
+- Dashboard widget controls: compatibility facades backed by `dashboard-widget-controls.ts`, including `openDashboardWidgetPicker()`, `toggleDashboardOrganizeMode()`, `resetDashboardWidgets()`, `clearDashboardWidgets()`, `addDashboardWidgetFromLens()`, and `removeDashboardWidgetFromLens()`
 - `showDetailModal(markerKey, data?)` — opens the marker detail modal
 
 **Window exports:** `navigate`, `showDashboard`, `showLabs`, `showGenomeLens`, `showBodyLens`, `showInsightLens`, `showRecommendations`, `showLight`, `showCategory`, `showDetailModal`, dashboard widget controls, and recommendation page helpers (`openRecommendationDetail`, `discussRecommendation`, `saveRecommendation`, `dismissRecommendation`)
 
 ---
 
-### `recommendation-actions.js`
+### `recommendation-actions.ts`
 
 Recommendation modal and action handlers shared by dashboard cards and the Recommendations page. It keeps option-detail rendering, chat prompts, saved/bookmarked state, and dismissed state out of the main route facade.
 
@@ -1509,22 +1509,22 @@ Recommendation modal and action handlers shared by dashboard cards and the Recom
 
 ---
 
-### `light-page-view.js`
+### `light-page-view.ts`
 
-Light & Sun page shell, Light Today strip, dashboard Light channel pills, Light session log actions, page widget assembly, and async population of page-only Light workbench sections. It imports shared lens chrome from `lens-page-shell.js`, condition rendering from `light-conditions-now.js`, session history from `light-sessions-view.js`, and channel rows/suggestions from `light-channel-view.js`.
+Light & Sun page shell, Light Today strip, dashboard Light channel pills, Light session log actions, page widget assembly, and async population of page-only Light workbench sections. It imports shared lens chrome from `lens-page-shell.ts`, condition rendering from `light-conditions-now.ts`, session history from `light-sessions-view.ts`, and channel rows/suggestions from `light-channel-view.ts`.
 
 **Key exports:**
 - `showLight(data?)` — renders the reorderable Light & Sun page widgets
 - `renderLightTodayStrip()` — legacy compact Light strip used by embedded/welcome surfaces
 - `renderLightChannelsLive()` — refreshes the live channel-pills slot after session updates
-- `renderDashboardLightChannelPills()` / `renderLightSessionLogActions()` — dashboard widget helper bodies shared through `dashboard-widget-renderers.js`
+- `renderDashboardLightChannelPills()` / `renderLightSessionLogActions()` — dashboard widget helper bodies shared through `dashboard-widget-renderers.ts`
 - `_expandLightToolsSection()` — compatibility handler for expanding the collapsed Light tools placeholder
 
 ---
 
-### `light-channel-view.js`
+### `light-channel-view.ts`
 
-Light channel pill rows, seven-day sparklines, dashboard-to-Light channel navigation, per-channel drill-down panels, citations, source mix, and channel suggestions. `light-page-view.js` imports the render helpers; `views.js` keeps the legacy `window._toggleChannelDetail` / `window._openChannelOnLightPage` wiring for inline handlers and dashboard widgets.
+Light channel pill rows, seven-day sparklines, dashboard-to-Light channel navigation, per-channel drill-down panels, citations, source mix, and channel suggestions. `light-page-view.ts` imports the render helpers; `views.ts` keeps the legacy `window._toggleChannelDetail` / `window._openChannelOnLightPage` wiring for inline handlers and dashboard widgets.
 
 **Key exports:**
 - `mergeTotals(a, b)` — combines sun and device channel totals
@@ -1534,124 +1534,53 @@ Light channel pill rows, seven-day sparklines, dashboard-to-Light channel naviga
 
 ---
 
-### `main.js`
+### `main.ts`
 
-Thin module entry point. Imports startup feature side effects, then starts the startup orchestrator.
+The authored browser entry imports extension bootstrap, foundation modules, cold health and Light loaders, UI shell hooks, and delegated shell actions, then calls `startApp()` from `startup-orchestrator.ts`. HTML loads its emitted `js/main.js` sibling.
 
-**Responsibilities:**
-- Imports `app-feature-modules.js` for startup-loaded feature side effects and window exports
-- Calls `startApp()` from `startup-orchestrator.js`
+### `app-feature-modules.ts`
 
-**Window exports:** none (all exports come from other modules)
+Compatibility composition for `app-foundation-modules.ts`, `health-data-loader.ts`, `light-sun-loader.ts`, and `app-ui-shell-modules.ts`. The current entry imports its cold dependencies directly rather than eagerly importing every feature group.
 
----
+### `app-foundation-modules.ts`
 
-### `app-feature-modules.js`
+Foundation/privacy side-effect composition. Feature UI belongs behind loaders or higher-level shell composition.
 
-Startup-loaded feature side-effect imports extracted from `main.js`. This module preserves the previous feature import order while keeping `main.js` focused on startup orchestration. Foundation/privacy imports are grouped behind `app-foundation-modules.js`; the Health & Data feature cluster is grouped behind `app-health-data-modules.js`; the Light & Sun feature cluster is grouped behind `app-light-sun-modules.js`; the import/export feature cluster is grouped behind `app-data-io-modules.js`; the AI/chat/settings feature cluster is grouped behind `app-ai-interaction-modules.js`; the UI shell feature cluster is grouped behind `app-ui-shell-modules.js`.
+### `health-data-loader.ts` and `app-health-data-modules.ts`
 
-**Key exports:** none
+The loader caches individual health module loads and selects the modules needed by Dashboard, Body, Insight, Recommendations, and persisted context. It exposes loaded-state probes and compatibility actions. The full composition imports charts, notes, supplements, recommendations, cycle, context cards, and DNA; it is not the cold startup graph.
 
-**Window exports:** none directly; imported feature modules attach their existing compatibility handlers.
+### `light-sun-loader.ts` and `app-light-sun-modules.ts`
 
----
+The loader separates behavior from UI/stylesheet loading and can hydrate persisted Light state without opening the full workbench. The composition groups full Light & Sun behavior and hook setup.
 
-### `app-foundation-modules.js`
+### `import-loader.ts` and `export-loader.ts`
 
-Startup-loaded foundation/privacy side-effect imports extracted from `app-feature-modules.js`. This module preserves the previous schema/constants/utils/pii import order while keeping the top-level feature list as named startup clusters.
+`import-loader.ts` loads PDF import behavior and styles on demand and restores pending review drafts. `export-loader.ts` loads export behavior once, applies injected dependencies, and forwards data import/export, demo, clear-data, and report-builder actions. These loaders replace the old eager Data I/O startup description.
 
-**Key exports:** none
+### `chat-loader.ts` and `app-ai-interaction-modules.ts`
 
-**Window exports:** none directly; imported foundation modules attach their existing compatibility handlers.
+First-use Chat loading and composition. The composition exports Chat actions, image helpers, summaries, thread/workspace controls, context status, and voice-loader entry points. Settings and other features keep their own loading boundaries.
 
----
+### `app-ui-shell-modules.ts`
 
-### `app-health-data-modules.js`
+Shell composition for feedback, tours, touch tooltips, views, and app/Light-environment hooks.
 
-Startup-loaded Health & Data feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the charts/notes/supplements/recommendations/cycle/context/DNA/wearables order and installs the cold nutrition facade while keeping the full Meals & Nutrition feature lazy.
+### `startup-orchestrator.ts`
 
-**Key exports:** none
+`startApp()` runs once, configures Sync composition, installs global event and refresh wiring, and starts immediately or on `DOMContentLoaded`. Its sequence awaits the foundation and profile load, runs maintenance and OAuth callbacks, renders the UI, invokes the extension startup hook, and restores pending import review state. Startup errors produce a notification.
 
-**Window exports:** none directly; imported Health & Data modules attach their existing compatibility handlers.
+### `emf-runtime.ts`
 
----
+Configured lazy entry points for the EMF assessment module and stylesheet. `app-shell-hooks.ts` supplies the module loader and host callbacks.
 
-### `app-light-sun-modules.js`
-
-Startup-loaded Light & Sun feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the previous Light & Sun import order while keeping the top-level feature list easier to scan.
-
-**Key exports:** none
-
-**Window exports:** none directly; imported Light & Sun modules attach their existing compatibility handlers.
+**Key exports:** `configureEMFRuntimeDeps()`, `loadEMFStylesheet()`, `loadEMFModule()`, `openEMFAssessmentEditor()`, `closeEMFInterpretation()`.
 
 ---
 
-### `app-data-io-modules.js`
+### `startup-foundation.ts`
 
-Startup-loaded import/export feature side-effect imports extracted from `app-feature-modules.js`. This module owns the compatibility startup load for data export/import handlers while keeping the top-level feature list as named startup clusters.
-
-**Key exports:** none
-
-**Window exports:** none directly; imported data I/O modules attach their existing compatibility handlers.
-
----
-
-### `app-ai-interaction-modules.js`
-
-Startup-loaded AI/chat/settings feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the previous chat/image/settings/lens/provider helper import order while keeping the top-level feature list easier to scan.
-
-**Key exports:** none
-
-**Window exports:** none directly; imported AI interaction modules attach their existing compatibility handlers.
-
----
-
-### `app-ui-shell-modules.js`
-
-Startup-loaded UI shell feature side-effect imports extracted from `app-feature-modules.js`. This module preserves the previous feedback/tour/touch-tooltip/client-list/views import order while keeping the top-level feature list easier to scan.
-
-**Key exports:** none
-
-**Window exports:** none directly; imported UI shell modules attach their existing compatibility handlers.
-
----
-
-### `startup-orchestrator.js`
-
-Startup global wiring and phase ordering. Runs once, installs app-wide startup hooks, and registers the `DOMContentLoaded` startup sequence.
-
-**Responsibilities:**
-- Sets the `_getActiveProfileId` startup global
-- Installs lazy EMF window handlers through `emf-facade.js`
-- Installs app-wide event and refresh wiring through `app-event-listeners.js`
-- Delegates encryption, backup, and meteo bootstrap to `startup-foundation.js`
-- Initializes startup profile data
-- Delegates startup service boot and post-profile maintenance to `startup-maintenance.js`
-- Delegates wearable/OpenRouter callback routing to `startup-oauth-callbacks.js`
-- Delegates first-render UI bootstrap to `startup-ui.js`
-
-**Key exports:**
-- `startApp()` — idempotently installs startup globals/listeners and registers the startup sequence
-
-**Window exports:** `_getActiveProfileId`
-
----
-
-### `emf-facade.js`
-
-Lazy window facade for the EMF assessment module extracted from `main.js`. It installs async `window.*` handlers for EMF editor and assessment actions, then imports `emf.js` on first use and replaces the facade handlers with the real module exports.
-
-**Key exports:**
-- `EMF_LAZY_WINDOW_FUNCTIONS` — list of EMF window handlers covered by the lazy facade
-- `installEMFLazyFacade()` — installs lazy handlers during app startup
-
-**Window exports:** EMF handler names from `EMF_LAZY_WINDOW_FUNCTIONS`
-
----
-
-### `startup-foundation.js`
-
-Blocking startup foundation extracted from `main.js`: encryption unlock, decrypted meteo config cache hydration, cross-tab broadcast setup, and folder backup handle restoration.
+Blocking startup foundation extracted from `main.ts`: encryption unlock, decrypted meteo config cache hydration, cross-tab broadcast setup, and folder backup handle restoration.
 
 **Key exports:**
 - `initializeStartupFoundation()` — runs the blocking security/storage bootstrap before wearable services or profile data load
@@ -1660,9 +1589,9 @@ Blocking startup foundation extracted from `main.js`: encryption unlock, decrypt
 
 ---
 
-### `startup-profile.js`
+### `startup-profile.ts`
 
-Profile startup bootstrap extracted from `main.js`: legacy v1 profile migration, encrypted profile-cache warmup, active-profile imported-data load, and unit/sex/range/DOB display state.
+Profile startup bootstrap extracted from `main.ts`: legacy v1 profile migration, encrypted profile-cache warmup, active-profile imported-data load, and unit/sex/range/DOB display state.
 
 **Key exports:**
 - `initializeProfileData()` — creates the default profile for legacy users, migrates old imported data through encrypted storage, warms the profile cache, sets `state.currentProfile`, and loads active imported data before OAuth callbacks can persist profile-scoped data
@@ -1672,9 +1601,9 @@ Profile startup bootstrap extracted from `main.js`: legacy v1 profile migration,
 
 ---
 
-### `startup-oauth-callbacks.js`
+### `startup-oauth-callbacks.ts`
 
-Startup OAuth callback routing extracted from `main.js`. Wearable callbacks run first after profile load; if they do not consume the URL code, OpenRouter OAuth handles the same `?code=`/`state` pair.
+Startup OAuth callback routing extracted from `main.ts`. Wearable callbacks run first after profile load; if they do not consume the URL code, OpenRouter OAuth handles the same `?code=`/`state` pair.
 
 **Key exports:**
 - `handleStartupOAuthCallbacks()` — delegates wearable OAuth callback handling, exchanges OpenRouter codes with state verification, stores the OpenRouter key, switches the active AI provider, and opens chat after init
@@ -1683,9 +1612,9 @@ Startup OAuth callback routing extracted from `main.js`. Wearable callbacks run 
 
 ---
 
-### `startup-maintenance.js`
+### `startup-maintenance.ts`
 
-Non-blocking startup maintenance extracted from `main.js`: wearable runtime config/scheduler boot, sun session self-heal, light-device preset hydration, and legacy biometrics migration.
+Non-blocking startup maintenance extracted from `main.ts`: wearable runtime config/scheduler boot, sun session self-heal, light-device preset hydration, and legacy biometrics migration.
 
 **Key exports:**
 - `initializeStartupServices()` — starts wearable runtime config loading and scheduler setup before profile data loads
@@ -1695,9 +1624,9 @@ Non-blocking startup maintenance extracted from `main.js`: wearable runtime conf
 
 ---
 
-### `startup-ui.js`
+### `startup-ui.ts`
 
-First-render UI bootstrap extracted from `main.js`: profile display state, theme, footer version, sidebar, sync indicator, initial navigation, deferred sync/catalog warmup, changelog, startup nudges, deferred settings/chat opens, header chrome, chat attachment handlers, and file-picker import binding.
+First-render UI bootstrap extracted from `main.ts`: profile display state, theme, footer version, sidebar, sync indicator, initial navigation, deferred sync/catalog warmup, changelog, startup nudges, deferred settings/chat opens, header chrome, chat attachment handlers, and file-picker import binding.
 
 **Key exports:**
 - `renderStartupUI()` — runs the initial UI render and schedules non-blocking startup UI work after profile/OAuth startup completes
@@ -1706,9 +1635,9 @@ First-render UI bootstrap extracted from `main.js`: profile display state, theme
 
 ---
 
-### `app-event-listeners.js`
+### `app-event-listeners.ts`
 
-App-wide browser event wiring that used to live in `main.js`: modal wheel guards, backdrop click handling, global role-button keyboard activation, Escape/Tab modal behavior, app shortcuts, and the `registerRefreshCallback()` bridge back into `navigate(state.currentView || 'dashboard')`.
+App-wide browser event wiring that used to live in `main.ts`: modal wheel guards, backdrop click handling, global role-button keyboard activation, Escape/Tab modal behavior, app shortcuts, and the `registerRefreshCallback()` bridge back into `navigate(state.currentView || 'dashboard')`.
 
 **Key exports:**
 - `installGlobalEventListeners()` — idempotently installs document-level modal, keyboard, shortcut, and click handlers
@@ -1716,7 +1645,7 @@ App-wide browser event wiring that used to live in `main.js`: modal wheel guards
 
 ---
 
-### `tour.js`
+### `tour.ts`
 
 Generic spotlight tour engine plus the app tour and cycle tour configurations.
 
@@ -1731,21 +1660,19 @@ Generic spotlight tour engine plus the app tour and cycle tour configurations.
 
 ---
 
-### `changelog.js`
+### `changelog.ts`
 
-What's New modal triggered on version bump so users see what changed after each PWA update.
+Cold-safe What's New gate and lazy modal facade. Release notes live in `changelog-impl.ts`; version metadata is authored in `version.ts`. Production cache identity is tied to the build commit and deployment, independently of the user-facing release label.
 
 **Key exports:**
-- `APP_VERSION` — number matching the SW cache version (e.g., 53)
-- `openChangelog(showAll)` — renders and shows the modal; `showAll=true` shows all entries, `false` shows latest 3
-- `closeChangelog()` — hides modal, marks current version as seen in localStorage
-- `maybeShowChangelog()` — auto-trigger: shows modal if `labcharts-changelog-seen` !== `APP_VERSION`
-
-**Window exports:** `openChangelog`, `closeChangelog`, `maybeShowChangelog`
+- `openChangelog(showAll)` — loads and opens the release-note modal
+- `closeChangelog()` — closes the modal and marks the release seen
+- `maybeShowChangelog()` — marks the first visit seen, then opens on a major/minor release change or a designated critical patch notice
+- `loadChangelogModule()` / `isChangelogModuleLoaded()` — lazy archive loading and status
 
 ---
 
-### `client-list.js`
+### `client-list.ts`
 
 Client List modal for managing multiple profiles.
 
@@ -1758,9 +1685,9 @@ Client List modal for managing multiple profiles.
 
 ---
 
-### `recommendations.js`
+### `recommendations.ts`
 
-Supplement, lifestyle, light-device, and EMF affiliate recommendations driven by a lazy-loaded catalog. Region-aware: products + URLs + coupons are filtered by user country via a single hierarchy chain (CZ → EU → INTL etc.). The global Recommendations page is rendered by `lens-pages.js`, while `dashboard-widgets.js` registers the dashboard surface and `dashboard-widget-renderers.js` owns its dashboard renderer; this module owns catalog loading, slot rendering, disclosure state, product filtering, and DNA/wearable slot helpers.
+Supplement, lifestyle, light-device, and EMF affiliate recommendations driven by a lazy-loaded catalog. Region-aware: products + URLs + coupons are filtered by user country via a single hierarchy chain (CZ → EU → INTL etc.). The global Recommendations page is rendered by `lens-pages.ts`, while `dashboard-widgets.ts` registers the dashboard surface and `dashboard-widget-renderers.ts` owns its dashboard renderer; this module owns catalog loading, slot rendering, disclosure state, product filtering, and DNA/wearable slot helpers.
 
 **Key exports:**
 - `loadCatalog()` — lazy-loads `data/recommendations.json` on first call
@@ -1772,11 +1699,11 @@ Supplement, lifestyle, light-device, and EMF affiliate recommendations driven by
 - `renderRecommendationSection(slotKey, opts)` — renders the "What can help" section in the detail modal
 - `renderEMFMeterRecs(catalog, opts)` / `renderEMFMitigationRecs(catalog, tags, opts)` — EMF panel surfaces
 
-**Window exports:** none (called via imports from `views.js`, `chat.js`, `context-cards.js`)
+**Window exports:** none (called via imports from `views.ts`, `chat.ts`, `context-cards.ts`)
 
 ---
 
-### `crypto.js`
+### `crypto.ts`
 
 Passphrase encryption, browser-device credential wrapping, and cross-tab data-change notifications.
 
@@ -1793,9 +1720,9 @@ With passphrase protection off, supported credential keys use a `d1:` AES-GCM en
 
 ---
 
-### `backup.js`
+### `backup.ts`
 
-IndexedDB auto-backup, folder backup via File System Access API, manual database backup, and restore. `backup-chat-storage.js` supplements profile collection with raw thread index/message envelopes so a locked or partially recovered index cannot make a full backup omit ciphertext. Unsent draft keys are intentionally excluded.
+IndexedDB auto-backup, folder backup via File System Access API, manual database backup, and restore. `backup-chat-storage.ts` supplements profile collection with raw thread index/message envelopes so a locked or partially recovered index cannot make a full backup omit ciphertext. Unsent draft keys are intentionally excluded.
 
 **Key exports:**
 - `scheduleAutoBackup()` — debounced five-minute trigger; saves up to 5 snapshots to IndexedDB + writes to folder backup if configured
@@ -1810,9 +1737,9 @@ IndexedDB auto-backup, folder backup via File System Access API, manual database
 
 ---
 
-### `lab-context.js`
+### `lab-context.ts`
 
-Central AI context serializer. Extracted from `chat.js`.
+Central AI context serializer. Extracted from `chat.ts`.
 
 **Key exports:**
 - `buildLabContext()` — serializes enabled lab groups, effective dated ranges, explicit collection context, profile/context cards, cycle data, notes, and other enabled sources into tagged AI context
@@ -1821,7 +1748,7 @@ Central AI context serializer. Extracted from `chat.js`.
 
 ---
 
-### `lab-context-collection.js`
+### `lab-context-collection.ts`
 
 Builds `[section:labCollectionContext]` from explicit per-draw metadata. It emits collection time, tri-state fasting when known, cycle day, and recorded phase; missing fields are omitted with an instruction not to infer them.
 
@@ -1831,7 +1758,7 @@ Builds `[section:labCollectionContext]` from explicit per-draw metadata. It emit
 
 ---
 
-### `lab-context-change-timeline.js`
+### `lab-context-change-timeline.ts`
 
 Builds the `[section:changeHistory]` profile-context timeline used by `buildLabContext()`. It filters the timeline by enabled Insight Context Cards and Light & Sun sources, orders snapshots by date, and renders field-level changes.
 
@@ -1839,7 +1766,7 @@ Builds the `[section:changeHistory]` profile-context timeline used by `buildLabC
 
 ---
 
-### `lab-context-wearables.js`
+### `lab-context-wearables.ts`
 
 Builds compact wearable context and optional Agent Access series. It also detects contradictions between manually selected Sleep & Rest duration/quality and recent wearable data, returning an explicit mismatch warning instead of silently choosing one source.
 
@@ -1849,9 +1776,9 @@ Builds compact wearable context and optional Agent Access series. It also detect
 
 ---
 
-### `markdown.js`
+### `markdown.ts`
 
-Block-aware markdown parser for chat rendering. Extracted from `chat.js`.
+Block-aware markdown parser for chat rendering. Extracted from `chat.ts`.
 
 **Key exports:**
 - `renderMarkdown(text)` — block-aware parser: headings, lists, code blocks, HR, paragraphs + inline formatting
@@ -1860,35 +1787,35 @@ Block-aware markdown parser for chat rendering. Extracted from `chat.js`.
 
 ---
 
-### `provider-panels.js`
+### `provider-panels.ts`
 
-AI provider settings behavior for the settings modal. Owns provider selection, key validation flows, provider model dropdown refresh, balances, and local-model advisor wiring. Imports `provider-panel-renderers.js` for provider-specific Settings → AI panel markup.
+AI provider settings behavior for the settings modal. Owns provider selection, key validation flows, provider model dropdown refresh, balances, and local-model advisor wiring. Imports `provider-panel-renderers.ts` for provider-specific Settings → AI panel markup.
 
 **Key exports:**
 - `renderAIProviderPanel(provider)` — returns the active provider configuration panel HTML
 - `switchAIProvider(provider)` — persists provider choice and refreshes the settings panel
 - Provider key/model helpers for Venice, OpenRouter, Routstr, PPQ, Custom API, and local OpenAI-compatible servers
 
-**Window exports:** provider panel handlers used by Settings HTML `onclick` attributes, including imported Routstr wallet handlers from `provider-wallet-panels.js`
+**Window exports:** provider panel handlers used by Settings HTML `onclick` attributes, including imported Routstr wallet handlers from `provider-wallet-panels.ts`
 
-### `provider-panel-renderers.js`
+### `provider-panel-renderers.ts`
 
 Provider-specific Settings → AI panel markup for OpenRouter, Routstr, Venice, PPQ, Custom, and Local AI. Keeps static panel HTML and cached-model select markup separate from provider validation, balance polling, and local-model advisor behavior.
 
-**Window exports:** none directly. `renderAIProviderPanel()` is re-exported and attached to `window` by `provider-panels.js`.
+**Window exports:** none directly. `renderAIProviderPanel()` is re-exported and attached to `window` by `provider-panels.ts`.
 
-### `provider-wallet-panels.js`
+### `provider-wallet-panels.ts`
 
-Routstr/Cashu wallet UI and node funding actions used inside the Routstr provider panel. Extracted from `provider-panels.js` so wallet deposit, withdrawal, seed backup/restore, mint switching, and node deposit/refund behavior are isolated from general provider key/model rendering.
+Routstr/Cashu wallet UI and node funding actions used inside the Routstr provider panel. Extracted from `provider-panels.ts` so wallet deposit, withdrawal, seed backup/restore, mint switching, and node deposit/refund behavior are isolated from general provider key/model rendering.
 
 **Key exports:**
 - `configureRoutstrWalletPanels(callbacks)` — injects provider-panel callbacks without introducing a circular module import
 - `routstrWalletActionButtons(active)` / `buildRoutstrNodeActions(nodeUrl, hasKey, active)` — render the wallet and node action controls used by the Routstr panel
 - `doRoutstrWalletFund()` / `doRoutstrNodeDeposit()` / `doRoutstrNodeWithdraw()` / withdraw and restore helpers — Cashu wallet and Routstr node action handlers
 
-**Window exports:** exported through `provider-panels.js` for legacy inline handlers.
+**Window exports:** exported through `provider-panels.ts` for legacy inline handlers.
 
-### `provider-qr.js`
+### `provider-qr.ts`
 
 Shared QR-code loader for provider payment surfaces.
 
@@ -1897,9 +1824,9 @@ Shared QR-code loader for provider payment surfaces.
 
 ---
 
-### `lens.js`
+### `lens.ts`
 
-Knowledge Base / Interpretive Lens — RAG endpoint config + multi-query rewrite + dedicated modal. Two backends under one UI: `'in-browser'` (transformers.js + OPFS via `lens-local.js`) and `'external-server'` (user-configured URL + Bearer key).
+Knowledge Base / Interpretive Lens — RAG endpoint config + multi-query rewrite + dedicated modal. Two backends under one UI: `'in-browser'` (transformers.js + OPFS via `lens-local.ts`) and `'external-server'` (user-configured URL + Bearer key).
 
 **Key exports:**
 - `hasLens()` — true when a lens is configured AND has indexed content
@@ -1917,7 +1844,7 @@ Knowledge Base / Interpretive Lens — RAG endpoint config + multi-query rewrite
 
 ---
 
-### `wearable-adapters.js`
+### `wearable-adapters.ts`
 
 Canonical wearable-metric registry + per-vendor adapter registry. Source of truth for OAuth client IDs, redirect URIs, scopes, and metric → endpoint mappings.
 
@@ -1935,14 +1862,14 @@ Canonical wearable-metric registry + per-vendor adapter registry. Source of trut
 
 ---
 
-### `wearables-connect.js`
+### `wearables-connect.ts`
 
 Connect/disconnect/backfill orchestration. OAuth dispatch table, scheduled stale-source sync, runtime config bootstrap.
 
 **Key exports:**
 - `OAUTH_DISPATCH` — `{adapterId: {begin, isCallback, complete, withFreshToken, fetchAccountInfo, fetchRange, displayName, postConnect?, commitAfterWrite?}}` — generic OAuth orchestration table
 - `beginConnectOAuth(adapterId)` — kicks off the auth flow; reads `clientId` via `getOAuthClientId(adapter)`
-- `handleOAuthCallbackOnLoad()` — runs via `startup-oauth-callbacks.js` init; reads `pending.clientId` from sessionStorage (set at begin time, NOT from runtime config)
+- `handleOAuthCallbackOnLoad()` — runs via `startup-oauth-callbacks.ts` init; reads `pending.clientId` from sessionStorage (set at begin time, NOT from runtime config)
 - `getConnection(adapterId)` / `listConnectedSources()` / `disconnectAdapter(adapterId)`
 - `syncNow(adapterId, opts?)` / `forceBackfill(adapterId, days)`
 - `initWearableScheduler()` — visibility-change + 6h interval poll; awaits `runtimeConfigReady()` before first sync to prevent race against override fetch
@@ -1960,22 +1887,22 @@ Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wea
 
 **Other OAuth paths:** Ultrahuman follows its reviewed experimental self-host contract. Fitbit's PKCE modules remain only for already-connected legacy users; the adapter is hidden for new connections and has no reconnect flow.
 
-**No OAuth:** `wearables-apple-health.js` (file-import — `parseAppleHealthXml` reads the `export.xml` from a Health zip), `wearables-manual.js` (`logManualMetric` / `logManualBP` + `MANUAL_TAGS` whitelist for what users can log by hand).
+**No OAuth:** `wearables-apple-health.ts` (file-import — `parseAppleHealthXml` reads the `export.xml` from a Health zip), `wearables-manual.ts` (`logManualMetric` / `logManualBP` + `MANUAL_TAGS` whitelist for what users can log by hand).
 
-**L1 storage + summary derivation:** `wearables-store.js` (per-profile IndexedDB at `labcharts-wearables-{profileId}`; two-phase upsertDailyBatch), `wearables-summary.js` (L2 derivation; vendor sources read a 90-day window, while sparse manual rows read all history so older hand-entered BP/pulse/weight entries stay visible; write gate — 5% d7 shift / trend flip / 14d force-refresh / source flip / metric removal triggers).
+**L1 storage + summary derivation:** `wearables-store.ts` (per-profile IndexedDB at `labcharts-wearables-{profileId}`; two-phase upsertDailyBatch), `wearables-summary.ts` (L2 derivation; vendor sources read a 90-day window, while sparse manual rows read all history so older hand-entered BP/pulse/weight entries stay visible; write gate — 5% d7 shift / trend flip / 14d force-refresh / source flip / metric removal triggers).
 
-**UI surface:** `wearables.js` (dashboard strip, source picker, reorder mode, empty-card manual-log forms, and legacy window facade), `wearables-detail-modal.js` (metric detail modal, Chart.js series, manual-entry list/add/delete, focus trap, EMF sleep nudge), `wearables-formatters.js` (shared value/date formatting), `wearables-manual-form-ui.js` (shared manual chip/note form snippets), `wearables-settings-panel.js` (Settings → Wearables rows, connect/sync/backfill/disconnect actions, Apple Health file-import UI, manual-source counts/delete action, strip visibility toggle), `brand-assets.js` (per-vendor logo registry — `iconLight/Dark` for in-app rows, `signInLight/Dark` for landing-site Connect buttons, `mono` SVG fallback while a vendor logo is gated).
+**UI surface:** `wearables.ts` (dashboard strip, source picker, reorder mode, empty-card manual-log forms, and legacy window facade), `wearables-detail-modal.ts` (metric detail modal, Chart.js series, manual-entry list/add/delete, focus trap, EMF sleep nudge), `wearables-formatters.ts` (shared value/date formatting), `wearables-manual-form-ui.ts` (shared manual chip/note form snippets), `wearables-settings-panel.ts` (Settings → Wearables rows, connect/sync/backfill/disconnect actions, Apple Health file-import UI, manual-source counts/delete action, strip visibility toggle), `brand-assets.ts` (per-vendor logo registry — `iconLight/Dark` for in-app rows, `signInLight/Dark` for landing-site Connect buttons, `mono` SVG fallback while a vendor logo is gated).
 
 ---
 
 ### Knowledge Base in-browser stack
 
-`lens.js` is the dispatcher; the 4 sibling `lens-local-*` modules are the in-browser implementation. The dispatcher routes between in-browser and external-server backends per the user's selection.
+`lens.ts` is the dispatcher; the 4 sibling `lens-local-*` modules are the in-browser implementation. The dispatcher routes between in-browser and external-server backends per the user's selection.
 
-- `lens-local.js` — main-thread shell: spawns a module worker, posts ingest/query/list/activate/delete messages, exposes a Promise-based API to `lens.js`.
-- `lens-local-worker.js` — module worker. Loads transformers.js (currently from jsdelivr — see `update-vendor.sh` notes), runs WebGPU embedding when available with WASM fallback, owns OPFS persistence (`FileSystemSyncAccessHandle`), library CRUD, MMR re-rank (λ named `MMR_LAMBDA`), per-library model selection from a 4-model catalog.
-- `lens-local-utils.js` — pure helpers: `chunkText`, `mmrSelect`, hashing, vector-pack helpers. Importable from both threads.
-- `lens-local-parsers.js` — main-thread document parsers (PDF via `pdfjs-loader.js`, DOCX via mammoth, ZIP via JSZip, plus plain text/markdown/CSV).
+- `lens-local.ts` — main-thread shell: spawns a module worker, posts ingest/query/list/activate/delete messages, exposes a Promise-based API to `lens.ts`.
+- `lens-local-worker.ts` — module worker. Loads transformers.js (currently from jsdelivr — see `update-vendor.sh` notes), runs WebGPU embedding when available with WASM fallback, owns OPFS persistence (`FileSystemSyncAccessHandle`), library CRUD, MMR re-rank (λ named `MMR_LAMBDA`), per-library model selection from a 4-model catalog.
+- `lens-local-utils.ts` — pure helpers: `chunkText`, `mmrSelect`, hashing, vector-pack helpers. Importable from both threads.
+- `lens-local-parsers.ts` — main-thread document parsers (PDF via `pdfjs-loader.ts`, DOCX via mammoth, ZIP via JSZip, plus plain text/markdown/CSV).
 
 ---
 
@@ -1983,86 +1910,86 @@ Each connected source ships as a pair: `wearables-<vendor>.js` (read API) + `wea
 
 Not separately documented because their exports are best read from source — kept thin on purpose.
 
-- `chat-images.js` — image attachment lifecycle (`getPendingAttachments`, `clearAttachments`, etc.). Owns the `_pendingAttachments` queue. Extracted from `chat.js` in v1.21.9.
-- `markdown.js` — XSS-safe markdown rendering (`applyInlineMarkdown` for spans, `renderMarkdown` for full blocks). 34 dedicated XSS test assertions.
-- `lab-context.js` — lab-data → AI-prompt context assembly; memoized via fingerprint that includes wearable summary, change history, and all 9 context cards.
-- `provider-panels.js` — Settings → AI provider behavior, validation, balances, dropdown refresh, globals.
-- `provider-panel-renderers.js` — Settings → AI per-provider panel markup (Venice / OpenRouter / Routstr / PPQ / Local AI / Custom).
-- `pdfjs-loader.js` — cached dynamic import of vendored pdf.js ESM. Pins `isEvalSupported: false` defense-in-depth on every `getDocument` call.
-- `sun-body-silhouette.js` — anatomical sun-session body-region picker, stock-figure region-map hit testing, and async selection overlay. Re-exported by `sun.js` for compatibility.
-- `sun-active-session.js` — quick-log/start modal, live active-session ticker, Simpson live-dose integration, and active-session compatibility handlers. Dependency-injected from `sun.js` so persistence and hydration stay in the owner module.
-- `sun-session-ui.js` — saved sun-session row/detail rendering, detailed past-session modal, channel chips, delete, and edit-duration UI. Dependency-injected from `sun.js` so storage, hydration, and dose math stay in the owning module.
-- `light-device-setup-modal.js` — add-device preset picker, custom-device form, and URL/photo AI spec extraction. Dependency-injected from `light-devices.js` so device persistence and channel defaults stay in the owning module.
-- `light-device-session-modal.js` — log/start light therapy device session modal; dependency-injected from `light-devices.js` so session persistence and active timer state stay in the owning module.
-- `light-env-audits.js` — saved Light Environment snapshots, audit comparison renderer, and audit-specific window handlers. Dependency-injected from `light-env.js` so rooms/screens remain owned by the environment module.
-- `light-env-evening.js` — canonical room after-sunset exposure helpers; normalizes legacy boolean room rows to numeric `eveningHoursAfterSunset` while leaving screen `eveningUseAfterSunset` numeric.
-- `light-tool-camera.js` / `light-tool-camera-modals.js` — shared camera lock, row-banding, aiming guides, lux calibration, and the camera-backed Light tool modal flows. Dependency-injected from `light-tools.js` so measurement persistence stays in the owning module.
-- `supplement-warnings.js` — claim-level, primary-study mitochondrial evidence matching and bounded context; `food-contaminants.js` separately owns deterministic diet-source warnings.
-- `emf.js` — Baubiologie SBM-2015 EMF assessment as a sub-module of the Environment context card.
-- `sync.js` — Public sync entry/barrel; exports sync lifecycle, actions, diagnostics, relay, identity, and cutover APIs while delegating dependency wiring to `sync-configure.js`.
-- `sync-configure.js` — Sync subsystem dependency wiring; configures relay health, push/pull/subscription/tombstone/diagnostic/UI/action/recovery/reconcile modules and browser window bindings.
-- `sync-push.js` — outbound profile push path, missing-profile-data rejection, unchanged-payload suppression, generation-safe dirty clearing, exact source-commit tracking, relay-storage refresh scheduling, in-flight watchdog, and Evolu profileData insert/update.
-- `sync-push-deltas.js` — push-side per-row delta planning/application; walks DELTA_ARRAYS/MAPS/SCALARS before blob writes, advances snapshots after onComplete, and records delta telemetry.
-- `sync-pull.js` — inbound pull orchestration and row loop; force-publishes pending backup restores, flushes dirty local work, tracks source-tab commits, and delegates one-time cleanup, active-profile UI refresh, and rebroadcast scheduling to helper modules.
-- `sync-pull-merge.js` — pull row recovery/dedupe, importedData blob/per-row merge, wearable-token preservation, metadata-only genetics blob protection, and profile metadata merge helpers.
-- `sync-pull-maintenance.js` — pull-path one-time migrations such as stale `-sync-hash` localStorage cleanup.
-- `sync-pull-active-refresh.js` — active-profile in-memory update, migration, chat reload, sidebar rebuild, current-view refresh, origin-aware toast, and sync-applied event after a pull.
-- `sync-pull-rebroadcast.js` — pull-side rebroadcast gating, budget checks, push-pending guard, and delayed active-profile push scheduling.
-- `data-merge.js` — importedData blob merge helpers, shared record freshness comparison, tombstone state merge, and sync-aware array mutation helpers (`appendImportedArrayItem`, `replaceImportedArrayItem`, `deleteImportedArrayItem`, `deleteImportedArrayItems`, `clearImportedArray`) used by feature modules so identity edits/deletes record the right tombstones before the next sync push.
-- `sync-cutover.js` — readiness-gated Phase 2 lean-sync cutover enable/disable bridge over payload flags and delta readiness.
-- `sync-delta.js` — per-row CRDT delta facade; config fan-out, apply helpers, and compatibility re-exports for planners, snapshots, merge, telemetry, and readiness.
-- `sync-delta-planners.js` — push-side planner facade; configures shared planner dependency context and compatibility re-exports for array/map/scalar planners.
-- `sync-delta-planner-context.js` — shared Evolu/itemRow query dependency access for push-side delta planners.
-- `sync-delta-array-planner.js` — push-side array planner; diffs array items against snapshots and emits itemRow insert/update/tombstone ops with tombstone-storm protection.
-- `sync-delta-map-planner.js` — push-side keyed-map planner; diffs keyed objects against snapshots, preserves original raw keys in payloads, and guards genetics SNP empty-map races.
-- `sync-delta-scalar-planner.js` — push-side scalar planner; handles singleton fields, most-recent canonical row selection, and null-transition tombstones.
-- `sync-delta-snapshot.js` — delta snapshot keying, reads, plannedAt-gated writes, and snapshot clear helpers.
-- `sync-delta-merge.js` — pull-side itemRow grouping and merge-shape dispatch into importedData after blob merge.
-- `sync-delta-merge-shapes.js` — pull-side row overlay facade; compatibility re-exports for array/map/scalar merge helpers.
-- `sync-delta-row-codec.js` — shared itemRow payload decoder for pull-side delta merge helpers, including gzip envelope handling.
-- `sync-delta-array-merge.js` — pull-side array row overlay helper; owns item tombstones, nested-path writes, dedupe, composite caps, and pull delta telemetry.
-- `sync-delta-map-merge.js` — pull-side keyed-map row overlay helper; owns raw-key preservation, synth-id tombstones, proto guards, nested-path writes, and pull delta telemetry.
-- `sync-delta-scalar-merge.js` — pull-side scalar row overlay helper; owns singleton LWW selection, null tombstones, dotted-path writes, genetics SNP preservation, and pull delta telemetry.
-- `sync-delta-registry.js` — delta registry facade; compatibility re-exports for surfaces, per-surface config, and identity helpers.
-- `sync-delta-surfaces.js` — DELTA_ARRAYS/MAPS/SCALARS importedData surface lists for per-row sync.
-- `sync-delta-surface-config.js` — per-surface itemId/keyId overrides for array/map delta planners and pull overlays.
-- `sync-delta-id.js` — shared per-row identity helpers, stable hash, allowlist guard, and proto-pollution key rejection.
-- `sync-delta-observability.js` — delta observability facade; compatibility re-exports for telemetry, pull snapshots, readiness, and injected Evolu query access.
-- `sync-delta-observability-context.js` — shared Evolu/itemRow query dependency access for delta observability helpers.
-- `sync-delta-pull-snapshot.js` — in-memory pull-side row-count snapshots for Sync Diagnose delta replication checks.
-- `sync-delta-telemetry.js` — per-push delta telemetry storage, aggregation, reset, and latest pull-snapshot reporting.
-- `sync-delta-readiness.js` — Phase 2 cutover readiness checks across array/map/scalar delta surfaces.
-- `sync-apply.js` — inbound sync apply helpers for AI provider settings and display prefs, with compatibility re-exports for chat apply helpers.
-- `sync-chat-apply.js` — inbound chat thread/message application, thread/persona delete tombstones, per-persona timestamp merge, and local freshness locks that protect just-edited local chat from stale remote rows.
-- `sync-tombstones.js` — remote profile delete propagation helpers, inbound tombstone application, batched-delete quarantine, and apply/reject pending tombstone actions for Settings.
-- `sync-messenger.js` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
-- `sync-environment.js` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
-- `sync-evolu8-candidate.js` — Evolu 8 default runtime facade; performs the verified one-time Evolu 7 identity handoff, retains an explicit V7 rollback, keeps identities aligned during restore/reset, and safely reclaims superseded V8 database generations.
-- `sync-evolu8-identity-vault.js` — durable IndexedDB-backed owner ID and mnemonic handoff; valid commits let normal V8 startup avoid loading the V7 worker.
-- `sync-identity.js` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress the client's internal reload, persist enabled owner state, then perform one controlled reload.
-- `sync-settings-state.js` — persisted configured/active/paused state. `labcharts-sync-enabled` means an identity is configured; `labcharts-sync-paused` suppresses traffic without forgetting it.
-- `sync-lifecycle.js` — runtime start, identity-preserving pause/resume, explicit disconnect/reset, and backup-restore push preflight.
-- `sync-backup-restore-state.js` — durable restored-profile handoff; clears stale delta/cutover state, marks profiles dirty, and retains the retry list until a recovery push succeeds.
-- `sync-subscriptions.js` — Evolu profile/settings subscriptions and debounce timers; paused state clears and blocks inbound delivery until resume rebinds them.
-- `sync-dirty-state.js` — durable per-profile edit generations, captured-generation clearing, and dirty-state inspection for pull and compaction safety.
-- `sync-origin-state.js` — tab-local committed `syncedAt` tracking used to distinguish source-browser echoes from updates received elsewhere.
-- `sync-profile-fields.js` — deterministic shared profile metadata field list used by outbound payload collection and inbound profile merge.
-- `sync-diagnostics.js` — Evolu diagnostics facade; stable exports for configuration, row snapshots, and copy-text formatting.
-- `sync-diagnostics-context.js` — Injected Evolu/query/subscription state accessors for sync diagnostics.
-- `sync-diagnostics-snapshot.js` — Evolu row diagnostics snapshot assembly, including live/tombstone rows, active imported counts, delta telemetry, and lean-sync readiness.
-- `sync-diagnostics-text.js` — Plain-text Sync Diagnose copy formatting for support/debug handoff.
-- `sync-diagnose-ui.js` — Sync Diagnose modal lifecycle, copy snapshot handling, and compatibility re-exports for Diagnose action handlers.
-- `sync-diagnose-render.js` — Pure Sync Diagnose panel/table markup for identity, relay health, relay storage, delta telemetry, lean-sync readiness, and local Evolu rows.
-- `sync-diagnose-actions.js` — Sync Diagnose action facade; keeps the public imports stable while delegating to focused action modules.
-- `sync-diagnose-actions-context.js` — Shared injected dependencies for Diagnose actions, including sync enable/restore, push, cutover toggles, and modal refresh.
-- `sync-diagnose-relay-actions.js` — Sync Diagnose relay storage refresh and self-serve compaction handlers.
-- `sync-diagnose-identity-actions.js` — Sync Diagnose identity rotation modal, BIP-39 mnemonic generation, QR display, copy fallback, and local apply flow.
-- `sync-diagnose-cutover-actions.js` — Sync Diagnose telemetry reset plus lean-sync enable/backfill/disable handlers.
-- `sync-actions.js` — user-triggered sync actions, all-profile initial push, dirty-profile compaction preflight, fail-closed unreadable-profile guard, relay snapshot rebuild, and compatibility re-exports for save hooks and storage cleanup.
-- `sync-save-hooks.js` — save/chat/profile-metadata debounce hooks, durable dirty marking, AI-setting push scheduling, per-profile timer cleanup, and canonical IndexedDB-backed profile reads that return `null` rather than an empty default on failure.
-- `sync-storage-cleanup.js` — emergency sync storage compaction; clears model-list caches, trims oversized `changeHistory`, saves the active profile, and reports freed bytes.
-- `sync-ui.js` — header sync badge, popover rendering, status subscription, and activity-log copy helpers.
-- `sync-payload-collectors.js` — Local AI/chat/display settings collection for sync payloads, including thread messages/tombstones, custom personas, persona tombstones, and synced setting allowlists.
-- `sync-payload.js` — Evolu wire-payload helpers; deterministic profile-field assembly, Phase 2 cutover payload shape, gzip envelope handling, inbound payload parsing, and local-only data stripping for wearable credentials and SNP map rows.
-- `sync-relay-health.js` — Evolu relay helper boundary; client-side quota estimate, signed `/self/owner-storage` and `/self/compact-owner` calls, and push-landed health verdict for the silent-reject detector.
-- `sync-state.js` — in-memory sync status pub-sub, header badge display-state derivation, recent sync activity ring buffer, and per-profile rebroadcast budget guard.
+- `chat-images.ts` — image attachment lifecycle (`getPendingAttachments`, `clearAttachments`, etc.). Owns the `_pendingAttachments` queue. Extracted from `chat.ts` in v1.21.9.
+- `markdown.ts` — XSS-safe markdown rendering (`applyInlineMarkdown` for spans, `renderMarkdown` for full blocks). 34 dedicated XSS test assertions.
+- `lab-context.ts` — lab-data → AI-prompt context assembly; memoized via fingerprint that includes wearable summary, change history, and all 9 context cards.
+- `provider-panels.ts` — Settings → AI provider behavior, validation, balances, dropdown refresh, globals.
+- `provider-panel-renderers.ts` — Settings → AI per-provider panel markup (Venice / OpenRouter / Routstr / PPQ / Local AI / Custom).
+- `pdfjs-loader.ts` — cached dynamic import of vendored pdf.js ESM. Pins `isEvalSupported: false` defense-in-depth on every `getDocument` call.
+- `sun-body-silhouette.ts` — anatomical sun-session body-region picker, stock-figure region-map hit testing, and async selection overlay. Re-exported by `sun.ts` for compatibility.
+- `sun-active-session.ts` — quick-log/start modal, live active-session ticker, Simpson live-dose integration, and active-session compatibility handlers. Dependency-injected from `sun.ts` so persistence and hydration stay in the owner module.
+- `sun-session-ui.ts` — saved sun-session row/detail rendering, detailed past-session modal, channel chips, delete, and edit-duration UI. Dependency-injected from `sun.ts` so storage, hydration, and dose math stay in the owning module.
+- `light-device-setup-modal.ts` — add-device preset picker, custom-device form, and URL/photo AI spec extraction. Dependency-injected from `light-devices.ts` so device persistence and channel defaults stay in the owning module.
+- `light-device-session-modal.ts` — log/start light therapy device session modal; dependency-injected from `light-devices.ts` so session persistence and active timer state stay in the owning module.
+- `light-env-audits.ts` — saved Light Environment snapshots, audit comparison renderer, and audit-specific window handlers. Dependency-injected from `light-env.ts` so rooms/screens remain owned by the environment module.
+- `light-env-evening.ts` — canonical room after-sunset exposure helpers; normalizes legacy boolean room rows to numeric `eveningHoursAfterSunset` while leaving screen `eveningUseAfterSunset` numeric.
+- `light-tool-camera.ts` / `light-tool-camera-modals.ts` — shared camera lock, row-banding, aiming guides, lux calibration, and the camera-backed Light tool modal flows. Dependency-injected from `light-tools.ts` so measurement persistence stays in the owning module.
+- `supplement-warnings.ts` — claim-level, primary-study mitochondrial evidence matching and bounded context; `food-contaminants.ts` separately owns deterministic diet-source warnings.
+- `emf.ts` — Baubiologie SBM-2015 EMF assessment as a sub-module of the Environment context card.
+- `sync.ts` — Public sync entry/barrel; exports sync lifecycle, actions, diagnostics, relay, identity, and cutover APIs while delegating dependency wiring to `sync-configure.ts`.
+- `sync-configure.ts` — Sync subsystem dependency wiring; configures relay health, push/pull/subscription/tombstone/diagnostic/UI/action/recovery/reconcile modules and browser window bindings.
+- `sync-push.ts` — outbound profile push path, missing-profile-data rejection, unchanged-payload suppression, generation-safe dirty clearing, exact source-commit tracking, relay-storage refresh scheduling, in-flight watchdog, and Evolu profileData insert/update.
+- `sync-push-deltas.ts` — push-side per-row delta planning/application; walks DELTA_ARRAYS/MAPS/SCALARS before blob writes, advances snapshots after onComplete, and records delta telemetry.
+- `sync-pull.ts` — inbound pull orchestration and row loop; force-publishes pending backup restores, flushes dirty local work, tracks source-tab commits, and delegates one-time cleanup, active-profile UI refresh, and rebroadcast scheduling to helper modules.
+- `sync-pull-merge.ts` — pull row recovery/dedupe, importedData blob/per-row merge, wearable-token preservation, metadata-only genetics blob protection, and profile metadata merge helpers.
+- `sync-pull-maintenance.ts` — pull-path one-time migrations such as stale `-sync-hash` localStorage cleanup.
+- `sync-pull-active-refresh.ts` — active-profile in-memory update, migration, chat reload, sidebar rebuild, current-view refresh, origin-aware toast, and sync-applied event after a pull.
+- `sync-pull-rebroadcast.ts` — pull-side rebroadcast gating, budget checks, push-pending guard, and delayed active-profile push scheduling.
+- `data-merge.ts` — importedData blob merge helpers, shared record freshness comparison, tombstone state merge, and sync-aware array mutation helpers (`appendImportedArrayItem`, `replaceImportedArrayItem`, `deleteImportedArrayItem`, `deleteImportedArrayItems`, `clearImportedArray`) used by feature modules so identity edits/deletes record the right tombstones before the next sync push.
+- `sync-cutover.ts` — readiness-gated Phase 2 lean-sync cutover enable/disable bridge over payload flags and delta readiness.
+- `sync-delta.ts` — per-row CRDT delta facade; config fan-out, apply helpers, and compatibility re-exports for planners, snapshots, merge, telemetry, and readiness.
+- `sync-delta-planners.ts` — push-side planner facade; configures shared planner dependency context and compatibility re-exports for array/map/scalar planners.
+- `sync-delta-planner-context.ts` — shared Evolu/itemRow query dependency access for push-side delta planners.
+- `sync-delta-array-planner.ts` — push-side array planner; diffs array items against snapshots and emits itemRow insert/update/tombstone ops with tombstone-storm protection.
+- `sync-delta-map-planner.ts` — push-side keyed-map planner; diffs keyed objects against snapshots, preserves original raw keys in payloads, and guards genetics SNP empty-map races.
+- `sync-delta-scalar-planner.ts` — push-side scalar planner; handles singleton fields, most-recent canonical row selection, and null-transition tombstones.
+- `sync-delta-snapshot.ts` — delta snapshot keying, reads, plannedAt-gated writes, and snapshot clear helpers.
+- `sync-delta-merge.ts` — pull-side itemRow grouping and merge-shape dispatch into importedData after blob merge.
+- `sync-delta-merge-shapes.ts` — pull-side row overlay facade; compatibility re-exports for array/map/scalar merge helpers.
+- `sync-delta-row-codec.ts` — shared itemRow payload decoder for pull-side delta merge helpers, including gzip envelope handling.
+- `sync-delta-array-merge.ts` — pull-side array row overlay helper; owns item tombstones, nested-path writes, dedupe, composite caps, and pull delta telemetry.
+- `sync-delta-map-merge.ts` — pull-side keyed-map row overlay helper; owns raw-key preservation, synth-id tombstones, proto guards, nested-path writes, and pull delta telemetry.
+- `sync-delta-scalar-merge.ts` — pull-side scalar row overlay helper; owns singleton LWW selection, null tombstones, dotted-path writes, genetics SNP preservation, and pull delta telemetry.
+- `sync-delta-registry.ts` — delta registry facade; compatibility re-exports for surfaces, per-surface config, and identity helpers.
+- `sync-delta-surfaces.ts` — DELTA_ARRAYS/MAPS/SCALARS importedData surface lists for per-row sync.
+- `sync-delta-surface-config.ts` — per-surface itemId/keyId overrides for array/map delta planners and pull overlays.
+- `sync-delta-id.ts` — shared per-row identity helpers, stable hash, allowlist guard, and proto-pollution key rejection.
+- `sync-delta-observability.ts` — delta observability facade; compatibility re-exports for telemetry, pull snapshots, readiness, and injected Evolu query access.
+- `sync-delta-observability-context.ts` — shared Evolu/itemRow query dependency access for delta observability helpers.
+- `sync-delta-pull-snapshot.ts` — in-memory pull-side row-count snapshots for Sync Diagnose delta replication checks.
+- `sync-delta-telemetry.ts` — per-push delta telemetry storage, aggregation, reset, and latest pull-snapshot reporting.
+- `sync-delta-readiness.ts` — Phase 2 cutover readiness checks across array/map/scalar delta surfaces.
+- `sync-apply.ts` — inbound sync apply helpers for AI provider settings and display prefs, with compatibility re-exports for chat apply helpers.
+- `sync-chat-apply.ts` — inbound chat thread/message application, thread/persona delete tombstones, per-persona timestamp merge, and local freshness locks that protect just-edited local chat from stale remote rows.
+- `sync-tombstones.ts` — remote profile delete propagation helpers, inbound tombstone application, batched-delete quarantine, and apply/reject pending tombstone actions for Settings.
+- `sync-messenger.ts` — Agent Access token/context-key helpers, owner-bound encrypted context writes, revoke helpers, and debounced lab-context push to the Agent Access context gateway.
+- `sync-environment.ts` — relay URL selection, relay connectivity probing, and browser capability checks for Evolu sync.
+- `sync-evolu8-candidate.ts` — Evolu 8 default runtime facade; performs the verified one-time Evolu 7 identity handoff, retains an explicit V7 rollback, keeps identities aligned during restore/reset, and safely reclaims superseded V8 database generations.
+- `sync-evolu8-identity-vault.ts` — durable IndexedDB-backed owner ID and mnemonic handoff; valid commits let normal V8 startup avoid loading the V7 worker.
+- `sync-identity.ts` — BIP-39/QR lazy loaders plus mnemonic read/restore helpers; existing-identity joins suppress the client's internal reload, persist enabled owner state, then perform one controlled reload.
+- `sync-settings-state.ts` — persisted configured/active/paused state. `labcharts-sync-enabled` means an identity is configured; `labcharts-sync-paused` suppresses traffic without forgetting it.
+- `sync-lifecycle.ts` — runtime start, identity-preserving pause/resume, explicit disconnect/reset, and backup-restore push preflight.
+- `sync-backup-restore-state.ts` — durable restored-profile handoff; clears stale delta/cutover state, marks profiles dirty, and retains the retry list until a recovery push succeeds.
+- `sync-subscriptions.ts` — Evolu profile/settings subscriptions and debounce timers; paused state clears and blocks inbound delivery until resume rebinds them.
+- `sync-dirty-state.ts` — durable per-profile edit generations, captured-generation clearing, and dirty-state inspection for pull and compaction safety.
+- `sync-origin-state.ts` — tab-local committed `syncedAt` tracking used to distinguish source-browser echoes from updates received elsewhere.
+- `sync-profile-fields.ts` — deterministic shared profile metadata field list used by outbound payload collection and inbound profile merge.
+- `sync-diagnostics.ts` — Evolu diagnostics facade; stable exports for configuration, row snapshots, and copy-text formatting.
+- `sync-diagnostics-context.ts` — Injected Evolu/query/subscription state accessors for sync diagnostics.
+- `sync-diagnostics-snapshot.ts` — Evolu row diagnostics snapshot assembly, including live/tombstone rows, active imported counts, delta telemetry, and lean-sync readiness.
+- `sync-diagnostics-text.ts` — Plain-text Sync Diagnose copy formatting for support/debug handoff.
+- `sync-diagnose-ui.ts` — Sync Diagnose modal lifecycle, copy snapshot handling, and compatibility re-exports for Diagnose action handlers.
+- `sync-diagnose-render.ts` — Pure Sync Diagnose panel/table markup for identity, relay health, relay storage, delta telemetry, lean-sync readiness, and local Evolu rows.
+- `sync-diagnose-actions.ts` — Sync Diagnose action facade; keeps the public imports stable while delegating to focused action modules.
+- `sync-diagnose-actions-context.ts` — Shared injected dependencies for Diagnose actions, including sync enable/restore, push, cutover toggles, and modal refresh.
+- `sync-diagnose-relay-actions.ts` — Sync Diagnose relay storage refresh and self-serve compaction handlers.
+- `sync-diagnose-identity-actions.ts` — Sync Diagnose identity rotation modal, BIP-39 mnemonic generation, QR display, copy fallback, and local apply flow.
+- `sync-diagnose-cutover-actions.ts` — Sync Diagnose telemetry reset plus lean-sync enable/backfill/disable handlers.
+- `sync-actions.ts` — user-triggered sync actions, all-profile initial push, dirty-profile compaction preflight, fail-closed unreadable-profile guard, relay snapshot rebuild, and compatibility re-exports for save hooks and storage cleanup.
+- `sync-save-hooks.ts` — save/chat/profile-metadata debounce hooks, durable dirty marking, AI-setting push scheduling, per-profile timer cleanup, and canonical IndexedDB-backed profile reads that return `null` rather than an empty default on failure.
+- `sync-storage-cleanup.ts` — emergency sync storage compaction; clears model-list caches, trims oversized `changeHistory`, saves the active profile, and reports freed bytes.
+- `sync-ui.ts` — header sync badge, popover rendering, status subscription, and activity-log copy helpers.
+- `sync-payload-collectors.ts` — Local AI/chat/display settings collection for sync payloads, including thread messages/tombstones, custom personas, persona tombstones, and synced setting allowlists.
+- `sync-payload.ts` — Evolu wire-payload helpers; deterministic profile-field assembly, Phase 2 cutover payload shape, gzip envelope handling, inbound payload parsing, and local-only data stripping for wearable credentials and SNP map rows.
+- `sync-relay-health.ts` — Evolu relay helper boundary; client-side quota estimate, signed `/self/owner-storage` and `/self/compact-owner` calls, and push-landed health verdict for the silent-reject detector.
+- `sync-state.ts` — in-memory sync status pub-sub, header badge display-state derivation, recent sync activity ring buffer, and per-profile rebroadcast budget guard.

@@ -61,44 +61,44 @@ Visible **Ask AI** and chat-shortcut templates inherit the normal chat system pr
 
 | ID | Surface | Instruction position | Source of truth |
 |---|---|---|---|
-| `chat.base` | Normal chat and multi-persona chat | System | `CHAT_SYSTEM_PROMPT` in [`js/chat-system-prompt.js`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.js) |
-| `chat.context` | Context, web state, personality, other-persona attribution | System fragments | [`js/chat-prompt-context.js`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.js) |
-| `chat.continue` | Truncated-response continuation | Automatic user message | [`js/chat-continuation.js`](https://github.com/elkimek/get-based/blob/main/js/chat-continuation.js) |
-| `chat.discussion` | Initial, rebuttal, and joining-persona turns | Automatic user messages | [`js/chat-discussion-round-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-prompts.js) |
-| `chat.persona-generator` | Custom personality draft | System + narrow user request | [`js/chat-personalities.js`](https://github.com/elkimek/get-based/blob/main/js/chat-personalities.js) |
-| `chat.summary` | Saved consultation summary | System | [`js/chat-summaries.js`](https://github.com/elkimek/get-based/blob/main/js/chat-summaries.js) |
-| `chat.prefills` | Explicit Ask AI actions and chat shortcuts | Editable or explicitly triggered user message | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js), [`js/dna-evidence.js`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.js), and linked callers in the detail page |
-| `lens.rewrite` | Knowledge Base multi-query expansion | System | [`js/lens.js`](https://github.com/elkimek/get-based/blob/main/js/lens.js) |
-| `import.classify` | Lab-report preflight classification | System + task template | [`js/pdf-import-preflight.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.js) |
-| `import.lab-text` | Text report extraction | Dynamic system + report text | [`js/pdf-import.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.js) |
-| `import.lab-image` | Image report extraction | Dynamic system + multimodal content | [`js/pdf-import.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.js) |
-| `import.collection-context` | Collection time and fasting rules | Shared system fragment | [`js/pdf-import-ai-utils.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.js) |
-| `privacy.local-pii` | Local-model report de-identification | User-role task instruction | [`js/pii.js`](https://github.com/elkimek/get-based/blob/main/js/pii.js) |
-| `import.supplement` | Label/photo and product-page extraction | User task for images; system for pages | [`js/supplement-import-draft.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-import-draft.js), [controller](https://github.com/elkimek/get-based/blob/main/js/supplement-import-controller.js) |
-| `import.light-device` | Product-page/photo specification extraction | System for pages; user task for images | [`js/light-device-setup-modal.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-setup-modal.js) |
-| `import.emf` | EMF PDF extraction | Dynamic system | [`js/emf.js`](https://github.com/elkimek/get-based/blob/main/js/emf.js) |
-| `nutrition.meal-photo` | Meal-photo analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.js) |
-| `nutrition.label` | Nutrition-label analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.js) |
-| `nutrition.history` | Selected nutrition-history chat handoff | Editable user message | [`js/nutrition-summary-context.js`](https://github.com/elkimek/get-based/blob/main/js/nutrition-summary-context.js) |
-| `insight.report-summary` | Practitioner-facing report overview | System | [`js/export-report.js`](https://github.com/elkimek/get-based/blob/main/js/export-report.js) |
-| `insight.focus-card` | Dashboard focus card | System | [`js/focus-card.js`](https://github.com/elkimek/get-based/blob/main/js/focus-card.js) |
-| `insight.context-dots` | Profile-area summaries and dots | Dynamic system | [`js/context-card-health-dots.js`](https://github.com/elkimek/get-based/blob/main/js/context-card-health-dots.js) |
-| `insight.marker-description` | One-sentence custom-marker reference | System | [`js/marker-detail-content.js`](https://github.com/elkimek/get-based/blob/main/js/marker-detail-content.js) |
-| `insight.biology-score` | Deterministic Biology Score explanation | System | [`js/biology-score-ai.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-ai.js) |
-| `insight.biology-context` | Suggested deterministic context flags | Dynamic system | [`js/biology-score-context-ai.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-context-ai.js) |
-| `insight.supplement-impact` | Marker-change impact dots | Dynamic system | [`js/supplement-impact.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-impact.js) |
-| `insight.emf` | Single and before/after EMF interpretation | System + task variant | [`js/emf-interpretation.js`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.js) |
-| `light.measurement` | One Light Tool measurement | System | [`js/light-tools-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.js) |
-| `light.today` | One-day Light Today synthesis | System | [`js/light-today-ai.js`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.js) |
-| `light.room` | One room | System | [`js/light-env-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.js) |
-| `light.device-session` | One light-device session | System | [`js/light-device-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.js) |
-| `light.screen` | One screen record | System | [`js/light-screen-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.js) |
-| `light.weekly-pattern` | Current versus previous seven days | System | [`js/light-channels-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.js) |
-| `light.audit` | Frozen multi-room audit | System | [`js/light-audit-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.js) |
-| `light.sun-session` | One modeled Sun session | System | [`js/sun-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.js) |
-| `light.onboarding` | Light & Sun setup synthesis | System | [`js/sun-onboarding-ai.js`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.js) |
-| `light.indoor-burden` | Live indoor screening picture | System | [`js/light-burden-ai-analysis.js`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.js) |
-| `light.hardware-guardrails` | Shared fixture/flicker restrictions | Shared system fragment | [`js/lighting-hardware-caveats.js`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.js) |
+| `chat.base` | Normal chat and multi-persona chat | System | `CHAT_SYSTEM_PROMPT` in [`js/chat-system-prompt.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.ts) |
+| `chat.context` | Context, web state, personality, other-persona attribution | System fragments | [`js/chat-prompt-context.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.ts) |
+| `chat.continue` | Truncated-response continuation | Automatic user message | [`js/chat-continuation.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-continuation.ts) |
+| `chat.discussion` | Initial, rebuttal, and joining-persona turns | Automatic user messages | [`js/chat-discussion-round-prompts.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-prompts.ts) |
+| `chat.persona-generator` | Custom personality draft | System + narrow user request | [`js/chat-personalities.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-personalities.ts) |
+| `chat.summary` | Saved consultation summary | System | [`js/chat-summaries.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-summaries.ts) |
+| `chat.prefills` | Explicit Ask AI actions and chat shortcuts | Editable or explicitly triggered user message | [`js/chat-marker-prompts.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.ts), [`js/dna-evidence.ts`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.ts), and linked callers in the detail page |
+| `lens.rewrite` | Knowledge Base multi-query expansion | System | [`js/lens.ts`](https://github.com/elkimek/get-based/blob/main/js/lens.ts) |
+| `import.classify` | Lab-report preflight classification | System + task template | [`js/pdf-import-preflight.ts`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.ts) |
+| `import.lab-text` | Text report extraction | Dynamic system + report text | [`js/pdf-import.ts`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.ts) |
+| `import.lab-image` | Image report extraction | Dynamic system + multimodal content | [`js/pdf-import.ts`](https://github.com/elkimek/get-based/blob/main/js/pdf-import.ts) |
+| `import.collection-context` | Collection time and fasting rules | Shared system fragment | [`js/pdf-import-ai-utils.ts`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.ts) |
+| `privacy.local-pii` | Local-model report de-identification | User-role task instruction | [`js/pii.ts`](https://github.com/elkimek/get-based/blob/main/js/pii.ts) |
+| `import.supplement` | Label/photo and product-page extraction | User task for images; system for pages | [`js/supplement-import-draft.ts`](https://github.com/elkimek/get-based/blob/main/js/supplement-import-draft.ts), [controller](https://github.com/elkimek/get-based/blob/main/js/supplement-import-controller.ts) |
+| `import.light-device` | Product-page/photo specification extraction | System for pages; user task for images | [`js/light-device-setup-modal.ts`](https://github.com/elkimek/get-based/blob/main/js/light-device-setup-modal.ts) |
+| `import.emf` | EMF PDF extraction | Dynamic system | [`js/emf.ts`](https://github.com/elkimek/get-based/blob/main/js/emf.ts) |
+| `nutrition.meal-photo` | Meal-photo analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.ts) |
+| `nutrition.label` | Nutrition-label analysis and benchmarks | Multimodal user task + JSON schema | [`js/nutrition-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/nutrition-analysis.ts) |
+| `nutrition.history` | Selected nutrition-history chat handoff | Editable user message | [`js/nutrition-summary-context.ts`](https://github.com/elkimek/get-based/blob/main/js/nutrition-summary-context.ts) |
+| `insight.report-summary` | Practitioner-facing report overview | System | [`js/export-report.ts`](https://github.com/elkimek/get-based/blob/main/js/export-report.ts) |
+| `insight.focus-card` | Dashboard focus card | System | [`js/focus-card.ts`](https://github.com/elkimek/get-based/blob/main/js/focus-card.ts) |
+| `insight.context-dots` | Profile-area summaries and dots | Dynamic system | [`js/context-card-health-dots.ts`](https://github.com/elkimek/get-based/blob/main/js/context-card-health-dots.ts) |
+| `insight.marker-description` | One-sentence custom-marker reference | System | [`js/marker-detail-content.ts`](https://github.com/elkimek/get-based/blob/main/js/marker-detail-content.ts) |
+| `insight.biology-score` | Deterministic Biology Score explanation | System | [`js/biology-score-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/biology-score-ai.ts) |
+| `insight.biology-context` | Suggested deterministic context flags | Dynamic system | [`js/biology-score-context-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/biology-score-context-ai.ts) |
+| `insight.supplement-impact` | Marker-change impact dots | Dynamic system | [`js/supplement-impact.ts`](https://github.com/elkimek/get-based/blob/main/js/supplement-impact.ts) |
+| `insight.emf` | Single and before/after EMF interpretation | System + task variant | [`js/emf-interpretation.ts`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.ts) |
+| `light.measurement` | One Light Tool measurement | System | [`js/light-tools-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-tools-ai-analysis.ts) |
+| `light.today` | One-day Light Today synthesis | System | [`js/light-today-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/light-today-ai.ts) |
+| `light.room` | One room | System | [`js/light-env-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-env-ai-analysis.ts) |
+| `light.device-session` | One light-device session | System | [`js/light-device-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-device-ai-analysis.ts) |
+| `light.screen` | One screen record | System | [`js/light-screen-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-screen-ai-analysis.ts) |
+| `light.weekly-pattern` | Current versus previous seven days | System | [`js/light-channels-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-channels-ai-analysis.ts) |
+| `light.audit` | Frozen multi-room audit | System | [`js/light-audit-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-audit-ai-analysis.ts) |
+| `light.sun-session` | One modeled Sun session | System | [`js/sun-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/sun-ai-analysis.ts) |
+| `light.onboarding` | Light & Sun setup synthesis | System | [`js/sun-onboarding-ai.ts`](https://github.com/elkimek/get-based/blob/main/js/sun-onboarding-ai.ts) |
+| `light.indoor-burden` | Live indoor screening picture | System | [`js/light-burden-ai-analysis.ts`](https://github.com/elkimek/get-based/blob/main/js/light-burden-ai-analysis.ts) |
+| `light.hardware-guardrails` | Shared fixture/flicker restrictions | Shared system fragment | [`js/lighting-hardware-caveats.ts`](https://github.com/elkimek/get-based/blob/main/js/lighting-hardware-caveats.ts) |
 
 ## Trust and assembly model
 

@@ -9,25 +9,25 @@ Meals & Nutrition combines a lazy UI feature, multimodal AI extraction, determin
 
 | Module | Responsibility |
 |---|---|
-| `nutrition-context.js` | Lazy stylesheet/module loading, dashboard and Body entry points, summary hydration, and context-source integration |
-| `nutrition.js` | Feature facade and dependency configuration |
-| `nutrition-modal-controller.js` | Editor/history/benchmark routing, guarded close behavior, and background-session notices |
-| `nutrition-entry-forms.js`, `nutrition-review-ui.js`, `nutrition-render.js` | Manual entry, target/drink forms, editable review, history, Fuel Mix, and accessible rendering |
-| `nutrition-analysis.js` | Photo/label prompts, image preparation, structured schema, provider call, parsing, normalization, usage, and provenance |
-| `nutrition-ai-settings.js` | Optional meal-specific model route within the active provider, image-capable catalog, persistence, pricing, and Settings UI |
-| `nutrition-request-lifecycle.js` | One active meal analysis, background editor session, abort handling, and cancellation |
-| `nutrition-benchmark-workspace.js` | Photo/label source independent from Log meal and navigation-state preservation |
-| `nutrition-comparison-ui.js`, `nutrition-comparison-results.js` | Parallel per-model lifecycle, saved result presentation, individual cancel/retry/replace, and estimate handoff |
-| `nutrition-comparison.js` | Device-local reference scoring; no provider or storage access |
-| `nutrition-food-data.js`, `nutrition-nutrient-registry.js` | Component normalization, deterministic scaling, and the canonical nutrient field registry |
-| `nutrition-store.js`, `nutrition-sync-sanitize.js` | Device encryption, local cache, canonical profile mirror, reconciliation, tombstones, archive restore, and thumbnail allowlist |
-| `nutrition-summary.js`, `nutrition-summary-context.js` | Coverage-aware windows, history ranges, timing/fasting, detailed averages, trend baselines, and bounded AI text |
-| `nutrition-targets.js` | Profile targets, selected widget nutrients, and weight-aware protein resolution |
-| `nutrition-fuel-mix.js`, `nutrition-photo-provenance.js` | Neutral carb/fat composition, personal response associations, and estimate provenance |
-| `nutrition-history.js` | History routing, pagination, selected range, and editable chat handoff |
-| `demo-nutrition.js` | Synthetic meal archives used by demo profiles |
+| `nutrition-context.ts` | Lazy stylesheet/module loading, dashboard and Body entry points, summary hydration, and context-source integration |
+| `nutrition.ts` | Feature facade and dependency configuration |
+| `nutrition-modal-controller.ts` | Editor/history/benchmark routing, guarded close behavior, and background-session notices |
+| `nutrition-entry-forms.ts`, `nutrition-review-ui.ts`, `nutrition-render.ts` | Manual entry, target/drink forms, editable review, history, Fuel Mix, and accessible rendering |
+| `nutrition-analysis.ts` | Photo/label prompts, image preparation, structured schema, provider call, parsing, normalization, usage, and provenance |
+| `nutrition-ai-settings.ts` | Optional meal-specific model route within the active provider, image-capable catalog, persistence, pricing, and Settings UI |
+| `nutrition-request-lifecycle.ts` | One active meal analysis, background editor session, abort handling, and cancellation |
+| `nutrition-benchmark-workspace.ts` | Photo/label source independent from Log meal and navigation-state preservation |
+| `nutrition-comparison-ui.ts`, `nutrition-comparison-results.ts` | Parallel per-model lifecycle, saved result presentation, individual cancel/retry/replace, and estimate handoff |
+| `nutrition-comparison.ts` | Device-local reference scoring; no provider or storage access |
+| `nutrition-food-data.ts`, `nutrition-nutrient-registry.ts` | Component normalization, deterministic scaling, and the canonical nutrient field registry |
+| `nutrition-store.ts`, `nutrition-sync-sanitize.ts` | Device encryption, local cache, canonical profile mirror, reconciliation, tombstones, archive restore, and thumbnail allowlist |
+| `nutrition-summary.ts`, `nutrition-summary-context.ts` | Coverage-aware windows, history ranges, timing/fasting, detailed averages, trend baselines, and bounded AI text |
+| `nutrition-targets.ts` | Profile targets, selected widget nutrients, and weight-aware protein resolution |
+| `nutrition-fuel-mix.ts`, `nutrition-photo-provenance.ts` | Neutral carb/fat composition, personal response associations, and estimate provenance |
+| `nutrition-history.ts` | History routing, pagination, selected range, and editable chat handoff |
+| `demo-nutrition.ts` | Synthetic meal archives used by demo profiles |
 
-The feature and `css/nutrition.css` load together only when needed. `nutrition-context.js` is the cold-path facade used by the shell, dashboard, context assembly, sync-applied listener, and import/export code.
+The feature and `css/nutrition.css` load together only when needed. `nutrition-context.ts` is the cold-path facade used by the shell, dashboard, context assembly, sync-applied listener, and import/export code.
 
 ## Meal record boundary
 
@@ -130,11 +130,11 @@ Profile removal must delete the profile's nutrition IndexedDB database. Full-siz
 
 ## Verification checklist
 
-- Run `tests/nutrition-analysis.test.js` for prompt-output normalization and incomplete output.
-- Run `tests/nutrition-ai-settings.test.js` when vision routing or model catalogs change.
-- Run `tests/nutrition-store.test.js`, `tests/nutrition-store-save-race.test.js`, and `tests/nutrition-sync.test.js` for encryption, thumbnails, reconciliation, races, and tombstones.
-- Run `tests/nutrition-summary.test.js`, `tests/nutrition-context.test.js`, `tests/nutrition-targets.test.js`, and `tests/nutrition-fuel-mix.test.js` for aggregate semantics.
-- Run `tests/nutrition-comparison.test.js` when scoring or model-run lifecycle changes.
-- Run the directly related cases in `tests/playwright/nutrition-module.spec.js` for editor/background cancellation, benchmark independence, history, targets, mobile accessibility, and saved-meal reuse.
+- Run `tests/nutrition-analysis.test.ts` for prompt-output normalization and incomplete output.
+- Run `tests/nutrition-ai-settings.test.ts` when vision routing or model catalogs change.
+- Run `tests/nutrition-store.test.ts`, `tests/nutrition-store-save-race.test.ts`, and `tests/nutrition-sync.test.ts` for encryption, thumbnails, reconciliation, races, and tombstones.
+- Run `tests/nutrition-summary.test.ts`, `tests/nutrition-context.test.ts`, `tests/nutrition-targets.test.ts`, and `tests/nutrition-fuel-mix.test.ts` for aggregate semantics.
+- Run `tests/nutrition-comparison.test.ts` when scoring or model-run lifecycle changes.
+- Run the directly related cases in `tests/playwright/nutrition-module.spec.ts` for editor/background cancellation, benchmark independence, history, targets, mobile accessibility, and saved-meal reuse.
 - Prove no full-size image or provider credential enters IndexedDB, profile JSON, sync, backup, comparison snapshots, logs, or fixtures.
 - Prove missing meals/nutrients remain unknown in UI, targets, trends, and AI prompts.

@@ -1,13 +1,13 @@
 ---
 title: "Report data contract"
-description: "Versioned, renderer-independent report snapshots shared by PDF rendering, practitioner summaries, and authorized local integrations."
+description: "Versioned, renderer-independent report snapshots shared by PDF rendering, AI summaries, and authorized local integrations."
 ---
 
 # Report data contract
 
-The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.js` owns this contract. PDF/print HTML and the practitioner overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
+The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.ts` owns this contract. PDF/print HTML and the optional AI overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
 
-Use `collectReportData(options)` from `export-report.js` or the `export.js` facade for the active profile:
+Use `collectReportData(options)` from `export-report.ts` or the `export.ts` facade for the active profile:
 
 ```js
 const report = collectReportData({
@@ -36,10 +36,12 @@ The top-level record contains:
 - `scope`, including preset, selected date range, sections, categories, range mode, status basis, and display-unit profile;
 - minimized `profile` metadata;
 - selected `labs`, including results, flags, trends, and collection context;
-- selected `notes`, `supplements`, `genetics`, and context; and
+- selected `notes`, `supplements`, `genetics`, context, and `additionalSections` for nutrition, wearables/body, light and environment; and
 - `null` or empty values for report sections that were not selected.
 
-This is a report contract, not a complete profile backup. Meals & Nutrition records, OAuth connections, raw wearable rows, chat archives, and every other unselected profile surface remain outside it. Use the supported JSON/database export paths when complete portable profile data is required.
+The scope also records `purpose`, `appendixSections`, `genomeMode` and explicit variant selection. `additionalSections` contains selected, date-filtered records and aggregates; OAuth connections, chat archives and unselected profile surfaces remain outside the report. It is a sharing snapshot, not a complete profile backup. Use JSON/database export for restorable profile data.
+
+`buildPreparedReportPayload()` captures the source state before asynchronous loading. Builder options filter notes, context, Genome and detailed histories before rendering or AI projection. An appendix cannot restore excluded content. The summary renderer and AI consumer use the same prepared facts.
 
 ## Lab result contract
 
@@ -61,19 +63,29 @@ A result is `unrated` when no applicable bound exists. Do not convert missing co
 
 Report sections are authorization and minimization inputs. `buildReportDataSnapshot()` includes labs only when a lab section was selected, includes notes/supplements/genetics/context only when their corresponding section was selected, and filters lab dates and categories before snapshot creation.
 
-The optional practitioner overview calls `formatReportDataForAgent()` over this same selected snapshot. That projection is deliberately bounded and lossy: it prioritizes latest abnormalities, representative markers, notable trends, and a limited number of context sections. The full structured snapshot remains the lossless interface for a local integration that the user has authorized.
+The optional AI overview calls `formatReportDataForAgent()` over this same selected snapshot. That projection is deliberately bounded and lossy: it prioritizes latest abnormalities, representative markers, notable trends, and a limited number of context sections. The full structured snapshot remains the lossless interface for a local integration that the user has authorized.
 
 Do not let an HTML renderer or AI consumer re-read global application state. New consumers must receive the snapshot explicitly so the report builder's selection remains the controlling boundary.
+
+## Builder and AI lifecycle
+
+The visible templates are Health summary (`clinician`), Full health report (`full`), Nutrition and lifestyle (`lifestyle`) and Lab results only (`personal`). Keep these internal IDs stable for existing integrations. Concise output is the default; detailed records are opt-in per selected section. Genome modes are `risks`, `risks-traits`, `traits` and `all`.
+
+`Include AI overview` starts checked only when a supported feature provider is available. The preview action may generate it, so disclose the request in the action label and require normal AI processing approval before loading/sending the selected context. With AI off, compilation makes no new AI request.
+
+Track the originating profile, selection revision and prepared payload across generation. Reject stale results after changes, cancellation, profile switches or modal removal. Keep attribution on edited AI output. The renderer provides an explicitly marked AI section and a printable preview; `export-report-progress.ts` owns progress and cancellation.
 
 ## Owners and verification
 
 | Concern | Owner |
 |---|---|
-| Pure snapshot schema, range/status resolution, agent projection | `js/export-report-data.js` |
-| Active profile collection, options, optional AI summary | `js/export-report.js` |
-| Printable HTML/PDF rendering | `js/export-report-html.js` |
-| Public facade | `js/export.js` |
+| Pure snapshot schema, range/status resolution, agent projection | `js/export-report-data.ts` |
+| Active profile collection, options, optional AI summary | `js/export-report.ts` |
+| Printable HTML/PDF rendering | `js/export-report-html.ts`, `js/export-report-summary-html.ts` |
+| Extra sections, date filtering and summaries | `js/export-report-sections.ts`, `js/export-report-aggregates.ts` |
+| Builder and progress | `js/export-report-builder.ts`, `js/export-report-progress.ts` |
+| Public facade | `js/export.ts` |
 
-Run `tests/report-data.test.js` when the schema, range behavior, minimization, or agent projection changes. Run `tests/report-export-html-runtime.test.js` for renderer consumption and the directly related report-export Playwright cases for the builder/preview boundary.
+Run `tests/report-data.test.ts` when the schema, range behavior, minimization, or agent projection changes. Run `tests/report-export-html-runtime.test.ts` for renderer consumption and the directly related report-export Playwright cases for the builder/preview boundary.
 
-The source implementation is in [`js/export-report-data.js`](https://github.com/elkimek/get-based/blob/main/js/export-report-data.js).
+The source implementation is in [`js/export-report-data.ts`](https://github.com/elkimek/get-based/blob/main/js/export-report-data.ts).

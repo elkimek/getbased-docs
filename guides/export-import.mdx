@@ -34,6 +34,7 @@ A JSON export contains the current profile's portable health record: all lab ent
 - Per-profile marker category placements and display customizations
 - Chat history, conversation threads, custom personas, and persona deletion records when **Export with Chat** is selected
 - Interpretive lens settings
+- Saved Biology Score summaries, explanations and comparison variants, plus reviewed context state
 
 ### Export a single client profile
 
@@ -112,36 +113,11 @@ Drop a database bundle exported with **Export All** onto the app, or select it w
 
 ## Export a PDF health report
 
-<Steps>
-  <Step title="Open the profile">
-    Open the profile you want to export as a report.
-  </Step>
-  <Step title="Open the report builder">
-    Use the PDF export control in the data tools. Choose **Clinician**, **Full**, or **Personal** as a starting template.
-  </Step>
-  <Step title="Choose dates and content">
-    Select **Current**, **3 months**, **6 months**, **1 year**, or **All time**. Choose at least one section and one lab category. Category controls show the live number of matching results and include **All**, **Flagged**, and **Clear** shortcuts.
-  </Step>
-  <Step title="Review the local preview">
-    The browser builds the report preview locally. Review the patient details, selected results, display units, and section order before sharing it.
-  </Step>
-  <Step title="Add an optional practitioner overview">
-    If you choose to generate a **Practitioner overview**, getbased sends only the currently selected report material to your active AI provider. Edit or remove the generated text before export.
-  </Step>
-  <Step title="Print or save">
-    Use **Print** or **Save PDF** from the preview.
-  </Step>
-</Steps>
+The report builder offers **Health summary**, **Full health report**, **Nutrition and lifestyle**, and **Lab results only** templates. Choose the date window, sections, lab categories, report-specific ranges, context, notes and Genome findings. Start with a concise summary or add selected detailed records as an appendix.
 
-Available report sections include flagged results, category tables, a summary, trends, supplements and medications, notes, genetics, and context. The chosen template only sets an initial selection; you remain in control of the final content.
+**Include AI overview** starts selected when a compatible AI connection is available. The button clearly indicates when previewing will generate an overview. Turn it off to build the preview without a new AI request. Required approvals appear before AI processing, and generated text remains labeled and editable.
 
-The preview itself does not call an AI provider. Only the optional **Practitioner overview** action crosses that boundary, after normal cloud-provider consent where applicable. Height and weight are shown in the profile's selected display units, while the canonical cm and kg values keep BMI calculations consistent.
-
-You can [read the practitioner-overview instruction](/developers/system-prompts-insights#prompt-insight-report-summary) before generating it. The page shows fixed wording with placeholders where your selected report material is inserted.
-
-<Warning>
-The report is a snapshot of the sections, categories, and date range you selected. Review it against the source records before relying on it for a clinical conversation.
-</Warning>
+See [Create a health report](/guides/health-reports) for the full workflow, range meanings and sharing controls.
 
 ## Common use cases
 

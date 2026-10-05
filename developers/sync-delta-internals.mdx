@@ -7,31 +7,39 @@ getbased sync is local-first CRDT storage plus app-level delta surfaces. The rel
 
 This page is the contributor contract for adding or changing a synced profile surface.
 
+## Recent convergence safeguards
+
+Clean manual sync, reconnect and tab resume use a dirty-aware pull path. Pending local edits still flush first; unconditional reconnect pushes must not republish stale scalar state with fresh timestamps. Serialize forced pulls and clone merge baselines so asynchronous overlays cannot mutate active data before persistence.
+
+Delayed save callbacks use the latest active or stored profile, skip already committed dirty generations and re-read when a newer save arrives during storage access. Chat-only changes also reconcile after startup, across active and inactive profiles; see [Chat backup and Sync](/developers/chat-internals#backup-and-sync).
+
+Biology Score context/explanation records merge by material and timestamp, preserving bounded variants through snapshot and delta overlays. A stale delta must not undo a completed local assessment.
+
 ## Core modules
 
 | Module | Role |
 |---|---|
-| `sync-delta-surfaces.js` | Names the profile surfaces that participate in delta sync |
-| `sync-delta-surface-config.js` | Per-surface identity keys, tombstone keys, map transforms, and user-visible labels |
-| `sync-push-deltas.js` | Builds and pushes deltas; advances snapshots only after successful remote application |
-| `sync-apply.js` / `sync-chat-apply.js` | Applies inbound profile and chat changes safely |
-| `sync-tombstones.js` | Profile and item-delete propagation, including batched-delete quarantine |
-| `sync-dirty-state.js` | Durable per-profile edit generations used to protect pending local work |
-| `sync-settings-state.js` | Separates configured, active, and paused state for the current browser |
-| `sync-lifecycle.js` | Starts, pauses, resumes, and disconnects the browser runtime without conflating those operations |
-| `sync-evolu8-candidate.js` | Evolu 8 default runtime facade, one-time Evolu 7 identity handoff, explicit V7 rollback, and superseded V8 database cleanup |
-| `sync-evolu8-identity-vault.js` | Durable browser-local owner ID and mnemonic handoff that avoids reopening the V7 worker during normal V8 startup |
-| `sync-backup-restore-state.js` | Marks restored profiles dirty and carries a durable publish-before-pull recovery list across reload |
-| `sync-profile-fields.js` | Shared deterministic profile-field allowlist for push and pull |
-| `sync-origin-state.js` | Tab-local committed timestamps used to suppress source-browser update notices |
-| `sync-relay-health.js` | Authoritative storage checks, quota warnings, and owner-signed relay maintenance |
-| `sync-diagnostics.js` | Debug snapshots, status panels, and copyable diagnostics |
+| `sync-delta-surfaces.ts` | Names the profile surfaces that participate in delta sync |
+| `sync-delta-surface-config.ts` | Per-surface identity keys, tombstone keys, map transforms, and user-visible labels |
+| `sync-push-deltas.ts` | Builds and pushes deltas; advances snapshots only after successful remote application |
+| `sync-apply.ts` / `sync-chat-apply.ts` | Applies inbound profile and chat changes safely |
+| `sync-tombstones.ts` | Profile and item-delete propagation, including batched-delete quarantine |
+| `sync-dirty-state.ts` | Durable per-profile edit generations used to protect pending local work |
+| `sync-settings-state.ts` | Separates configured, active, and paused state for the current browser |
+| `sync-lifecycle.ts` | Starts, pauses, resumes, and disconnects the browser runtime without conflating those operations |
+| `sync-evolu8-candidate.ts` | Evolu 8 default runtime facade, one-time Evolu 7 identity handoff, explicit V7 rollback, and superseded V8 database cleanup |
+| `sync-evolu8-identity-vault.ts` | Durable browser-local owner ID and mnemonic handoff that avoids reopening the V7 worker during normal V8 startup |
+| `sync-backup-restore-state.ts` | Marks restored profiles dirty and carries a durable publish-before-pull recovery list across reload |
+| `sync-profile-fields.ts` | Shared deterministic profile-field allowlist for push and pull |
+| `sync-origin-state.ts` | Tab-local committed timestamps used to suppress source-browser update notices |
+| `sync-relay-health.ts` | Authoritative storage checks, quota warnings, and owner-signed relay maintenance |
+| `sync-diagnostics.ts` | Debug snapshots, status panels, and copyable diagnostics |
 
 ## Evolu 8 default and V7 identity handoff
 
 Evolu 8 is the default browser Sync client. Existing users keep the same mnemonic, owner ID, and encrypted relay history; there is no new Sync identity and no relay-side data migration.
 
-Evolu 8 cannot open Evolu 7's local SQLite database directly. On the first V8 start without a committed identity vault, `sync-evolu8-candidate.js` therefore opens the V7 client without relay transports, reads its owner mnemonic, derives the V8 owner, and refuses the handoff if the owner IDs differ. It attempts to commit the verified owner ID and mnemonic to `sync-evolu8-identity-vault.js` before starting the V8 database. A successful commit lets later normal starts avoid loading the V7 worker. If browser storage rejects the commit, the current start continues with the verified in-memory identity and the next start retries the V7 handoff.
+Evolu 8 cannot open Evolu 7's local SQLite database directly. On the first V8 start without a committed identity vault, `sync-evolu8-candidate.ts` therefore opens the V7 client without relay transports, reads its owner mnemonic, derives the V8 owner, and refuses the handoff if the owner IDs differ. It attempts to commit the verified owner ID and mnemonic to `sync-evolu8-identity-vault.ts` before starting the V8 database. A successful commit lets later normal starts avoid loading the V7 worker. If browser storage rejects the commit, the current start continues with the verified in-memory identity and the next start retries the V7 handoff.
 
 Keep the V7 bundle and bridge while browsers that have not run since the upgrade may still need this one-time handoff. The query parameter `?evolu-client=v7` is an explicit temporary operational rollback, not a user-facing migration step. Identity restore and reset also update the V7 owner lazily so rollback cannot reopen a different identity.
 
@@ -84,15 +92,15 @@ Do not advance the local “last pushed” snapshot until the remote operation a
 
 When adding a surface:
 
-1. Add it to `sync-delta-surfaces.js`.
-2. Add identity/tombstone behavior in `sync-delta-surface-config.js`.
+1. Add it to `sync-delta-surfaces.ts`.
+2. Add identity/tombstone behavior in `sync-delta-surface-config.ts`.
 3. Verify export/import behavior if the surface belongs in JSON backups.
 4. Add apply/merge tests for local-vs-remote conflicts.
 5. Add observability if the surface is user-visible in Settings diagnostics.
 
 ## No-op and dirty-generation rules
 
-Equivalent maintenance saves must not create relay history. `data.js` skips an imported-data write when the stored value is unchanged, and `sync-push.js` skips an outbound profile payload when its deterministic content matches the last committed payload. Forced rebuilds are the explicit exception.
+Equivalent maintenance saves must not create relay history. `data.ts` skips an imported-data write when the stored value is unchanged, and `sync-push.ts` skips an outbound profile payload when its deterministic content matches the last committed payload. Forced rebuilds are the explicit exception.
 
 Every real local edit marks its profile dirty before the debounced push. The marker is a generation token, not a boolean:
 
@@ -102,15 +110,15 @@ Every real local edit marks its profile dirty before the debounced push. The mar
 
 Before an inbound pull can merge remote scalar state, it flushes pending local work. If the flush cannot commit, the pull must fail closed rather than let stale remote state overwrite the local edit. This rule applies to inactive profiles too: durable profile storage, not only the active in-memory profile, is the source for their pending push.
 
-`readProfileImportedData()` always uses `encryptedGetItem()` for named profiles. That wrapper owns the IndexedDB-backed `*-imported` route whether or not the blob contents are encrypted. A missing/unreadable named profile returns `null`, not a newly created default object. `sync-push.js`, scheduled pushes, pull preflight, and compaction treat that result as a hard skip/failure so a storage read problem cannot become an authoritative empty relay update.
+`readProfileImportedData()` always uses `encryptedGetItem()` for named profiles. That wrapper owns the IndexedDB-backed `*-imported` route whether or not the blob contents are encrypted. A missing/unreadable named profile returns `null`, not a newly created default object. `sync-push.ts`, scheduled pushes, pull preflight, and compaction treat that result as a hard skip/failure so a storage read problem cannot become an authoritative empty relay update.
 
-`sync-origin-state.js` records exact committed `syncedAt` values for the current tab. An inbound subscription with one of those timestamps still refreshes local state but does not show the misleading “updated from another device” notice. Other tabs and devices do not share this in-memory marker and still show the notice.
+`sync-origin-state.ts` records exact committed `syncedAt` values for the current tab. An inbound subscription with one of those timestamps still refreshes local state but does not show the misleading “updated from another device” notice. Other tabs and devices do not share this in-memory marker and still show the notice.
 
 ## Existing-mnemonic restore ordering
 
 Joining a Sync identity must finish application state before navigation. The Evolu 7 worker's default `restoreAppOwner()` behavior can reload before the returned promise resolves. A first-time join previously reloaded while Sync still had provisional `persist: false` state, so the restored owner could not pull relay data. The Evolu 8 facade preserves the same application contract.
 
-For a user-entered existing mnemonic, `sync-identity.js` calls:
+For a user-entered existing mnemonic, `sync-identity.ts` calls:
 
 ```js
 await evolu.restoreAppOwner(normalizedMnemonic, { reload: false });
