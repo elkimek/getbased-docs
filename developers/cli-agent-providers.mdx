@@ -12,15 +12,15 @@ The browser remains the health-data authority. A loopback Companion owns the age
 
 | Layer | Source owners in the application repository |
 |---|---|
-| Settings, setup commands, discovery UI | `js/settings-cli-agent-panel.js`, `js/agent-host-discovery.js` |
-| Connection and per-agent/target settings | `js/agent-chat-settings.js`, `js/agent-model-catalog.js` |
-| Chat transport and feature inference | `js/agent-chat-client.js`, `js/agent-chat-backend.js`, `js/agent-feature-inference.js` |
-| Capability-aware routing | `js/ai-execution-routing.js`, `js/ai-feature-routing.js`, `js/chat-backend-selection.js` |
-| Host and protocol | `server/agent-host-server.js`, `shared/agent-host-protocol.js`, `lib/agent-host-service.js` |
-| Tool schema and browser authority | `shared/agent-tool-contract.js`, `js/agent-tool-runtime.js`, `js/agent-tool-bindings.js`, `js/agent-drafts.js` |
-| Distribution and lifecycle | `bin/getbased-companion.js`, `scripts/build-companion-bundle.mjs`, `lib/companion-install.js`, platform installers, `lib/companion-runtime-control.js` |
+| Settings, setup commands, discovery UI | `js/settings-cli-agent-panel.ts`, `js/agent-host-discovery.ts` |
+| Connection and per-agent/target settings | `js/agent-chat-settings.ts`, `js/agent-model-catalog.ts` |
+| Chat transport and feature inference | `js/agent-chat-client.ts`, `js/agent-chat-backend.ts`, `js/agent-feature-inference.ts` |
+| Capability-aware routing | `js/ai-execution-routing.ts`, `js/ai-feature-routing.ts`, `js/chat-backend-selection.ts` |
+| Host and protocol | `server/agent-host-server.ts`, `shared/agent-host-protocol.ts`, `lib/agent-host-service.ts` |
+| Tool schema and browser authority | `shared/agent-tool-contract.ts`, `js/agent-tool-runtime.ts`, `js/agent-tool-bindings.ts`, `js/agent-drafts.ts` |
+| Distribution and lifecycle | `bin/getbased-companion.ts`, `scripts/build-companion-bundle.mts`, `lib/companion-install.ts`, platform installers, `lib/companion-runtime-control.ts` |
 
-See [the source architecture note](https://github.com/elkimek/get-based/blob/main/docs/agent-chat-architecture.md) and [MODULE_MAP.md](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) for the full graph. Where older design prose differs from the current service authorization checks, the checks are authoritative.
+See [the source architecture note](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md#state-storage-and-privacy-boundaries) and [MODULE_MAP.md](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) for the full graph. Where older design prose differs from the current service authorization checks, the checks are authoritative.
 
 ## Adapter boundaries
 
@@ -80,14 +80,14 @@ Gateway non-loopback connections require HTTPS; loopback tunnels may use HTTP. H
 
 ## Build and operate
 
-From an application checkout:
+From an application checkout with Node.js 24:
 
 ```sh
 npm ci
 npm run dev-server -- 8000
 ```
 
-The npm prehook builds the ignored single-file bundle; the development server owns its Companion and watches host-source changes. `npm run companion` runs a standalone source Companion; `npm run companion:install` builds and installs it for login startup. The production build also emits `getbased-companion.mjs` for hosted setup. Do not tell a hosted user to run an npm script without a checkout.
+The npm prehook compiles TypeScript and builds the ignored single-file bundle; the development server owns its Companion and watches host-source changes. After source edits, compile with `npm run typescript:build` before `npm run companion` to run a standalone source Companion; `npm run companion:install` builds and installs it for login startup. The production build also emits `getbased-companion.mjs` for hosted setup. Do not tell a hosted user to run an npm script without a checkout.
 
 The distributed file needs Node.js 20+. Linux uses a systemd user service, macOS a LaunchAgent, and Windows a least-privilege user scheduled task with a hidden launcher. Installation captures executable paths rather than relying on an interactive shell PATH. Windows command wrappers are validated and paths escaped. The headless bundle has no native tray GUI.
 

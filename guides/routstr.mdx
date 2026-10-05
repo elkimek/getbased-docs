@@ -98,6 +98,10 @@ getbased keeps recovery state for the common failure cases:
 - if a node refund returns a Cashu token, the app saves it before trying to receive it into the wallet;
 - if local proof state is lost, seed restore can recover unspent proofs from the mint.
 
+Saved node refunds show the original node and token mint. **Check refund recovery** lists these records separately from the active node balance; an old refund does not block an unrelated node account or a later session. Retry recovery against the saved record. The app receives the token at its original mint even if you have selected another wallet mint.
+
+Keep recovery tokens until the app confirms completion. An unknown quote or spent-proof response can require reconciliation; it is not a reason to delete saved recovery data or reset your wallet.
+
 ## Practical caveats
 
 - Mints and nodes are external services. They can be temporarily down or unreachable from your network.

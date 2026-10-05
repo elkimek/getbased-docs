@@ -9,7 +9,7 @@ The current official deployment separates the static browser app from several na
 
 ## Production build
 
-`vercel.json` enables Git deployment only for `main` and runs:
+Source deployments require Node.js 24. `npm ci` compiles canonical `.ts` and `.mts` sources with TypeScript 7 through `prepare`; the emitted `.js` and `.mjs` files are ignored in Git. `vercel.json` enables Git deployment only for `main` and then runs:
 
 ```json
 {
@@ -18,7 +18,7 @@ The current official deployment separates the static browser app from several na
 }
 ```
 
-The catalog fetch runs first. The Rolldown build then rewrites the native-module development entry to a content-hashed startup bundle while retaining feature-level lazy chunks. `vercel.json` gives hashed `js/bundle-*.js` files immutable cache headers and applies the CSP and security headers before the legacy documentation redirects and `/app` rewrite.
+After dependency installation and compilation, the catalog fetch runs first. The Rolldown build then rewrites the native-module development entry to a content-hashed startup bundle while retaining feature-level lazy chunks. `vercel.json` gives hashed `js/bundle-*.js` files immutable cache headers and applies the CSP and security headers before the legacy documentation redirects and `/app` rewrite.
 
 Production catalog fetch variables are build-time secrets, not browser runtime configuration:
 
@@ -31,6 +31,10 @@ Production catalog fetch variables are build-time secrets, not browser runtime c
 
 With no URL, the script accepts an existing readable catalog or copies the public example stub. When a URL is present but a preview build has no token, it also uses the stub. A configured production fetch that returns invalid JSON or the wrong catalog shape fails the build rather than silently shipping it.
 
+For local production verification, use `npm run production:build` or `npm run production:check`; both compile first. Direct execution of `scripts/*.mjs` after source edits requires `npm run typescript:build`.
+
+Standalone compatibility and profile-share Docker images use a build stage with compiler dependencies, then copy compiled runtime modules into a non-root Node runtime stage. Rebuild from source when updating these services; copying uncompiled TypeScript into the runtime image is insufficient. Browser imports, worker URLs, service routes, and Companion download paths retain their JavaScript runtime contracts. Vercel's function configuration refers to canonical API sources such as `api/proxy.ts`.
+
 ## Official service topology
 
 | Origin | Responsibility | Plaintext boundary |
@@ -42,13 +46,13 @@ With no URL, the script accepts an existing readable catalog or copies the publi
 | `sync.getbased.health` | Evolu encrypted sync, owner self-service, and encrypted Agent Access context gateway | Encrypted sync records and Agent Context envelopes; owner/token mappings, quotas, and ordinary operational metadata |
 | `docs.getbased.health` | Mintlify documentation | Public documentation only |
 
-`js/proxy-runtime.js` routes official hosts to the integrations service and independent self-hosts to same-origin `/api/proxy`. `js/profile-share.js` routes current `vps1_...` links from official hosts directly to the share service while older IDs and self-hosted links remain same-origin.
+`js/proxy-runtime.ts` routes official hosts to the integrations service and independent self-hosts to same-origin `/api/proxy`. `js/profile-share.ts` routes current `vps1_...` links from official hosts directly to the share service while older IDs and self-hosted links remain same-origin.
 
 ## Sync relay stack
 
-The operated sync stack is deployed from immutable [getbased-relay](https://github.com/elkimek/getbased-relay) release tags. Relay v2.0.0 uses `@evolu/common` 8.9.0, `@evolu/nodejs` 3.2.0, and a Docker image pinned to Node.js 24.20.0. Evolu source is installed from the locked npm dependencies; it is not vendored into the relay.
+The sync stack is released separately through immutable [getbased-relay](https://github.com/elkimek/getbased-relay) tags. The app's compatibility CI currently pins v2.0.0, whose dependencies include `@evolu/common` 8.9.0 and `@evolu/nodejs` 3.2.0, with Docker pinned to Node.js 24.20.0. These describe the tested pin, not every later relay release or a live deployment revision. Evolu source is installed from the locked npm dependencies; it is not vendored into the relay.
 
-The browser app and relay use independent adapter packages and version streams. The app currently uses `@evolu/common` 8.7.0 with `@evolu/web` 3.1.0, while the relay uses the versions above. They share the Evolu 8 protocol generation; matching package numbers are neither expected nor required. The app's `Sync compatibility` workflow pins the exact relay release commit and exercises both the Evolu 8 default client and the temporary Evolu 7 rollback client against a disposable real relay.
+The browser app and relay use independent adapter packages and version streams. The app currently uses `@evolu/common` 8.7.0 with `@evolu/web` 3.1.0, while the CI-pinned relay uses the versions above. They share the Evolu 8 protocol generation; matching package numbers are neither expected nor required. The app's `Sync compatibility` workflow pins the exact relay release commit and exercises both the Evolu 8 default client and the temporary Evolu 7 rollback client against a disposable real relay.
 
 The public TLS origin routes three surfaces while keeping private administration off the network:
 
@@ -79,7 +83,7 @@ User documentation is not built from the application repository. It lives in the
 
 ## Compatibility proxy service
 
-The standalone entry point is `server/compat-proxy-server.js`; deployment assets live in `deploy/compat-proxy/`. The container listens on its internal port and should be published only on host loopback behind a TLS reverse proxy that exposes the exact `/api/proxy` path.
+The standalone entry point is `server/compat-proxy-server.ts`; deployment assets live in `deploy/compat-proxy/`. The container listens on its internal port and should be published only on host loopback behind a TLS reverse proxy that exposes the exact `/api/proxy` path.
 
 The operated policy accepts only classified operations:
 
@@ -108,7 +112,7 @@ Never expose the container port directly, add request-body logging, or broaden a
 
 ## Profile-share service
 
-The current official store is `server/profile-share-server.js` with a SQLite adapter in `lib/profile-share-sqlite-store.js`; deployment assets live in `deploy/profile-share/`. The browser compresses and encrypts a single-profile export before upload. The service accepts at most a 3.75 MB envelope and a 30-day expiry, while the reverse proxy caps the HTTP body at 4 MB.
+The current official store is `server/profile-share-server.ts` with a SQLite adapter in `lib/profile-share-sqlite-store.ts`; deployment assets live in `deploy/profile-share/`. The browser compresses and encrypts a single-profile export before upload. The service accepts at most a 3.75 MB envelope and a 30-day expiry, while the reverse proxy caps the HTTP body at 4 MB.
 
 Cleanup runs at service start, hourly, after creation, and when an expired record is read. The database ceiling defaults to 512 MiB. The operated policy intentionally keeps no retained database backup, so service loss can invalidate outstanding links without affecting source profiles.
 
@@ -127,7 +131,7 @@ The service must run in its own container and writable volume, separate from the
 
 ### Legacy Blob transition
 
-Existing Vercel Blob envelopes are not copied. `api/share.js` implements a bounded transition configured with:
+Existing Vercel Blob envelopes are not copied. `api/share.ts` implements a bounded transition configured with:
 
 | Variable | Purpose |
 |---|---|
@@ -166,7 +170,7 @@ For CAMS, set `UVDATA_UPSTREAM` explicitly on an independent self-host or choose
 
 The production build also emits `getbased-companion.mjs` for the CLI-provider bootstrap. Serve that artifact alongside the app, but run Companion on each browser user's machine, not on the public web server. Hosted discovery grants chat-only credentials; the current service deliberately reserves lifecycle controls for installation-authorized local connections. Custom page origins require an explicit Companion allowlist. See [CLI agent build and security](/developers/cli-agent-providers#build-and-operate).
 
-`node dev-server.js` serves source modules and mirrors same-origin APIs:
+`npm run dev-server -- 8000` compiles TypeScript, builds the Companion download, serves emitted native modules, and mirrors same-origin APIs. Open `/app`; direct `node dev-server.js` invocation requires already compiled files.
 
 | Path | Behavior |
 |---|---|
@@ -198,7 +202,7 @@ When adding a provider or browser runtime, review the CSP, direct-CORS requireme
 
 ## Service worker
 
-Each deployed build has an identity derived from its commit and deployment ID, embedded in `version.js` and the worker by the production builder. New builds use separate caches even when the user-facing `APP_VERSION` is unchanged. Semver labels are for releases and changelogs; a version bump is not required to deliver every patch.
+Each deployed build has an identity derived from its commit and deployment ID, embedded in emitted `version.js` and the worker by the production builder. New builds use separate caches even when the user-facing `APP_VERSION` is unchanged. Semver labels are for releases and changelogs; a version bump is not required to deliver every patch.
 
 While visible, the app checks for updates every five minutes and on return. It installs the new app shell in the background and offers **Reload / Later** only when that build is ready. Choosing Later keeps the current build running. A failed download leaves the active build usable. Initial installation does not produce a false update prompt.
 

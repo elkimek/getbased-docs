@@ -68,7 +68,7 @@ When an effect size is quoted, the note must identify what it represents and avo
 
 ## Runtime presentation
 
-`js/dna-evidence.js` owns the shared label, rank, prompt, publication-label, and privacy-safe issue-link helpers. The same evidence profile is reused by the raw-import preview, Genome lens, dashboard widget, biomarker details, and DNA-aware recommendation hints.
+`js/dna-evidence.ts` owns the shared label, rank, prompt, publication-label, and privacy-safe issue-link helpers. The same evidence profile is reused by the raw-import preview, Genome lens, dashboard widget, biomarker details, and DNA-aware recommendation hints.
 
 The ranking function orders findings for presentation; it is not a clinical score. Association direction is ranked first, then relevance and evidence, so the most useful items appear before reference calls without implying disease severity.
 

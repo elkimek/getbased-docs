@@ -9,18 +9,18 @@ The supplements and medications feature is a compatibility-first therapy-history
 
 | Module | Responsibility |
 |---|---|
-| `supplement-medication-domain.js` | Stable IDs, lifecycle/status derivation, periods, schedules, quantities, unit normalization, and additive migration |
-| `supplements.js` | Editor orchestration, persistence, pause/end/restart/dose-change actions, and modal refresh |
-| `supplement-form-ui.js` | Structured form rendering and collection for periods, ingredients, other ingredients, and quality rows |
-| `supplement-import-controller.js` | Link/photo import progress, provider calls, selective review, and applying a reviewed draft to editable fields |
-| `supplement-import-draft.js` | Strict extraction schema, normalization, deterministic page facts, evidence merge, conflict reporting, and tolerant JSON parsing |
-| `supplement-dashboard.js` | Current-only timeline and grouped mitochondrial evidence display |
-| `supplement-quality.js` | Quality-result formatting, AI inclusion defaults, report applicability, and conservative contaminant aggregation |
-| `supplement-context.js` | Compact/detail prompt projections and hard character budgets |
-| `supplement-impact.js` | Period-aware lab comparisons, daily ingredient math, fingerprints, caching, and AI summaries |
-| `supplement-warnings.js` | Claim-level primary-study catalog loading, matching, grouping, display labels, and bounded AI evidence context |
+| `supplement-medication-domain.ts` | Stable IDs, lifecycle/status derivation, periods, schedules, quantities, unit normalization, and additive migration |
+| `supplements.ts` | Editor orchestration, persistence, pause/end/restart/dose-change actions, and modal refresh |
+| `supplement-form-ui.ts` | Structured form rendering and collection for periods, ingredients, other ingredients, and quality rows |
+| `supplement-import-controller.ts` | Link/photo import progress, provider calls, selective review, and applying a reviewed draft to editable fields |
+| `supplement-import-draft.ts` | Strict extraction schema, normalization, deterministic page facts, evidence merge, conflict reporting, and tolerant JSON parsing |
+| `supplement-dashboard.ts` | Current-only timeline and grouped mitochondrial evidence display |
+| `supplement-quality.ts` | Quality-result formatting, AI inclusion defaults, report applicability, and conservative contaminant aggregation |
+| `supplement-context.ts` | Compact/detail prompt projections and hard character budgets |
+| `supplement-impact.ts` | Period-aware lab comparisons, daily ingredient math, fingerprints, caching, and AI summaries |
+| `supplement-warnings.ts` | Claim-level primary-study catalog loading, matching, grouping, display labels, and bounded AI evidence context |
 
-Keep domain, import, quality, and context logic outside `supplements.js`. The editor is a workflow layer, not the canonical home for lifecycle or evidence rules.
+Keep domain, import, quality, and context logic outside `supplements.ts`. The editor is a workflow layer, not the canonical home for lifecycle or evidence rules.
 
 ## Record shape
 
@@ -202,7 +202,7 @@ Form edits must not retain stale imported semantics. Existing or pending-import 
 
 ## AI context projection
 
-`supplement-context.js` has three hard budgets:
+`supplement-context.ts` has three hard budgets:
 
 | Projection | Default maximum |
 |---|---:|
@@ -222,7 +222,7 @@ Compact mode prioritizes regimen, active doses, capsule/allergen-like other ingr
 
 The dashboard scans only current records. AI evidence context is capped separately from therapy context and includes explicit constraints against treating preclinical findings as personalized benefit/harm or recommending that prescription medication be stopped.
 
-See the public [mitochondrial evidence methodology](https://github.com/elkimek/get-based/blob/main/docs/mitochondrial-evidence-methodology.md) before changing the catalog or matching rules.
+Before changing claims or matching rules, review the [claim-level catalog](https://github.com/elkimek/get-based/blob/main/data/mito-compounds.json) and the validation and context bounds in [`supplement-warnings.ts`](https://github.com/elkimek/get-based/blob/main/js/supplement-warnings.ts). Keep the evidence limitations described above intact.
 
 ## Compatibility, backup, and sync
 
@@ -244,16 +244,16 @@ Use change-scoped checks:
 
 ```bash
 npm test -- \
-  tests/supplement-medication-domain.test.js \
-  tests/supplement-form-ui.test.js \
-  tests/supplement-import-draft.test.js \
-  tests/supplement-quality.test.js \
-  tests/supplement-context.test.js \
-  tests/supplement-warnings.test.js
+  tests/supplement-medication-domain.test.ts \
+  tests/supplement-form-ui.test.ts \
+  tests/supplement-import-draft.test.ts \
+  tests/supplement-quality.test.ts \
+  tests/supplement-context.test.ts \
+  tests/supplement-warnings.test.ts
 
 node tests/test-supplement-impact.js
-npx playwright test tests/playwright/supplements-browser-coverage.spec.js
-npx playwright test tests/playwright/supplement-warnings-browser-coverage.spec.js
+npx playwright test tests/playwright/supplements-browser-coverage.spec.ts
+npx playwright test tests/playwright/supplement-warnings-browser-coverage.spec.ts
 ```
 
 Also run the relevant sync and backup tests when changing IDs, migration, delete behavior, or restore handling. GitHub Actions owns the exhaustive browser and combined-coverage matrix.

@@ -5,9 +5,9 @@ description: "Versioned, renderer-independent report snapshots shared by PDF ren
 
 # Report data contract
 
-The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.js` owns this contract. PDF/print HTML and the optional AI overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
+The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.ts` owns this contract. PDF/print HTML and the optional AI overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
 
-Use `collectReportData(options)` from `export-report.js` or the `export.js` facade for the active profile:
+Use `collectReportData(options)` from `export-report.ts` or the `export.ts` facade for the active profile:
 
 ```js
 const report = collectReportData({
@@ -73,19 +73,19 @@ The visible templates are Health summary (`clinician`), Full health report (`ful
 
 `Include AI overview` starts checked only when a supported feature provider is available. The preview action may generate it, so disclose the request in the action label and require normal AI processing approval before loading/sending the selected context. With AI off, compilation makes no new AI request.
 
-Track the originating profile, selection revision and prepared payload across generation. Reject stale results after changes, cancellation, profile switches or modal removal. Keep attribution on edited AI output. The renderer provides an explicitly marked AI section and a printable preview; `export-report-progress.js` owns progress and cancellation.
+Track the originating profile, selection revision and prepared payload across generation. Reject stale results after changes, cancellation, profile switches or modal removal. Keep attribution on edited AI output. The renderer provides an explicitly marked AI section and a printable preview; `export-report-progress.ts` owns progress and cancellation.
 
 ## Owners and verification
 
 | Concern | Owner |
 |---|---|
-| Pure snapshot schema, range/status resolution, agent projection | `js/export-report-data.js` |
-| Active profile collection, options, optional AI summary | `js/export-report.js` |
-| Printable HTML/PDF rendering | `js/export-report-html.js`, `js/export-report-summary-html.js` |
-| Extra sections, date filtering and summaries | `js/export-report-sections.js`, `js/export-report-aggregates.js` |
-| Builder and progress | `js/export-report-builder.js`, `js/export-report-progress.js` |
-| Public facade | `js/export.js` |
+| Pure snapshot schema, range/status resolution, agent projection | `js/export-report-data.ts` |
+| Active profile collection, options, optional AI summary | `js/export-report.ts` |
+| Printable HTML/PDF rendering | `js/export-report-html.ts`, `js/export-report-summary-html.ts` |
+| Extra sections, date filtering and summaries | `js/export-report-sections.ts`, `js/export-report-aggregates.ts` |
+| Builder and progress | `js/export-report-builder.ts`, `js/export-report-progress.ts` |
+| Public facade | `js/export.ts` |
 
-Run `tests/report-data.test.js` when the schema, range behavior, minimization, or agent projection changes. Run `tests/report-export-html-runtime.test.js` for renderer consumption and the directly related report-export Playwright cases for the builder/preview boundary.
+Run `tests/report-data.test.ts` when the schema, range behavior, minimization, or agent projection changes. Run `tests/report-export-html-runtime.test.ts` for renderer consumption and the directly related report-export Playwright cases for the builder/preview boundary.
 
-The source implementation is in [`js/export-report-data.js`](https://github.com/elkimek/get-based/blob/main/js/export-report-data.js).
+The source implementation is in [`js/export-report-data.ts`](https://github.com/elkimek/get-based/blob/main/js/export-report-data.ts).

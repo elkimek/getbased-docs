@@ -9,7 +9,7 @@ This page documents the instructions behind ordinary chat and the smaller AI tas
 
 ## Request composition
 
-CLI-backed chat uses the same enabled health-context baseline with an adapter-specific instruction envelope in [`agent-chat-context.js`](https://github.com/elkimek/get-based/blob/main/js/agent-chat-context.js). Local execution also declares the scoped tool contract from [`agent-tool-contract.js`](https://github.com/elkimek/get-based/blob/main/shared/agent-tool-contract.js). The agent may read approved context, navigate allowlisted views, or propose a reviewed change; instructions are not a substitute for runtime permission checks. Personal gateways receive the context snapshot but not the local tool credential. See [the complete routing boundary](/developers/cli-agent-providers#turn-and-data-flow).
+CLI-backed chat uses the same enabled health-context baseline with an adapter-specific instruction envelope in [`agent-chat-context.ts`](https://github.com/elkimek/get-based/blob/main/js/agent-chat-context.ts). Local execution also declares the scoped tool contract from [`agent-tool-contract.ts`](https://github.com/elkimek/get-based/blob/main/shared/agent-tool-contract.ts). The agent may read approved context, navigate allowlisted views, or propose a reviewed change; instructions are not a substitute for runtime permission checks. Personal gateways receive the context snapshot but not the local tool credential. See [the complete routing boundary](/developers/cli-agent-providers#turn-and-data-flow).
 
 The system instruction for a normal chat turn is assembled in this order:
 
@@ -26,8 +26,8 @@ Conversation history is sent separately. Assistant messages from another persona
 
 | Property | Current behavior |
 |---|---|
-| Source | [`js/chat-system-prompt.js`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.js), [`js/chat-prompt-context.js`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.js) |
-| Callers | [`js/chat-send.js`](https://github.com/elkimek/get-based/blob/main/js/chat-send.js), [`js/chat-discussion-round-request.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-request.js), and [`js/chat-discussion-round-runner.js`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-runner.js) |
+| Source | [`js/chat-system-prompt.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-system-prompt.ts), [`js/chat-prompt-context.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-prompt-context.ts) |
+| Callers | [`js/chat-send.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-send.ts), [`js/chat-discussion-round-request.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-request.ts), and [`js/chat-discussion-round-runner.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-discussion-round-runner.ts) |
 | Output | Free-form Markdown |
 | History bound | Last 30 eligible messages |
 | Context controls | User-selectable under **Insight → Manage → Context** |
@@ -289,17 +289,17 @@ These are application-authored **user messages**, not system instructions. They 
 
 | UI action | Behavior | Source |
 |---|---|---|
-| Marker **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js) |
-| Correlations **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.js`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.js) |
-| Genome finding **Ask AI** | Prefills the composer | [`js/dna-evidence.js`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.js) |
-| Recommendation **Discuss** | Prefills the composer | [`js/recommendation-actions.js`](https://github.com/elkimek/get-based/blob/main/js/recommendation-actions.js) |
-| Biology Scores overview | Sends after the explicit click | [`js/biology-scores.js`](https://github.com/elkimek/get-based/blob/main/js/biology-scores.js) |
-| Biology Scores coverage plan | Prefills a new chat | [`js/biology-score-coverage-planner.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-coverage-planner.js) |
-| Supplement mitochondrial evidence | Prefills the composer | [`js/supplement-dashboard.js`](https://github.com/elkimek/get-based/blob/main/js/supplement-dashboard.js) |
-| Diet contaminants | Sends after the explicit click | [`js/context-card-lifestyle-runtime.js`](https://github.com/elkimek/get-based/blob/main/js/context-card-lifestyle-runtime.js) |
-| Light Audit comparison | Prefills the composer | [`js/light-env-audits.js`](https://github.com/elkimek/get-based/blob/main/js/light-env-audits.js) |
-| EMF interpretation discussion | Prefills the composer | [`js/emf-interpretation.js`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.js) |
-| Empty-chat suggestion | Sends the visible button text after the explicit click | [`js/chat-empty-state.js`](https://github.com/elkimek/get-based/blob/main/js/chat-empty-state.js) |
+| Marker **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.ts) |
+| Correlations **Ask AI** | Prefills a new chat | [`js/chat-marker-prompts.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-marker-prompts.ts) |
+| Genome finding **Ask AI** | Prefills the composer | [`js/dna-evidence.ts`](https://github.com/elkimek/get-based/blob/main/js/dna-evidence.ts) |
+| Recommendation **Discuss** | Prefills the composer | [`js/recommendation-actions.ts`](https://github.com/elkimek/get-based/blob/main/js/recommendation-actions.ts) |
+| Biology Scores overview | Sends after the explicit click | [`js/biology-scores.ts`](https://github.com/elkimek/get-based/blob/main/js/biology-scores.ts) |
+| Biology Scores coverage plan | Prefills a new chat | [`js/biology-score-coverage-planner.ts`](https://github.com/elkimek/get-based/blob/main/js/biology-score-coverage-planner.ts) |
+| Supplement mitochondrial evidence | Prefills the composer | [`js/supplement-dashboard.ts`](https://github.com/elkimek/get-based/blob/main/js/supplement-dashboard.ts) |
+| Diet contaminants | Sends after the explicit click | [`js/context-card-lifestyle-runtime.ts`](https://github.com/elkimek/get-based/blob/main/js/context-card-lifestyle-runtime.ts) |
+| Light Audit comparison | Prefills the composer | [`js/light-env-audits.ts`](https://github.com/elkimek/get-based/blob/main/js/light-env-audits.ts) |
+| EMF interpretation discussion | Prefills the composer | [`js/emf-interpretation.ts`](https://github.com/elkimek/get-based/blob/main/js/emf-interpretation.ts) |
+| Empty-chat suggestion | Sends the visible button text after the explicit click | [`js/chat-empty-state.ts`](https://github.com/elkimek/get-based/blob/main/js/chat-empty-state.ts) |
 
 <Accordion title="Marker and correlation messages">
   Marker result:
@@ -434,10 +434,10 @@ These are application-authored **user messages**, not system instructions. They 
 
 Relevant checks live in:
 
-- [`tests/chat-runtime.test.js`](https://github.com/elkimek/get-based/blob/main/tests/chat-runtime.test.js)
-- [`tests/test-audit.js`](https://github.com/elkimek/get-based/blob/main/tests/test-audit.js)
-- [`tests/test-custom-personality.js`](https://github.com/elkimek/get-based/blob/main/tests/test-custom-personality.js)
-- [`tests/test-chat-actions.js`](https://github.com/elkimek/get-based/blob/main/tests/test-chat-actions.js)
-- [`tests/playwright/chat-discussion-browser-coverage.spec.js`](https://github.com/elkimek/get-based/blob/main/tests/playwright/chat-discussion-browser-coverage.spec.js)
+- [`tests/chat-runtime.test.ts`](https://github.com/elkimek/get-based/blob/main/tests/chat-runtime.test.ts)
+- [`tests/test-audit.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-audit.ts)
+- [`tests/test-custom-personality.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-custom-personality.ts)
+- [`tests/test-chat-actions.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-chat-actions.ts)
+- [`tests/playwright/chat-discussion-browser-coverage.spec.ts`](https://github.com/elkimek/get-based/blob/main/tests/playwright/chat-discussion-browser-coverage.spec.ts)
 
 Prompt-quality changes still require representative output evaluation; contract tests alone cannot establish factual quality or absence of bias.

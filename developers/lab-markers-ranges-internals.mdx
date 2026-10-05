@@ -11,7 +11,7 @@ This page owns the contracts that connect the marker schema, imported laboratory
 
 The core schema currently contains 197 markers across 19 categories, including 22 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
 
-The schema is split under `js/marker-schema/`. `schema.js` is the public composition layer; category files own marker metadata, and `schema-environment.js` owns reference, optimal, guidance, and source metadata. Keep category placement clinically legible: insulin, for example, is `diabetes.insulin` under **Glucose & Insulin Metabolism**, not Hormones or Biochemistry.
+The schema is split under `js/marker-schema/`. `schema.ts` is the public composition layer; category files own marker metadata, and `schema-environment.ts` owns reference, optimal, guidance, and source metadata. Keep category placement clinically legible: insulin, for example, is `diabetes.insulin` under **Glucose & Insulin Metabolism**, not Hormones or Biochemistry.
 
 Every built-in marker has two identifiers:
 
@@ -22,11 +22,11 @@ Renames and category moves must preserve the stable identity and add an alias mi
 
 ## Unit-profile boundary
 
-Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.js` projects all 197 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
+Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.ts` projects all 197 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
 
 `getActiveData()` applies the projection after calculations and range resolution. Tables, charts, marker details, reports, manual entry, and AI context consume that same result. Manual entry and import review accept compatible regional and secondary units and convert them back to canonical storage. Custom markers retain their user-supplied canonical unit.
 
-Do not convert again in an individual renderer. Add regional differences to the central profile or secondary-unit registries, record conversion provenance where needed, and round-trip the complete catalog in `unit-profiles.test.js` plus focused active-data and range-shape tests.
+Do not convert again in an individual renderer. Add regional differences to the central profile or secondary-unit registries, record conversion provenance where needed, and round-trip the complete catalog in `unit-profiles.test.ts` plus focused active-data and range-shape tests.
 
 ## Effective-range data layers
 
@@ -54,7 +54,7 @@ For ordinary markers, an adopted laboratory interval suppresses generic contextu
 
 Do not attach a context range when its required inputs are missing. The UI should render an explicit state such as **Requires fasting** or leave the point unrated rather than synthesizing a cutoff.
 
-Compare Dates must resolve this contract independently for both selected dates. `compare-correlations.js` uses `resolveMarkerRangeContext()` to render every displayed range, marks the range used for status when more than one is visible, and groups the ranges by date when their signatures differ. Direction coloring compares normalized distance outside each date's applicable range; it must not score movement toward a static midpoint as improvement.
+Compare Dates must resolve this contract independently for both selected dates. `compare-correlations.ts` uses `resolveMarkerRangeContext()` to render every displayed range, marks the range used for status when more than one is visible, and groups the ranges by date when their signatures differ. Direction coloring compares normalized distance outside each date's applicable range; it must not score movement toward a static midpoint as improvement.
 
 ## Range policies and labels
 
@@ -69,7 +69,7 @@ User-facing labels must state the applicable basis, for example **Lab reference*
 
 Optimal-range additions require a defensible source and applicability. Coverage alone is not a quality goal; unsupported sex-, age-, assay-, or timing-independent values should remain absent.
 
-The **Suggest a better range** action is gated to an untouched built-in range. `marker-range-suggestions.js` excludes custom markers and any marker with personal reference or optimal overrides. Its public GitHub issue payload contains catalog metadata only and must never include result values, profile attributes, laboratory names, dates, or filenames.
+The **Suggest a better range** action is gated to an untouched built-in range. `marker-range-suggestions.ts` excludes custom markers and any marker with personal reference or optimal overrides. Its public GitHub issue payload contains catalog metadata only and must never include result values, profile attributes, laboratory names, dates, or filenames.
 
 ## Laboratory range lifecycle
 
@@ -102,7 +102,7 @@ The detail UI formats the metadata per value, for example **Collected 07:35 · f
 
 ## Menstrual draw context
 
-`cycle-draw-phases.js` resolves draw context separately for every laboratory date. An explicit recorded phase wins. Calendar prediction is allowed only for a female profile with an active natural cycle, regularity marked regular, period history, and no hormonal contraception. Non-cycling states and uncertain predictions produce no phase range.
+`cycle-draw-phases.ts` resolves draw context separately for every laboratory date. An explicit recorded phase wins. Calendar prediction is allowed only for a female profile with an active natural cycle, regularity marked regular, period history, and no hormonal contraception. Non-cycling states and uncertain predictions produce no phase range.
 
 Built-in phase ranges currently apply to estradiol, progesterone, LH, and FSH and carry assay/source metadata. The chart layer renders compact pills only at measured points:
 
@@ -114,9 +114,9 @@ Broad background bands were removed because they implied continuous certainty be
 
 ## Calculated marker contract
 
-`data-calculated-markers.js` owns deterministic calculations. For each date, a directly reported supported calculation wins; the pipeline computes a value only when the canonical destination is empty. Normalization and alias migrations move imported historical variants into **Calculated Ratios**, preventing duplicate cards and preserving a laboratory's rounding or method.
+`data-calculated-markers.ts` owns deterministic calculations. For each date, a directly reported supported calculation wins; the pipeline computes a value only when the canonical destination is empty. Normalization and alias migrations move imported historical variants into **Calculated Ratios**, preventing duplicate cards and preserving a laboratory's rounding or method.
 
-HOMA-IR is the intentional exception to category placement: `lab-entry.js` recalculates `diabetes.homaIR` from same-date glucose and canonical insulin and keeps it under **Glucose & Insulin Metabolism**.
+HOMA-IR is the intentional exception to category placement: `lab-entry.ts` recalculates `diabetes.homaIR` from same-date glucose and canonical insulin and keeps it under **Glucose & Insulin Metabolism**.
 
 | Key | Formula or rule |
 |---|---|
@@ -151,7 +151,7 @@ Range/status rows must remain usable in narrow marker cards. The label pill, cur
 
 ## Migration rules
 
-`profile-marker-alias-migrations.js` remaps marker identity across:
+`profile-marker-alias-migrations.ts` remaps marker identity across:
 
 - `entries[].markers` and snapshot mappings;
 - `customMarkers`;
@@ -162,18 +162,18 @@ When both the alias and canonical key exist, the canonical destination wins. Mig
 
 ## Demo-data contract
 
-The bundled demo fixtures are product walkthroughs, not normative clinical datasets. Lab entries include coherent `sampleTime` and `fasting` metadata. The female fixture also records per-draw cycle day, broad/detail phase, and source so its late-follicular and luteal hormone examples agree with the UI labels and dated ranges. Keep `scripts/upgrade-demos.mjs`, demo fixtures, and `tests/test-demo.js` aligned when the entry schema changes.
+The bundled demo fixtures are product walkthroughs, not normative clinical datasets. Lab entries include coherent `sampleTime` and `fasting` metadata. The female fixture also records per-draw cycle day, broad/detail phase, and source so its late-follicular and luteal hormone examples agree with the UI labels and dated ranges. Keep `scripts/upgrade-demos.mts`, demo fixtures, and `tests/test-demo.ts` aligned when the entry schema changes.
 
 ## Owner modules and focused verification
 
 | Concern | Primary modules |
 |---|---|
-| Schema and range metadata | `js/marker-schema/`, `js/schema.js`, `js/schema-environment.js` |
-| Active data, calculations, and display units | `js/data.js`, `js/data-calculated-markers.js`, `js/marker-context-ranges.js`, `js/unit-profiles.js`, `js/secondary-unit-conversions.js` |
-| Cycle draw context | `js/cycle-draw-phases.js`, `js/data.js`, `js/schema-environment.js` |
-| Import extraction and review | `js/pdf-import.js`, `js/pdf-import-review.js`, `js/pdf-import-commit.js` |
-| Collection metadata ownership | `js/lab-context-collection.js` |
-| Effective range and comparison UI | `js/marker-analysis.js`, `js/compare-correlations.js`, chart and marker-detail modules |
-| Suggestions and migrations | `js/marker-range-suggestions.js`, `js/profile-marker-alias-migrations.js` |
+| Schema and range metadata | `js/marker-schema/`, `js/schema.ts`, `js/schema-environment.ts` |
+| Active data, calculations, and display units | `js/data.ts`, `js/data-calculated-markers.ts`, `js/marker-context-ranges.ts`, `js/unit-profiles.ts`, `js/secondary-unit-conversions.ts` |
+| Cycle draw context | `js/cycle-draw-phases.ts`, `js/data.ts`, `js/schema-environment.ts` |
+| Import extraction and review | `js/pdf-import.ts`, `js/pdf-import-review.ts`, `js/pdf-import-commit.ts` |
+| Collection metadata ownership | `js/lab-context-collection.ts` |
+| Effective range and comparison UI | `js/marker-analysis.ts`, `js/compare-correlations.ts`, chart and marker-detail modules |
+| Suggestions and migrations | `js/marker-range-suggestions.ts`, `js/profile-marker-alias-migrations.ts` |
 
 Use change-scoped tests for the touched owner. At minimum, cover direct-versus-computed precedence, same-date inputs, unit conversion, missing/context-gated inputs, import ownership/re-review/delete, range revert order, alias metadata migration, and recorded-versus-predicted phase behavior. GitHub Actions owns the exhaustive browser and combined-coverage runs.

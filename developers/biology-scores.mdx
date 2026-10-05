@@ -11,20 +11,20 @@ This guide reflects scoring contract `2026-09-16.3`. Treat the linked source as 
 
 | Module | Responsibility |
 |---|---|
-| `js/biology-scores.js` | Definitions, orchestration, comparison views, request deduplication and UI actions |
-| `js/biology-score-contract.js` | Algorithm version and normalized input contract shared by scoring, tables and planner |
-| `js/biology-score-tier1-definitions.js`, `js/biology-score-tier2-definitions.js`, `js/biology-score-mappings.js` | Base input definitions; filenames do not determine baseline/advanced membership |
-| `js/biology-score-inputs.js` | Marker identity, usable values, canonical units and range evidence |
-| `js/biology-score-engine.js` | Range fit, grouped weights, core coverage, confidence and alerts |
-| `js/biology-score-panel-policy.js` | Alternative assays, specimen routes, minimum anchors and calcium context |
-| `js/biology-score-profile-modifiers.js` | Fasting, collection, sex, therapy and muscle-mass interpretation rules |
-| `js/biology-score-dates.js` | Recency and collection-span rules |
-| `js/biology-score-coherence.js` | Domain aggregation, breadth threshold and coverage |
-| `js/biology-score-methodology.js`, `js/biology-score-copy.js` | Interpretation boundaries, pattern flags and reading links |
-| `js/biology-score-render.js`, `js/biology-score-sections.js` | Cards, tables, dashboard widgets, saved explanations and fingerprints |
-| `js/biology-score-ai.js`, `js/biology-score-context-ai.js` | Explanation requests and separately reviewed context suggestions |
-| `js/biology-score-persistence.js` | Serialized writes and bounded mergeable explanation variants |
-| `js/biology-score-coverage-planner.js` | Core gaps, optional tests, dependencies and chat handoff |
+| `js/biology-scores.ts` | Definitions, orchestration, comparison views, request deduplication and UI actions |
+| `js/biology-score-contract.ts` | Algorithm version and normalized input contract shared by scoring, tables and planner |
+| `js/biology-score-tier1-definitions.ts`, `js/biology-score-tier2-definitions.ts`, `js/biology-score-mappings.ts` | Base input definitions; filenames do not determine baseline/advanced membership |
+| `js/biology-score-inputs.ts` | Marker identity, usable values, canonical units and range evidence |
+| `js/biology-score-engine.ts` | Range fit, grouped weights, core coverage, confidence and alerts |
+| `js/biology-score-panel-policy.ts` | Alternative assays, specimen routes, minimum anchors and calcium context |
+| `js/biology-score-profile-modifiers.ts` | Fasting, collection, sex, therapy and muscle-mass interpretation rules |
+| `js/biology-score-dates.ts` | Recency and collection-span rules |
+| `js/biology-score-coherence.ts` | Domain aggregation, breadth threshold and coverage |
+| `js/biology-score-methodology.ts`, `js/biology-score-copy.ts` | Interpretation boundaries, pattern flags and reading links |
+| `js/biology-score-render.ts`, `js/biology-score-sections.ts` | Cards, tables, dashboard widgets, saved explanations and fingerprints |
+| `js/biology-score-ai.ts`, `js/biology-score-context-ai.ts` | Explanation requests and separately reviewed context suggestions |
+| `js/biology-score-persistence.ts` | Serialized writes and bounded mergeable explanation variants |
+| `js/biology-score-coverage-planner.ts` | Core gaps, optional tests, dependencies and chat handoff |
 
 ## Composition and scoring
 
@@ -42,7 +42,7 @@ For a family, effective member weight is its share of the family budget. The sco
 
 Additional markers are described as supporting the core pattern, differing from it, measuring another dimension, or not assessable. Their absence does not reduce core coverage. Profile limitations can lower confidence independently.
 
-The generic fit function uses a half-bound buffer for one-sided ranges and an interval-width buffer for two-sided ranges, with clamping to 0–100. These are product heuristics, not calibrated probabilities. See [`biology-score-engine.js`](https://github.com/elkimek/get-based/blob/main/js/biology-score-engine.js) for exact behavior and edge cases.
+The generic fit function uses a half-bound buffer for one-sided ranges and an interval-width buffer for two-sided ranges, with clamping to 0–100. These are product heuristics, not calibrated probabilities. See [`biology-score-engine.ts`](https://github.com/elkimek/get-based/blob/main/js/biology-score-engine.ts) for exact behavior and edge cases.
 
 ## Important panel contracts
 

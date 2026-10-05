@@ -29,7 +29,7 @@ local file classification
 
 | Property | Current behavior |
 |---|---|
-| Source | [`js/pdf-import-preflight.js`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.js) |
+| Source | [`js/pdf-import-preflight.ts`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-preflight.ts) |
 | Input | First approximately 2,000 characters of extracted PDF text |
 | Output | `testType` and optional `labName` JSON |
 | Token cap | 80, with a 64-token minimum |
@@ -245,7 +245,7 @@ Both variants use a dynamic system instruction. The templates below preserve the
   </Tab>
 </Tabs>
 
-The router requests JSON mode/schema where supported, disables reasoning output for this task, uses zero temperature, detects truncation, normalizes fields, and opens an import preview. See [`IMPORT_JSON_SCHEMA`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.js) and the [marker mapping pipeline](https://github.com/elkimek/get-based/blob/main/js/pdf-import-marker-mapping.js).
+The router requests JSON mode/schema where supported, disables reasoning output for this task, uses zero temperature, detects truncation, normalizes fields, and opens an import preview. See [`IMPORT_JSON_SCHEMA`](https://github.com/elkimek/get-based/blob/main/js/pdf-import-ai-utils.ts) and the [marker mapping pipeline](https://github.com/elkimek/get-based/blob/main/js/pdf-import-marker-mapping.ts).
 
 <span id="prompt-import-collection-context"></span>
 
@@ -447,9 +447,9 @@ The report is de-identified before this request using the selected PII path. Par
 
 ## Focused verification
 
-- [`tests/pdf-import-review-boundaries.test.js`](https://github.com/elkimek/get-based/blob/main/tests/pdf-import-review-boundaries.test.js) and the focused PDF import suites cover mapping, parsing, collection context, and truncation.
-- [`tests/supplement-import-draft.test.js`](https://github.com/elkimek/get-based/blob/main/tests/supplement-import-draft.test.js) covers classification and normalization.
-- [`tests/test-emf.js`](https://github.com/elkimek/get-based/blob/main/tests/test-emf.js) covers EMF parsing and state behavior.
-- [`tests/playwright/light-device-modal-loader-browser-coverage.spec.js`](https://github.com/elkimek/get-based/blob/main/tests/playwright/light-device-modal-loader-browser-coverage.spec.js) covers the custom-device modal and extracted fields.
+- [`tests/pdf-import-review-boundaries.test.ts`](https://github.com/elkimek/get-based/blob/main/tests/pdf-import-review-boundaries.test.ts) and the focused PDF import suites cover mapping, parsing, collection context, and truncation.
+- [`tests/supplement-import-draft.test.ts`](https://github.com/elkimek/get-based/blob/main/tests/supplement-import-draft.test.ts) covers classification and normalization.
+- [`tests/test-emf.ts`](https://github.com/elkimek/get-based/blob/main/tests/test-emf.ts) covers EMF parsing and state behavior.
+- [`tests/playwright/light-device-modal-loader-browser-coverage.spec.ts`](https://github.com/elkimek/get-based/blob/main/tests/playwright/light-device-modal-loader-browser-coverage.spec.ts) covers the custom-device modal and extracted fields.
 
 Before changing an extraction prompt, use synthetic reports/pages with embedded adversarial instructions and compare the final normalized draft—not only the raw model response.

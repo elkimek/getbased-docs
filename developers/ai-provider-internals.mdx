@@ -21,30 +21,30 @@ CLI agents are a distinct backend, not another `/chat/completions` endpoint. See
 
 ## Core modules
 
-The shared chat model picker (`chat-model-controls.js`, `chat-model-preferences.js`) follows the active provider and privacy mode immediately. Recommended groups are scoped to that catalog, not merged with other saved providers. `reasoning-capabilities.js` normalizes explicit reasoning metadata and narrow documented fallbacks; unsupported models must not get an invented effort control. The same selection is carried inside attested private transports when supported.
+The shared chat model picker (`chat-model-controls.ts`, `chat-model-preferences.ts`) follows the active provider and privacy mode immediately. Recommended groups are scoped to that catalog, not merged with other saved providers. `reasoning-capabilities.ts` normalizes explicit reasoning metadata and narrow documented fallbacks; unsupported models must not get an invented effort control. The same selection is carried inside attested private transports when supported.
 
 OpenRouter supplies per-model controls, Venice supplies reasoning metadata, and PPQ/Routstr/Custom retain supported compatible metadata. Ollama and LM Studio can expose native thinking controls. Jan, Unsloth Studio, llama.cpp, and other compatible endpoints only get controls their metadata/serving contract supports. Built-in reasoning is not evidence of configurable effort.
 
-For non-chat feature calls use `ai-feature-routing.js` so CLI selection, global pause, text/image capability, and no-silent-fallback behavior remain consistent. Keep direct transport functions in the API modules; do not implement a second CLI dispatcher per feature.
+For non-chat feature calls use `ai-feature-routing.ts` so CLI selection, global pause, text/image capability, and no-silent-fallback behavior remain consistent. Keep direct transport functions in the API modules; do not implement a second CLI dispatcher per feature.
 
 | Module | Role |
 |---|---|
-| `api.js` | provider routing, model lists, streaming calls, PPQ private transport creation |
-| `api-provider-storage.js` | localStorage keys for provider, model, private-mode, and key state |
-| `provider-panel-renderers.js` | Settings → AI panel markup, PPQ Private TEE UI, model dropdowns |
-| `provider-model-controls.js` | dropdown changes, model persistence, E2EE/private-mode switching |
-| `provider-ppq-panels.js` | PPQ account, balance, top-up, and private-model panel behavior |
-| `provider-local-ai-controls.js` | Local AI URL validation, discovery UI, CORS help, Advisor, and server switching |
-| `local-ai-provider-registry.js` | normalized Local AI adapter registry and detection precedence |
-| `local-ai-provider-{ollama,lmstudio,openai-compatible}.js` | backend discovery, inference, context, performance, and unload implementations |
-| `local-ai-provider-shared.js` | URL normalization, location classification, model normalization, and secret redaction |
-| `local-ai-discovery.js` | cached discovery orchestration and runtime metadata updates |
-| `api-local.js` | Local AI prompt sizing, context planning, native request selection, and normalized diagnostics |
-| `local-ai-lifecycle.js` | memory-only runtime tracking and same-machine model handoff/unload |
-| `chat-attestation.js` | lock/attestation status shown in chat |
-| `api-custom.js` | Browser-direct Custom model discovery, validation, and chat transport |
-| `cloud-ai-consent.js` | Versioned recipient/origin-scoped approval before cloud AI or voice transport |
-| `proxy-runtime.js` | Narrow compatibility-service routing for non-AI operations such as operated NRAS/wearables/CAMS |
+| `api.ts` | provider routing, model lists, streaming calls, PPQ private transport creation |
+| `api-provider-storage.ts` | localStorage keys for provider, model, private-mode, and key state |
+| `provider-panel-renderers.ts` | Settings → AI panel markup, PPQ Private TEE UI, model dropdowns |
+| `provider-model-controls.ts` | dropdown changes, model persistence, E2EE/private-mode switching |
+| `provider-ppq-panels.ts` | PPQ account, balance, top-up, and private-model panel behavior |
+| `provider-local-ai-controls.ts` | Local AI URL validation, discovery UI, CORS help, Advisor, and server switching |
+| `local-ai-provider-registry.ts` | normalized Local AI adapter registry and detection precedence |
+| `local-ai-provider-{ollama,lmstudio,openai-compatible}.ts` | backend discovery, inference, context, performance, and unload implementations |
+| `local-ai-provider-shared.ts` | URL normalization, location classification, model normalization, and secret redaction |
+| `local-ai-discovery.ts` | cached discovery orchestration and runtime metadata updates |
+| `api-local.ts` | Local AI prompt sizing, context planning, native request selection, and normalized diagnostics |
+| `local-ai-lifecycle.ts` | memory-only runtime tracking and same-machine model handoff/unload |
+| `chat-attestation.ts` | lock/attestation status shown in chat |
+| `api-custom.ts` | Browser-direct Custom model discovery, validation, and chat transport |
+| `cloud-ai-consent.ts` | Versioned recipient/origin-scoped approval before cloud AI or voice transport |
+| `proxy-runtime.ts` | Narrow compatibility-service routing for non-AI operations such as operated NRAS/wearables/CAMS |
 
 ## Local AI adapter contract
 
@@ -89,13 +89,13 @@ Use the exact browser origin in CORS help. Do not recommend wildcard origins. Mi
 
 ### Context planning and inference
 
-`api-local.js` estimates prompt tokens, adds a safety reserve, and clamps requested output to the loaded context. If the remaining context cannot satisfy the minimum output, it fails with the current and maximum context sizes instead of sending a predictably truncated request.
+`api-local.ts` estimates prompt tokens, adds a safety reserve, and clamps requested output to the loaded context. If the remaining context cannot satisfy the minimum output, it fails with the current and maximum context sizes instead of sending a predictably truncated request.
 
 Imports and meal-photo analysis opt into discovery and native context planning because a full report or structured nutrition result can exceed a default loaded context. Dense lab tables use a conservative three-characters-per-token estimate; routine chat avoids an extra discovery probe before the first token.
 
-`nutrition-ai-settings.js` keeps an optional meal-specific model route separate from the main chat model while remaining on the active provider, and filters its catalog to image-capable models. Benchmarks can select models from multiple configured providers. Meal requests use recipient consent kind `meal-photo`, structured JSON output, no automatic retry, and their own abort signal. See [Meals and Nutrition internals](/developers/nutrition-internals).
+`nutrition-ai-settings.ts` keeps an optional meal-specific model route separate from the main chat model while remaining on the active provider, and filters its catalog to image-capable models. Benchmarks can select models from multiple configured providers. Meal requests use recipient consent kind `meal-photo`, structured JSON output, no automatic retry, and their own abort signal. See [Meals and Nutrition internals](/developers/nutrition-internals).
 
-Ollama can pass `num_ctx`. For a current LM Studio server, `prepareNativeRequest()` selects a target context and `loadWithContext()` unloads the previous instance, loads the model through `/api/v1/models/load`, forces discovery, and returns the context LM Studio actually fitted. `api-local.js` replans output against that verified context, then generates through streaming `/v1/chat/completions`. A missing load route falls back to native non-streaming inference with a 15-minute ceiling. An unload failure may proceed only after forced discovery proves the old instance is gone; otherwise it fails before allocating a duplicate.
+Ollama can pass `num_ctx`. For a current LM Studio server, `prepareNativeRequest()` selects a target context and `loadWithContext()` unloads the previous instance, loads the model through `/api/v1/models/load`, forces discovery, and returns the context LM Studio actually fitted. `api-local.ts` replans output against that verified context, then generates through streaming `/v1/chat/completions`. A missing load route falls back to native non-streaming inference with a 15-minute ceiling. An unload failure may proceed only after forced discovery proves the old instance is gone; otherwise it fails before allocating a duplicate.
 
 Local streaming gets a 15-minute allowance only for the first reader result because prompt prefill can be silent. Every later read keeps the shared 30-second stall guard. Provider finish reasons and native LM Studio token accounting normalize to `truncated`; PDF text and image imports reject that result before JSON review so a partial marker list cannot be confirmed.
 
@@ -103,7 +103,7 @@ All adapters return the common text/usage result plus optional diagnostics. Gene
 
 ### Runtime handoff and VRAM
 
-`local-ai-lifecycle.js` keeps only the last base URL, adapter ID, and model in module memory. Before using a different endpoint/model on the same machine, it discovers the previous runtime and unloads its loaded model when the adapter supports that operation.
+`local-ai-lifecycle.ts` keeps only the last base URL, adapter ID, and model in module memory. Before using a different endpoint/model on the same machine, it discovers the previous runtime and unloads its loaded model when the adapter supports that operation.
 
 Do not persist runtime-use state: it becomes stale after refresh and can expose misleading loaded-model claims. If a supported unload operation fails while changing servers in Settings, keep the new selection unsaved and return an actionable manual-unload error. An adapter without unload support can proceed without automatic release. Never attempt to unload cloud-tagged models or models on a different machine.
 
@@ -128,7 +128,7 @@ User docs should say this plainly, and UI state should match it: no visible Web 
 
 ## Custom API direct-transport boundary
 
-`api-custom.js` calls `/models` and `/chat/completions` directly from the browser with `credentials: 'omit'`. `callOpenAICompatibleAPI()` receives `{ useProxy: false }`, and connection errors explicitly state that no server retry occurred.
+`api-custom.ts` calls `/models` and `/chat/completions` directly from the browser with `credentials: 'omit'`. `callOpenAICompatibleAPI()` receives `{ useProxy: false }`, and connection errors explicitly state that no server retry occurred.
 
 Remote Custom origins require recipient/origin-scoped cloud-processing consent before chat data is sent. Loopback and private-network Custom origins are treated as local for that consent gate, though the configured machine can still read the request. The endpoint must allow the exact app origin with CORS and must satisfy mixed-content rules.
 
@@ -143,8 +143,8 @@ OpenRouter OAuth must bind state to the browser session and use PKCE/state valid
 Before shipping provider changes:
 
 - run targeted provider tests for the touched provider;
-- run `tests/api-provider-contracts.test.js` for adapter inference and redaction contracts;
-- run `tests/test-provider-local-ai-runtime.js` for discovery, context, location, and lifecycle behavior;
+- run `tests/api-provider-contracts.test.ts` for adapter inference and redaction contracts;
+- run `tests/test-provider-local-ai-runtime.ts` for discovery, context, location, and lifecycle behavior;
 - run chat streaming tests if transport code changed;
 - run Settings panel tests if dropdowns/toggles changed;
 - verify Local AI connection copy for loopback, LAN, remote, cloud, CORS, and mixed-content cases;

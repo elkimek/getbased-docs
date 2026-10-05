@@ -8,7 +8,7 @@ description: "How getbased turns stored profile data into active chart, scoring,
 
 # Data Pipeline
 
-`getActiveData()` in `js/data.js` is the central active-data projection. Dashboard, category charts, compare, correlations, scoring, and AI context consume its output. It reads `state`, caches by relevant input identities and profile context, and returns a derived dataset without persisting changes.
+`getActiveData()` in `js/data.ts` is the central active-data projection. Dashboard, category charts, compare, correlations, scoring, and AI context consume its output. It reads `state`, caches by relevant input identities and profile context, and returns a derived dataset without persisting changes.
 
 ## Pipeline flowchart
 
@@ -154,7 +154,7 @@ See [Lab markers and range internals](/developers/lab-markers-ranges-internals) 
 
 ## Durable import and restore boundary
 
-`import-commit-validation.js` rejects duplicate canonical mappings and blank/non-finite values before mutation. Compatible custom values and range bounds convert together; raw per-file snapshots retain source units. Specialty marker identities stay separate.
+`import-commit-validation.ts` rejects duplicate canonical mappings and blank/non-finite values before mutation. Compatible custom values and range bounds convert together; raw per-file snapshots retain source units. Specialty marker identities stay separate.
 
 IndexedDB writes commit on transaction completion, not merely request success. Reads propagate failure, and failed marker edits/JSON imports roll back rather than leaving partially applied state. Restore merges entries by marker and retains unrelated same-date results, collection-context ownership, timestamps and deletion metadata.
 

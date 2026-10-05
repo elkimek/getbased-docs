@@ -4,7 +4,7 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased loads native ES modules during local development. Production deployments run a Rolldown build that creates a hashed startup bundle and keeps feature-level lazy chunks separate. The resulting runtime is still mostly static HTML, CSS, and JavaScript, plus optional API routes for hosted features.
+getbased is authored in TypeScript and compiled with TypeScript 7 to native JavaScript ES modules for local development. A source checkout requires Node.js 24 and npm dependencies. Production deployments run a Rolldown build that creates a hashed startup bundle and keeps feature-level lazy chunks separate. The resulting runtime is still mostly static HTML, CSS, and JavaScript, plus optional API routes for hosted features.
 
 ## Quick start
 
@@ -13,23 +13,24 @@ getbased loads native ES modules during local development. Production deployment
     ```bash
     git clone https://github.com/elkimek/get-based
     cd get-based
+    npm ci
     ```
   </Step>
 
   <Step title="Start a local server">
     ```bash
-    node dev-server.js 8000
+    npm run dev-server -- 8000
     ```
 
     Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
 
     <Note>
-      Use `node dev-server.js` for wearable OAuth and other features that depend on `/api/proxy`. A static server such as `python3 -m http.server 8000` is sufficient only for browser-local features; it cannot load deployment OAuth settings or exchange confidential OAuth tokens, so Google Health remains unavailable there.
+      Use the development server for wearable OAuth and other features that depend on `/api/proxy`. After compiling with `npm run typescript:build`, a static server such as `python3 -m http.server 8000` is sufficient only for browser-local features; it cannot load deployment OAuth settings or exchange confidential OAuth tokens, so Google Health remains unavailable there.
     </Note>
   </Step>
 </Steps>
 
-The quick local server loads source modules directly, so this path needs no `npm install` or compile step. Production deployments install dependencies and run `node scripts/build-production.mjs`; Vercel does this through the repository's existing build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
+`npm ci` compiles the sources through its `prepare` step; `npm run dev-server` recompiles and builds the Companion download before serving. If you edit sources while the server is running, run `npm run typescript:build` before reloading. Production builds also require compiled runtime modules: use `npm run production:build` locally; Vercel compiles during dependency installation before its configured build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
 
 ## Optional CLI Companion
 
@@ -42,9 +43,9 @@ npm ci
 npm run dev-server -- 8000
 ```
 
-This npm command builds the Companion bundle before starting the development server. Keep the same browser origin (including `localhost` versus `127.0.0.1` and port) to use existing local data. If port 8000 is occupied, stop your previous server normally; starting on another origin does not migrate its browser storage.
+This npm command compiles TypeScript and builds the Companion bundle before starting the development server. Keep the same browser origin (including `localhost` versus `127.0.0.1` and port) to use existing local data. If port 8000 is occupied, stop your previous server normally; starting on another origin does not migrate its browser storage.
 
-For an independently running source Companion, use `npm run companion`. For login startup, use `npm run companion:install`. The public download runs with Node.js 20+ without a source checkout. A self-hosted HTTPS page outside the official allowlist needs its exact origin in the Companion's `GETBASED_AGENT_HOST_ALLOWED_ORIGINS`; never expose the loopback listener publicly to solve connection failures. See [Companion operation and security](/developers/cli-agent-providers#build-and-operate).
+For an independently running source Companion, compile after source edits and use `npm run companion`. For login startup, use `npm run companion:install`. The public download runs with Node.js 20+ without a source checkout. A self-hosted HTTPS page outside the official allowlist needs its exact origin in the Companion's `GETBASED_AGENT_HOST_ALLOWED_ORIGINS`; never expose the loopback listener publicly to solve connection failures. See [Companion operation and security](/developers/cli-agent-providers#build-and-operate).
 
 ## Wearable OAuth apps
 
@@ -64,7 +65,7 @@ To run wearable OAuth on your own host, register your own OAuth app with each pr
 | WHOOP | [developer.whoop.com](https://developer.whoop.com/) — an active WHOOP membership is required to create an app. |
 | Ultrahuman | [vision.ultrahuman.com/developer](https://vision.ultrahuman.com/developer) |
 
-When registering, add both your local dev redirect URI (`http://localhost:8000/app`) and your production hostname (e.g. `https://your-host.example/app`) to the allowed redirect URI list in each provider's portal — the URIs must match character-for-character. For a custom hostname that is not already listed, add the same URI to that provider's `oauth.redirectUris` entry in `js/wearable-adapters.js` in your fork.
+When registering, add both your local dev redirect URI (`http://localhost:8000/app`) and your production hostname (e.g. `https://your-host.example/app`) to the allowed redirect URI list in each provider's portal — the URIs must match character-for-character. For a custom hostname that is not already listed, add the same URI to that provider's `oauth.redirectUris` entry in `js/wearable-adapters.ts` in your fork.
 
 ### Environment variables
 
@@ -133,7 +134,7 @@ The integration requests only these scopes:
 - `https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly`
 - `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
 
-A copy-ready explanation for Google's **How will the scopes be used?** field is kept under 1,000 characters in [`google-health-scope-justification.md`](https://github.com/elkimek/get-based/blob/main/google-health-scope-justification.md).
+A copy-ready explanation for Google's **How will the scopes be used?** field is kept under 1,000 characters in [`google-health-scope-justification.md`](https://github.com/elkimek/get-based/blob/main/engineering/integrations/google-health-scope-justification.md).
 
 <Note>
   Google currently caps a new unverified OAuth client at 100 users. Testing mode requires each tester to be added explicitly, and its refresh tokens expire after seven days. Supporting more than 100 users requires a third-party security review. Check Google's setup page before launch because these requirements can change.
@@ -183,7 +184,7 @@ A `vercel.json` is already present in the repo root — no extra configuration i
 
 ## Self-hosted profile sharing
 
-The local development server provides only a process-memory `/api/share` store, so its links disappear when the process restarts. For durable temporary links, run `server/profile-share-server.js` behind the same HTTPS origin at `/api/share`, using the container assets under `deploy/profile-share/`.
+The local development server provides only a process-memory `/api/share` store, so its links disappear when the process restarts. For durable temporary links, run `server/profile-share-server.ts` behind the same HTTPS origin at `/api/share`, using the container assets under `deploy/profile-share/`.
 
 The standalone service requires an absolute `PROFILE_SHARE_SQLITE_PATH` and a unique `PROFILE_SHARE_RATE_LIMIT_KEY` of at least 32 characters. Optional bounds include `PROFILE_SHARE_BIND`, `PROFILE_SHARE_PORT`, `PROFILE_SHARE_DATABASE_MAX_BYTES`, and `PROFILE_SHARE_REQUEST_TIMEOUT_MS`.
 
@@ -193,7 +194,7 @@ The browser encrypts before upload, but the service still observes ordinary conn
 
 Cross-device sync uses a **relay** — a blind store-and-forward server that holds encrypted blobs. The relay never sees your plaintext data. By default, getbased connects to `wss://sync.getbased.health`. You can run your own.
 
-These instructions target [getbased-relay v2.0.0](https://github.com/elkimek/getbased-relay/releases/tag/v2.0.0). The v2 line uses Evolu 8 and adds replay-protected compaction plus an owner-proof verifier for the separate Agent Access context gateway.
+These examples pin the release used by the app's compatibility CI: [getbased-relay v2.0.0](https://github.com/elkimek/getbased-relay/releases/tag/v2.0.0). The v2 line uses Evolu 8 and adds replay-protected compaction plus an owner-proof verifier for the separate Agent Access context gateway.
 
 <Steps>
   <Step title="Clone a released relay">

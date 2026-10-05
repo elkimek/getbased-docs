@@ -15,7 +15,7 @@ getbased uses two test layers:
 
 Routstr/Cashu wallet work has an extra release gate because it touches bearer money. Before changing wallet funding, token export/import, seed restore, node deposit/top-up, refunds, or Cashu TS migration code, read [Routstr/Cashu safety](/developers/routstr-cashu-safety).
 
-Some browser fixtures are still self-executing IIFEs with local `assert()` helpers; Playwright executes those through `tests/playwright/browser-script-runner.js` so they run in the same browser suite as native Playwright specs.
+All first-party tests are authored in TypeScript. Some legacy browser fixtures retain classic-script execution semantics; Playwright executes those through `tests/playwright/browser-script-runner.ts` so they run in the same browser suite as native Playwright specs.
 
 Generated marker catalogs have dedicated drift gates:
 
@@ -26,185 +26,174 @@ npm run marker-terminology:check
 
 Use the matching `:build` command after editing authoring modules, then run the focused identity, placement, persistence, or terminology tests relevant to the diff. GitHub Actions owns the exhaustive Chromium and combined-coverage run.
 
-## The assert pattern
+## Test setup and assertions
 
 For CLI-provider and chat-workspace changes, cover the [Companion verification checklist](/developers/cli-agent-providers#verification-checklist) and [chat ownership checks](/developers/chat-internals#change-scoped-verification). Test discovery-only versus installation-authorized credentials separately, unavailable models/targets, canceled uploads, profile switches before the first token, and source-toggle enforcement in tools. Use mocks for routine CI rather than real health records or paid inference. Native OS service installation and OS file dragging require separate platform checks.
 
-Cold-load budgets measure source-mode requests, compressed transfer, and decoded bytes; they are distinct from production chunk budgets. `cold-load-budget.spec.js` attaches the per-resource inventory for attribution. Record any deliberate feature cost explicitly instead of removing assertions or silently widening the budget. Exhaustive browser and combined-coverage runs belong in GitHub Actions, not an unapproved local full-matrix run.
+Cold-load budgets measure source-mode requests, compressed transfer, and decoded bytes; they are distinct from production chunk budgets. `cold-load-budget.spec.ts` attaches the per-resource inventory for attribution. Record any deliberate feature cost explicitly instead of removing assertions or silently widening the budget. Exhaustive browser and combined-coverage runs belong in GitHub Actions, not an unapproved local full-matrix run.
 
-Browser-script fixture files define a local `assert` helper and collect results:
+Install dependencies with Node.js 24 and `npm ci`. `npm test` compiles the app and fixtures before Vitest. Before direct Playwright or Node commands after source edits, run `npm run typescript:build`; keep runtime imports and fixture fetch URLs ending in `.js` or `.mjs`.
 
-```js
-(async () => {
-  const results = [];
-  let passed = 0, failed = 0;
+Native unit tests use Vitest assertions. For example:
 
-  function assert(name, condition, detail = '') {
-    if (condition) {
-      results.push({ ok: true, name });
-      passed++;
-    } else {
-      results.push({ ok: false, name, detail });
-      failed++;
-    }
-  }
+```ts
+import { expect, test } from 'vitest';
+import { isAllowedProxyUrl } from '../lib/proxy-policy.js';
 
-  // --- tests ---
-
-  assert('state object exists', typeof window._labState === 'object');
-  assert('importedData has entries array',
-    Array.isArray(window._labState.importedData.entries));
-
-  // --- report ---
-  console.log(`Tests: ${passed} passed, ${failed} failed`);
-  results.filter(r => !r.ok).forEach(r =>
-    console.error(`FAIL: ${r.name}`, r.detail)
-  );
-  return { passed, failed, results };
-})();
+test('proxy policy rejects loopback destinations', () => {
+  expect(isAllowedProxyUrl('https://127.0.0.1/private')).toBe(false);
+});
 ```
 
-The `detail` argument appears in the failure output — use it to print the actual value that caused the failure.
+Legacy Node fixtures can use `createLegacyAssertions()` from `tests/helpers/legacy-assertions.ts` through its `.js` runtime specifier; the helper returns `assert` and `{ pass, fail }` results. Classic browser fixtures listed in `scripts/classic-browser-fixture-entries.json` keep their assertions inside a typed `runBrowserFixture()` wrapper. The build validates the wrapper and emits its body for the browser-script runner, preserving return values and execution mode. Keep every original assertion when adapting a fixture to TypeScript, and include useful failure details. Prefer native Vitest or Playwright for new tests.
+
+```bash
+npm run typecheck:migration
+npm run typecheck:migration-tests
+npm run typescript:build
+npx playwright test tests/playwright/<relevant-spec>.spec.ts
+```
 
 ## Notable test files
 
-All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; fixture scripts live as `tests/test-*.js`. The table calls out representative ownership areas rather than duplicating the complete file listing from the repository.
+All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; fixture scripts live as `tests/test-*.ts`. The table calls out representative ownership areas rather than duplicating the complete file listing from the repository.
 
 A few tests run node-side (no browser) — pure-helper unit tests + node script guards. Marked **node** in the table; browser-driven coverage is owned by Playwright specs.
 
 | File | What it covers |
 |---|---|
-| `tests/api-provider-contracts.test.js` | **Vitest** — provider adapter inference, Local AI context planning, native capability fallbacks, transport diagnostics, and secret redaction |
-| `tests/api-transport.test.js` | **Vitest** — Local AI first-token allowance, normal mid-stream stall timeout, cancellation, and transport timeout cleanup |
-| `tests/pdf-import-progress-phases.test.js` | **Vitest** — reading/writing phase labels, learned prefill estimates, stream transition, and progress cleanup |
-| `tests/test-a11y-axe.js` | Runtime locally installed axe-core 4.13 scan across every lens + Settings surfaces + EMF editor. Zero-baseline critical/serious CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
-| `tests/test-a11y-phase3.js` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
-| `tests/test-ai-verdict-engine-instance.js` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
-| `tests/test-adapters.js` | Adapter registry: structure, fatty acids, Metabolomix+, Mosaic OAT/MOAT catalogs, aliases, product isolation, and cross-adapter behavior |
-| `tests/test-ai-verdict-engine.js` | Shared `js/ai-verdict-engine.js` factory: in-flight tracker, watchdog, fingerprint cache, JSON parse guards |
-| `tests/test-audit-fixes.js` | Regression coverage for the 2026-05-09 audit pass (multi-area follow-ups) |
-| `tests/test-audit.js` | Security audit: XSS escaping, marker-key allowlist guards, innerHTML sanitizer sweep, null/div-by-zero, focus trapping, CSP |
-| `tests/test-biometrics.js` | Biometrics time-series: weight, BP, pulse, BMI auto-calc |
-| `tests/test-biostarks-adapter.js` | BioStarks adapter: registration, detection, markers, normalization |
-| `tests/test-blob-storage.js` | IDB-backed key/value store + the localStorage→IDB migration on first read of `*-imported` |
-| `tests/test-calculated-markers.js` | Calculated markers: PhenoAge, Bortz Age, Biological Age, BUN/Creatinine, Free Water Deficit, hs-CRP/HDL |
-| `tests/test-cashu-wallet.js` | Cashu wallet: encrypted mnemonic, locks, proofs, recovery, fee split, Nostr discovery, BIP-39 seed |
-| `tests/test-change-history.js` | Change history: `recordChange` dedup, snapshot deep-copy, cap, AI context timeline, export/import round-trip |
-| `tests/test-changelog.js` | What's New modal: version sync, HTML, main.js wiring, settings, forceShow patch-bump override, behavioral idempotency |
-| `tests/test-chat-actions.js` | Chat message action buttons: regenerate, copy, context toggle |
-| `tests/test-chat-panel-ux.js` | Chat panel interactive-while-open + fullscreen layout (v1.3.29 surface) |
-| `tests/test-chat-threads.js` | Chat thread CRUD, auto-naming, migration, encryption patterns, backup inclusion |
-| `tests/chat-composer.test.js`, `tests/chat-render-window.test.js`, `tests/chat-scroll.test.js`, `tests/chat-mobile-viewport.test.js` | **Vitest** — per-thread drafts, growing composer, bounded transcript batches, user-owned streaming scroll, and mobile viewport behavior |
-| `tests/chat-personality-merge.test.js`, `tests/chat-recommendation-disclosure.test.js`, `tests/chat-storage-safety.test.js`, `tests/chat-discussion-pending.test.js` | **Vitest** — per-persona Sync merge/tombstones, collapsed suggestions, untrusted-record bounds, and targeted discussion retry state |
-| `tests/playwright/chat-composer.spec.js`, `tests/playwright/chat-message-edit.spec.js`, `tests/playwright/chat-accessibility-polish.spec.js`, `tests/playwright/custom-personality-dom.spec.js` | **Playwright** — composer recovery, latest-turn edits and forks, accessible streaming/scroll controls, and custom-persona UI policy |
-| `tests/test-correctness-phase2.js` | v1.5.1 correctness pass: per-profile sync debouncer, lab-context fingerprint, lens LRU |
-| `tests/test-crypto.js` | AES-256-GCM encryption, PBKDF2, passphrase validation (20+ sections) |
-| `tests/test-custom-api.js` | Custom API provider: 6th provider registration, endpoint config, model fetch |
-| `tests/test-custom-lens.js` | Custom Knowledge Source (Lens Corpus): backend selection, library CRUD, query routing |
-| `tests/test-custom-personality.js` | Named custom personalities: storage, icon picker, generation, dirty state, thread metadata |
-| `tests/test-cycle-improvements.js` | Phase-aware ranges, cycle iron alerts, perimenopause detection, heavy flow alerts |
-| `tests/test-cycle-tour.js` | Cycle spotlight tour: 8 steps, DOM elements, auto-trigger, storage key |
-| `tests/test-dashboard-data-protection.js` | Data protection CTA + picker on the dashboard (encryption / sync / auto-backup) |
-| `tests/test-dashboard-genetics-empty.js` | Genetics empty-state CTA (DNA discovery stub) on the dashboard |
-| `tests/test-dashboard-knowledge-base.js` | Knowledge Base row + Personalize-AI CTA on the dashboard |
-| `tests/test-data-merge.js` | Per-array union-by-id sync merge: additions, edit-conflict resolution, tombstones, nested |
-| `tests/test-data-pipeline.js` | Core data pipeline: getActiveData, unit conversion, date filtering, trend detection |
-| `tests/test-demo.js` | Demo data files: v2 structure, structured context cards, menstrual cycle for Sarah |
-| `tests/test-dev-server-helpers.js` | **node** — `dev-server.js` helper unit tests |
-| `tests/test-dev-server-origin.js` | **node** — `dev-server.js` `/api/*` same-origin guard rejects forged headers |
-| `tests/test-dna-genome-remediation.js` | 60-entry catalog contract, evidence/relevance grades, repeat and strand normalization, privacy-safe issue links, curated-override/mtDNA re-import preservation, Living DNA motherline routing, focused AI context, and Genome rendering |
-| `tests/test-dna-illumina-and-valence.js` | Illumina GenomeStudio/DNAEra and annotated-report formats, probe-prefix stripping, genotype normalization, and risk/protective/trait/neutral presentation |
-| `tests/test-dna-mtdna-subclades.js` | Parent/subclade mtDNA resolution with specific-match tie-breaking |
-| `tests/test-dna-recommendations.js` | DNA-aware recommendation hints, evidence/relevance labels, conservative APOE wording, and catalog-linked context |
-| `tests/test-dna.js`, `tests/test-dna-runtime.js` | DNA parsing, APOE, format detection, lazy runtime bridge, import summaries, and AI context bounds |
-| `tests/test-emf.js` | EMF assessment: SBM-2015 severity, room CRUD, source/mitigation tags |
-| `tests/test-emf-flow.js` | EMF module behavioral flow (CRUD + interpret + PDF-import path) — opens the full editor lifecycle that `test-emf.js` only schema-tests |
-| `tests/test-export-import.js` | Export/import roundtrip + encrypted-backup re-enumeration: JSON structure, date merge, context field handling |
-| `tests/test-family-history.js` | Medical History + family-history subsection: relative picker, CRUD, FAMILY_RELATIVES enum |
-| `tests/test-folder-backup.js` | Folder backup: File System Access API, snapshot format, daily filenames, IndexedDB v2 handle persistence |
-| `tests/test-hardware.js` | Model Advisor: GPU detection, VRAM badges, model fitness ratings |
-| `tests/test-image-utils.js` | Image utilities: resize, format, vision content building |
-| `tests/test-integration-batch2.js` | Integration: batch import, marker keys, custom markers, adapters |
-| `tests/playwright/import-benchmarks.spec.js` | **Playwright** — model-test modal, reference scoring, same-report/provider comparison, review metrics, persistence, sync exclusion, and fixture integrity |
-| `tests/test-lens-local-utils.js` | **node** — pure helpers from `js/lens-local-utils.js`: chunking, MMR selection, cosine similarity |
-| `tests/test-lens-local-worker.js` | Full message-protocol round-trip against `lens-local-worker.js` with a mocked embedder |
-| `tests/test-lens-multi-query.js` | Multi-query rewrite + reciprocal-rank-fusion chunk fusion |
-| `tests/test-lens-parsers.js` | `js/lens-local-parsers.js` edge cases: `extractFromFile()` never throws, returns expected shape |
-| `tests/test-light-ai-renders.js` | Smoke coverage for the 10 feature-specific Light & Sun AI modules |
-| `tests/test-light-device-ai-analysis.js` | Per-device-session AI verdict: fingerprint determinism, prompt-context shape (incl. mode resolution + injection guards), render state machine, engine adapter coverage |
-| `tests/test-light-devices.js` | Light therapy device library + sessions: addDeviceFromPreset, deleteDevice, logDeviceSession |
-| `tests/test-light-devices-store.js` | Light-device mutation boundary: device CRUD, session lifecycle, dose recompute, sync tombstones |
-| `tests/test-light-env.js` | Light Environment math + CRUD: rooms, screens, audits, computeRoomSeverity, computeScreenStatus, computeIndoorBurden |
-| `tests/test-light-env-store.js` | Light Environment mutation boundary: room/screen CRUD, today overrides, room-delete cleanup, sync tombstones |
-| `tests/test-light-tools.js` | Pure helpers re-exported from `light-tools.js`: computeRowBanding (flicker FFT), saveMeasurement, lockStatusLine |
-| `tests/test-light-tools-flow.js` | Drives `saveMeasurement` across all 8 tool types + every camera-bound opener (handles missing getUserMedia cleanly) |
-| `tests/test-lighting-hardware-caveats.js` | Guard the load-bearing PWM/TRIAC caveat block against silent removal from any AI-analysis prompt |
-| `tests/test-manual-entry-flow.js` | Manual-entry quality-of-life: range sanity check, duplicate-date confirm, Save & Add Another |
-| `tests/test-markdown.js`, `tests/markdown-security-runtime.test.js` | Markdown formatting, comparison entities, URL policy, DOM tag/attribute allowlisting, attack corpus, dense-input robustness, and shared AI-output rendering paths |
-| `tests/playwright/chat-markdown-security.spec.js` | **Playwright** — browser-DOM verification for formatted model output, blocked tags/events/schemes, safe external links, and bounded quote nesting |
-| `tests/test-marker-key-safety.js` | **node** — `safeMarkerId` + `sanitizeMarkerKey` allowlist + proto-pollution rejection (38 assertions) |
-| `tests/test-marker-detail-store.js` | Marker detail mutation boundary: manual values, mirrored insulin notes, ref overrides, marker notes |
-| `tests/test-marker-value-notes.js` | Per-value notes on lab markers: schema defaults, profile migration, sync DELTA_MAPS wiring |
-| `tests/marker-schema-contract.test.js` | **Vitest** — category-module composition, generated schema parity, and stable facade exports |
-| `tests/marker-identity.test.js` | **Vitest** — built-in identity uniqueness, aliases, checksum, and legacy-location resolution |
-| `tests/custom-marker-identity.test.js`, `tests/custom-marker-export-boundaries.test.js` | **Vitest** — deterministic custom identity migration and export/backup/share compatibility |
-| `tests/marker-placement.test.js`, `tests/marker-placement-data.test.js`, `tests/marker-placement-editing.test.js` | **Vitest** — placement validation, final data projection, and immutable mutation paths |
-| `tests/marker-placement-ui.test.js`, `tests/playwright/marker-placement-ui.spec.js` | Picker compatibility filtering, sidebar order, restore flow, and calculated-marker placement |
-| `tests/category-order.test.js` | Shared regular/specialty category order used by navigation and placement controls |
-| `tests/marker-terminology.test.js` | **Vitest** — terminology registry shape, reviewed pilot mappings, isolation, and generated-file parity |
-| `tests/test-mobile.js` | Responsive layout: breakpoints, grid overflow, touch tap targets, safe grid sizing |
-| `tests/test-no-native-dialogs.js` | **node** — guard against `window.prompt/confirm/alert` regressions across `js/` |
-| `tests/test-normalize-units.js` | Unit normalization: SI conversion in the PDF import pipeline |
-| `tests/test-openrouter.js` | OpenRouter provider: curated model list, pricing cache, exclude blocklist, model fetch |
-| `tests/test-phase-ranges.js` | Phase-aware reference ranges for estradiol and progesterone aligned with dates |
-| `tests/test-pii.js` | PII obfuscation: regex patterns, streaming sanitizer |
-| `tests/test-prelab.js` | Pre-lab onboarding: context assembly without data, chat prompts |
-| `tests/test-provider-local-ai-runtime.js` | Local AI discovery, backend precedence, context planning, location disclosure, runtime handoff, unload, CORS, and mixed-content guards |
-| `tests/test-provenance.js` | Import provenance: markerSources tracking, PDF/manual source attribution |
-| `tests/test-recommendations.js` | Supplement recommendations: catalog slots, keyword scanner, safety caveats, disclosure gate |
-| `tests/test-schema.js` | MARKER_SCHEMA integrity, unit conversions, optimal ranges, phase ranges |
-| `tests/test-security-phase1.js` | v1.5.0 security pass: pdf.js vendor presence, isEvalSupported, defense-in-depth |
-| `tests/test-silhouette-picker.js` | Body-region silhouette picker: bindBodySilhouette mounts, every region clickable |
-| `tests/test-silhouette-region-map.js` | Region-map correctness: anatomical body-zone definitions and lookups |
-| `tests/test-sun-ai-analysis.js` | Per-session AI verdict module: fingerprint stability, context-build, render state machine |
-| `tests/test-sun-context.js` | `buildSunContext({tier})` AI prompt assembly: always/standard/deep tier shaping, deficit detection |
-| `tests/test-sun-correlations.js` | Pearson coefficient + weekly binning + cache invalidation for per-channel × biomarker engine |
-| `tests/test-sun-defaults.js` | Onboarding defaults: Fitzpatrick mapping, OTT score boundaries, getSunDefaults round-trip |
-| `tests/test-sun-spectrum.js` | Bird-Riordan reconstruction + action-spectrum convolution + vit-D calibration gate |
-| `tests/test-sun-ui-flow.js` | Behavioral UI flow for the Light & Sun lens: dashboard strip, /light page, session controls |
-| `tests/test-sun-uvdata.js` | Multi-source UV/ozone client: SSRF guard, retired-manual-source exclusion, compatibility adapters, provider routing, solar-zenith math |
-| `tests/test-sun-uvdata-flow.js` | Behavioral flow for `sun-uvdata.js`: cache, current provider chain, legacy manual/NOAA mode migration, interpolation bracketing, stale-cache fallback |
-| `tests/test-sun.js` | Sun session orchestration: lifecycle, hydration, rolling totals, vit-D IU accumulation, MED carry-over |
-| `tests/test-supplement-impact.js` | Supplement-biomarker impact analysis: batched computation, caching, health dots |
-| `tests/supplement-medication-domain.test.js` | **Vitest** — stable IDs, status derivation, periods, schedule exposure, quantities, unit normalization, and additive migration |
-| `tests/supplement-form-ui.test.js`, `tests/supplement-import-draft.test.js` | **Vitest** — structured form rows, strict link/photo draft normalization, multilingual identity, source merging, and conflict review |
-| `tests/supplement-quality.test.js`, `tests/supplement-context.test.js` | **Vitest** — lot scope, ND/NQ and comparator handling, contaminant aggregation, per-result AI inclusion, and prompt budgets |
-| `tests/supplement-warnings.test.js` | **Vitest** — claim-level mitochondrial evidence matching, grouping, scope, and AI projection |
-| `tests/playwright/supplements-browser-coverage.spec.js` | **Playwright** — manager groups, add/edit, lifecycle actions, reviewed imports, and structured quality UI |
-| `tests/playwright/supplement-impact-browser-coverage.spec.js`, `tests/playwright/supplement-warnings-browser-coverage.spec.js` | **Playwright** — historical impact rendering and mitochondrial evidence interactions |
-| `tests/test-sync.js` | Cross-device sync: payload format, AI settings keys, encrypted keys, Evolu integration |
-| `tests/sync-save-hooks.test.js`, `tests/sync-runtime.test.js` | **Vitest** — canonical IndexedDB-backed profile reads, fail-closed missing/unreadable profiles, and rejection of invalid outbound payloads |
-| `tests/sync-settings-state.test.js`, `tests/sync-lifecycle-runtime.test.js`, `tests/sync-subscriptions-pause.test.js` | **Vitest** — configured/active/paused state, runtime teardown/rebind, and subscription suppression while paused |
-| `tests/backup-sync-restore.test.js` | **Vitest** — full-backup profile handoff, dirty marking, stale delta/cutover reset, and restore-safe preflight |
-| `tests/playwright/sync-identity-browser-coverage.spec.js` | **Playwright** — existing-mnemonic restore ordering and the single controlled reload contract |
-| `tests/playwright/settings-sync-panel-loader-browser-coverage.spec.js` | **Playwright** — cold Settings facade loading, in-place Sync/Agent placeholder replacement, and retry behavior |
-| `tests/playwright/sync-actions-browser-coverage.spec.js` | **Playwright** — compaction preflight and decrypted Agent Access payload coverage for the complete redesigned context, including explicit negative/normal answers and skin type |
-| `tests/test-table-heatmap-empty.js` | Table/Heatmap views skip all-null markers; empty category shows hint |
-| `tests/test-tour.js` | App tour: 7 steps, spotlight DOM, positioning, escape key, completion flag (154 assertions) |
-| `tests/test-trend-alerts.js` | Trend detection: sudden change alerts, linear regression, status logic |
-| `tests/test-ui-flows.js` | Behavioral UI tests: key user flows, rendered output verification |
-| `tests/test-unit-import.js` | Unit normalization on import: SI conversion, enzyme units, FA adapter safety |
-| `tests/test-v1-6-shipped.js` | Regression coverage for v1.6.7..v1.6.16 ship arc |
-| `tests/test-venice-e2ee.js` | Venice encrypted mode: ECDH/AES-GCM, fail-closed responses, required DCAP/NRAS verification, attestation badge states, TEE headers, and model detection |
-| `tests/test-vendor-personal-info.js` | `fetchXxxPersonalInfo` + `logDebug` rails for Fitbit / Ultrahuman / Whoop / Polar (one stubbed `/api/proxy` response per vendor) |
-| `tests/test-coverage-stragglers.js` | Targeted probes for the 1-fn gaps left after the AI-verdict + vendor sweeps: image-utils onerror, lens-local-parsers extractDocx, oura-auth json-catch, utils animationend, FileReader stub, AbortSignal.any polyfill, SSE handler, IDB onerror rails (blob / cashu / ws / backup), cashu open onerror, dna worker.onerror |
-| `tests/test-wearables-bp-merge.js` | BP renders as one paired card (sys/dia): strip-render filter, reorder-mode behavior |
-| `tests/test-wearables-fetchers.js` | Per-vendor adapter `fetchXxxDailyRange` against canned proxy responses |
-| `tests/test-wearables-manual.js` | Manual entry as a first-class wearable source: logManualMetric, MANUAL_TAGS whitelist, migration |
-| `tests/test-wearables-runtime-config.js` | Self-host OAuth `*_CLIENT_ID` env override (issue #145) |
-| `tests/test-wearables-sync-flow.js` | Wearable sync orchestration end-to-end with mocked proxy fetch + fake connection record |
-| `tests/test-wearables-ui-flows.js` | DOM-driven wearable UI flows: detail-modal manual entry, source picker, reorder mode |
-| `tests/test-wearables.js` | Wearable adapter registry + L1 store + L2 summary + AI context + JSZip lazy-load (Apple Health) |
+| `tests/api-provider-contracts.test.ts` | **Vitest** — provider adapter inference, Local AI context planning, native capability fallbacks, transport diagnostics, and secret redaction |
+| `tests/api-transport.test.ts` | **Vitest** — Local AI first-token allowance, normal mid-stream stall timeout, cancellation, and transport timeout cleanup |
+| `tests/pdf-import-progress-phases.test.ts` | **Vitest** — reading/writing phase labels, learned prefill estimates, stream transition, and progress cleanup |
+| `tests/test-a11y-axe.ts` | Runtime locally installed axe-core 4.13 scan across every lens + Settings surfaces + EMF editor. Zero-baseline critical/serious CI gate (see [Accessibility regression scan](#accessibility-regression-scan)) |
+| `tests/test-a11y-phase3.ts` | Accessibility regression pass: keyboard delegation, role="button" tabindex, focus trapping |
+| `tests/test-ai-verdict-engine-instance.ts` | Engine instance methods (refresh, isAnalyzing, maybeAfterFinish, purgeOrphaned) + the default cfg callbacks the main engine test overrides |
+| `tests/test-adapters.ts` | Adapter registry: structure, fatty acids, Metabolomix+, Mosaic OAT/MOAT catalogs, aliases, product isolation, and cross-adapter behavior |
+| `tests/test-ai-verdict-engine.ts` | Shared `js/ai-verdict-engine.ts` factory: in-flight tracker, watchdog, fingerprint cache, JSON parse guards |
+| `tests/test-audit-fixes.ts` | Regression coverage for the 2026-05-09 audit pass (multi-area follow-ups) |
+| `tests/test-audit.ts` | Security audit: XSS escaping, marker-key allowlist guards, innerHTML sanitizer sweep, null/div-by-zero, focus trapping, CSP |
+| `tests/test-biometrics.ts` | Biometrics time-series: weight, BP, pulse, BMI auto-calc |
+| `tests/biostarks-adapter.test.ts` | BioStarks adapter: registration, detection, markers, normalization |
+| `tests/test-blob-storage.ts` | IDB-backed key/value store + the localStorage→IDB migration on first read of `*-imported` |
+| `tests/test-calculated-markers.ts` | Calculated markers: PhenoAge, Bortz Age, Biological Age, BUN/Creatinine, Free Water Deficit, hs-CRP/HDL |
+| `tests/test-cashu-wallet.ts` | Cashu wallet: encrypted mnemonic, locks, proofs, recovery, fee split, Nostr discovery, BIP-39 seed |
+| `tests/test-change-history.ts` | Change history: `recordChange` dedup, snapshot deep-copy, cap, AI context timeline, export/import round-trip |
+| `tests/test-changelog.ts` | What's New modal: version sync, HTML, main.ts wiring, settings, forceShow patch-bump override, behavioral idempotency |
+| `tests/test-chat-actions.ts` | Chat message action buttons: regenerate, copy, context toggle |
+| `tests/test-chat-panel-ux.ts` | Chat panel interactive-while-open + fullscreen layout (v1.3.29 surface) |
+| `tests/test-chat-threads.ts` | Chat thread CRUD, auto-naming, migration, encryption patterns, backup inclusion |
+| `tests/chat-composer.test.ts`, `tests/chat-render-window.test.ts`, `tests/chat-scroll.test.ts`, `tests/chat-mobile-viewport.test.ts` | **Vitest** — per-thread drafts, growing composer, bounded transcript batches, user-owned streaming scroll, and mobile viewport behavior |
+| `tests/chat-personality-merge.test.ts`, `tests/chat-recommendation-disclosure.test.ts`, `tests/chat-storage-safety.test.ts`, `tests/chat-discussion-pending.test.ts` | **Vitest** — per-persona Sync merge/tombstones, collapsed suggestions, untrusted-record bounds, and targeted discussion retry state |
+| `tests/playwright/chat-composer.spec.ts`, `tests/playwright/chat-message-edit.spec.ts`, `tests/playwright/chat-accessibility-polish.spec.ts`, `tests/playwright/custom-personality-dom.spec.ts` | **Playwright** — composer recovery, latest-turn edits and forks, accessible streaming/scroll controls, and custom-persona UI policy |
+| `tests/test-correctness-phase2.ts` | v1.5.1 correctness pass: per-profile sync debouncer, lab-context fingerprint, lens LRU |
+| `tests/test-crypto.ts` | AES-256-GCM encryption, PBKDF2, passphrase validation (20+ sections) |
+| `tests/test-custom-api.ts` | Custom API provider: 6th provider registration, endpoint config, model fetch |
+| `tests/test-custom-lens.ts` | Custom Knowledge Source (Lens Corpus): backend selection, library CRUD, query routing |
+| `tests/test-custom-personality.ts` | Named custom personalities: storage, icon picker, generation, dirty state, thread metadata |
+| `tests/profile-switch-concurrency.test.ts`, `tests/profile-encrypted-read-safety.test.ts` | **Vitest** — latest-selection profile ownership and fail-closed encrypted reads across loading, saves, imports, and Sync |
+| `tests/test-cycle-improvements.ts` | Phase-aware ranges, cycle iron alerts, perimenopause detection, heavy flow alerts |
+| `tests/test-cycle-tour.ts` | Cycle spotlight tour: 8 steps, DOM elements, auto-trigger, storage key |
+| `tests/test-dashboard-data-protection.ts` | Data protection CTA + picker on the dashboard (encryption / sync / auto-backup) |
+| `tests/test-dashboard-genetics-empty.ts` | Genetics empty-state CTA (DNA discovery stub) on the dashboard |
+| `tests/test-dashboard-knowledge-base.ts` | Knowledge Base row + Personalize-AI CTA on the dashboard |
+| `tests/test-data-merge.ts` | Per-array union-by-id sync merge: additions, edit-conflict resolution, tombstones, nested |
+| `tests/test-data-pipeline.ts` | Core data pipeline: getActiveData, unit conversion, date filtering, trend detection |
+| `tests/test-demo.ts` | Demo data files: v2 structure, structured context cards, menstrual cycle for Sarah |
+| `tests/test-dev-server-helpers.ts` | **node** — `dev-server.ts` helper unit tests |
+| `tests/test-dev-server-origin.ts` | **node** — `dev-server.ts` `/api/*` same-origin guard rejects forged headers |
+| `tests/test-dna-genome-remediation.ts` | 60-entry catalog contract, evidence/relevance grades, repeat and strand normalization, privacy-safe issue links, curated-override/mtDNA re-import preservation, Living DNA motherline routing, focused AI context, and Genome rendering |
+| `tests/test-dna-illumina-and-valence.ts` | Illumina GenomeStudio/DNAEra and annotated-report formats, probe-prefix stripping, genotype normalization, and risk/protective/trait/neutral presentation |
+| `tests/test-dna-mtdna-subclades.ts` | Parent/subclade mtDNA resolution with specific-match tie-breaking |
+| `tests/test-dna-recommendations.ts` | DNA-aware recommendation hints, evidence/relevance labels, conservative APOE wording, and catalog-linked context |
+| `tests/test-dna.ts`, `tests/test-dna-runtime.ts` | DNA parsing, APOE, format detection, lazy runtime bridge, import summaries, and AI context bounds |
+| `tests/test-emf.ts` | EMF assessment: SBM-2015 severity, room CRUD, source/mitigation tags |
+| `tests/test-emf-flow.ts` | EMF module behavioral flow (CRUD + interpret + PDF-import path) — opens the full editor lifecycle that `test-emf.ts` only schema-tests |
+| `tests/test-export-import.ts` | Export/import roundtrip + encrypted-backup re-enumeration: JSON structure, date merge, context field handling |
+| `tests/test-family-history.ts` | Medical History + family-history subsection: relative picker, CRUD, FAMILY_RELATIVES enum |
+| `tests/test-folder-backup.ts` | Folder backup: File System Access API, snapshot format, daily filenames, IndexedDB v2 handle persistence |
+| `tests/test-hardware.ts` | Model Advisor: GPU detection, VRAM badges, model fitness ratings |
+| `tests/test-image-utils.ts` | Image utilities: resize, format, vision content building |
+| `tests/test-integration-batch2.ts` | Integration: batch import, marker keys, custom markers, adapters |
+| `tests/playwright/import-benchmarks.spec.ts` | **Playwright** — model-test modal, reference scoring, same-report/provider comparison, review metrics, persistence, sync exclusion, and fixture integrity |
+| `tests/test-lens-local-utils.ts` | **node** — pure helpers from `js/lens-local-utils.ts`: chunking, MMR selection, cosine similarity |
+| `tests/test-lens-local-worker.ts` | Full message-protocol round-trip against `lens-local-worker.ts` with a mocked embedder |
+| `tests/test-lens-multi-query.ts` | Multi-query rewrite + reciprocal-rank-fusion chunk fusion |
+| `tests/test-lens-parsers.ts` | `js/lens-local-parsers.ts` edge cases: `extractFromFile()` never throws, returns expected shape |
+| `tests/test-light-ai-renders.ts` | Smoke coverage for the 10 feature-specific Light & Sun AI modules |
+| `tests/test-light-device-ai-analysis.ts` | Per-device-session AI verdict: fingerprint determinism, prompt-context shape (incl. mode resolution + injection guards), render state machine, engine adapter coverage |
+| `tests/test-light-devices.ts` | Light therapy device library + sessions: addDeviceFromPreset, deleteDevice, logDeviceSession |
+| `tests/test-light-devices-store.ts` | Light-device mutation boundary: device CRUD, session lifecycle, dose recompute, sync tombstones |
+| `tests/test-light-env.ts` | Light Environment math + CRUD: rooms, screens, audits, computeRoomSeverity, computeScreenStatus, computeIndoorBurden |
+| `tests/test-light-env-store.ts` | Light Environment mutation boundary: room/screen CRUD, today overrides, room-delete cleanup, sync tombstones |
+| `tests/test-light-tools.ts` | Pure helpers re-exported from `light-tools.ts`: computeRowBanding (flicker FFT), saveMeasurement, lockStatusLine |
+| `tests/test-light-tools-flow.ts` | Drives `saveMeasurement` across all 8 tool types + every camera-bound opener (handles missing getUserMedia cleanly) |
+| `tests/test-lighting-hardware-caveats.ts` | Guard the load-bearing PWM/TRIAC caveat block against silent removal from any AI-analysis prompt |
+| `tests/test-manual-entry-flow.ts` | Manual-entry quality-of-life: range sanity check, duplicate-date confirm, Save & Add Another |
+| `tests/test-markdown.ts`, `tests/markdown-security-runtime.test.ts` | Markdown formatting, comparison entities, URL policy, DOM tag/attribute allowlisting, attack corpus, dense-input robustness, and shared AI-output rendering paths |
+| `tests/playwright/chat-markdown-security.spec.ts` | **Playwright** — browser-DOM verification for formatted model output, blocked tags/events/schemes, safe external links, and bounded quote nesting |
+| `tests/test-marker-key-safety.ts` | **node** — `safeMarkerId` + `sanitizeMarkerKey` allowlist + proto-pollution rejection (38 assertions) |
+| `tests/test-marker-detail-store.ts` | Marker detail mutation boundary: manual values, mirrored insulin notes, ref overrides, marker notes |
+| `tests/test-marker-value-notes.ts` | Per-value notes on lab markers: schema defaults, profile migration, sync DELTA_MAPS wiring |
+| `tests/marker-schema-contract.test.ts` | **Vitest** — category-module composition, generated schema parity, and stable facade exports |
+| `tests/marker-identity.test.ts` | **Vitest** — built-in identity uniqueness, aliases, checksum, and legacy-location resolution |
+| `tests/custom-marker-identity.test.ts`, `tests/custom-marker-export-boundaries.test.ts` | **Vitest** — deterministic custom identity migration and export/backup/share compatibility |
+| `tests/marker-placement.test.ts`, `tests/marker-placement-data.test.ts`, `tests/marker-placement-editing.test.ts` | **Vitest** — placement validation, final data projection, and immutable mutation paths |
+| `tests/marker-placement-ui.test.ts`, `tests/playwright/marker-placement-ui.spec.ts` | Picker compatibility filtering, sidebar order, restore flow, and calculated-marker placement |
+| `tests/category-order.test.ts` | Shared regular/specialty category order used by navigation and placement controls |
+| `tests/marker-terminology.test.ts` | **Vitest** — terminology registry shape, reviewed pilot mappings, isolation, and generated-file parity |
+| `tests/test-mobile.ts` | Responsive layout: breakpoints, grid overflow, touch tap targets, safe grid sizing |
+| `tests/test-no-native-dialogs.ts` | **node** — guard against `window.prompt/confirm/alert` regressions across `js/` |
+| `tests/test-normalize-units.ts` | Unit normalization: SI conversion in the PDF import pipeline |
+| `tests/test-openrouter.ts` | OpenRouter provider: curated model list, pricing cache, exclude blocklist, model fetch |
+| `tests/test-phase-ranges.ts` | Phase-aware reference ranges for estradiol and progesterone aligned with dates |
+| `tests/test-pii.ts` | PII obfuscation: regex patterns, streaming sanitizer |
+| `tests/test-prelab.ts` | Pre-lab onboarding: context assembly without data, chat prompts |
+| `tests/test-provider-local-ai-runtime.ts` | Local AI discovery, backend precedence, context planning, location disclosure, runtime handoff, unload, CORS, and mixed-content guards |
+| `tests/test-provenance.ts` | Import provenance: markerSources tracking, PDF/manual source attribution |
+| `tests/test-recommendations.ts` | Supplement recommendations: catalog slots, keyword scanner, safety caveats, disclosure gate |
+| `tests/test-schema.ts` | MARKER_SCHEMA integrity, unit conversions, optimal ranges, phase ranges |
+| `tests/test-security-phase1.ts` | v1.5.0 security pass: pdf.js vendor presence, isEvalSupported, defense-in-depth |
+| `tests/test-silhouette-picker.ts` | Body-region silhouette picker: bindBodySilhouette mounts, every region clickable |
+| `tests/test-silhouette-region-map.ts` | Region-map correctness: anatomical body-zone definitions and lookups |
+| `tests/test-sun-ai-analysis.ts` | Per-session AI verdict module: fingerprint stability, context-build, render state machine |
+| `tests/test-sun-context.ts` | `buildSunContext({tier})` AI prompt assembly: always/standard/deep tier shaping, deficit detection |
+| `tests/test-sun-correlations.ts` | Pearson coefficient + weekly binning + cache invalidation for per-channel × biomarker engine |
+| `tests/test-sun-defaults.ts` | Onboarding defaults: Fitzpatrick mapping, OTT score boundaries, getSunDefaults round-trip |
+| `tests/test-sun-spectrum.ts` | Bird-Riordan reconstruction + action-spectrum convolution + vit-D calibration gate |
+| `tests/test-sun-ui-flow.ts` | Behavioral UI flow for the Light & Sun lens: dashboard strip, /light page, session controls |
+| `tests/sun-uvdata-adapters.test.ts` | Multi-source UV/ozone client: SSRF guard, retired-manual-source exclusion, compatibility adapters, provider routing, solar-zenith math |
+| `tests/sun-uvdata-flow.test.ts` | Behavioral flow for `sun-uvdata.ts`: cache, current provider chain, legacy manual/NOAA mode migration, interpolation bracketing, stale-cache fallback |
+| `tests/test-sun.ts` | Sun session orchestration: lifecycle, hydration, rolling totals, vit-D IU accumulation, MED carry-over |
+| `tests/test-supplement-impact.ts` | Supplement-biomarker impact analysis: batched computation, caching, health dots |
+| `tests/supplement-medication-domain.test.ts` | **Vitest** — stable IDs, status derivation, periods, schedule exposure, quantities, unit normalization, and additive migration |
+| `tests/supplement-form-ui.test.ts`, `tests/supplement-import-draft.test.ts` | **Vitest** — structured form rows, strict link/photo draft normalization, multilingual identity, source merging, and conflict review |
+| `tests/supplement-quality.test.ts`, `tests/supplement-context.test.ts` | **Vitest** — lot scope, ND/NQ and comparator handling, contaminant aggregation, per-result AI inclusion, and prompt budgets |
+| `tests/supplement-warnings.test.ts` | **Vitest** — claim-level mitochondrial evidence matching, grouping, scope, and AI projection |
+| `tests/playwright/supplements-browser-coverage.spec.ts` | **Playwright** — manager groups, add/edit, lifecycle actions, reviewed imports, and structured quality UI |
+| `tests/playwright/supplement-impact-browser-coverage.spec.ts`, `tests/playwright/supplement-warnings-browser-coverage.spec.ts` | **Playwright** — historical impact rendering and mitochondrial evidence interactions |
+| `tests/test-sync.ts` | Cross-device sync: payload format, AI settings keys, encrypted keys, Evolu integration |
+| `tests/sync-save-hooks.test.ts`, `tests/sync-runtime.test.ts` | **Vitest** — canonical IndexedDB-backed profile reads, fail-closed missing/unreadable profiles, and rejection of invalid outbound payloads |
+| `tests/sync-settings-state.test.ts`, `tests/sync-lifecycle-runtime.test.ts`, `tests/sync-subscriptions-pause.test.ts` | **Vitest** — configured/active/paused state, runtime teardown/rebind, and subscription suppression while paused |
+| `tests/backup-sync-restore.test.ts` | **Vitest** — full-backup profile handoff, dirty marking, stale delta/cutover reset, and restore-safe preflight |
+| `tests/playwright/sync-identity-browser-coverage.spec.ts` | **Playwright** — existing-mnemonic restore ordering and the single controlled reload contract |
+| `tests/playwright/settings-sync-panel-loader-browser-coverage.spec.ts` | **Playwright** — cold Settings facade loading, in-place Sync/Agent placeholder replacement, and retry behavior |
+| `tests/playwright/sync-actions-browser-coverage.spec.ts` | **Playwright** — compaction preflight and decrypted Agent Access payload coverage for the complete redesigned context, including explicit negative/normal answers and skin type |
+| `tests/test-table-heatmap-empty.ts` | Table/Heatmap views skip all-null markers; empty category shows hint |
+| `tests/test-tour.ts` | App tour: 7 steps, spotlight DOM, positioning, escape key, completion flag (154 assertions) |
+| `tests/test-trend-alerts.ts` | Trend detection: sudden change alerts, linear regression, status logic |
+| `tests/test-ui-flows.ts` | Behavioral UI tests: key user flows, rendered output verification |
+| `tests/test-unit-import.ts` | Unit normalization on import: SI conversion, enzyme units, FA adapter safety |
+| `tests/test-v1-6-shipped.ts` | Regression coverage for v1.6.7..v1.6.16 ship arc |
+| `tests/test-venice-e2ee.ts` | Venice encrypted mode: ECDH/AES-GCM, fail-closed responses, required DCAP/NRAS verification, attestation badge states, TEE headers, and model detection |
+| `tests/test-vendor-personal-info.ts` | `fetchXxxPersonalInfo` + `logDebug` rails for Fitbit / Ultrahuman / Whoop / Polar (one stubbed `/api/proxy` response per vendor) |
+| `tests/test-coverage-stragglers.ts` | Targeted probes for the 1-fn gaps left after the AI-verdict + vendor sweeps: image-utils onerror, lens-local-parsers extractDocx, oura-auth json-catch, utils animationend, FileReader stub, AbortSignal.any polyfill, SSE handler, IDB onerror rails (blob / cashu / ws / backup), cashu open onerror, dna worker.onerror |
+| `tests/test-wearables-bp-merge.ts` | BP renders as one paired card (sys/dia): strip-render filter, reorder-mode behavior |
+| `tests/test-wearables-fetchers.ts` | Per-vendor adapter `fetchXxxDailyRange` against canned proxy responses |
+| `tests/test-wearables-manual.ts` | Manual entry as a first-class wearable source: logManualMetric, MANUAL_TAGS whitelist, migration |
+| `tests/test-wearables-runtime-config.ts` | Self-host OAuth `*_CLIENT_ID` env override (issue #145) |
+| `tests/test-wearables-sync-flow.ts` | Wearable sync orchestration end-to-end with mocked proxy fetch + fake connection record |
+| `tests/test-wearables-ui-flows.ts` | DOM-driven wearable UI flows: detail-modal manual entry, source picker, reorder mode |
+| `tests/test-wearables.ts` | Wearable adapter registry + L1 store + L2 summary + AI context + JSZip lazy-load (Apple Health) |
 
 The landing page test (`test-landing.js`) lives in the [get-based-site](https://github.com/elkimek/get-based-site) repo.
 
@@ -213,26 +202,25 @@ The landing page test (`test-landing.js`) lives in the [get-based-site](https://
 Run the focused native suites while iterating:
 
 ```bash
-npx vitest run tests/api-provider-contracts.test.js
-npx playwright test tests/playwright/import-benchmarks.spec.js
+npm test -- tests/api-provider-contracts.test.ts
+npm run typescript:build
+npx playwright test tests/playwright/import-benchmarks.spec.ts
 ```
 
-`tests/test-provider-local-ai-runtime.js` is a legacy browser fixture executed through the Playwright browser-script runner. While iterating, run its focused wrapper and any directly affected Settings, import, or service-worker specs. GitHub Actions owns the exhaustive browser matrix.
+`tests/test-provider-local-ai-runtime.ts` is a legacy browser fixture executed through the Playwright browser-script runner. While iterating, run its focused wrapper and any directly affected Settings, import, or service-worker specs. GitHub Actions owns the exhaustive browser matrix.
 
 ## Full CI runner
 
+`./run-tests.sh` runs repository preflight checks, Vitest, the origin guard, and the full Chromium Playwright suite. Use Node.js 24, installed dependencies, and freshly compiled runtime modules. It starts an isolated server on an available port rather than reusing an arbitrary process on port 8000; reuse requires an explicit `REUSE_TEST_SERVER=1`.
+
+Routine local checks should target the changed behavior. The full runner is guarded outside CI because browser profiles and coverage snapshots can write substantial data. An exceptional local full run requires explicit approval for that write volume and this opt-in:
+
 ```bash
-./run-tests.sh
+npm run typescript:build
+GETBASED_ALLOW_HIGH_WRITE_TESTS=1 ./run-tests.sh
 ```
 
-The script:
-1. Checks if a server is running on port 8000; starts `node dev-server.js` if not
-2. Runs the node-side tests first (fast fail on helper regressions, no browser needed)
-3. Runs the dev-server origin guard
-4. Runs the Playwright browser suite
-5. Exits with code `0` if all pass, `1` if any fail
-
-**Requires:** Node.js and dependencies installed with `npm ci`.
+Pull-request CI selects affected tests and runs the relevant gates. Main-branch and manually requested exhaustive CI runs own the full browser/coverage matrix; affected-only results do not constitute full coverage evidence.
 
 ## Coverage status
 
@@ -242,11 +230,13 @@ With CI authorization, `COVERAGE=1 ./run-tests.sh` runs Vitest with V8 coverage,
 
 Running `node scripts/playwright-coverage.mjs` directly still falls back to the legacy high-surface Chromium sampler when no Playwright suite shards are present. The full `COVERAGE=1 ./run-tests.sh` path requires suite shards so coverage regressions in the Playwright instrumentation fail clearly.
 
-Coverage is report-only by default. Set `COVERAGE_MIN=90` or another percentage to fail the run when combined global function coverage falls below that floor.
+Combined coverage is enforced by [`scripts/coverage-baseline.json`](https://github.com/elkimek/get-based/blob/main/scripts/coverage-baseline.json): the current global function floor is **89%**, with independent floors for 17 feature groups. `COVERAGE_MIN` can demand a stricter global floor but cannot lower the committed baseline. Missing feature measurements fail the gate.
+
+Runtime coverage measures emitted JavaScript consistently across Node and Chromium. Byte coverage is reported separately and is not line or branch coverage. A separate critical-module Vitest configuration enforces line, statement, function, and branch thresholds for selected safety-sensitive modules; those percentages do not describe the entire app. See [`vitest.critical.config.ts`](https://github.com/elkimek/get-based/blob/main/vitest.critical.config.ts). Keep gate thresholds intact when adding tests or refactoring.
 
 ## Accessibility regression scan
 
-`tests/test-a11y-axe.js` uses the pinned local `axe-core` 4.13 dependency and runs `axe.run()` against the live rendered surfaces. It does not fetch axe from a CDN. Severity policy:
+`tests/test-a11y-axe.ts` uses the pinned local `axe-core` 4.13 dependency and runs `axe.run()` against the live rendered surfaces. It does not fetch axe from a CDN. Severity policy:
 
 - **critical / serious** → test fails on regression vs baseline
 - **moderate / minor** → logged but doesn't block (axe leans opinionated at those tiers)
@@ -276,26 +266,27 @@ The test fails when any critical/serious rule's count **exceeds** the baseline. 
 After a wave of fixes that legitimately drops violation counts:
 
 ```bash
-A11Y_REBASELINE=1 npx playwright test tests/playwright/a11y-axe-browser.spec.js
+npm run typescript:build
+A11Y_REBASELINE=1 npx playwright test tests/playwright/a11y-axe-browser.spec.ts
 ```
 
-`tests/playwright/a11y-axe-browser.spec.js` pipes the env var into the page context before loading the fixture. The test prints a `▶ {...}` JSON line — copy it over the critical/serious/moderate/minor blocks in `tests/.a11y-baseline.json`. Don't lower these numbers without an actual fix; the gate would lock in the new lower bound and silently accept regressions.
+`tests/playwright/a11y-axe-browser.spec.ts` pipes the env var into the page context before loading the fixture. The test prints a `▶ {...}` JSON line — copy it over the critical/serious/moderate/minor blocks in `tests/.a11y-baseline.json`. Lower counts only after fixing and verifying the corresponding violations. Raising the baseline would accept regressions and requires explicit review.
 
 If the baseline file is missing entirely, the test treats the first run as "establish baseline" and prints the JSON to stdout for paste-back.
 
 ## Running a single test in the browser
 
-Open the browser console while `http://localhost:8000` is running, then:
+Prefer a focused Playwright spec. For a classic browser fixture, compile first and open an isolated demo/test profile at `http://localhost:8000/app`, then use the console:
 
 ```js
-fetch('tests/test-cycle-improvements.js').then(r => r.text()).then(s => Function(s)())
+fetch('/tests/test-ui-flows.js').then(r => r.text()).then(s => Function(s)())
 ```
 
-Results appear in the console. This is useful during development before running the full suite.
+Results appear in the console. This works only for compiled classic fixtures in the explicit manifest; Node fixtures such as `test-cycle-improvements.ts` belong in the Node/Vitest harness. Do not use `Function()` to evaluate arbitrary TypeScript or module source.
 
 ## Writing new tests
 
-When you add a feature or fix a bug, add assertions to the relevant test file. If none fits, create `test-yourfeature.js`.
+When adding a feature or fixing a bug, cover the behavior in the relevant TypeScript test. If none fits, create a focused `your-feature.test.ts` or Playwright spec. Use source inspection only for contracts that truly depend on source structure; runtime assertions should prove observable behavior.
 
 **What to cover:**
 
@@ -309,7 +300,7 @@ When you add a feature or fix a bug, add assertions to the relevant test file. I
   ```js
   const card = document.querySelector('.context-card[data-key="diet"]');
   assert('diet card rendered', card !== null);
-  assert('diet card has edit button', card.querySelector('.ctx-edit-btn') !== null);
+  assert('diet card has edit button', card?.querySelector('.ctx-edit-btn') != null);
   ```
 
 - **Function behavior** — call window-exported functions and check results:
@@ -326,17 +317,10 @@ When you add a feature or fix a bug, add assertions to the relevant test file. I
   assert('grid overflow hidden set', styles.includes('min-width: 0'));
   ```
 
-- **localStorage keys** — verify storage conventions:
-  ```js
-  assert('correct key format', localStorage.getItem('labcharts-default-imported') !== undefined
-    || true); // key may not exist in test env
-  ```
+- **Persistence** — in an isolated fixture, save a known record through the feature's API, reload the page, and assert that the same reviewed values are restored. Exercise failure paths separately. Checking that a key might exist, or using an always-true fallback, does not verify persistence.
 
-## What the headless runner cannot test
+## Browser automation and manual checks
 
-- Drag-and-drop interactions
-- File picker dialogs
-- Actual streaming AI responses (API key required)
-- IndexedDB state across page reloads (the runner resets between files)
+Playwright can test synthetic drag-and-drop, file uploads, mocked streaming responses, and IndexedDB persistence across reloads. Keep these tests deterministic with isolated storage and controlled provider responses. A fixture runner resetting between files does not prevent a dedicated spec from testing reload persistence.
 
-For these, test the surrounding logic (e.g., that `handleBatchPDFs` function exists and has the right signature) rather than the interaction itself.
+Manual platform checks remain useful for native OS file dialogs and service installation, real cameras/microphones and hardware, mobile PWA behavior, and live provider compatibility. Paid inference and real wallet funds require deliberate authorization and isolated test data; they are not routine CI requirements.

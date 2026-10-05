@@ -147,7 +147,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 | **% MED burn estimate** | Modeled erythemal action spectrum × Fitzpatrick reference threshold. It is a caution estimate, not a personal safe-time guarantee. |
 | **Vitamin-D-effective estimate** | Modeled UVB reaching logged uncovered skin. It is not measured synthesis, serum status, or an oral-dose equivalent. |
 | **Reference ranges** (`refMin` / `refMax`) on lab charts | Whatever the lab printed on the PDF, OR your own override. Never AI-generated. |
-| **Trend alerts** ("dropped 25%" / "trending up") | Linear regression slope + R² thresholds in `data.js`. Algorithmic, not LLM. |
+| **Trend alerts** ("dropped 25%" / "trending up") | Linear regression slope + R² thresholds in `data.ts`. Algorithmic, not LLM. |
 | **PhenoAge biological age** | Levine 2018 formula over 9 biomarkers + age. Closed-form math. |
 | **Calculated markers** (Free Water Deficit, BUN/Creatinine ratio, HOMA-IR) | Published formulas with conversion math for unit systems. |
 | **Channel doses on dashboard / per-session** | Same Bird-Riordan reconstruction; no AI. |
@@ -161,7 +161,7 @@ A lot of the app is deterministic math, not AI inference. If you see a number on
 
 ## What runs on-device vs cloud
 
-CLI-backed features use `ai-feature-routing.js` and the capability-aware execution route instead of bypassing the selected assistant through a direct-provider call. Local CLI agents receive the same enabled context plus scoped getbased tools; personal gateways receive context and may advertise text-only feature support, but do not receive the local tool bridge. Image support does not imply audio support, and automatic voice remains on-device for CLI chat. See [CLI agent providers](/developers/cli-agent-providers) for the dispatch and approval contract.
+CLI-backed features use `ai-feature-routing.ts` and the capability-aware execution route instead of bypassing the selected assistant through a direct-provider call. Local CLI agents receive the same enabled context plus scoped getbased tools; personal gateways receive context and may advertise text-only feature support, but do not receive the local tool bridge. Image support does not imply audio support, and automatic voice remains on-device for CLI chat. See [CLI agent providers](/developers/cli-agent-providers) for the dispatch and approval contract.
 
 | Path | Where it runs |
 |---|---|

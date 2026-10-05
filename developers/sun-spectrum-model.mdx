@@ -8,7 +8,7 @@ description: "Bird-Riordan spectral reconstruction and Light session modeling."
 
 # Sun spectrum model — contributor reference
 
-The Light & Sun lens reconstructs solar spectral irradiance and convolves it through published action spectra to derive per-channel doses. This page documents the model, the action spectra, and the calibration choices for anyone touching `js/sun-spectrum.js` or `js/sun-uvdata.js`.
+The Light & Sun lens reconstructs solar spectral irradiance and convolves it through published action spectra to derive per-channel doses. This page documents the model, the action spectra, and the calibration choices for anyone touching `js/sun-spectrum.ts` or `js/sun-uvdata.ts`.
 
 ## Pipeline
 
@@ -49,7 +49,7 @@ The 5 nm interval is the application's internal modeling grid. It samples the na
 
 ## Action spectra (per channel)
 
-Each channel has a closed-form action spectrum function returning a 0–1 weighting per nm. Defined in `js/sun-spectrum.js`:
+Each channel has a closed-form action spectrum function returning a 0–1 weighting per nm. Defined in `js/sun-spectrum.ts`:
 
 | Channel | Function | Reference | Peak | Bandwidth |
 |---|---|---|---|---|
@@ -198,17 +198,17 @@ These values are not literature-established personal requirements, treatment dos
 
 ## Adding a new channel
 
-1. Add an entry to `CHANNEL_DISPLAY` in `js/sun.js` with `icon`, `label`, `dailyTarget`, and `what` (user-facing tooltip)
-2. Add an action-spectrum function to `js/sun-spectrum.js`
+1. Add an entry to `CHANNEL_DISPLAY` in `js/sun.ts` with `icon`, `label`, `dailyTarget`, and `what` (user-facing tooltip)
+2. Add an action-spectrum function to `js/sun-spectrum.ts`
 3. Append to the `CHANNELS` array in the same file with `{ id, key, fn, label }`
 4. Add a row to `data/sun-action-spectra.json`'s `channels` block with the citation
-5. Add to the dashboard pill order in `js/views.js` and the page/detail render order in `js/light-channel-view.js`
-6. Update `js/sun-correlations.js` if the channel should be biomarker-correlated
-7. Update `tests/test-sun-spectrum.js` — assert the channel is in `SUN_CHANNELS` and has non-zero dose at noon
+5. Add to the dashboard pill order in `js/views.ts` and the page/detail render order in `js/light-channel-view.ts`
+6. Update `js/sun-correlations.ts` if the channel should be biomarker-correlated
+7. Update `tests/test-sun-spectrum.ts` — assert the channel is in `SUN_CHANNELS` and has non-zero dose at noon
 
 ## UV data source
 
-`js/sun-uvdata.js` resolves the active UV data provider via `providerOrder(cfg)`:
+`js/sun-uvdata.ts` resolves the active UV data provider via `providerOrder(cfg)`:
 
 | `cfg.mode` | Order |
 |---|---|
@@ -226,7 +226,7 @@ The relay does not expose a server-side `/spectrum` reconstruction. It returns a
 
 ## Validation
 
-`tests/test-sun-spectrum.js` covers ~120 assertions:
+`tests/test-sun-spectrum.ts` covers ~120 assertions:
 - Spectrum shape (wavelength array, 5nm grid, 280–2500 nm bounds, non-negative irradiance)
 - Sun-below-horizon → all-zero spectrum
 - Atmospheric attenuation (zenith / ozone / cloud / altitude) — directional checks

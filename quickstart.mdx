@@ -33,15 +33,16 @@ Already have Codex, OpenCode, Hermes, Grok Build, or OpenClaw installed? You can
 
     **Self-hosting**
 
-    If you prefer to run getbased yourself, clone the repository and start a local server:
+    If you prefer to run getbased yourself, use Node.js 24, clone the repository, install dependencies, and start a local server:
 
     ```bash
     git clone https://github.com/elkimek/get-based
     cd get-based
-    node dev-server.js
+    npm ci
+    npm run dev-server -- 8000
     ```
 
-    Then open `http://localhost:8000`. A local server is required because the app uses native ES modules.
+    Then open `http://localhost:8000/app`. These npm commands compile the TypeScript sources before serving JavaScript to the browser. See [Self-hosting](/guides/self-hosting) for configuration and updates.
   </Step>
 
   <Step title="Take the first-visit tour">

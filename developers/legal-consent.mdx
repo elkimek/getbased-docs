@@ -9,9 +9,9 @@ getbased has a first-launch Terms & Privacy gate. It is not a marketing modal; i
 
 | Module | Role |
 |---|---|
-| `legal-consent.js` | current Terms/Privacy version dates, accepted-version storage, modal rendering, and re-consent trigger |
-| `app-foundation-modules.js` | imports the legal gate early during startup |
-| `changelog.js` / tour modules | must wait behind the legal gate instead of competing with it |
+| `legal-consent.ts` | current Terms/Privacy version dates, accepted-version storage, modal rendering, and re-consent trigger |
+| `app-foundation-modules.ts` | imports the legal gate early during startup |
+| `changelog.ts` / tour modules | must wait behind the legal gate instead of competing with it |
 
 ## Stored consent
 
@@ -47,7 +47,7 @@ Do not include private deployment details, analytics implementation internals, o
 When Terms or Privacy copy changes materially:
 
 1. Update the public Terms/Privacy document.
-2. Bump the corresponding current version date in `legal-consent.js`.
+2. Bump the corresponding current version date in `legal-consent.ts`.
 3. Verify first launch shows the gate on a fresh profile/browser.
 4. Verify existing accepted browsers see re-consent after the version bump.
 5. Verify changelog/tour/backup prompts wait until consent is accepted.
