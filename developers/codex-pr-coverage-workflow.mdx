@@ -14,7 +14,7 @@ Use a focused, reviewable change for one behavior or coverage gap. Follow the ap
 
 1. Start from a verified base and use an isolated branch or worktree when needed.
 2. Choose a coherent user workflow, storage/security boundary, or uncovered feature. Prefer behavior tests over assertions that merely mirror implementation.
-3. Edit canonical `.ts` and `.mts` sources and tests. Keep `.js`/`.mjs` runtime imports and commands; never patch emitted siblings.
+3. Edit canonical `.ts`, `.mts`, `.svelte` and owning Tailwind recipe sources and tests. Keep `.js`/`.mjs` runtime imports and commands; never patch emitted siblings, component artifacts or generated CSS. Follow [Svelte and Tailwind](/developers/svelte-tailwind) for UI ownership.
 4. Use Vitest for pure logic and narrow contracts, and Playwright for rendered behavior, browser storage, modal/session flows, and integrations. Use synthetic data and mocked providers for routine checks.
 5. Run the relevant tests and lightweight gates. Compile with `npm run typescript:build` before direct Playwright or Node commands. `npm test` compiles automatically.
 6. Open or update the authorized PR with the concrete behavior change and validation performed. Watch Actions and Greptile, fix actionable findings, and rerun the affected checks.
@@ -30,6 +30,8 @@ npx playwright test tests/playwright/<relevant-spec>.spec.ts
 ```
 
 Use `npx playwright test <spec>` for focused iteration. `npm run test:playwright` and `./run-tests.sh` invoke the guarded full matrix and are not shortcuts for one spec. GitHub Actions owns exhaustive verification; a local full run needs explicit approval for its high write volume and `GETBASED_ALLOW_HIGH_WRITE_TESTS=1`.
+
+Use `styles:check` and `svelte:check` for presentation changes, and `production:check` for shipping build changes. Static acceptance specs under `tests/pwa/` verify the assembled artifact; native browser specs remain separate evidence. Preserve original frozen fixtures and meaningful assertions.
 
 Combined function coverage has a committed global floor and independent feature floors. Critical-module line/branch gates are separate. Review the [testing guide](/developers/testing#coverage-status) and CI artifacts when selecting a coverage target; do not weaken thresholds to make a change pass.
 

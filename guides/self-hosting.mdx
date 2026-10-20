@@ -4,7 +4,7 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased is authored in TypeScript and compiled with TypeScript 7 to native JavaScript ES modules for local development. A source checkout requires Node.js 24 and npm dependencies. Production deployments run a Rolldown build that creates a hashed startup bundle and keeps feature-level lazy chunks separate. The resulting runtime is still mostly static HTML, CSS, and JavaScript, plus optional API routes for hosted features.
+getbased uses Svelte 5, Tailwind CSS 4 and a static SvelteKit 3 build. A source checkout requires Node.js 24 and npm dependencies; TypeScript 7 compiles the application. The built core is static HTML, CSS and JavaScript and needs no Node rendering server. Wearable OAuth, optional integration endpoints, profile sharing, Sync and Companion retain their own service requirements.
 
 ## Quick start
 
@@ -25,12 +25,26 @@ getbased is authored in TypeScript and compiled with TypeScript 7 to native Java
     Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
 
     <Note>
-      Use the development server for wearable OAuth and other features that depend on `/api/proxy`. After compiling with `npm run typescript:build`, a static server such as `python3 -m http.server 8000` is sufficient only for browser-local features; it cannot load deployment OAuth settings or exchange confidential OAuth tokens, so Google Health remains unavailable there.
+      This is the source-development server, not the assembled production build. It provides local `/api/proxy` behavior where configured. A static file server cannot exchange confidential OAuth tokens or supply those API routes; build and configure the production artifact and optional services separately for a public host.
     </Note>
   </Step>
 </Steps>
 
 `npm ci` compiles the sources through its `prepare` step; `npm run dev-server` recompiles and builds the Companion download before serving. If you edit sources while the server is running, run `npm run typescript:build` before reloading. Production builds also require compiled runtime modules: use `npm run production:build` locally; Vercel compiles during dependency installation before its configured build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
+
+## Build for a static host
+
+```bash
+npm ci
+npm run production:build
+npm run production:check
+```
+
+`production:build` writes the complete app to `dist/`. `production:check` validates a separate disposable build. Publish the **contents of `dist/`** together, including hidden public files, workers, assets and `getbased-companion.mjs`. Copying the checkout's `index.html` alone does not deploy the production app.
+
+Configure your static host to serve `/app` and `/app/` from `/index.html`, with the existing JavaScript/Wasm MIME types, CSP and security headers. Keep API routes separate from the app-document rewrite. Use HTTPS on a public host so installation and offline features can work. Node/npm are build dependencies; they are not required to render the built core on the host.
+
+Keep a stable origin when updating. Browser data belongs to its scheme, hostname and port; moving to another origin requires a deliberate backup/import or Sync setup. Deploy a complete matching build so documents, styles, workers and version metadata stay aligned. See [Deployment](/developers/deployment) for headers, services and build identity.
 
 ## Optional CLI Companion
 
@@ -158,7 +172,7 @@ For a multi-instance Vercel deployment, also configure a suitable proxy limiter 
 
 ## App updates
 
-Deploy the production build so its embedded build identity and service-worker assets stay aligned. Updates download quietly; **Reload / Later** appears after installation succeeds. A failed update keeps the current app usable. Build identity, not a semver bump for every fix, distinguishes cache generations. See [Deployment](/developers/deployment#service-worker).
+Deploy the complete production artifact so its embedded build identity and service-worker assets stay aligned. Updates download quietly and offer **Reload / Later** when ready. Applying shows progress; a failed or paused activation offers recovery rather than silently discarding the offer. Follow [App updates and offline use](/guides/app-updates) for **Retry update** and close-all-windows recovery. Updating does not require clearing browser storage. Build identity, not a semver bump for every fix, distinguishes cache generations. See [Deployment](/developers/deployment#service-worker).
 
 ## Deploying to Vercel
 

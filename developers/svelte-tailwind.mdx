@@ -1,0 +1,85 @@
+---
+title: "Svelte and Tailwind"
+description: "Author getbased UI with Svelte components, typed controllers and Tailwind recipes, and verify the static SvelteKit app."
+---
+
+getbased shares Svelte 5 presentation between its static SvelteKit 3 production app and retained native compatibility entry. Tailwind CSS 4 supplies scoped utilities and semantic recipes. Domain services, storage formats and optional integration boundaries remain separate from the UI framework.
+
+## Choose the source owner
+
+| Change | Source owner |
+|---|---|
+| Markup, accessible labels and child composition | `js/components/*.svelte` |
+| Readonly display values | The feature's presentation or projector module |
+| Persistence, calculations, provider requests and navigation | The existing typed domain service or controller |
+| Feature styles | The utility catalog or recipe input registered by `scripts/build-styles.mts` |
+| Fixed inline declarations | Recipes registered in `scripts/inline-style-map-owners.mts` |
+| Measured geometry or runtime visibility | The existing controller's explicit style port |
+| Shared app route and hydration | `js/kit/routes/app/+page.svelte` and `+layout.svelte` |
+| Shipping artifact and offline inventory | `scripts/build-sveltekit.mts` and its asset-policy owners |
+
+Read the app's [presentation ownership contract](https://github.com/elkimek/get-based/blob/main/engineering/presentation-ownership.md), [architecture](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md) and generated [module map](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) before moving responsibilities between these owners.
+
+Edit canonical `.ts`, `.mts`, `.svelte` and registered style inputs. Ignored `.js`/`.mjs` siblings and compiled component declarations are emissions. Some `.base.css` files contain authored recipes; the suffix alone does not identify an output. Find the registered owner instead of patching generated CSS.
+
+## Keep components responsible for presentation
+
+Compose ordinary UI through typed Svelte children and props. Use normal interpolation for text; preserve reviewed sanitization boundaries for Markdown, SVG, print documents and retained HTML serializers. Do not coordinate children through serialized HTML slots, compiler markers or private parser structures.
+
+Existing native facades can synchronously serialize the same Svelte owners for their compatibility insertion points. They are not a second template system. Production Kit compiles the authored components directly and shares one Svelte runtime; native serializers use their explicitly built lifecycle boundary.
+
+Keep credentials and private metadata out of general display snapshots and action attributes. Dedicated reveal/copy and private-field ports retain their narrow existing contracts.
+
+## Preserve lifecycle and durable writes
+
+- Hydrate matching snapshots once and dispose the old owner before replacing its DOM. Preserve retained controls, draft values, native reset defaults, selection, composition and focused-node identity.
+- Before awaiting work, capture the original profile/data, root and request identity. Recheck the relevant provider, thread, selection or draft before dispatch, publication and persistence. A retired control must not act on a replacement view.
+- Keep accepted writes with their original domain transaction. Closing a component must not silently lose an already accepted save or make it adopt another profile's unsaved fields.
+- Release listeners, subscriptions, timers, observers, pointer capture and object URLs when their UI owner retires. Preserve keyboard actions, focus traps and scroll locks.
+- Retain lightweight configuration and close/abort ports for lazy features. Closing a cold feature should not load its UI.
+
+Loading and hydration are asynchronous. Tests should await actual route completion, mounted controls or durable writes before comparing state; preserve the original assertions rather than using fixed sleeps or looser comparisons.
+
+## Use the styling pipeline
+
+Tailwind utilities are scoped and prefixed, without global Preflight. Existing theme variables remain authoritative for colors, typography and radii. Preserve the owning selectors, specificity, stylesheet URL, cascade position and media/container/supports ancestry.
+
+`scripts/build-styles.mts` coordinates owners. `scripts/native-recipe-styles.mts` validates recipe declarations; `scripts/style-recipes/` holds build-time catalogs. The inline-style registry generates typed maps for fixed declarations. Root foundation and optional-theme recipes generate `styles.css` and `themes-extra.css`.
+
+Use necessary native CSS for tokens, keyframes, pseudo-elements, vendor integration and reviewed print/report outputs. Do not add a competing global override or `!important` to bypass a component's owner. For prefixed Tailwind relationships, use the marker alone (`gb:peer`, `gb:group`) and scope the consuming utility. Verify visible switch track/thumb, color and keyboard focus as well as the stored checked value.
+
+## Build and check a change
+
+Use Node.js 24. `npm ci` installs the workspaces and compiles through `prepare`.
+
+```bash
+npm run typescript:build
+npm run styles:check
+npm run svelte:check
+npm run typecheck:migration
+npm run typecheck:migration-tests
+npm run architecture:check
+npm run quality
+npm test -- tests/<relevant-test>.test.ts
+```
+
+Application compilation and component diagnostics use TypeScript 7. `tooling/svelte` isolates the supporting Kit/checker TypeScript 6 peer. Do not replace the strict app compiler or weaken diagnostics to satisfy a peer dependency.
+
+When runtime modules or imports change, run `npm run architecture:build`, inspect and commit the regenerated `MODULE_MAP.md`, then check it. Compile before direct emitted Node or Playwright commands. Standard development, test and production npm commands compile first.
+
+For a shipping build change, use `npm run production:check`. To run one assembled-app browser spec:
+
+```bash
+npm run sveltekit:build
+npx playwright test --config playwright.sveltekit.config.ts tests/pwa/sveltekit.spec.ts --project kit-chromium
+```
+
+Native browser behavior under `tests/playwright/` and shipping/offline behavior under `tests/pwa/` are distinct evidence. Preserve frozen reference fixtures, complete data comparisons, compiler safety, coverage floors and resource budgets. GitHub Actions owns the exhaustive browser and combined-coverage matrix; focused local checks do not establish complete release acceptance.
+
+## Ship the assembled app
+
+`npm run production:build` writes the complete static artifact to ignored `dist/`. Serve it with the `/app` document rewrite, existing MIME types, CSP and security headers. The core needs no Node rendering server; optional services retain their requirements.
+
+The root service worker remains the only offline/update owner. Do not add a second Kit worker or independent version poller. Preserve the existing legal-consent bootstrap, stable worker/style/facade URLs in the verified public closure and old-client build ownership. A source document or arbitrary emitted development module is not a substitute for the assembled artifact.
+
+See [Deployment](/developers/deployment), [Testing](/developers/testing) and the maintained [static distribution contract](https://github.com/elkimek/get-based/blob/main/engineering/static-sveltekit.md).

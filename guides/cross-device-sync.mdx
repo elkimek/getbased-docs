@@ -90,6 +90,12 @@ Open **Settings → Data → Cross-device sync** to manage the current browser:
 
 Use disconnect/reset only when you intend to remove the identity from this browser or troubleshoot by starting its Sync state again. To reconnect it to the same identity, choose **Join existing device** and restore the saved mnemonic. Choose **Set up new sync** only when you intend to create a separate identity and reconnect your other devices to it.
 
+## Edits while a profile is loading
+
+An incoming Sync update can arrive while a profile is opening. getbased preserves local edits made as that profile becomes active when applying the update. Save editor changes normally. If you need to verify a change on another device, wait for Sync to settle and compare the affected profile on both devices.
+
+An app update is separate from changing your Sync identity. Follow [App updates and offline use](/guides/app-updates); you do not need to create a new mnemonic because the interface changed.
+
 ## Chat recovery after an update
 
 Use the same Sync identity on your devices, update/reload the app, and keep them open while Sync settles. The app reconciles chat-only differences as well as health-data changes, including inactive profiles. Renaming or moving a conversation does not make an older message body overwrite a newer one. Deletion records prevent an old offline copy from simply resurrecting a removed thread.
