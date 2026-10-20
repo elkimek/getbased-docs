@@ -143,7 +143,7 @@ Confirmed lab results and per-file import history still sync normally. Deleting 
 Wearable sync follows a deliberate split:
 
 - **Wearable summary syncs.** The latest values, baselines, weekly trends, and anomaly events for every connected wearable metric flow to your other devices alongside everything else. Strip cards on Device B show the right numbers immediately after sync.
-- **Raw daily rows stay local.** The full 90-day history (every per-day HRV, sleep score, RHR, and manual entry) lives in a per-device IndexedDB and is excluded from the sync payload. Detail-modal charts on Device B will be empty until you connect each wearable vendor separately on that device.
+- **Raw vendor and file-imported daily rows stay local.** Their per-day HRV, sleep, RHR and other source history lives in a per-device IndexedDB and is excluded from the Sync payload. Connect each vendor separately on another device to populate its history. Explicitly entered manual weight, blood pressure and pulse are the exception: their narrow synced records materialize into the local manual history as described above.
 - **OAuth tokens never sync.** Each device must authorise each wearable independently. This is by design — a stolen mnemonic should not grant continuous access to your live wearable feeds.
 
 ## Sync status indicator
