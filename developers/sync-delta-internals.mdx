@@ -51,7 +51,7 @@ Because V8 uses generation-named local databases for history resets, successful 
 |---|---|---|
 | dated item arrays | `entries`, `changeHistory` | stable date/item fields plus surface-specific tombstones |
 | stable-id arrays | `importSnapshots`, `supplements`, `healthGoals`, `notes`, `chatSummaries` | item `id` or configured key |
-| maps | `manualValues`, `markerValueNotes`, `markerPlacements` | key transform, not array identity |
+| maps | `manualBodyReadings`, `manualValues`, `markerValueNotes`, `markerPlacements` | key transform, not array identity |
 | scalar/profile state | `agentAccess`, `agentAccessWearableSeriesDays` | profile-level last-write-wins |
 
 `importSnapshots` are user-visible because Settings → Data can reopen a saved import review. They must keep stable IDs and tombstones so deleting one source file does not delete unrelated same-day marker values.
@@ -199,3 +199,7 @@ Before shipping sync changes:
 - check Settings → Data diagnostics for a useful label and no plaintext secrets;
 - verify owner storage refresh and compaction/rebuild failure recovery when relay maintenance changes;
 - test export/import if the surface should survive backups.
+
+## Manual body-reading fields
+
+`manualBodyReadings` is an explicit user-entered exception to device-local raw wearable history. Each `<field>.<date>` key has a value and edit clock, so independent same-day weight, BP and pulse updates compose. Explicit null values clear a field; empty local storage does not. Blob reconciliation and keyed-row overlays retain a newer embedded manual edit clock. The receiving browser validates and materializes this narrow map in its manual Reading store. See [Wearable internals](/developers/wearables-internals#explicit-manual-reading-mirror) for backfill, ownership, deletion and privacy boundaries.
