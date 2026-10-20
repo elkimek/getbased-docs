@@ -1,0 +1,44 @@
+---
+title: "App updates and offline use"
+description: "Apply getbased updates, recover a paused update, and keep browser-local data available offline."
+---
+
+getbased downloads app updates in the background while you use it. An update changes the application code and styles; it does not require a new account, a new Sync identity or clearing your saved data.
+
+## Apply an update
+
+1. Finish and save any work in an open editor before reloading.
+2. When **Update ready** appears, choose **Reload** to apply it, or **Later** to keep using the current version.
+3. While the banner shows **Updating…**, wait for the app to finish. The buttons are temporarily disabled to prevent duplicate actions, and the page reloads when the accepted update is ready.
+
+You may also see **New version installed** with a **Reload** choice when a reload is still needed. Returning to an earlier page can restore that offer; it does not automatically accept another update for you.
+
+## If the update is paused or takes too long
+
+Some open tabs or installed-app windows may still be using an older version. If the banner says **Update paused to protect open tabs**, close **all getbased tabs and installed-app windows**, then reopen getbased while online. Closing only the tab with the banner can leave another copy open.
+
+If an update cannot start or takes longer than expected, the banner restores **Retry update** or **Reload**. Use the offered action, then choose to apply the available update when prompted. You can also close all getbased tabs/app windows and reopen. Older versions may not show the newer recovery message, so the same close-all-and-reopen step can help when their Reload button leaves an update waiting.
+
+<Warning>
+Do not clear site data, reset Sync or delete a profile just to apply an update. Browser storage contains your local health data and settings. Keep a separate [backup](/guides/backup), especially before deliberate storage cleanup or moving to another browser or host.
+</Warning>
+
+A failed update download leaves the currently active build available. Connect to the network again to obtain an update; a first installation does not need to show an update prompt.
+
+## Use getbased offline
+
+Open the app online first and allow it to finish caching its application files. Cached browser-local workflows and already saved data can then work without a network connection, including labs, charts and local encryption. This also applies to a supported installed Progressive Web App (PWA).
+
+Network features have separate requirements:
+
+- Hosted AI needs a connection to the selected provider. Local AI depends on the local model/server being available.
+- Downloaded voice or local models must be acquired separately; app caching does not include every optional model.
+- Wearable connection/refresh, live weather or atmosphere requests, cross-device Sync and remote sharing need their respective services.
+
+If a feature needs the network, reconnect and retry it. App caching and installation are not substitutes for a backup of your profile data.
+
+## Keep the same browser origin
+
+Local data belongs to the browser profile and the exact website origin. A different hostname, port, browser profile or private window does not automatically contain the same records. Use [export/import](/guides/export-import) or deliberately configure [cross-device Sync](/guides/cross-device-sync) when moving.
+
+For installation options, see the [quickstart](/quickstart). Operators should follow [self-hosting](/guides/self-hosting#build-for-a-static-host) to publish the complete matching build and preserve its offline assets.

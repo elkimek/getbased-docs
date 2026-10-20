@@ -114,6 +114,16 @@ Before an inbound pull can merge remote scalar state, it flushes pending local w
 
 `sync-origin-state.ts` records exact committed `syncedAt` values for the current tab. An inbound subscription with one of those timestamps still refreshes local state but does not show the misleading “updated from another device” notice. Other tabs and devices do not share this in-memory marker and still show the notice.
 
+## Profile activation during a pull
+
+Selecting a profile ID does not immediately make the previous profile's data object belong to it. `profile.ts` marks the context handoff as a transition; `isActiveProfileDataOwner(profileId, data)` requires the transition to be complete, a matching active ID and the exact installed data-object identity. A stale or failed load must not certify the old object under the new ID.
+
+`captureSyncPullBaseline()` and `persistPulledImportedData()` use that ownership check when capturing live state, preserving device-local connections and adopting a committed merge. Persistence stays serialized with ordinary saves through `queueProfileDataWrite()`.
+
+If an inactive profile becomes active after the pull's early snapshot, compare its live edits with that object's remembered `profileDataBaseline()`. Do not use its already edited value as the origin, and retain the early stored baseline for durable saves. If a different object is installed during the awaited write, rebase from that replacement object's own remembered origin before publishing into it.
+
+The regression cases in [`tests/profile-write-concurrency.test.ts`](https://github.com/elkimek/get-based/blob/main/tests/profile-write-concurrency.test.ts) cover activation during queued reads/writes, unsaved edits and interrupted handoffs. Keep these assertions alongside the [profile](https://github.com/elkimek/get-based/blob/main/js/profile.ts) and [pull-merge](https://github.com/elkimek/get-based/blob/main/js/sync-pull-merge.ts) owners.
+
 ## Existing-mnemonic restore ordering
 
 Joining a Sync identity must finish application state before navigation. The Evolu 7 worker's default `restoreAppOwner()` behavior can reload before the returned promise resolves. A first-time join previously reloaded while Sync still had provisional `persist: false` state, so the restored owner could not pull relay data. The Evolu 8 facade preserves the same application contract.

@@ -9,16 +9,18 @@ The current official deployment separates the static browser app from several na
 
 ## Production build
 
-Source deployments require Node.js 24. `npm ci` compiles canonical `.ts` and `.mts` sources with TypeScript 7 through `prepare`; the emitted `.js` and `.mjs` files are ignored in Git. `vercel.json` enables Git deployment only for `main` and then runs:
+Source deployments require Node.js 24. `npm ci` compiles canonical TypeScript, Svelte and style sources through `prepare`; edit registered source owners rather than emitted runtime siblings, component artifacts or generated CSS. The shipping app uses static SvelteKit 3 with `adapter-static`, Svelte 5 and Tailwind CSS 4. `vercel.json` enables Git deployment only for `main` and then runs:
 
 ```json
 {
-  "buildCommand": "node scripts/fetch-catalog.mjs && node scripts/build-production.mjs",
-  "outputDirectory": "."
+  "buildCommand": "node scripts/fetch-catalog.mjs && npm run production:build",
+  "outputDirectory": "dist"
 }
 ```
 
-After dependency installation and compilation, the catalog fetch runs first. The Rolldown build then rewrites the native-module development entry to a content-hashed startup bundle while retaining feature-level lazy chunks. `vercel.json` gives hashed `js/bundle-*.js` files immutable cache headers and applies the CSP and security headers before the legacy documentation redirects and `/app` rewrite.
+After the catalog fetch, `production:build` recompiles and assembles the complete static app in `dist/`, including prerendered documents, hashed Kit assets, retained worker dependencies, public styles, the manifest and Companion download. Serve that complete artifact; the source `index.html` or a selection of bundles is insufficient. No Node rendering server is required for the core. API functions and optional services retain their separate deployment boundaries.
+
+`vercel.json` gives `/_app/immutable/*` and retained hashed `js/bundle-*.js` assets immutable headers and applies CSP/security headers before documentation redirects and the `/app` rewrite. Keep the generated classic bootstrap external; enabling inline executable scripts to make hydration work would change the security contract.
 
 Production catalog fetch variables are build-time secrets, not browser runtime configuration:
 
@@ -31,7 +33,7 @@ Production catalog fetch variables are build-time secrets, not browser runtime c
 
 With no URL, the script accepts an existing readable catalog or copies the public example stub. When a URL is present but a preview build has no token, it also uses the stub. A configured production fetch that returns invalid JSON or the wrong catalog shape fails the build rather than silently shipping it.
 
-For local production verification, use `npm run production:build` or `npm run production:check`; both compile first. Direct execution of `scripts/*.mjs` after source edits requires `npm run typescript:build`.
+For local production verification, use `npm run production:build` or `npm run production:check`; both compile first. The latter checks a disposable artifact. `npm run sveltekit:build` retains the local acceptance artifact; `npm run test:sveltekit` builds it before its configured browser cases. `native:compatibility:check` retains the old native build checks and does not validate the default shipping distribution. Direct execution of `scripts/*.mjs` after source edits requires `npm run typescript:build`. See the maintained [static distribution contract](https://github.com/elkimek/get-based/blob/main/engineering/static-sveltekit.md).
 
 Standalone compatibility and profile-share Docker images use a build stage with compiler dependencies, then copy compiled runtime modules into a non-root Node runtime stage. Rebuild from source when updating these services; copying uncompiled TypeScript into the runtime image is insufficient. Browser imports, worker URLs, service routes, and Companion download paths retain their JavaScript runtime contracts. Vercel's function configuration refers to canonical API sources such as `api/proxy.ts`.
 
@@ -196,15 +198,19 @@ Missing configuration skips the corresponding operation. The development endpoin
 
 ## Content Security Policy
 
-The current hosted policy allows self scripts, Wasm evaluation, blob workers, the approved analytics origin, jsDelivr for explicitly retained runtime needs, HTTPS/WebSocket connections, and loopback Local AI connections. It denies frames, objects, and foreign base URLs. The exact source of truth is `vercel.json`.
+The current hosted policy allows self scripts, Wasm evaluation, blob workers, approved analytics, explicitly retained jsDelivr runtime needs, HTTPS/WebSocket connections and loopback Local AI connections. Script inline execution remains disallowed. Frames are limited to loopback `http://127.0.0.1:*`; objects are denied and the base URL is restricted to self. Preserve the policy and cross-origin isolation headers from `vercel.json` when configuring another host.
 
 When adding a provider or browser runtime, review the CSP, direct-CORS requirements, service-worker network-only list, proxy policy, and public privacy disclosure together. CSP permission does not authorize use of the compatibility relay.
 
 ## Service worker
 
-Each deployed build has an identity derived from its commit and deployment ID, embedded in emitted `version.js` and the worker by the production builder. New builds use separate caches even when the user-facing `APP_VERSION` is unchanged. Semver labels are for releases and changelogs; a version bump is not required to deliver every patch.
+The production builder embeds a matching build identity in emitted `version.js` and the worker. Identity covers authored TypeScript, Svelte, CSS, HTML and JSON inputs, the explicit build tag and copied public asset bytes. Revision/verification metadata alone is not proof of complete artifact byte identity. Different application identities use separate caches even when the user-facing `APP_VERSION` is unchanged; a version bump is not required for every patch.
 
-While visible, the app checks for updates every five minutes and on return. It installs the new app shell in the background and offers **Reload / Later** only when that build is ready. Choosing Later keeps the current build running. A failed download leaves the active build usable. Initial installation does not produce a false update prompt.
+The existing root service worker owns both native and Kit offline/update behavior; Kit must not register a competing worker. While visible, the app checks for updates every five minutes and on return. It installs a separate build cache in the background and offers **Reload / Later** when ready. Initial installation does not produce a false update prompt.
+
+Accepting an update keeps visible **Updating…** feedback and disables duplicate actions while the exact waiting worker is checked and asked to activate. A deferred activation explains that all getbased tabs and installed-app windows must close. Message failures, a vanished waiting worker or the 30-second timeout restore an actionable **Retry update** or **Reload** choice. Retry checking does not carry automatic activation consent to a replacement worker. Leaving the page clears pending consent; returning can restore an available offer, including an already installed version's manual Reload choice. **Later** still dismisses that offer.
+
+Early activation retains direct build-identity replies from every live document and a fresh client census. Unidentified older pages keep the update waiting; close all app tabs/windows and reopen. Old clients cannot acquire the new banner behavior retroactively. Keep matching modules/styles for older identified documents until their owners leave or reload; never mix new deployment HTML with an old build's metadata. Failed downloads retain the active app. User steps are in [App updates and offline use](/guides/app-updates).
 
 Required shell assets are precached with bounded concurrency/retries, including offline settings artwork and the bundled Fitbit fallback icon. Keep this inventory aligned with production build output.
 
@@ -214,10 +220,10 @@ Required shell assets are precached with bounded concurrency/retries, including 
 | Same-origin `/api/*` | Network only |
 | Production same-origin app assets | Current-build cache first, then network |
 | Preview/local same-origin app assets | Network first, then current cache |
-| Navigation | Cached route when present, with app-shell fallback |
+| Navigation | Verified cached app document/alias for its build; missing owned documents fail rather than mixing builds |
 | Explicit update probe | Network first |
 
-Activation cleans obsolete app caches. Version 1.19.3 provides the migration signal for older version-based clients. Local development normally unregisters the worker; use `/app?dev-sw=1` only for deliberate offline verification.
+Activation cleans obsolete caches only when no retained document still owns that build. Version 1.19.3 provides the migration signal for older version-based clients. Local development normally unregisters the worker; use `/app?dev-sw=1` only for deliberate offline verification.
 
 For release tags, do not move historical tags that happen to share a semver label. The repository already uses descriptive tags such as `v1.19.0-cli-agents` to disambiguate its older history.
 

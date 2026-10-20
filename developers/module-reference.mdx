@@ -8,9 +8,23 @@ description: "Reference map for the getbased native ES modules and compatibility
 
 # Module Reference
 
-Modules live under `js/`. The app has hundreds of focused TypeScript modules, compiled to JavaScript by TypeScript 7. This page is a guided implementation map, not a promise that every small hook, delegate, or helper file has its own long section. It is grouped by ownership area. Follow the app architecture contract for dependency direction; `.ts` filenames identify authored source, while imports and browser URLs retain `.js` runtime specifiers.
+Modules live under `js/`. Typed services and controllers are compiled by TypeScript 7; authored Svelte components own first-party markup. The static Kit build consumes those components directly, while native compatibility facades retain their emitted runtime URLs. This page is a guided implementation map, not a promise that every small hook, delegate, or helper file has its own long section. It is grouped by ownership area. Follow the app architecture contract for dependency direction; `.ts` filenames identify authored source, while imports and browser URLs retain `.js` runtime specifiers.
 
 ---
+
+## UI and build owners
+
+| Owner | Responsibility |
+|---|---|
+| `js/components/*.svelte` | First-party markup and typed child composition |
+| Feature presentation/projector modules | Readonly display snapshots; keep requests, credentials and persistence in their existing owners |
+| Feature controllers and runtime ports | Actions, storage, provider execution, async ownership and disposal |
+| `js/kit/routes/app/+page.svelte` and `+layout.svelte` | Static AppShell route, hydration and service bootstrap |
+| `scripts/build-styles.mts`, `scripts/style-recipes/`, `scripts/inline-style-map-owners.mts` | Tailwind/style ownership and reproducible outputs |
+| `scripts/build-sveltekit.mts` | Complete production artifact and offline resource closure |
+| `js/service-worker-update.ts` | User update acceptance, pending feedback and retry/reload recovery |
+
+Use [Svelte and Tailwind](/developers/svelte-tailwind) before changing UI ownership. The generated [module map](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) is the full current inventory; this page is a guided map.
 
 ## Layer 1 — Foundation
 

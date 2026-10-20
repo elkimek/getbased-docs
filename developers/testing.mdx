@@ -11,7 +11,7 @@ description: "How to run and write getbased tests across Node, Vitest, and Playw
 getbased uses two test layers:
 
 - **Vitest** wraps the node-side helper fixtures and fast logic checks.
-- **Playwright** runs the browser suite against the live app in headless Chrome.
+- **Playwright** checks the native compatibility entry and assembled static SvelteKit app headlessly. Shipping acceptance covers Chromium, Firefox, desktop WebKit and mobile WebKit; use the project/configuration that owns the behavior.
 
 Routstr/Cashu wallet work has an extra release gate because it touches bearer money. Before changing wallet funding, token export/import, seed restore, node deposit/top-up, refunds, or Cashu TS migration code, read [Routstr/Cashu safety](/developers/routstr-cashu-safety).
 
@@ -24,13 +24,13 @@ npm run marker-schema:check
 npm run marker-terminology:check
 ```
 
-Use the matching `:build` command after editing authoring modules, then run the focused identity, placement, persistence, or terminology tests relevant to the diff. GitHub Actions owns the exhaustive Chromium and combined-coverage run.
+Use the matching `:build` command after editing authoring modules, then run the focused identity, placement, persistence, or terminology tests relevant to the diff. GitHub Actions owns the exhaustive browser and combined-coverage run.
 
 ## Test setup and assertions
 
 For CLI-provider and chat-workspace changes, cover the [Companion verification checklist](/developers/cli-agent-providers#verification-checklist) and [chat ownership checks](/developers/chat-internals#change-scoped-verification). Test discovery-only versus installation-authorized credentials separately, unavailable models/targets, canceled uploads, profile switches before the first token, and source-toggle enforcement in tools. Use mocks for routine CI rather than real health records or paid inference. Native OS service installation and OS file dragging require separate platform checks.
 
-Cold-load budgets measure source-mode requests, compressed transfer, and decoded bytes; they are distinct from production chunk budgets. `cold-load-budget.spec.ts` attaches the per-resource inventory for attribution. Record any deliberate feature cost explicitly instead of removing assertions or silently widening the budget. Exhaustive browser and combined-coverage runs belong in GitHub Actions, not an unapproved local full-matrix run.
+The shipping build enforces its offline-cache resource budget; `npm run performance:check -- --artifact dist` separately measures startup and incremental Settings/Body transfer with synthetic profiles. The native source-mode cold-load budgets remain separate checks. `cold-load-budget.spec.ts` attaches the per-resource inventory for attribution. Record any deliberate feature cost explicitly instead of removing assertions or silently widening the budget. Exhaustive browser and combined-coverage runs belong in GitHub Actions, not an unapproved local full-matrix run.
 
 Install dependencies with Node.js 24 and `npm ci`. `npm test` compiles the app and fixtures before Vitest. Before direct Playwright or Node commands after source edits, run `npm run typescript:build`; keep runtime imports and fixture fetch URLs ending in `.js` or `.mjs`.
 
@@ -54,9 +54,24 @@ npm run typescript:build
 npx playwright test tests/playwright/<relevant-spec>.spec.ts
 ```
 
+## Svelte, styling and production acceptance
+
+After changing authored presentation, compile and run `npm run styles:check` and `npm run svelte:check` as applicable, plus strict application/test types and relevant behavior tests. Use `npm run production:check` for a shipping build change. Do not replace frozen native receipts, original assertions or cache/performance/coverage floors merely because the renderer changed.
+
+For one static acceptance spec, build once and select that spec explicitly:
+
+```bash
+npm run sveltekit:build
+npx playwright test --config playwright.sveltekit.config.ts tests/pwa/sveltekit.spec.ts --project kit-chromium
+```
+
+`npm run test:sveltekit` builds first and runs its configured acceptance set; a focused result is not complete release acceptance. The root service-worker protocol fixture at `tests/pwa/update-acceptance.spec.ts` has its own configuration, `playwright.pwa.config.ts`.
+
+In GitHub Actions, shipping desktop/mobile WebKit UI and real Worker/OPFS acceptance run on macOS Cocoa. The OPFS lane uses persistent profiles and a required write/flush/read control across a browser restart. Chromium/Firefox shipping acceptance and native suites retain Linux placement. Case inventories and the aggregate check reject missing or duplicate receipts. A focused Linux WPE diagnostic does not certify shipping Cocoa behavior. See the app's [testing policy](https://github.com/elkimek/get-based/blob/main/engineering/testing-policy.md) for current partitions and release evidence.
+
 ## Notable test files
 
-All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; fixture scripts live as `tests/test-*.ts`. The table calls out representative ownership areas rather than duplicating the complete file listing from the repository.
+All test files live in the `tests/` directory. Native browser specs live under `tests/playwright/`; static artifact and offline workflow specs live under `tests/pwa/`; fixture scripts live as `tests/test-*.ts`. The table calls out representative ownership areas rather than duplicating the complete file listing from the repository.
 
 A few tests run node-side (no browser) — pure-helper unit tests + node script guards. Marked **node** in the table; browser-driven coverage is owned by Playwright specs.
 
@@ -226,13 +241,13 @@ Pull-request CI selects affected tests and runs the relevant gates. Main-branch 
 
 `./run-tests.sh` and the full Playwright command are intentionally guarded outside CI because they run the complete browser matrix and can produce substantial disk writes. Local development should use change-scoped Vitest files and Playwright specs. Run the guarded full matrix only after explicit approval to set `GETBASED_ALLOW_HIGH_WRITE_TESTS=1`; routine exhaustive verification belongs to GitHub Actions.
 
-With CI authorization, `COVERAGE=1 ./run-tests.sh` runs Vitest with V8 coverage, runs the Playwright suite with Chromium JS coverage, then merges `tests/.playwright-coverage/` with `tests/.vitest-coverage/coverage-final.json`. The reporter writes `tests/.coverage.json` and prints separate Playwright, Vitest/Node, and combined global function/byte coverage percentages for app-source JavaScript.
+With CI authorization, `COVERAGE=1 ./run-tests.sh` combines browser collection with the explicit native function-coverage receipt. The custom unit provider uses public native V8 collection, preserving exact compiled source mappings, raw captures and test membership. Its `coverage-functions.json` records function identities and execution counts; it does not infer native statement, branch or byte coverage. The retained `production-coverage` artifact includes per-file/feature results and revision information. Critical-module coverage is a separate Istanbul gate. See the [coverage contract](https://github.com/elkimek/get-based/blob/main/engineering/testing-policy.md#coverage-measurement-and-floors) before changing producers or consumers.
 
 Running `node scripts/playwright-coverage.mjs` directly still falls back to the legacy high-surface Chromium sampler when no Playwright suite shards are present. The full `COVERAGE=1 ./run-tests.sh` path requires suite shards so coverage regressions in the Playwright instrumentation fail clearly.
 
 Combined coverage is enforced by [`scripts/coverage-baseline.json`](https://github.com/elkimek/get-based/blob/main/scripts/coverage-baseline.json): the current global function floor is **89%**, with independent floors for 17 feature groups. `COVERAGE_MIN` can demand a stricter global floor but cannot lower the committed baseline. Missing feature measurements fail the gate.
 
-Runtime coverage measures emitted JavaScript consistently across Node and Chromium. Byte coverage is reported separately and is not line or branch coverage. A separate critical-module Vitest configuration enforces line, statement, function, and branch thresholds for selected safety-sensitive modules; those percentages do not describe the entire app. See [`vitest.critical.config.ts`](https://github.com/elkimek/get-based/blob/main/vitest.critical.config.ts). Keep gate thresholds intact when adding tests or refactoring.
+Runtime coverage uses emitted JavaScript coordinates consistently across Node and Chromium. Svelte components are inventoried once at their native-browser emission; only framework functions positively identified by authoritative source maps are separated. Missing or ambiguous mappings must not improve coverage. Byte coverage is distinct from line/branch coverage, and native function-only evidence must not be presented as those metrics. A separate critical-module Vitest configuration enforces line, statement, function, and branch thresholds for selected safety-sensitive modules; those percentages do not describe the entire app. See [`vitest.critical.config.ts`](https://github.com/elkimek/get-based/blob/main/vitest.critical.config.ts). Keep gate thresholds intact when adding tests or refactoring.
 
 ## Accessibility regression scan
 

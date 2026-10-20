@@ -8,7 +8,7 @@
     "light": "#34548c",
     "dark": "#1c1c24"
   },
-  "favicon": "https://media.brand.dev/f3866873-8ef5-4327-86de-315bc482d257.svg",
+  "favicon": "/favicon.ico",
   "icons": {
     "library": "lucide"
   },
@@ -75,6 +75,7 @@
             "pages": [
               "introduction",
               "quickstart",
+              "guides/app-updates",
               "guides/dashboard",
               "guides/privacy",
               "ai-providers",
@@ -161,6 +162,7 @@
             "pages": [
               "developers",
               "developers/architecture",
+              "developers/svelte-tailwind",
               "developers/module-reference",
               "developers/cross-module-patterns"
             ]

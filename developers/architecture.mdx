@@ -1,6 +1,6 @@
 ---
 title: "Architecture"
-description: "How the native-module getbased app is structured, started, tested, and layered."
+description: "How the static SvelteKit app, Svelte components, typed services, Tailwind styles, and native compatibility entry fit together."
 ---
 
 {/* Synced during developer-docs migration. */}
@@ -10,7 +10,7 @@ description: "How the native-module getbased app is structured, started, tested,
 
 ## TypeScript authoring and JavaScript runtime
 
-Edit canonical `.ts` and `.mts` sources. TypeScript 7 emits ignored `.js` and `.mjs` siblings at the existing runtime paths. Local development loads these emitted native ES modules; production uses Rolldown to bundle the startup graph and retain lazy feature chunks. The browser does not load TypeScript directly.
+Edit canonical `.ts`, `.mts` and `.svelte` sources and the owning Tailwind recipe inputs. TypeScript 7 emits ignored `.js` and `.mjs` siblings for the native compatibility graph; local development uses that graph. Production uses SvelteKit 3 with `adapter-static`, compiles authored Svelte components directly and ships the complete assembled artifact from `dist/`. The browser does not load TypeScript directly. Supporting Kit/checker peers are isolated in `tooling/svelte`; their TypeScript 6 dependency does not replace the application compiler.
 
 Use Node.js 24. `npm ci` installs dependencies and compiles through `prepare`; `npm run dev-server`, `npm test`, and the production build/check commands also compile first. With a server already running, compile after source edits before reloading. Direct Node and Playwright commands need the same compilation step.
 
@@ -33,13 +33,26 @@ The production and test compiler projects are separate and strict. The app, serv
 
 Source modules remain the ownership boundary. Regenerate [`MODULE_MAP.md`](https://github.com/elkimek/get-based/blob/main/MODULE_MAP.md) when modules or imports change. GitHub Actions owns the exhaustive browser and combined-coverage matrix.
 
+## Presentation and styling ownership
+
+Svelte components own first-party markup. Readonly presentation projections prepare display data; typed controllers retain domain calculations, storage, requests, navigation and action dispatch. Compose ordinary UI through typed child components. Existing synchronous HTML facades serialize the same owners only at retained native compatibility boundaries.
+
+Preserve input identity, drafts, selection, focus and live child hosts through hydration and refresh. Async actions must retain their original profile, request and mounted owner before publishing results. Component disposal releases UI resources; accepted durable writes follow their domain transaction rather than being canceled solely because a view closed.
+
+Tailwind utilities and semantic recipes are scoped and prefixed, with no global Preflight. Theme tokens, stylesheet URLs, specificity and cascade positions remain contracts. Necessary native CSS covers tokens, keyframes, vendor integration and reviewed print/report boundaries. See [Svelte and Tailwind](/developers/svelte-tailwind) for source owners and commands.
+
 ## File layout
 
 ```
-index.html          — HTML structure only; script/CSS includes; SEO meta tags
-styles.css          — Core CSS: tokens, base resets, shared components, responsive/touch rules
-css/app-shell.css   — App chrome: header, sidebar navigation, footer, mobile shell, profile and sync controls
-css/*.css           — Split shared/feature CSS for import/upload flow, EMF assessment, dashboard shell/widgets, category views, modal shell/utilities, context/profile cards, and high-churn surfaces such as settings, mobile dashboard, menstrual cycle, Meals & Nutrition, marker detail modal, client list, chat panel, wearables, Light/Sun, and redesign catch-up
+index.html          — Native compatibility document; not the complete production distribution
+styles.css / themes-extra.css — Generated root styles; edit their registered recipe owners
+css/                — Authored utility/recipe inputs, necessary custom CSS, and generated stylesheet outputs
+scripts/build-styles.mts — Stylesheet owner orchestration
+scripts/style-recipes/ — Build-time Tailwind recipe catalogs
+js/components/      — Authored Svelte markup and typed child composition
+js/kit/routes/app/  — Static SvelteKit route and shared AppShell mount
+scripts/build-sveltekit.mts — Assembles the shipping static distribution
+dist/               — Ignored production artifact, including the complete offline asset graph
 api/share.ts        — bounded legacy Blob → standalone share-service transition adapter
 api/proxy.ts        — same-origin compatibility endpoint for self-hosts and legacy clients
 api/commit.ts       — current deployed commit/version helper
@@ -224,17 +237,15 @@ js/
 
 ## Entry points
 
-```text
-index.html
-  └── <script type="module" src="js/main.js">
-        └── emitted JavaScript module graph
-```
+The production route at `js/kit/routes/app/+page.svelte` renders the shared `AppShell`. Its layout hydrates the route before importing the existing `main.js` service entry. Kit shares one Svelte runtime and owns navigation within `#kit-root`; links and forms outside that root retain their document handlers.
 
-The authored entry is `js/main.ts`; the HTML keeps the emitted `js/main.js` URL. The hosted artifact rewrites it to the hashed Rolldown entry generated by `scripts/build-production.mts`.
+The native development document retains `js/main.js`, compiled from `js/main.ts`. The separate native compatibility build remains available for its own regression checks; it is not the default shipping artifact. `npm run production:build` assembles the static Kit app in `dist/`; serve that entire directory. See [Deployment](/developers/deployment).
 
-`main.ts` installs extension, foundation, cold health/Light loaders, UI shell hooks, and delegated shell actions, then calls `startApp()` from `startup-orchestrator.ts`. Startup installs global event and refresh wiring, initializes encryption/storage foundation and profile data, runs post-profile maintenance and OAuth callbacks, renders the UI, invokes the edition startup hook, and restores pending import review state. It reports failure without silently replacing unreadable profile data.
+`main.ts` installs extension, foundation, cold health/Light loaders, UI shell hooks, and delegated shell actions, then calls `startApp()` from `startup-orchestrator.ts`. Startup initializes encryption/storage, active-profile data, maintenance and OAuth callbacks before completing the current route. It awaits initial navigation before declaring `data-app-ready` and reports failure without replacing unreadable profile data.
 
-Feature loaders keep expensive behavior out of the cold graph. Health modules load according to route and persisted data; `chat-loader.ts` loads `app-ai-interaction-modules.ts` on first use. Import, export, settings, sharing, and EMF have their own loader or runtime boundaries. `emf-runtime.ts` receives its module loader and host callbacks through `app-shell-hooks.ts` and loads the EMF module and stylesheet together. The composition modules remain useful grouping boundaries; they are not all eager imports of `main.ts`.
+Feature loaders retain route- and data-aware loading for health, Light, Chat, import, export, Settings, sharing and EMF. Stable facade, worker and stylesheet URLs remain available where the build verifies their public closure; arbitrary emitted development modules are not a public production module API.
+
+The existing root service worker remains the sole offline/update owner. Kit must not introduce another worker, version poller or competing consent gate. The build retains the legal-consent ordering and CSP without enabling inline executable scripts.
 
 ## Trusted build-time extension boundary
 

@@ -8,11 +8,11 @@ description: "Window exports, circular dependency avoidance, and shared state pa
 
 # Cross-Module Patterns
 
-getbased is authored in TypeScript and compiled to JavaScript ES modules. Local development loads those emitted modules directly; production uses Rolldown bundles. Keep runtime imports ending in `.js` and use explicit dependencies and configured callbacks to avoid cycles. The architecture checker rejects new dependency cycles.
+getbased uses typed Svelte presentation and TypeScript domain services. The static SvelteKit production build and native compatibility entry share those owners. Keep runtime imports ending in `.js` and use explicit dependencies and configured callbacks to avoid cycles. The architecture checker rejects new dependency cycles.
 
 ## Compatibility handlers and delegated actions
 
-Existing inline HTML handlers call functions exposed on `window`. Some modules retain `Object.assign(window, {...})` as a compatibility surface. Static shell controls also use delegated actions installed by `shell-actions.ts`, and lazy features expose loader or runtime entry points.
+Some retained native handlers call functions exposed on `window`, and modules may retain `Object.assign(window, {...})` as a compatibility surface. Shared shell controls also use delegated actions installed by `shell-actions.ts`; lazy features expose loader or runtime entry points. New presentation belongs in Svelte components with typed props and feature-owned actions. Preserve existing action attributes and avoid installing a second handler over an already owned control.
 
 When changing a handler, preserve its public name and availability at the time the control becomes usable. Do not install competing owners for the same compatibility export. Prefer feature-owned delegates and narrow typed callbacks for new wiring; do not expand global exports simply to avoid designing a dependency boundary.
 
@@ -35,23 +35,21 @@ This is one specific refresh seam. Other features have their own configured runt
 
 ---
 
-## HTML interpolation — always `escapeHTML()`
+## Svelte text and reviewed rich-content boundaries
 
-Any user-controlled or data-derived string inserted into `innerHTML` must be escaped. This is the project's primary XSS defense:
+Use ordinary Svelte interpolation for text. It escapes strings for HTML; do not pre-escape a label and then display the resulting entities literally.
 
-```js
-import { escapeHTML } from './utils.js';
+```svelte
+<script lang="ts">
+  let { label }: { label: string } = $props();
+</script>
 
-// Always escape — even values that "look safe"
-el.innerHTML = `
-  <div class="marker-name">${escapeHTML(marker.name)}</div>
-  <div class="marker-value">${escapeHTML(String(value))}</div>
-`;
+<span>{label}</span>
 ```
 
-Safe values (hardcoded strings, enum results, numbers from your own code) do not need escaping, but when in doubt, escape it.
+Do not introduce HTML-string templates or raw HTML as ordinary component composition. Sanitized Markdown, fixed SVG/catalog content, self-contained print documents and explicitly retained serializers have reviewed boundaries. Keep `escapeHTML()` where an existing HTML serializer requires it, and retain the URL policy in `markdown.ts`. Neither a component migration nor a sink-count update authorizes a new untrusted HTML sink.
 
-**Never use `innerHTML` with concatenated user input without `escapeHTML`.** The shared `renderMarkdown()` function in `markdown.ts` validates URLs against an allowlist (`http`, `https`, `mailto`) before rendering link tags; chat renderers call that shared boundary rather than implementing their own Markdown path.
+See [Svelte and Tailwind](/developers/svelte-tailwind) and the app's [presentation contract](https://github.com/elkimek/get-based/blob/main/engineering/presentation-ownership.md).
 
 ---
 
