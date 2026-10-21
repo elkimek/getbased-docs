@@ -7,6 +7,10 @@ You can also start the same reviewed import workflow from **Chat → + → Impor
 
 getbased can read lab reports from virtually any provider worldwide. Use the header import button or drop a file onto the app. The AI extracts results, maps them to known biomarkers, and shows you a preview before saving anything. Text-based reports go through PII obfuscation before the content reaches your AI provider; image-mode imports can include personal information visible on the page.
 
+Page-wide file drops work even when the profile already contains data. Before processing a page drop, getbased shows the detected file types and counts. Chat attachments, Lens knowledge-base ingestion and wearable upload areas keep their own drop behavior. Moving dashboard widgets is separate from dropping files.
+
+DNA and mixed-type selections require confirmation. Recognized Drip and Natural Cycles exports go directly to the local cycle-import preview instead of the AI lab-report pipeline. Unrecognized text/CSV files need an explicit **Treat text as lab reports** confirmation before entering the configured AI import pipeline. Cancel if they contain genetic data or another export type. File detection cannot identify every format.
+
 ## Before you start
 
 You need an AI provider configured in **Settings → AI**. Manual lab entry, JSON import, DNA import, charts, comparisons, and correlations do not require AI, but PDF and image lab import do.
@@ -190,3 +194,7 @@ Large models must process the complete report before generating the first stream
 <Warning>
 If you see unexpected results after a large batch import, start with the per-file **Review & Edit** / **Delete** controls in Settings → Data. If the problem came from older date-only imports or broad accidental changes, restore from a pre-import snapshot instead of manually deleting many marker values.
 </Warning>
+
+## Locating review errors
+
+The **Row** column keeps the original import row number even when rows are grouped by mapping status. If saving is blocked, the affected rows are highlighted and revealed across filters; correcting or excluding a row clears its invalid state. A custom marker with no saved unit can adopt the report's unit; an incompatible established unit still blocks the import.

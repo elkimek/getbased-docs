@@ -86,13 +86,20 @@ The requested `read:workout` scope is disclosed, but the current daily normalize
 | Google Health daily rows | Per-profile wearable IndexedDB, always device-key encrypted | Excluded from raw-row backups and sync |
 | WHOOP daily rows | Per-profile wearable IndexedDB, always device-key encrypted | Excluded from raw-row backups and sync |
 | WHOOP connection, source summary, source-owned metrics/overrides, and change events | Device-encrypted WHOOP profile sidecar, rehydrated into runtime `importedData` | The connection stays local. Allowlisted derived summary, source preferences, and change events can follow encrypted profile Sync or single-profile export; the device envelope itself never does. |
-| Other daily rows | Per-profile wearable IndexedDB, passphrase-encrypted when local encryption is enabled | Local only; eligible for local backup filtering rules |
+| Explicit manual weight, BP and pulse | Local Reading store plus `importedData.manualBodyReadings` | The narrow mirror follows encrypted profile Sync and portable profile exports; vendor/file-imported raw histories are excluded |
+| Other vendor/imported daily rows | Per-profile wearable IndexedDB, passphrase-encrypted when local encryption is enabled | Local only; eligible for local backup filtering rules |
 | Compact summaries, baselines, trends, anomalies | `importedData` | End-to-end encrypted profile sync |
 | Agent Access series window | Profile preference | Syncs so paired browsers retain the same export choice |
 
-Credential writes use generation checks so an in-flight refresh cannot recreate a connection after disconnect. `transformWhoopStorageValue()` splits WHOOP-owned profile fields into `WHOOP_PROFILE_DATA_META` before local storage and transparently hydrates them after read, including migration of legacy plaintext profile fields. Restricted daily rows migrate in place to `_devicePayload` envelopes without overwriting a newer row that landed during encryption. Never move token material, the local connection record, or the sidecar envelope into sync, exports, logs, or debug snapshots. Sync/export may carry only the existing allowlisted derived profile surfaces after hydration.
+Credential writes use generation checks so an in-flight refresh cannot recreate a connection after disconnect. `transformWhoopStorageValue()` splits WHOOP-owned profile fields into `WHOOP_PROFILE_DATA_META` before local storage and transparently hydrates them after read, including migration of legacy plaintext profile fields. Restricted daily rows migrate in place to `_devicePayload` envelopes without overwriting a newer row that landed during encryption. Never move token material, the local connection record, or the sidecar envelope into sync, exports, logs, or debug snapshots. Sync/export may carry the allowlisted derived profile surfaces and the explicit manual-reading mirror after hydration; vendor raw rows remain excluded.
 
-If a new metric needs charts on another device, add or extend the compact summary deliberately; do not silently sync the raw table.
+If a new vendor metric needs charts on another device, add or extend the compact summary deliberately; do not silently sync the raw table. The explicit manual-reading surface is a narrow exception for user-entered data.
+
+## Explicit manual-reading mirror
+
+`wearables-manual.ts` writes `manualBodyReadings` only for explicit manual log/edit/delete actions. Keys are `<field>.<YYYY-MM-DD>` for weight, systolic/diastolic BP, pulse (`rhr`), and existing date-level `tags`/`note`. Entries contain `value` and `updatedAt`; explicit null values carry deletions without treating an empty local store as deletion intent. The existing `manualMetricTombstones` protocol remains authoritative for removed readings and explicit re-adds.
+
+The lazy `wearables-manual-sync.ts` service validates field types and calendar dates before patching source `manual` in the local Reading store. It preserves opaque row fields, rejects obsolete profile/data/Sync-owner work and respects locked storage. Both ordinary startup and profile switching run catch-up. The upgrade is add-only and marks completion only after successful persistence of nonempty history; it never scans vendor sources. Per-key edit clocks prevent an older blob or row overlay from replacing a newer manual edit. Portable profile exports include this map even without lab entries.
 
 ## Settings and sync behavior
 
