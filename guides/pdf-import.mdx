@@ -149,6 +149,8 @@ See [Import specialty lab panels](/guides/specialty-labs) for details.
 
 Your file is processed in the browser first. Extracted text goes through regex obfuscation and, when configured, a separate compatible text model before it is sent to the active AI provider. Image mode sends page images without text PII obfuscation. See [Privacy](/guides/privacy) for the complete boundary.
 
+When **Review & Edit** is shown, the original and prepared-text panes scroll together. You can still edit the prepared text before choosing **Send to AI**. Recognized patient names use familiar fictional Czech or English names consistently across the report; repeated identifiers use report-local replacements. The redaction key is not saved or reused for later reports. Review the prepared text for any identifying details the automated pass missed.
+
 ## What gets extracted
 
 The core schema contains 210 markers across 20 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
