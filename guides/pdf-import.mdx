@@ -11,6 +11,10 @@ Page-wide file drops work even when the profile already contains data. Before pr
 
 DNA and mixed-type selections require confirmation. Recognized Drip and Natural Cycles exports go directly to the local cycle-import preview instead of the AI lab-report pipeline. Unrecognized text/CSV files need an explicit **Treat text as lab reports** confirmation before entering the configured AI import pipeline. Cancel if they contain genetic data or another export type. File detection cannot identify every format.
 
+## Discover reports from an archive
+
+An optional **Settings → Data → Lab report source** can find new PDFs in a configured document-archive feed. You still choose **Review now**, complete the normal privacy and import review, and confirm each report. It is off until configured and does not watch a local folder. See [Lab report source](/guides/lab-report-source).
+
 ## Before you start
 
 You need an AI provider configured in **Settings → AI**. Manual lab entry, JSON import, DNA import, charts, comparisons, and correlations do not require AI, but PDF and image lab import do.
@@ -85,7 +89,7 @@ After confirmation, this context stays attached to that lab date, appears beside
 
 ### Unit normalization
 
-Common unit differences are normalized automatically. For example, enzymes reported as IU/L are mapped to U/L. Values are saved in each marker's canonical unit and projected through the profile selected in **Settings → Display → Lab units**: **International (SI)**, **Australia / NZ**, or **US**. The Australia/New Zealand profile covers common regional pathology-reporting units across the built-in marker catalog.
+Common unit differences are normalized automatically. For example, enzymes reported as IU/L are mapped to U/L, and C-peptide reported in pmol/L is converted using the marker-specific factor rather than copied as ng/mL. Check the result and unit together in the review. Values are saved in each marker's canonical unit and projected through the profile selected in **Settings → Display → Lab units**: **International (SI)**, **Australia / NZ**, or **US**. The Australia/New Zealand profile covers common regional pathology-reporting units across the built-in marker catalog.
 
 The import review, tables, charts, marker details, reports, manual entry, and AI context use the same active projection. Changing profiles therefore changes presentation without rewriting imported values. The marker detail modal can also show a compatible secondary value when **Alternate Units** is enabled in **Settings → Display**.
 
@@ -147,7 +151,7 @@ Your file is processed in the browser first. Extracted text goes through regex o
 
 ## What gets extracted
 
-The core schema contains 197 markers across 19 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
+The core schema contains 210 markers across 20 categories, plus specialty-panel adapters and unlimited custom markers. Common areas include:
 
 - **Biochemistry** — glucose, liver enzymes, kidney markers, electrolytes
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, progesterone, LH, and FSH

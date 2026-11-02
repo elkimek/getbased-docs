@@ -45,6 +45,20 @@ Keep the V7 bundle and bridge while browsers that have not run since the upgrade
 
 Because V8 uses generation-named local databases for history resets, successful startup reclaims superseded generations only after it can take Evolu's exclusive database lock. An active database in another tab is skipped and retried on a later startup.
 
+## Browser SQLite runtime generation
+
+The current browser vendor is `@evolu/common` **8.24.1**, `@evolu/web` **3.6.5**, and `@evolu/sqlite-wasm` **3.54.1-build3**. `scripts/build-evolu8-vendor.mts` produces the versioned `vendor/evolu8/v8.24.1-web3.6.5/` assets and integrity manifest. Keep worker, JS, WASM, and service-worker assets from one matching generation; do not replace one file independently.
+
+The application selects a fresh local runtime generation for the upgrade while preserving the verified mnemonic, owner identity, and encrypted relay history. Existing V7 handoff and explicit rollback support remain separate from a new Sync identity. Refuse a generation switch that cannot be durably recorded. Older generations are reclaimed only through the guarded cleanup path, which avoids databases held by another tab.
+
+## Field ownership and deterministic convergence
+
+`profile-data-writes.ts` retains each loaded object's read baseline and rebases named changes against canonical persisted state. A late form save must not republish unrelated stale fields. Dirty metadata is evidence of pending work, not permission to assign a fresh version to an unchanged old value.
+
+`sync-profile-metadata.ts` and scalar snapshots retain independent field clocks. Array and map planners preserve observed versions. Duplicate physical rows for one logical item use `sync-conflict-order.ts`: timestamp, deletion precedence, stable row ID, then canonical payload order. New versions advance past every observed timestamp even if the wall clock moves backwards. Query order and locale are not conflict policies.
+
+Scalar tombstones, map deletions, and item-array deletions stay distinct. An older full snapshot must not revive a deleted item or overwrite a newer field merely because a different field changed. Pull/save ownership also protects inactive profiles and canonical IndexedDB data. See the app's [architecture contract](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md) for the per-surface rules.
+
 ## Delta surface types
 
 | Type | Examples | Identity rule |

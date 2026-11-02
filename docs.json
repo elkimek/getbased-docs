@@ -86,6 +86,7 @@
             "group": "Labs",
             "pages": [
               "guides/pdf-import",
+              "guides/lab-report-source",
               "guides/manual-entry",
               "guides/specialty-labs",
               "guides/biomarker-charts",
@@ -106,6 +107,7 @@
               "guides/supplements-medications",
               "guides/meals-nutrition",
               "guides/wearables",
+              "guides/body-measurements",
               "guides/menstrual-cycle"
             ]
           },
@@ -123,6 +125,7 @@
             "pages": [
               "guides/biology-scores",
               "guides/ai-chat",
+              "guides/health-updates-in-chat",
               "guides/cli-agents",
               "guides/ai-prompts",
               "guides/voice",
@@ -173,6 +176,7 @@
               "developers/marker-model",
               "developers/marker-terminology",
               "developers/data-pipeline",
+              "developers/auto-import-source",
               "developers/lab-markers-ranges-internals",
               "developers/report-data",
               "developers/storage-schema",
@@ -208,6 +212,7 @@
             "pages": [
               "developers/biology-scores",
               "developers/chat-internals",
+              "developers/health-chat-tools",
               "developers/genome-evidence-methodology",
               "developers/supplements-medications-internals",
               "developers/nutrition-internals",

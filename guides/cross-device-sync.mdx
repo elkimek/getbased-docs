@@ -102,6 +102,14 @@ Use the same Sync identity on your devices, update/reload the app, and keep them
 
 If one device has the only remaining copy of a conversation, export it before resetting storage. Reconciliation can recover records that still exist on a device or in the encrypted relay history; it cannot reconstruct messages absent from every copy.
 
+## Concurrent edits and recovery
+
+Sync now reconciles individual fields and records with deterministic conflict ordering, including same-timestamp changes. A clean reconnect does not re-publish a stale profile merely because the browser woke up. Saved local edits are rebased against newly received state so unrelated newer values can survive a delayed save.
+
+Explicit manual body readings, method-specific waist/hip/SAD history, and deletion records use their supported synced surfaces. The runtime upgrade preserves the existing mnemonic and encrypted relay history. Let an updated browser finish initialization; creating a new identity or clearing storage is not a normal upgrade step.
+
+This does not make Sync an unlimited undo log or a substitute for an independent backup. If values conflict or appear missing, preserve the browser with the known-good copy and [back it up](/guides/backup) before reset or identity changes.
+
 ## What syncs
 
 The following data flows across all paired devices:

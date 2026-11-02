@@ -61,7 +61,7 @@ Turning a source off does not delete the data. It stops that source from influen
 
 ### How chat handles marker ranges
 
-For an ordinary marker question, chat is instructed to lead with the main takeaway instead of listing every possible range. It starts from the range and status supplied by getbased, but it must not present that frame as universal medical truth.
+For an ordinary marker question, chat is instructed to lead with the main takeaway instead of listing every possible range. It considers the supplied values, trends, collection conditions, and personal context alongside ranges. App statuses and intervals are comparison evidence, not diagnoses or universal medical truth.
 
 If a laboratory reference interval and a supplied optimal band lead to different conclusions, the answer should normally compress the distinction into one sentence—for example, “within the lab range but above getbased optimal guidance.” Other published thresholds should appear only when you ask about alternatives or when they materially change a safety-relevant interpretation. When Web or Knowledge Base evidence is available, chat should identify the outside source rather than describe an uncited number as a “model range.”
 
@@ -72,6 +72,16 @@ Routine Genome context is intentionally compact. It can include up to 12 ranked 
 Supplement and medication context is deliberately bounded. Normal questions prioritize current items and history that overlaps the visible lab range; a therapy-specific question can include additional matching history within the context limit. Compact context keeps high-signal quality findings, while detailed context may also include methods and reporting limits. Each imported quality result has its own **Include in AI** control. Passing duplicate potency checks default off, while failures remain visible by default.
 
 See [Track supplements and medications](/guides/supplements-medications) for lifecycle, import, and laboratory-evidence details.
+
+## Propose updates from the conversation
+
+When you report a new health goal, routine, or other supported personal fact, chat can read the relevant record and prepare a **Proposed change** card. It can prepare several cards from one message or pasted questionnaire. Choose **Apply** or **Discard** for each; reply text alone never saves a change.
+
+Actual tool activity appears during generation. Reading, preparing, and saving are different outcomes: a prose promise of a draft is not an actionable card. Check the destination and before/after values, and ask for a correction when needed.
+
+Turn **Health updates through chat** on or off in **Settings → AI**. This browser-wide permission is separate from the per-profile context-source switches. It is on by default; turning it off leaves ordinary chat available and expires older pending reviews.
+
+See [Health updates in chat](/guides/health-updates-in-chat) for supported records, intake examples, review recovery, model limitations, and controls that remain in Settings or native editors.
 
 ## Current Focus
 

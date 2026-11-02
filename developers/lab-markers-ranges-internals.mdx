@@ -3,13 +3,11 @@ title: "Lab markers and range internals"
 description: "Marker identity, effective-range precedence, import-owned collection context, calculated markers, migrations, and focused test ownership."
 ---
 
-# Lab markers and range internals
-
 This page owns the contracts that connect the marker schema, imported laboratory metadata, contextual ranges, calculated markers, and chart status. Read it with [Data pipeline](/developers/data-pipeline) and [Storage schema](/developers/storage-schema).
 
 ## Schema ownership
 
-The core schema currently contains 197 markers across 19 categories, including 22 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
+The core schema currently contains 210 markers across 20 categories, including 24 entries in **Calculated Ratios**. Specialty adapters and user-defined custom markers extend that surface at runtime and are not part of the core count.
 
 The schema is split under `js/marker-schema/`. `schema.ts` is the public composition layer; category files own marker metadata, and `schema-environment.ts` owns reference, optimal, guidance, and source metadata. Keep category placement clinically legible: insulin, for example, is `diabetes.insulin` under **Glucose & Insulin Metabolism**, not Hormones or Biochemistry.
 
@@ -22,11 +20,19 @@ Renames and category moves must preserve the stable identity and add an alias mi
 
 ## Unit-profile boundary
 
-Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.ts` projects all 197 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
+Marker results and ranges are stored once in the canonical units declared by the schema. `unit-profiles.ts` projects all 210 built-in markers through three persisted display profiles: `EU` for International (SI), `ANZ` for common Australia/New Zealand pathology units, and `US` for US conventional units. The legacy `EU` identifier remains part of profile persistence for compatibility.
 
 `getActiveData()` applies the projection after calculations and range resolution. Tables, charts, marker details, reports, manual entry, and AI context consume that same result. Manual entry and import review accept compatible regional and secondary units and convert them back to canonical storage. Custom markers retain their user-supplied canonical unit.
 
 Do not convert again in an individual renderer. Add regional differences to the central profile or secondary-unit registries, record conversion provenance where needed, and round-trip the complete catalog in `unit-profiles.test.ts` plus focused active-data and range-shape tests.
+
+## Personal baselines and chart framing
+
+`marker-baseline.ts` builds a per-draw median from at least three distinct, valid earlier draw dates in the preceding two calendar years. The current draw is excluded; conflicting duplicate-date results cannot create extra independent observations. Abnormal values are retained. Baselines are derived after unit projection and before display-date filtering, not persisted as reference intervals.
+
+Charts, marker details, and permitted lab chat context consume the same derived comparison. Source/date-filtered AI projections rebuild the baseline from allowed evidence. `marker-chart-scale.ts` can focus low readings when range bounds dwarf the observed span; it never changes result values, range/status semantics, or calculations.
+
+The `lymphocyteSubsets` category keeps CD3/CD4/CD8/CD19/NK absolute counts and percentages separate. Unit profiles distinguish cells/µL from canonical absolute counts. CD4/CD8 and LMR use their required count inputs; LMR and MLR are reciprocal and must not be double-counted as independent Biology Score evidence.
 
 ## Effective-range data layers
 

@@ -35,6 +35,14 @@ Snapshots are stored in IndexedDB and never leave your browser. They are not aff
 You can restore a snapshot even without a passphrase configured — snapshots follow the same encryption state as your data at the time they were created.
 </Tip>
 
+## Download a full backup
+
+Open **Settings → Data → Backup & Restore → Download Backup** for the full backup format. It includes the backup-supported profile stores, preferences, app settings, and eligible IndexedDB data. With passphrase protection enabled, supported API keys are included as encrypted values; without it, provider credentials are omitted.
+
+Use **Restore Backup** for this file. Read the confirmation: a full restore reinstates backed-up profiles and settings, rather than performing the same merge as a client export. An encrypted backup requires the original passphrase and its included salt.
+
+**Export Client** and **Export All Clients** are portable client-data files. They exclude app settings and API keys. **Restore Backup** also accepts an **Export All Clients** file, but confirms a client merge and leaves the destination's app settings, encryption configuration, and API keys unchanged. See [Export and import](/guides/export-import).
+
 ## Automatic folder backup
 
 Folder backup automatically saves your data to a folder on your computer — your local drive, Proton Drive, Dropbox, a NAS, or anywhere you choose. This uses the browser's File System Access API.
@@ -88,21 +96,9 @@ A folder backup is triggered automatically 5 minutes after data changes. You can
 
 ### Restore from a folder backup
 
-Folder backup files are standard getbased JSON exports. Restore one the same way you import any JSON file:
+Folder files use the full backup format. Open **Settings → Data → Backup & Restore → Restore Backup**, select `getbased-backup-latest.json` or a dated copy, and read the restore confirmation. The full restore reinstates backed-up profiles and settings. With encryption enabled, use the original passphrase.
 
-<Steps>
-  <Step title="Locate your backup file">
-    Find the `getbased-backup-latest.json` or any dated backup file in your backup folder.
-  </Step>
-  <Step title="Open getbased">
-    Open getbased in any Chromium-based browser (or Firefox/Safari if restoring a single-profile export).
-  </Step>
-  <Step title="Import the file">
-    Drop the `.json` file onto the app or select it with the header import button. getbased detects it automatically and merges it into your current data.
-  </Step>
-</Steps>
-
-For full database bundles that contain multiple profiles, getbased handles profile merging automatically — new profiles are created and existing ones are merged.
+Restoring an existing file does not require the browser API used to create folder backups. File handling still follows your browser's normal picker permissions.
 
 ### Restore a backup before rejoining Sync
 
@@ -118,6 +114,6 @@ If you have not configured folder backup and have not manually exported in over 
 
 In addition to automatic backups, you can download a plaintext JSON copy of your data at any time from **Settings → Data → Export**. This is your most portable backup — it is a plain file you can store anywhere: a password manager, an encrypted USB drive, or an offline backup.
 
-An **Export All** database bundle contains each profile's complete stored data, including local AI model-test records. A curated single-profile JSON export does not include model-test diagnostics, and its compatibility import path does not restore every structured supplement/medication product and quality field. Model-test history is also excluded from cross-device sync, so use a full database or folder backup when you want a full-fidelity restore.
+**Export All Clients** includes portable client data and sent chat, while **Download Backup** and folder backups cover the broader backup-supported stores and app settings. Structured supplement and medication records now retain product facts, quality evidence, schedules, periods, and import provenance through supported client imports. A conflicting record can require a **Keep saved** or **Use imported** decision. Choose a full backup for recovery of device-local diagnostics and backup-supported settings; client exports and Sync are not interchangeable with it.
 
 See [Export and import your data](/guides/export-import) for the full export and import workflow.

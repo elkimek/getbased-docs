@@ -97,6 +97,13 @@ Keys are namespaced by profile ID where data is per-profile. `{profileId}` defau
 | `labcharts-{profileId}-country` | string | ISO country code |
 | `labcharts-{profileId}-zip` | string | ZIP/postal code |
 
+### Health review and report-source settings
+
+- `getbased-chat-controls` is a browser-wide UI permission plus revocation epoch, owned by `chat-control-settings.ts`. Missing configuration defaults on; disabling removes tool authority, and re-enabling cannot revive old pending review IDs. It is not a health fact or a synced per-profile preference.
+- `labcharts-{profileId}-autoImportFeedV1` holds this browser's configured PDF feed and handled-report history. It is excluded from portable profile data and Sync.
+- Health review payloads and lifecycle receipts belong to their originating chat records. A pending draft is not a second canonical copy of the health record. Apply must go through the native domain writer and current authorization; older management proposals remain non-actionable history.
+- Manual body measurements use method-specific `manualBodyReadings` keys, with canonical cm, per-reading update clocks, and deletion state. Personal marker baselines are derived, not stored as manual values or reference ranges.
+
 ## importedData structure
 
 Stored as JSON at `labcharts-{profileId}-imported`. Full database and folder backups preserve this blob, while curated single-profile exports select user-facing fields from it.
@@ -616,32 +623,32 @@ Database: `labcharts-backups`
 Object store: `snapshots`
 Key path: `id` (auto-increment)
 
-Each snapshot record:
+Each record stores a full backup snapshot, not a single profile's `data` object:
 
 ```js
 {
-  id: 42,                          // auto-increment
-  createdAt: "2025-03-15T14:22:00.000Z",
-  profileId: "default",
-  data: {
-    importedData: { ... },         // full importedData object
-    unitSystem: "EU",
-    rangeMode: "optimal",
-    suppOverlayMode: "off",
-    noteOverlay: "off",
-    chatPersonality: "default",
-    chatPersonalityCustom: [...],
-    chatPersonalityDeleted: { "custom_old": 1782290000000 },
-    // ... all per-profile preferences
-    threadIndex: [...],            // chat thread index
-    threads: {                     // raw per-thread JSON or ciphertext envelopes
-      "t_abc123": "...",
-    }
+  id: 42,
+  createdAt: "2026-10-25T10:00:00Z",
+  encrypted: false,
+  snapshot: {
+    format: "labcharts-backup",
+    version: 1,
+    createdAt: "2026-10-25T10:00:00Z",
+    encrypted: false,
+    encryptionSalt: null,
+    settings: {},
+    profileList: "[]",
+    profiles: [],
+    wearableIDB: {},
+    cycleIDB: {},
+    cycleImportMeta: {}
   }
 }
 ```
 
-Maximum 5 snapshots are kept per profile. The oldest is pruned automatically on each new backup.
+At most five snapshot records are retained in this database. The oldest is pruned after a new snapshot. Profile raw keys, chat, and supported IndexedDB side stores are collected through the backup owners rather than independently serialized by the UI.
+
+`format: 'labcharts-backup'` version 1 is different from the portable `type: 'database'` version 2 client bundle. Restore detects a client bundle before changing backup encryption settings, confirms the client merge, and preserves the destination's settings and salt. A full-backup restore follows its own confirmation and encryption configuration. See [Backup and restore](/guides/backup).
 
 Unsent `chatDraft_*` records are intentionally absent from full database, auto, folder, and single-profile backups. Sent conversations, their project membership, and custom personas are included. Original chat images are not retained as a recoverable attachment archive; normalized thumbnails can be persisted. Agent executable installations and login state belong to the local agent/Companion and must be reconnected on another machine.
 

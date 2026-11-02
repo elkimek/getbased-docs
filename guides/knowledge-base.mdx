@@ -159,6 +159,12 @@ Only the question itself is sent to the knowledge source — no lab values, prof
 
 Toggle **Enable Knowledge Source** off to pause retrieval without deleting your configuration. The chat header badge disappears and subsequent AI calls use only your interpretive lens text.
 
+## Management and recovery
+
+Use the Knowledge Base panel to add or replace documents, choose the active library and model, and manage saved inclusion settings. Chat can search enabled saved content, but it does not administer libraries or import files through health-update tools.
+
+An import error should leave the previous saved library available and allow later queued files to proceed. Review the reported error before retrying. **Stop indexing** cancels pending work; it does not approve an incomplete import. A storage or locked-library error is not evidence that a library is empty: reopen the panel and check the saved state before removing or rebuilding anything.
+
 ## Caching
 
 getbased caches each query result for 5 minutes (up to 20 entries, scoped per profile). Switching profiles, changing the config, or clicking **Clear cache** in the panel flushes the cache.

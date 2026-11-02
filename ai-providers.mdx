@@ -275,6 +275,12 @@ The built-in demo profiles ship with precomputed context-card insights. Local AI
   </Tab>
 </Tabs>
 
+## Health updates through chat
+
+Direct API models and supported local CLI agents use the same [reviewed health-update workflow](/guides/health-updates-in-chat). The selected model must support the route's tools or structured outputs; compatibility is not guaranteed for every model in a provider catalog. Personal gateways receive baseline context without the local getbased tool bridge.
+
+The **Health updates through chat** switch in **Settings → AI** is on by default. Turn it off to keep ordinary conversation without these tools. Proposals can require several requests and more tokens, so review the response's usage and your provider's pricing.
+
 ## Recommended models
 
 The Settings and chat model pickers scope choices to the active provider and privacy mode. Search is available for long catalogs. Supported catalogs show curated groups:

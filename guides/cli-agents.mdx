@@ -54,6 +54,10 @@ Only reported reasoning controls are offered. The scale runs from less to more e
 
 An advertised model is not a guarantee of account entitlement. Refresh the catalog if a model is missing or fails, then check the agent's account and configuration. getbased excludes explicitly unavailable entries, but some providers report entitlement errors only when a request is made.
 
+### Refresh installed versions
+
+Companion reports installed agent versions separately from readiness and model availability. Refresh discovery after updating a CLI. A stale or missing version label does not establish whether authentication or a particular model works. Update Companion when getbased requests it; restarting an old bundle does not add newer schemas or image capabilities.
+
 ## Connect a personal gateway
 
 Hermes and OpenClaw can offer a personal execution target as well as local execution. Choose it explicitly under the active agent's execution options.
@@ -73,14 +77,14 @@ Gateway catalogs are authoritative; getbased highlights the current/default mode
 | Search the web | Depends on the adapter and agent | Depends on gateway configuration |
 | Exact health lookups and Knowledge Base search | Through scoped getbased tools | No local tool bridge |
 | Open supported getbased views | Through navigation tools | No local tool bridge |
-| Propose notes, meals, biometrics, supplements, or medications | Reviewable **Apply / Discard** cards | No local tool bridge |
+| Propose supported health-context and record updates | Shared **Apply / Discard** reviews, including multi-card intakes | No local tool bridge |
 | Text-based AI features and report interpretation | When the selected route declares support | When the target advertises text-feature support; update Companion first |
 | Photos and image-based imports | Only with advertised image support | Not supported |
 | Dictation and spoken replies | Separate getbased voice service | Separate getbased voice service |
 
 Local OpenClaw is currently text-only. Other adapters' image support depends on the discovered agent and model. **Follow chat assistant** in feature-model settings follows the selected CLI route; it does not silently use a previously selected cloud provider when that route cannot do the task.
 
-The agent can propose health-data changes, but only your **Apply** action saves them. Check values and units before applying a proposal or confirming an import. **Pause AI** stops both direct-provider and CLI-backed AI routes.
+The agent can propose health-data changes, but only your **Apply** action saves them. The review system is the same as direct API chat. **Settings → AI → Health updates through chat** controls this capability; turning it off leaves ordinary conversation available and revokes older pending reviews. Settings, provider/model switching, backups, Knowledge Base management, and custom personas stay in the native UI. See [Health updates in chat](/guides/health-updates-in-chat). Check values and units before applying a proposal or confirming an import. **Pause AI** stops both direct-provider and CLI-backed AI routes.
 
 Automatic voice stays **On this device** for CLI chat. To send audio to a cloud or compatible-server voice service, select that service explicitly in [Voice settings](/guides/voice).
 
