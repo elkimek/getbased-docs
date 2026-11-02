@@ -43,6 +43,8 @@ See the developer [source contract](/developers/auto-import-source) for URL rule
 
 Imported and skipped IDs are remembered for this profile and source, so they are not repeatedly offered. Failed downloads or imports can be offered again. A check processes a bounded batch; remaining reports stay available for a later check.
 
+A report also stays available if privacy review cannot open, or if you cancel after a failed local-model attempt without a successful retry or **Regex** replacement. Cancelling while the configured local privacy model is unreachable also leaves the report for a later check. Nothing is imported in these cases. After a failed stream is successfully retried or replaced with **Regex**, cancelling counts as a deliberate skip.
+
 - **Disconnect** removes the saved address and keeps already imported lab data and report history.
 - Reconnecting the same address retains its handled-report history.
 - Saving a different address starts a new handled-report history.
