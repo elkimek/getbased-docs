@@ -258,7 +258,7 @@ If an import or verdict response is missing the fields getbased expects, it norm
     It uses the normal chat instruction plus an app-written user message for that action. Most of those messages are visible and editable in the composer. All current templates are listed under [app-written chat messages](/developers/system-prompts-chat#prompt-chat-prefills).
   </Accordion>
   <Accordion title="Which marker range does chat use?">
-    Chat starts with the range paired with the status supplied by getbased. It is told to treat that range as a comparison frame rather than universal medical truth. Routine answers should not list every available range. When a lab interval, optimal band, or relevant published threshold changes the takeaway, chat should state the difference briefly and label which frame produced each conclusion. You can always ask for a deeper range or source comparison.
+    Chat considers supplied values, trends, collection conditions, personal context, and relevant range frames together. It treats ranges as comparison frames rather than universal medical truth. Routine answers should not list every available range. When a lab interval, optimal band, or relevant published threshold changes the takeaway, chat should state the difference briefly and label which frame produced each conclusion. You can always ask for a deeper range or source comparison.
   </Accordion>
   <Accordion title="Can I change the main instruction?">
     The main extraction and analysis instructions are maintained with the app because changes can affect safety, parsing, and compatibility. You can change your message, enabled context, personality, Knowledge Base, web-search setting, provider, and model.

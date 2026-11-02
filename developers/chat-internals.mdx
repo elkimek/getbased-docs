@@ -68,6 +68,10 @@ Chat original images are not recompressed or stripped of metadata. Queue limits 
 
 Desktop resizing persists bounded device-local widths and updates the dashboard's available width, including when the conversation rail changes. Compact mobile layouts do not inherit an unusable desktop width. Waiting phrases are decorative, not tool receipts. Sender avatars use the active profile image/initial or the selected persona/agent branding; default analyst labels are suppressed unless participant identity is needed. Treat all names, model labels, and image URLs as untrusted rendering inputs.
 
+## Native persona selection ownership
+
+Custom-persona management and selection remain native UI. Selection and thread-index writers share profile-scoped ownership and Web Locks where required. A late selection save must preserve a newer thread rename or messages, and an unreadable index cannot be replaced with an empty one. Sync/import retain versioned persona metadata and deletion state. Prompt construction uses only the exact selected usable persona; an unknown or deleted ID must not disclose another private persona as a fallback.
+
 ## Health proposals and live activity
 
 The model can prepare semantic changes, not commit them. `shared/chat-tool-instructions.ts` preserves natural conversation, recognizes explicit new personal facts, and requires exact reads before drafts. Runtime policy and native persistence still enforce the boundary; prompt wording is not authorization.

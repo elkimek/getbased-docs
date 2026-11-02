@@ -33,6 +33,14 @@ Local Lens persists user libraries inside browser storage, not getbased servers.
 
 Because this is browser storage, clearing site data removes the local library unless the user has exported a backup outside the browser.
 
+## Native ownership and recovery
+
+Knowledge Base management remains native UI. Health chat exposes bounded search, not library/document/settings mutation tools. Retained internal review/projection modules are not evidence that those operations belong in the current chat catalog.
+
+`knowledge-library-source.ts` proves bounded existing registry/corpus state without initializing a worker, repairing storage, or loading an embedding model. Native management uses dedicated ownership and authorization; read-only inventory must not create a library as a side effect.
+
+Workers serialize registry and corpus changes with origin-wide Web Locks and reload saved state after acquisition. An unavailable registry is not an absent registry to initialize. Unconfirmed writes retire mutation authority and require an authoritative reload rather than replaying an uncertain command. Import failure releases queue ownership so later work can continue; cancellation remains effective while waiting for a lock. Native inclusion checkboxes must reflect saved state, not an optimistic default.
+
 ## Embedding model behavior
 
 The worker supports a small model catalog, including MiniLM/BGE/E5-style options. The active library's model controls how new chunks are embedded. Changing a model may require re-embedding the library because vector dimensions and embedding spaces are not interchangeable.
