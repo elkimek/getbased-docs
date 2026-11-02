@@ -29,7 +29,9 @@ See [Encrypt your data](/guides/encryption) for setup instructions and passphras
 When you import a text-based lab PDF, getbased runs an obfuscation pass before the extracted text reaches the active AI provider:
 
 1. **Regex scan (always on)** — detects and replaces known PII patterns: name, address, date of birth, SSN/patient ID, email, phone, and common US lab identifiers (Specimen ID, Accession No, MRN).
-2. **Local AI obfuscation (opt-in)** — a compatible text model reads the full PDF text and replaces personal information contextually, catching edge cases the regex misses. Enable it in **Settings → Privacy → Configure Local AI**. This step stays on the same device only when you configure a loopback endpoint and a truly local model.
+2. **Local AI obfuscation (opt-in)** — a compatible text model reads the text after the regex pass and replaces personal information contextually, catching edge cases the regex misses. Enable it in **Settings → Privacy → Configure Local AI**. This step stays on the same device only when you configure a loopback endpoint and a truly local model.
+
+Recognized patient names become conventional fictional Czech or English names, with one name used throughout a report. Reported sex selects the name, with profile sex as a fallback. Repeated identifiers receive consistent replacements within that report, including the local-model passes, using a temporary key that is never saved or synced. Recognized dates of birth retain their year while their month and day change; age is preserved. Collection dates, test names, values, units, and reference ranges must remain unchanged.
 
 **What the active AI provider receives:** the text after the obfuscation pass, normally marker names, values, units, and collection dates. Review the obfuscated text when prompted because automated detection can miss unusual identifiers.
 
