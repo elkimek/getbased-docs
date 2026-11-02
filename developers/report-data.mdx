@@ -3,8 +3,6 @@ title: "Report data contract"
 description: "Versioned, renderer-independent report snapshots shared by PDF rendering, AI summaries, and authorized local integrations."
 ---
 
-# Report data contract
-
 The report builder resolves selected profile facts into one detached, JSON-serializable snapshot before HTML rendering or optional AI summarization. `export-report-data.ts` owns this contract. PDF/print HTML and the optional AI overview consume it; neither is a source of truth for ranges, status, provenance, or section selection.
 
 Use `collectReportData(options)` from `export-report.ts` or the `export.ts` facade for the active profile:

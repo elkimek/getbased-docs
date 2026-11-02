@@ -27,7 +27,7 @@ A JSON export contains the current profile's portable health record: all lab ent
 - Notes, health goals, and context card change history
 - Complete supplement and medication records, including lifecycle periods, schedules, product ingredients, quality evidence, and reviewed-import provenance
 - Reviewed meal records, nutrient values, targets, response check-ins, and small thumbnails
-- Biometrics — height, weight history, blood pressure history, pulse history. Height is stored in cm and weight in kg; your display-unit preference controls how the app shows them after import.
+- Biometrics — profile height, weight, blood pressure, pulse, and supported explicit manual body readings, including method-specific waist/hip and abdominal-depth history. Canonical values and display units remain distinct; raw wearable daily rows are not portable client data.
 - Menstrual cycle data (if entered)
 - Genetics data — SNP results from DNA raw data import (if imported)
 - Custom marker definitions
@@ -59,11 +59,21 @@ To back up everything across all profiles at once:
   </Step>
 </Steps>
 
-A database bundle downloads containing every profile's complete stored data, chat history, threads, custom personas, and settings. This includes device-local AI model-test history that is not present in a curated single-profile export. Unsent chat drafts are intentionally excluded. Use the bundle for a complete backup or when migrating your entire getbased setup to a new browser or device.
+An **Export All Clients** bundle contains portable client data across profiles, including sent chat and custom personas. It excludes app settings, API keys, unsent chat drafts, and raw device-local wearable stores. For the broader backup-supported stores and settings, use **Settings → Data → Backup & Restore → Download Backup** or a folder backup. See [Back up and restore](/guides/backup).
 
 <Tip>
 Export a JSON backup before doing a large batch import or clearing data — it's your safety net if something doesn't go as expected.
 </Tip>
+
+### Choose the right file
+
+| File | Purpose | Settings and API keys |
+|---|---|---|
+| **Export Client** / **Export with Chat** | One portable client profile | Excluded |
+| **Export All Clients** | Portable profiles and sent chat; merges matching clients | Excluded |
+| **Download Backup** / folder backup | Recovery of backed-up profiles, stores, and settings | Supported keys only with passphrase protection |
+
+**Restore Backup** recognizes both full backups and current multi-client exports. For a client export it asks to merge clients without replacing app settings; for a full backup it asks to restore the backed-up state. Cancelling the confirmation leaves it unapplied.
 
 ## Import a JSON file
 
@@ -77,13 +87,13 @@ You import a JSON file the same way you import a lab PDF: use the header import 
     Drag and drop your `.json` export file onto the app, or use the header import button. getbased detects JSON files automatically.
   </Step>
   <Step title="Review the merge">
-    getbased merges the imported data into your current profile:
+    A current single-client export with profile metadata creates a profile for that client. Older files without that metadata can merge into the active profile. Check the destination; relevant merge rules include:
 
-    - **Lab entries** are merged by date — values for the same date are combined, not overwritten.
+    - **Lab entries** are merged by date; a conflicting imported result for the same marker/date can replace its saved value.
     - **Notes** are deduplicated — the same note will not appear twice.
     - **Context cards** are overwritten by the imported values.
     - **Health goals** are merged and deduplicated by text content.
-    - **Supplements and medications** are deduplicated by name and first start date.
+    - **Supplements and medications** retain their structured records. Matching IDs with different contents prompt **Keep saved** or **Use imported**; choosing the imported record can replace its dose history and omitted fields. Other data can still import if you keep the saved regimen.
     - **Meals** merge by stable meal ID and update time; deletion tombstones prevent an older copy from reviving a deleted meal.
     - **Sent conversations** with new IDs are added without deleting existing ones, up to 50 conversations in the destination profile. Use **Export All** and import the database bundle when migrating a larger chat archive.
     - **Custom personas** are restored when the destination does not already have custom-persona state.
@@ -92,13 +102,13 @@ You import a JSON file the same way you import a lab PDF: use the header import 
 </Steps>
 
 <Warning>
-If you import a JSON file from a different profile or device, the lifestyle context cards in your current profile will be overwritten by the imported values. Your lab entry data is safe — it merges rather than overwrites.
+A merge can replace context fields and matching lab values. A current profile export normally creates its client profile, while a database bundle matches existing client IDs. Check the destination and back it up before importing conflicting or older data.
 </Warning>
 
 Older exports that do not contain marker placements remain compatible. Their markers simply appear in their original categories until you organize them in the current profile; no migration or re-import is required.
 
 <Note>
-For a full-fidelity restore of structured supplement and medication product facts, schedules, quality evidence, and import provenance, use an **Export All** database bundle or folder backup. The curated single-profile compatibility importer deduplicates therapies by name and first start date but currently restores only the legacy core fields, ingredients, multi-period history, note, and safe source URL.
+Supported single-client and multi-client imports preserve structured supplement and medication product facts, schedules, quality evidence, periods, and import provenance. Conflicting matching records require a native keep/replace decision. Use **Download Backup** for app settings and backup-supported device-local stores, which client exports do not include.
 </Note>
 
 ### Import a database bundle

@@ -1,0 +1,84 @@
+---
+title: "Health chat tools and review contracts"
+sidebarTitle: "Health chat tools"
+description: "Shared API and CLI tool execution, bounded semantic edits, proposal lifecycle, and native UI boundaries."
+---
+
+Interactive chat maintains supported health information through a shared semantic tool runtime. Direct providers and local Companion execution use the same catalog, browser bindings, domain projections, review cards, and Apply boundary. Provider adapters translate transport; they do not each implement a separate health editor.
+
+## Ownership
+
+| Concern | Source owners |
+|---|---|
+| Tool definitions and current versus compatibility exposure | `shared/agent-tool-contract.ts` |
+| Allowed health resources, fields, operations, and navigation | `shared/chat-control-policy.ts` |
+| Conversation behavior and proposal-claim repair instruction | `shared/chat-tool-instructions.ts` |
+| Browser-wide permission and revocation epoch | `js/chat-control-settings.ts` |
+| Semantic dispatch and bounded receipts | `js/agent-tool-runtime.ts`, `js/agent-tool-bindings.ts` |
+| Direct-provider orchestration | `js/direct-chat-tools.ts`, `js/chat-tool-loop.ts` |
+| Local CLI orchestration | `js/agent-chat-backend.ts`, `js/agent-chat-context.ts`, Companion adapters |
+| Context-card projection and record edits | `js/agent-context-fields.ts`, `js/agent-context-records.ts` |
+| Saved-record projection and Apply | `js/agent-data-model.ts`, `js/agent-data-apply.ts`, domain-specific proposal modules |
+| Review outcomes and recovery | `js/chat-turn-recovery.ts`, `shared/chat-review-contract.ts` |
+| Live activity | `shared/chat-tool-activity.ts`, chat stream-status and presentation modules |
+
+Use the app's [architecture contract](https://github.com/elkimek/get-based/blob/main/ARCHITECTURE.md) and these source modules for exact current fields. The broader compatibility decoder is not the advertised current capability set.
+
+## Current tool surface
+
+With all browser handlers bound, the current catalog exposes 13 primary definitions:
+
+| Access | Tools |
+|---|---|
+| Bounded context reads | `getbased_lab_context`, `getbased_section` |
+| Health lookups | `getbased_search_markers`, `getbased_marker_history`, `getbased_nutrition_summary`, `getbased_wearable_series` |
+| Search | `getbased_search_knowledge`, `getbased_search_conversations` |
+| Exact record reads | `getbased_read_context_card`, `getbased_read_data` |
+| Prepare a review | `getbased_draft_context`, `getbased_draft_data` |
+| Health navigation | `getbased_navigate` |
+
+Tools can be absent when a handler, permission, source, model, or execution route is unavailable. Personal gateways have no local tool bridge. The old note/meal/biometric/supplement shortcuts and app-management definitions remain compatibility material, not additional current capabilities.
+
+## Read, project, review, commit
+
+1. Capture profile, conversation, provider/model/recipient, generation, and permission ownership.
+2. Read the exact permitted target. Return its current values, allowed fields and operations, and a snapshot identifier. A create read prepares the boundary for a new record.
+3. Validate a proposed semantic operation against that snapshot. Require supporting words from the accepted user message and a brief reason.
+4. Present native review cards with the before/after projection. A successful draft is still unsaved.
+5. On human **Apply**, revalidate permission, ownership, baseline and domain dependencies, then call the native persistence owner. Reject stale or unsupported operations rather than merging an arbitrary object patch.
+
+An unsaved or busy native editor can block Apply; its draft must remain intact. Superseded, discarded, expired, conflicted, or uncertain outcomes are distinct from success. Recovery must establish whether a commit occurred before retrying it. Model text, a fake Markdown card, and a successful read are never commit receipts.
+
+Context edits use the lifestyle form's field definitions. All nine cards, Menstrual Cycle, and Interpretive Lens have destinations. Goal, condition, family-history, and period collections use individual record operations, preserving unspecified fields and unrelated records. Death age is not disease-onset age; a period start does not supply an end or flow; a goal does not establish a symptom.
+
+For a long intake, prepare independent destination proposals and group related changes to the same card. The user applies each review separately. There is no implicit approval or atomic “import everything” transaction.
+
+## Resource policy
+
+`getbased_read_data` discovers the permitted saved-record models. Current health resources include profile facts, treatments, nutrition targets, meals, notes, manual readings, labs, genetics, Light & Sun facts and observations, and EMF records.
+
+The current policy has 25 readable resource IDs and 22 draftable IDs. `labReports`, `lightDevices`, and `lightAudits` are read-only through this catalog. Whole lab-sample deletion is disallowed. Profile changes are restricted to `name`, `sex`, `dob`, `height`, and `location`; display-unit changes are not profile-fact edits. Nutrition presentation fields such as `widgetNutrients` and `proteinBasis` stay outside chat edits. Resource-specific validation narrows the common operations further.
+
+The catalog does not grant application management: provider/model or profile switching, settings, backups, Sync, payments, connections, Knowledge Base administration, custom personas, live timer controls, hardware acquisition, and file selection remain native UI workflows. Retired management proposals can render as history but cannot Apply or Undo. Reading device specifications or completed sessions does not authorize device or timer administration.
+
+## Provider protocols and limits
+
+`direct-chat-tools.ts` constructs the shared runtime and passes definitions through the provider facade. `chat-tool-loop.ts` bounds completion/tool rounds and validates native or structured tool responses. Venice's encrypted route carries actions inside encrypted message content. A model without compatible tool or structured-output behavior can still fail; catalog presence is not live provider qualification.
+
+Local CLI adapters carry the same definitions and return calls to the originating browser through the authenticated bridge. Schema negotiation, advertised image support, cancellation, provider errors, and stale-session rejection remain adapter responsibilities. See [CLI agent providers](/developers/cli-agent-providers).
+
+If an answer affirmatively claims a prepared review without an actual turn-local draft, a bounded repair attempt can request a real proposal. Repeated unsupported claims become an explicit no-proposal result. Prose is never executed, and repair must not replay earlier successful tool calls or uncertain saves.
+
+## Permission and disclosure
+
+**Health updates through chat** is a browser-wide UI permission, on by default. Disabling it removes the API/CLI catalog and revokes in-flight tool and Apply authority while leaving ordinary enabled baseline context available. A persisted epoch prevents re-enabling from reviving old pending reviews. Only the Settings UI changes this permission.
+
+Per-profile context-source controls still constrain baseline context and exact reads. Saved notes, imported documents, tool results, and historical conversation excerpts are untrusted data, never fresh instructions or consent. Literal prior-conversation search is for an explicit historical question and does not switch conversations or turn excerpts into current facts.
+
+Activity comes from actual execution events and appears during generation. Retained outcome summaries distinguish reads, prepared reviews, failures, and saving; decorative waiting phrases are not receipts. Persisted disclosure records successful data-returning reads, not failed or draft-only calls, and must omit credentials and private transport metadata.
+
+## Verification
+
+Exercise source restrictions, current/compatibility exposure, direct and CLI transports, fake-card claims, multi-destination intakes, ambiguous family/cycle facts, stale snapshots, editor conflicts, duplicate prevention, profile/provider switches, revocation, failed persistence, reload, and uncertain-save recovery. Keep native editor success tests alongside chat rejection tests for management operations.
+
+Focused fixture results, merge-tier CI, full browser/coverage runs, and live provider acceptance are different evidence. See [Testing](/developers/testing) and the app's [testing policy](https://github.com/elkimek/get-based/blob/main/engineering/testing-policy.md).

@@ -7,7 +7,7 @@ Every biomarker you import gets its own trend chart in the Labs lens and marker 
 
 ## Marker categories
 
-The core schema contains 197 markers across 19 categories. Specialty lab adapters and custom markers extend that surface when you import them.
+The core schema contains 210 markers across 20 categories. Specialty lab adapters and custom markers extend that surface when you import them.
 
 - **Biochemistry** — liver enzymes, kidney markers, bilirubin fractions, pancreatic enzymes, and related chemistry
 - **Hormones** — testosterone, estradiol, cortisol, DHEA, progesterone, LH, FSH, and other endocrine markers
@@ -60,6 +60,18 @@ See [Understand lab ranges and calculated markers](/guides/lab-ranges-calculated
     Some categories — Fatty Acids is the main example — contain measurements that are typically taken once rather than tracked over time. These display as a grid of value cards rather than a trend line. Each card shows the value alongside its reference range. Click any card to open the detail modal.
   </Tab>
 </Tabs>
+
+## Compare with your personal baseline
+
+When at least three distinct prior draws are available in the preceding two years, charts can show a neutral dotted **personal baseline**. It is the median of those earlier results; the point being compared does not enter its own baseline. Each draw has its own eligible history, even when the visible chart is filtered to a shorter date range.
+
+The baseline is descriptive recorded history, not a healthy range, treatment target, or statistically significant-change threshold. Earlier abnormal readings remain part of that history. Reference and optimal ranges keep their separate meanings and status colors. Enabled lab context can supply the same comparison to chat.
+
+When a very wide range would hide low readings, the chart can focus its vertical scale around the observations. This changes framing, not the stored values, range bounds, or high/low status.
+
+## Immune-cell counts and percentages
+
+**Lymphocyte Subsets** includes CD3 total T cells, CD4, CD8, CD19 B cells, and NK cells as separate absolute counts and percentages. Percentages and counts are not interchangeable. **Calculated Ratios** includes CD4/CD8 and lymphocyte-to-monocyte (LMR) ratios when the required inputs exist. LMR and monocyte-to-lymphocyte (MLR) express reciprocal information, rather than two independent findings.
 
 ## Chart overlays
 

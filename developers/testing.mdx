@@ -6,8 +6,6 @@ description: "How to run and write getbased tests across Node, Vitest, and Playw
 {/* Synced during developer-docs migration. */}
 
 
-# Testing
-
 getbased uses two test layers:
 
 - **Vitest** wraps the node-side helper fixtures and fast logic checks.
@@ -68,6 +66,14 @@ npx playwright test --config playwright.sveltekit.config.ts tests/pwa/sveltekit.
 `npm run test:sveltekit` builds first and runs its configured acceptance set; a focused result is not complete release acceptance. The root service-worker protocol fixture at `tests/pwa/update-acceptance.spec.ts` has its own configuration, `playwright.pwa.config.ts`.
 
 In GitHub Actions, shipping desktop/mobile WebKit UI and real Worker/OPFS acceptance run on macOS Cocoa. The OPFS lane uses persistent profiles and a required write/flush/read control across a browser restart. Chromium/Firefox shipping acceptance and native suites retain Linux placement. Case inventories and the aggregate check reject missing or duplicate receipts. A focused Linux WPE diagnostic does not certify shipping Cocoa behavior. See the app's [testing policy](https://github.com/elkimek/get-based/blob/main/engineering/testing-policy.md) for current partitions and release evidence.
+
+## Merge checks and release evidence
+
+PR and main-push checks use an affected-change plan. The merge tier runs selected unit/native regressions, Chromium shipping shards when affected, and the applicable resource budgets. Nightly and manual full runs retain the complete regression/coverage matrix, including shipping Firefox and desktop/mobile WebKit. A green merge check is not a measurement of whole-project coverage or proof that every browser/provider was qualified.
+
+Explicit `release-evidence.yml` dispatch or the `run-release-evidence` PR label reuses full tests and adds real WASM model checks and isolated container runtime checks. It does not deploy. Installed-agent authentication, paid model access, native service lifecycle, and physical hardware require their own live evidence. Do not describe fixtures as successful live-provider tests.
+
+Recent focused contracts include `body-measurement.test.ts`, `body-measurement-cycle.test.ts`, `marker-baseline.test.ts`, the report-feed model/runtime and HTTP/PDF end-to-end specs, `backup-client-bundle.test.ts`, backup portability, health-tool permission/receipt/recovery tests, and the full-surface Sync compatibility scenarios. Consult the [app testing policy](https://github.com/elkimek/get-based/blob/main/engineering/testing-policy.md) for current owners, commands, inventories, budgets, and evidence tiers.
 
 ## Notable test files
 

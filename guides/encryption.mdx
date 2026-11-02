@@ -83,6 +83,12 @@ A plaintext JSON profile export contains the profile data you chose to export, s
 
 See [Backup](/guides/backup) and [Export and import](/guides/export-import) before relying on a copy for recovery.
 
+### Client exports are different from full backups
+
+**Export Client** and **Export All Clients** omit app settings and API keys, even when data protection is enabled. To include supported keys, enable passphrase protection and choose **Download Backup**. Its encrypted credentials need the original passphrase and included salt after restore. Supported key coverage includes configured voice and PII-service keys as well as AI-provider keys; portable client files are not credential backups.
+
+Restoring an **Export All Clients** file through **Restore Backup** performs a confirmed client merge and preserves the destination's encryption settings. Restoring a full backup reinstates its backup encryption configuration.
+
 ## Relationship to sync encryption
 
 Local encryption and [cross-device sync](/guides/cross-device-sync) are independent:

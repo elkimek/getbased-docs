@@ -3,8 +3,6 @@ title: "Laboratory terminology registry"
 description: "How getbased models LOINC, NPU, NČLP, and UCUM mappings without coupling external codes to marker identity or profile storage."
 ---
 
-# Laboratory terminology registry
-
 getbased keeps external laboratory terminology in an optional generated registry keyed by immutable `gb:marker:*` IDs. External codes are mappings, not getbased identities.
 
 That distinction matters because one conceptual marker can require different codes for different specimens, properties, timing, scales, or methods. A name such as “glucose” is not enough to choose a safe laboratory observation code.

@@ -5,6 +5,12 @@ description: "Developer contract for direct provider routing, cloud consent, pri
 
 AI provider code touches health context, API keys, browser transport, private TEE modes, web search, import parsing, and chat streaming. Treat it as a privacy/security surface, not just a dropdown.
 
+## Shared interactive health tools
+
+Interactive direct chat uses `direct-chat-tools.ts` and `chat-tool-loop.ts` around the existing provider facade. It shares the catalog, browser bindings, semantic projections, activity, and review lifecycle with local CLI chat. Venice encrypted transport carries structured actions within encrypted content. Other routes still depend on their model's compatible tool/structured-output behavior.
+
+Do not implement health mutation policy independently in provider adapters or infer successful proposal creation from assistant prose. The catalog and `shared/chat-control-policy.ts` define the current boundary. Personal gateways and ordinary feature jobs do not automatically receive interactive health proposals. See [Health chat tools](/developers/health-chat-tools).
+
 ## Provider map
 
 CLI agents are a distinct backend, not another `/chat/completions` endpoint. See [CLI agent provider internals](/developers/cli-agent-providers) for the Companion, structured tools, gateways, and lifecycle authorization.

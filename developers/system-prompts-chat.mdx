@@ -3,13 +3,11 @@ title: "Chat and retrieval prompts"
 description: "Exact and parameterized prompts for chat, personalities, discussion, continuation, summaries, and Knowledge Base query rewriting."
 ---
 
-# Chat and retrieval prompts
-
 This page documents the instructions behind ordinary chat and the smaller AI tasks attached to a conversation. Source identifiers are stable catalog handles; application source remains authoritative.
 
 ## Request composition
 
-CLI-backed chat uses the same enabled health-context baseline with an adapter-specific instruction envelope in [`agent-chat-context.ts`](https://github.com/elkimek/get-based/blob/main/js/agent-chat-context.ts). Local execution also declares the scoped tool contract from [`agent-tool-contract.ts`](https://github.com/elkimek/get-based/blob/main/shared/agent-tool-contract.ts). The agent may read approved context, navigate allowlisted views, or propose a reviewed change; instructions are not a substitute for runtime permission checks. Personal gateways receive the context snapshot but not the local tool credential. See [the complete routing boundary](/developers/cli-agent-providers#turn-and-data-flow).
+Direct-provider and local CLI chat share the semantic health-tool instructions in [`shared/chat-tool-instructions.ts`](https://github.com/elkimek/get-based/blob/main/shared/chat-tool-instructions.ts) and the current catalog in [`shared/agent-tool-contract.ts`](https://github.com/elkimek/get-based/blob/main/shared/agent-tool-contract.ts). The direct loop and local adapter add their transport envelopes around the same enabled context and review boundary. Personal gateways receive baseline context without the local tool credential. Instructions do not replace runtime permissions. See [Health chat tools](/developers/health-chat-tools) and [the routing boundary](/developers/cli-agent-providers#turn-and-data-flow).
 
 The system instruction for a normal chat turn is assembled in this order:
 
@@ -35,6 +33,14 @@ Conversation history is sent separately. Assistant messages from another persona
 | Fallback | Provider error is surfaced; an incomplete response can continue automatically twice |
 
 <span id="prompt-chat-base"></span>
+
+## Health-tool instruction layer
+
+When **Health updates through chat** is enabled, interactive tool-capable routes append `CHAT_TOOL_INSTRUCTIONS` and bounded review context. The shared instruction keeps ordinary education and hypothetical conversation tool-free unless saved data is needed, recognizes explicit new personal facts, and directs read-before-draft proposals rather than guessed writes.
+
+It separates personal from family history, diagnosis from suspicion, a goal from a symptom, and a period observation from a prediction. Intake messages can prepare independent reviews for multiple destinations. It also states the native-only management boundary and forbids Markdown imitations of proposal cards. When disabled, the off instruction explains the setting without letting the model enable it. A bounded repair instruction handles unsupported claims of prepared cards; the runtime remains authoritative.
+
+Maintain this as one shared instruction source rather than copying separate provider-specific health editors. See [Health chat tools](/developers/health-chat-tools) for execution and Apply validation.
 
 ## `chat.base`
 

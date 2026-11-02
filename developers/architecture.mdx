@@ -6,8 +6,6 @@ description: "How the static SvelteKit app, Svelte components, typed services, T
 {/* Synced during developer-docs migration. */}
 
 
-# Architecture
-
 ## TypeScript authoring and JavaScript runtime
 
 Edit canonical `.ts`, `.mts` and `.svelte` sources and the owning Tailwind recipe inputs. TypeScript 7 emits ignored `.js` and `.mjs` siblings for the native compatibility graph; local development uses that graph. Production uses SvelteKit 3 with `adapter-static`, compiles authored Svelte components directly and ships the complete assembled artifact from `dist/`. The browser does not load TypeScript directly. Supporting Kit/checker peers are isolated in `tooling/svelte`; their TypeScript 6 dependency does not replace the application compiler.
@@ -275,6 +273,14 @@ The dashboard is not a replacement for lens pages. It is a user-composed overvie
 
 Recommendations have both a dashboard widget and a dedicated `recommendations` route. The page aggregates data-linked recommendation candidates from Labs, Body, Light, and Genome signals, while product option rendering and affiliate disclosure remain owned by `recommendations.ts`.
 
+## Shared health tools and canonical writes
+
+Direct API chat and local CLI chat share the semantic tool runtime and native review boundary. The model can prepare named health-field changes from an exact snapshot; it cannot Apply, control application management, or run arbitrary storage mutations. Provider adapters own transport and capability negotiation. See [Health chat tools](/developers/health-chat-tools).
+
+Native editors, chat proposals, imports, and Sync must preserve canonical profile-data ownership. `profile-data-writes.ts` rebases a caller's named changes against persisted state and retains unrelated newer fields. Sync planners preserve observed versions and deterministic conflict order. A full object captured before an await is not permission to overwrite later data.
+
+Optional PDF feed discovery stays in its leaf model and runtime controller, then enters the existing reviewed import workflow. Method-specific body measurements use manual-reading persistence. Personal marker baselines are derived chart/context data, not mutable healthy ranges. See [Report-source internals](/developers/auto-import-source), [Sync internals](/developers/sync-delta-internals), and [Lab marker internals](/developers/lab-markers-ranges-internals).
+
 ## Dependency direction
 
 ```text
@@ -301,11 +307,11 @@ Bundled locally under `vendor/`:
 | pdf.js | 4.10.38 (legacy ESM) | PDF text extraction; loaded lazily via `js/pdfjs-loader.ts` with `isEvalSupported: false` pinned for defense-in-depth |
 | Mammoth | 1.8.0 | DOCX text extraction |
 | JSZip | 3.10.1 | ZIP import handling |
-| Cashu TS | 4.9.0 | Routstr wallet operations |
+| Cashu TS | 4.11.0 | Routstr wallet operations |
 | qrcode-generator | 1.4.4 | Local QR rendering |
 | Tinfoil + EHBP | 1.2.1 + 0.3.2 | Verified private transport for supported PPQ/Routstr models |
-| venice-e2ee + Phala DCAP QVL | 0.5.3 + 0.6.2 | Venice encrypted-message, TDX, and NVIDIA evidence verification |
-| Evolu | `@evolu/common` 8.7.0 + `@evolu/web` 3.1.0 | Local-first encrypted sync storage; Evolu 7 remains bundled as a lazy identity handoff and rollback bridge |
+| venice-e2ee + Phala DCAP QVL | 0.5.3 + 0.6.3 | Venice encrypted-message, TDX, and NVIDIA evidence verification |
+| Evolu | `@evolu/common` 8.24.1 + `@evolu/web` 3.6.5 + `@evolu/sqlite-wasm` 3.54.1-build3 | Local-first encrypted sync storage; Evolu 7 remains bundled as a lazy identity handoff and rollback bridge |
 | Inter, Outfit, JetBrains Mono, VT323 | unversioned vendored assets | Local font files for body, headings, data, and display accents; inventory-checked but not version-advisory monitored |
 
 AI providers, Custom API, Local AI, xAI voice, and ElevenLabs voice are called directly from the browser. The dedicated compatibility service receives only policy-classified wearable, CAMS, NRAS, and credential-free public-page operations; it must never become a generic AI/voice proxy. The dedicated share service receives only browser-encrypted envelopes and metadata. Independent self-hosts keep their own same-origin compatibility endpoints.

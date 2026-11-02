@@ -3,8 +3,6 @@ title: "See what getbased asks AI"
 description: "Find the instruction used by chat, imports, insights, and Light & Sun—and see what information is included with it."
 ---
 
-# See what getbased asks AI
-
 Whenever getbased uses AI, it sends an instruction that describes the job. Chat receives an instruction about answering health and lab questions. A report import receives a different instruction about extracting dates, markers, values, and ranges. Other features have their own focused instructions.
 
 This guide lets you start with something you did in the app and answer four questions:
@@ -272,6 +270,12 @@ If an import or verdict response is missing the fields getbased expects, it norm
     No developer health prompt is added for voice transcription or speech synthesis. Those services receive the recording or text-to-read together with their selected voice settings. They can use a different provider from chat.
   </Accordion>
 </AccordionGroup>
+
+## Health-update proposals
+
+Interactive chat has a shared instruction layer for noticing new personal facts, reading the right record, and preparing a review. It asks for missing details, preserves unrelated answers, and distinguishes family history from your own diagnosis and recommendations from actions you have taken. A pasted intake can produce several independent proposals.
+
+The app, not the reply text, creates the **Apply / Discard** cards. **Settings → AI → Health updates through chat** controls the tools; model/provider switching and application management stay in the UI. Read the [user workflow](/guides/health-updates-in-chat) or [developer prompt layer](/developers/system-prompts-chat#health-tool-instruction-layer).
 
 ## Report or propose a change
 

@@ -126,3 +126,11 @@ Settings → Agent Access can expose an off, 7-day, 30-day, or 90-day read-only 
 - Verify 7-day update, 90-day import, scheduler, and manual kg/lb normalization for touched paths.
 - Verify Apple Health parsing remains local and cancellable.
 - Verify Agent Access output when metric IDs or the daily-row shape changes.
+
+## Method-specific body measurements
+
+`body-measurement-model.ts` defines standing/seated/supine waist and optional hip measurements at midpoint, iliac, or navel sites, plus supine iliac SAD. The persistent fields keep same-day methods separate and use canonical centimetres. Matched waist/hip values share their save version; ratios need explicit matching inputs and valid profile height.
+
+`body-measurement-modal.ts` captures profile, data, route, and modal ownership before lazy loading and persistence. `wearables-manual.ts` owns writes/deletions through the manual-reading surface, including tombstones and source projections. History edits must not delete another method or a device-sourced reading.
+
+`body-measurement-cycle.ts` derives display-only cycle labels and estimated consistency windows from eligible recorded history. Predicted windows never become observations. Unsupported or incomplete cycles use general guidance rather than invented dates. See [Body measurement guide](/guides/body-measurements).

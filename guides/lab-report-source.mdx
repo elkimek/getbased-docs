@@ -1,0 +1,55 @@
+---
+title: "Find new lab reports from a document archive"
+sidebarTitle: "Lab report source"
+description: "Connect an optional PDF-report feed and review newly discovered reports before saving results."
+---
+
+If you keep reports in a document archive, getbased can check a feed for new PDFs and offer them for import. This feature is **off until you save a source address**. It does not watch a local folder or require Companion.
+
+## Set up a source
+
+1. Open **Settings → Data → Lab report source**.
+2. Enter the **Report feed address** supplied by your archive or its feed adapter.
+3. Choose **Save source**, then **Check for reports**.
+4. Choose **Review now** when new reports are offered, or **Later** to leave them for another check.
+5. Complete the usual privacy review and [lab import preview](/guides/pdf-import) for each report. Confirm the results you want or skip the report.
+
+After setup, getbased also checks when the app opens. Discovery does not save lab results: every report still uses the configured AI import route and your review. Keep the app open while processing. Switching profiles stops unfinished work for the original profile.
+
+## What the archive must provide
+
+The address must return a JSON feed listing PDFs with stable IDs and download addresses. A document manager such as Paperless-ngx may need a separate adapter; its ordinary web page is not itself a compatible feed.
+
+For an archive operator, a minimal fictional example is:
+
+```json
+{
+  "items": [
+    {
+      "id": "report-1",
+      "title": "Lab report",
+      "url": "https://your-archive.example/reports/report-1.pdf",
+      "created": "2026-10-25T10:00:00Z"
+    }
+  ]
+}
+```
+
+Use HTTPS, except for supported same-origin or loopback development addresses. A separate archive origin must allow the browser to fetch the feed and PDFs through CORS. getbased does not attach cross-origin credentials; arrange access in the archive or adapter without placing private tokens in public examples.
+
+See the developer [source contract](/developers/auto-import-source) for URL rules, limits, and retry behavior.
+
+## Report history and retries
+
+Imported and skipped IDs are remembered for this profile and source, so they are not repeatedly offered. Failed downloads or imports can be offered again. A check processes a bounded batch; remaining reports stay available for a later check.
+
+- **Disconnect** removes the saved address and keeps already imported lab data and report history.
+- Reconnecting the same address retains its handled-report history.
+- Saving a different address starts a new handled-report history.
+- **Reset report history** makes previously imported or skipped reports eligible for review again. It does not delete saved results.
+
+## Privacy
+
+The archive and PDF hosts receive the browser's requests and network metadata. The usual AI provider receives report content only through the reviewed import workflow. Feed configuration and handled IDs are browser-local per-profile settings; configure the source separately on another browser.
+
+The report source is separate from encrypted Sync, backups, and the local Companion. Do not treat discovery history as a backup of the PDFs or the extracted results.

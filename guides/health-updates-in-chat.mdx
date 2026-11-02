@@ -1,0 +1,79 @@
+---
+title: "Update your health records in chat"
+sidebarTitle: "Health updates in chat"
+description: "Share what changed, review proposed updates, and choose what getbased saves."
+---
+
+Tell chat about a change in your health or routine. getbased can prepare updates in the relevant records, so you do not have to find every field yourself.
+
+**Nothing is saved until you choose Apply on a proposal card.** You can accept some changes and discard others.
+
+## Start with what changed
+
+For example, you could say:
+
+> I started swimming twice a week. Please add improving endurance as a low-priority health goal.
+
+Chat can read the relevant saved records and propose the new facts. It should preserve information you did not change and ask when a detail is ambiguous. A statement such as “my digestion changed” needs more detail before it can become a useful record.
+
+Ordinary questions, hypothetical examples, and advice do not automatically become records. A suggested supplement is not a treatment you have started, and a suspected diagnosis is not a confirmed condition. You can also say that you do not want something remembered.
+
+## Review and save
+
+1. Send your message and wait for the response to finish. Tool activity can show which records chat is reading or preparing.
+2. Find the **Proposed change** cards. Each identifies the destination, the change, your supporting words, and a reason. Existing and proposed values are shown where applicable.
+3. Choose **Apply** for a change you want, or **Discard** to leave that record as it is.
+4. Check the result in its normal card or record view. You can continue editing there.
+
+A sentence saying “I prepared a draft” is not a proposal. If there is no native card with **Apply / Discard**, no reviewable update has been prepared. Ask chat to prepare the supported change again, or use the normal editor.
+
+If a proposal needs correction, tell chat what to change and review the replacement. A newer overlapping proposal can supersede an older one. Editing a saved record, changing profiles, or changing the chat permission can make an older review unusable; request a fresh proposal instead of applying an outdated one.
+
+When a save result is uncertain, use the card's **Check saved change** action when offered and inspect the destination before trying again.
+
+## Paste a questionnaire or health summary
+
+You can paste a summary you already have and ask chat to prepare the relevant updates. For a fictional test, try:
+
+> This is a fictional intake to review, not to save automatically. I eat a vegetarian diet, sleep 7–8 hours, and swim twice a week. My goal is to improve endurance, low priority. Record only these stated facts. Keep other saved answers and show proposals for me to review.
+
+Chat can prepare several proposals in one response, including changes to different context cards and individual records. Review them separately: applying one card does not approve the others. This is not an all-or-nothing import, and the model may need a follow-up for missing details or conflicts. Do not assume every sentence in a long intake has been captured.
+
+For reports containing measured lab results, use the [reviewed lab-import workflow](/guides/pdf-import). Selecting and analyzing a file is a separate action from telling chat about it.
+
+## What chat can help update
+
+The exact fields and operations depend on the record and current permissions.
+
+| Area | Examples |
+|---|---|
+| All nine [context cards](/guides/context-cards) | Goals, personal and family medical history, diet, sleep, exercise, light habits, stress, relationships, and environment |
+| [Menstrual cycle](/guides/menstrual-cycle) | An explicitly reported period start or correction; unreported end dates and flow remain unknown |
+| Personal profile facts | Name, sex, date of birth, height, and location when explicitly supplied |
+| Supplements and medications | Reported treatments, doses, schedules, and supported history changes |
+| Nutrition and manual readings | Explicit meal or drink records, nutrition targets, and manual body measurements with their units |
+| Notes, labs, and genetics | Supported notes, exact lab results or samples, reported variants, and maternal haplogroup |
+| Light and environment observations | Supported room or screen facts, completed exposure records, measurements, and EMF observations |
+| Interpretive Lens | An explicitly requested change to your interpretation preferences |
+
+This is not unrestricted access to every editable field. Calculated results are not invented or set as measurements. Deleting a complete lab sample, deleting an imported report, administering light devices, and operating live timers remain in their native workflows. Report history, saved device specifications, and light audits can be readable without being editable through chat.
+
+## What stays in the normal UI
+
+Use Settings and the relevant editors for provider or model switching, units and display preferences, profile switching or deletion, backups, Sync, payments, connections, Knowledge Base management, custom personas, file selection, and hardware or timer controls. Chat can explain where to go without changing these controls.
+
+[Agent Access](/guides/agent-access) for an assistant outside getbased is a separate, read-only context-sharing feature.
+
+## Providers and cost
+
+The same review system serves direct API chat and supported local [CLI agents](/guides/cli-agents). The selected model and adapter still need compatible tool or structured-output support. A provider appearing in Settings does not guarantee every model supports this workflow. Personal-gateway targets do not receive the local getbased tool bridge.
+
+Reading records, preparing proposals, and responding after tool calls can take several model requests and more tokens than an ordinary reply. Cost depends on the provider, model, enabled context, and number of changes; check the response's usage information.
+
+## Turn the feature off
+
+Open **Settings → AI** and turn **Health updates through chat** off. It is on by default. Ordinary conversation and enabled baseline context remain available; manual editors continue working.
+
+This setting belongs to the current browser. Turning it off revokes pending tool authorization. Turning it back on does not reactivate older pending reviews: request fresh proposals. Chat cannot turn this permission on for you.
+
+Context-source switches under **Insight → Manage → Context → Data sources** are separate. They still control what stored context and exact reads can disclose. Turning this feature on does not override a source you turned off.

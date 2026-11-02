@@ -1,0 +1,53 @@
+---
+title: "PDF report-source contract"
+sidebarTitle: "Report-source internals"
+description: "Optional feed discovery, PDF download limits, deduplication, review, privacy, and offline-cache boundaries."
+---
+
+The [lab report source](/guides/lab-report-source) is browser-driven discovery of PDFs from a configured archive. It is not a Companion filesystem watcher or a background service that commits health records.
+
+## Ownership and data flow
+
+- `js/auto-import-feed.ts`: pure feed parsing, URL validation, per-profile configuration, handled IDs, and limits.
+- `js/auto-import-feed-runtime.ts`: bounded requests, profile ownership, discovery confirmation, download queue, and retry handoff.
+- `js/components/AutoImportFeedSettings.svelte` and Settings data modules: save, check, disconnect, and history controls.
+- Existing PDF import/review modules: privacy review, AI extraction, user confirmation, and post-confirmation bookkeeping.
+
+No source means no discovery requests. Saving an address enables checks on startup and through **Check for reports**. The per-profile `autoImportFeedV1` setting is device-local and excluded from portable profile data and Sync.
+
+## Feed shape
+
+```json
+{
+  "items": [
+    { "id": "report-1", "url": "/reports/report-1.pdf", "title": "Lab report", "created": "2026-10-25T10:00:00Z" }
+  ]
+}
+```
+
+IDs must be stable. Resolve report URLs against the feed address. `title` and `created` provide optional display and ordering metadata. Reports must be valid PDFs served as `application/pdf`. See [`auto-import-feed.ts`](https://github.com/elkimek/get-based/blob/main/js/auto-import-feed.ts) for exact parser validation.
+
+## Request and memory limits
+
+| Boundary | Limit |
+|---|---|
+| Feed | 5 MiB, up to 5,000 report entries |
+| One check | Up to 50 new reports |
+| One PDF | 50 MiB |
+| Combined downloaded PDF buffer | 50 MiB per check |
+
+Requests have bounded timeouts and reject policy-violating redirects. HTTPS is required except supported same-origin or loopback HTTP. Cross-origin requests omit credentials and need archive CORS. Do not add a general authenticated proxy or expose private archive tokens as a workaround.
+
+Feed and report requests use `cache: 'no-store'`. Same-origin requests additionally carry `#getbased-fresh=auto-import`; the service worker bypasses its cache only for that explicit marker. The fragment is not sent to the server. Other same-origin requests keep their normal offline caching. Avoid reusing a path already fetched by the app for a dynamic feed.
+
+## Confirmation, retry, and ownership
+
+Offer unhandled reports oldest first, placing previously failed reports after untried reports. Excess work remains for the next check. Discovery confirmation waits behind an existing modal confirmation; **Later** does not mark reports handled.
+
+An imported or explicitly skipped report is remembered only after its corresponding outcome. Download or import failure remains retryable. Switching profiles retires the original batch and prevents late callbacks from writing into the new profile. Import-queue failure must not strand later files.
+
+Disconnect removes the address, retaining handled IDs for reconnection to the same source. Changing the address resets that source's handled-ID history. Resetting history does not remove lab data. Neither discovery history nor the ordinary service-worker cache is a PDF archive.
+
+## Verification
+
+Focused tests cover parsing, URL policy, deduplication, confirmation queues, downloads, privacy review, confirmed import, skip/retry, reload, and profile switching. `tests/playwright/auto-import-feed-e2e.spec.ts` uses real HTTP and PDF extraction with a deterministic AI fixture. It does not establish authentication compatibility with a particular deployed archive or live model extraction accuracy.

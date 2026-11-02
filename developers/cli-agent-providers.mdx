@@ -50,13 +50,19 @@ The following tools form the current local bridge:
 
 | Access | Tools |
 |---|---|
-| Read | `getbased_lab_context`, `getbased_section`, `getbased_search_markers`, `getbased_marker_history`, `getbased_nutrition_summary`, `getbased_wearable_series`, `getbased_search_knowledge` |
+| Read | Bounded context, marker/nutrition/wearable lookups, Knowledge Base and prior-conversation search, exact context-card and saved-record snapshots |
 | Navigate | `getbased_navigate` — allowlisted views and marker details only |
-| Propose | `getbased_draft_note`, `getbased_draft_meal`, `getbased_draft_biometric`, `getbased_draft_supplement` |
+| Propose | `getbased_draft_context`, `getbased_draft_data` — semantic health changes, never application management |
 
 Drafts never commit through a tool call. The browser sanitizes the proposal, presents **Apply / Discard**, revalidates profile ownership on Apply, and uses existing sync-aware persistence helpers. There is no generic database write, raw IndexedDB/DOM access, arbitrary JavaScript, credential-reading, or shell tool.
 
 Source toggles apply to both baseline context and typed local reads. This deliberately differs from relay Agent Access's separately authorized full-context snapshot. A profile switch invalidates ongoing reads/navigation and stale async UI work. See [chat internals](/developers/chat-internals) for generation, search, import, and storage race guards.
+
+### Shared health-review implementation
+
+Direct API chat and local CLI chat use the same current tool catalog, runtime, semantic projections, and native review lifecycle. They differ at transport and session capability boundaries. See [Health chat tools](/developers/health-chat-tools) for the complete current catalog and the retained compatibility surface.
+
+**Health updates through chat** revokes the API/CLI tool mode and pending Apply authority when disabled. Companion must respect plain-chat capability and signed session mode; resuming a session with the opposite mode must fail closed. Adapter feature schemas and image capabilities are negotiated explicitly. A process being installed is not evidence of valid sign-in, model access, or a successful request.
 
 ## Text-only gateway features
 

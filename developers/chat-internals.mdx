@@ -3,8 +3,6 @@ title: "Chat internals"
 description: "Developer contract for chat drafts, thread storage, bounded rendering, message edits and forks, discussion rounds, custom personas, sync, and backups."
 ---
 
-# Chat internals
-
 Chat is a profile-scoped workflow built from small ES modules rather than one panel controller. The active conversation lives in `state.chatHistory`, while durable thread metadata, messages, custom personas, and deletion records use separate storage keys. UI work must preserve four invariants:
 
 1. switching profiles or conversations must not let late async work mutate the new active thread;
@@ -25,7 +23,7 @@ Chat is a profile-scoped workflow built from small ES modules rather than one pa
 | Desktop sizing, model selection, and sender identity | `chat-layout.ts`, `chat-model-controls.ts`, `chat-model-preferences.ts`, `chat-message-avatars.ts` |
 | Attachments and import routing | `chat-images.ts`, `image-utils.ts`, `import-file-input.ts` |
 | Personas | `chat-personalities.ts`, `chat-personality-editor.ts`, `chat-personality-storage.ts`, `chat-personality-merge.ts` |
-| Discussion mode | `chat-discussion-*.js` modules |
+| Discussion mode | `chat-discussion-*.ts` modules |
 | Persisted recommendation disclosure | `chat-recommendation-disclosure.ts`, `chat-render.ts` |
 | Validation, backup, and Sync | `chat-storage-safety.ts`, `backup-chat-storage.ts`, `sync-payload-collectors.ts`, `sync-chat-apply.ts` |
 
@@ -45,7 +43,7 @@ Thread switches save the visible draft before changing state and restore the des
 
 ## Send and response flow
 
-Direct providers and local agents share the enabled context snapshot. CLI transport, local structured tools, and the personal-gateway boundary are documented in [CLI agent providers](/developers/cli-agent-providers). Do not assume a CLI exposes shell access or that a gateway receives the local tool bridge.
+Direct providers and local agents share the enabled context snapshot and [health tool/review runtime](/developers/health-chat-tools). Direct transports use `direct-chat-tools.ts` and the bounded `chat-tool-loop.ts`; local adapters return scoped calls to the originating browser. Personal gateways retain their baseline-only boundary. Do not assume a CLI exposes shell access or that a gateway receives the local tool bridge.
 
 For a normal turn, `chat-send.ts`:
 
@@ -69,6 +67,14 @@ The plus menu routes readable supported image files into the message queue only 
 Chat original images are not recompressed or stripped of metadata. Queue limits are five images for direct providers, four for agents, and 18 MiB total. History retains bounded thumbnails, while full originals remain request-time data. CLI uploads additionally pass the authenticated Companion's type/size validation and temporary-file cleanup. Preserve these distinctions in privacy copy.
 
 Desktop resizing persists bounded device-local widths and updates the dashboard's available width, including when the conversation rail changes. Compact mobile layouts do not inherit an unusable desktop width. Waiting phrases are decorative, not tool receipts. Sender avatars use the active profile image/initial or the selected persona/agent branding; default analyst labels are suppressed unless participant identity is needed. Treat all names, model labels, and image URLs as untrusted rendering inputs.
+
+## Health proposals and live activity
+
+The model can prepare semantic changes, not commit them. `shared/chat-tool-instructions.ts` preserves natural conversation, recognizes explicit new personal facts, and requires exact reads before drafts. Runtime policy and native persistence still enforce the boundary; prompt wording is not authorization.
+
+Actual tool activity appears in the generation UI, separately from model Markdown. The retained turn outcome comes from successful runtime results and review lifecycle state. A false prose claim that a review exists can trigger one bounded repair; prose never creates a review. Apply must retain source permissions, captured profile/provider ownership, current permission epoch, stale-baseline checks, native editor protection, and uncertain-save recovery.
+
+See [Health chat tools](/developers/health-chat-tools) for the catalog, resource exclusions, batch intake behavior, and current versus compatibility contracts.
 
 ## Markdown and model-output safety
 
