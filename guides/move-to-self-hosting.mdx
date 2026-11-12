@@ -5,7 +5,7 @@ description: "Download a complete encrypted migration file, restore at your own 
 
 Your records belong to the browser profile or installed app where you saved them. A new address cannot read the old address's storage. Keep the original browser data throughout the move.
 
-The hosted transition provides **30 days from the published announcement** before personal-data use is disabled. The original address remains available for recovery afterward. The public demo uses a separate address. The announcement will state the actual cutoff date; installing a local copy does not start the notice period.
+The hosted transition provides **30 days from the published announcement** before personal-data use is disabled. The original address remains available for recovery afterward. The public demo uses a separate address. The [transition announcement](https://getbased.health/self-hosting) states the actual cutoff date; installing a local copy does not start the notice period.
 
 Use the exact original address, including the official Tor address if that is where you saved records. Browser data at an onion origin is separate from the HTTPS site.
 
@@ -73,3 +73,5 @@ Ordinary snapshots contain only their supported stores at the displayed time. Th
 | App or private HTTPS unavailable | Check the running host, its sleep state, Tailscale connection and Serve mapping. Offline cached recovery can resume after the tools have installed. |
 
 The current archive format has a 512 MiB decoded-content limit and needs working IndexedDB, OPFS, service workers and browser-wide locks. Very large installations or browsers missing those capabilities need additional recovery support before the hosted cutoff. A successful download alone is not proof of a checked destination.
+
+An already-cached older app may still run offline. The transition does not remotely erase those browser records. Use your own maintained installation for continued personal use and updates.
