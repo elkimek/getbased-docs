@@ -4,33 +4,83 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased uses Svelte 5, Tailwind CSS 4 and a static SvelteKit 3 build. A source checkout requires Node.js 24 and npm dependencies; TypeScript 7 compiles the application. The built core is static HTML, CSS and JavaScript and needs no Node rendering server. Wearable OAuth, optional integration endpoints, profile sharing, Sync and Companion retain their own service requirements.
+getbased runs on your own computer or server. Each browser keeps its own health records. The host serves the application; it does not become a shared database for your devices.
 
-## Quick start
+## Install the prebuilt app
 
-<Steps>
-  <Step title="Clone the repository">
-    ```bash
-    git clone https://github.com/elkimek/get-based
-    cd get-based
-    npm ci
-    ```
-  </Step>
+Install [Node.js](https://nodejs.org/en/download) **24.20 or later within version 24**. Use Terminal on Linux or macOS, or PowerShell on Windows.
 
-  <Step title="Start a local server">
-    ```bash
-    npm run dev-server -- 8000
-    ```
+1. Open [getbased releases](https://github.com/elkimek/get-based/releases) and download the self-host package for the release you want. Save the `.tgz` file as `getbased-self-host.tgz`.
+2. In the folder containing that file, run:
 
-    Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
+   ```bash
+   npm install --global ./getbased-self-host.tgz
+   getbased
+   ```
 
-    <Note>
-      This is the source-development server, not the assembled production build. It provides local `/api/proxy` behavior where configured. A static file server cannot exchange confidential OAuth tokens or supply those API routes; build and configure the production artifact and optional services separately for a public host.
-    </Note>
-  </Step>
-</Steps>
+3. Keep the terminal open. On that computer, the app is available at `http://127.0.0.1:8000/app`. Press **Ctrl+C** to stop it. Run `getbased` to start it again.
 
-`npm ci` compiles the sources through its `prepare` step; `npm run dev-server` recompiles and builds the Companion download before serving. If you edit sources while the server is running, run `npm run typescript:build` before reloading. Production builds also require compiled runtime modules: use `npm run production:build` locally; Vercel compiles during dependency installation before its configured build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
+The package includes the built app and its server. It needs no source checkout or build tools. `getbased --help` shows the commands; `getbased --version` shows the installed version. If npm reports a permission error on Linux or macOS, use a user-owned Node installation, such as a Node version manager, before retrying.
+
+<Note>
+  Release packages must include the migration screen before you move records. If the selected release has no self-host package, use the source installation below and keep the original browser data.
+</Note>
+
+## Use private HTTPS on all your devices
+
+1. [Install Tailscale](https://tailscale.com/docs/install) on the host and each computer, phone or tablet you want to use. Sign them into your private tailnet.
+2. Leave `getbased` running. In another terminal on the host, run:
+
+   ```bash
+   tailscale serve --bg http://127.0.0.1:8000
+   ```
+
+3. Follow the prompt to enable HTTPS if needed. Open the full HTTPS address printed by Tailscale, ending in `.ts.net`, and use that same address on every device. Add `/app` if needed.
+4. Bookmark that address before restoring records. If you plan to install the PWA, install and open it before restoring; some browsers keep installed-app storage separate.
+
+[Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve) keeps this HTTPS mapping in the background. The getbased process must still be running, and the host must be awake and connected. Devices need Tailscale access to the host. Check `tailscale serve status` first if you already use Serve for another service. This setup uses private Serve rather than public Funnel.
+
+The server listens only on loopback. You do not need to forward a router port or expose it to your local network. The installer does not configure `getbased.local`; the private HTTPS address provides a trusted connection for phones and tablets without installing local certificates.
+
+## Keep the same address
+
+Browser storage belongs to the full origin: protocol, hostname and port. These addresses have separate storage:
+
+| Address | Storage |
+| --- | --- |
+| `http://127.0.0.1:8000` | This loopback origin in this browser |
+| `http://localhost:8000` | A different loopback origin |
+| Your Tailscale HTTPS address | A different HTTPS origin on each browser/device |
+
+Use the HTTPS address from the start, including on the host computer. Keep the host's Tailscale name stable. If port 8000 is occupied, stop the previous getbased process. You can set `GETBASED_SELF_HOST_PORT` to another fixed port before starting and point Serve at that port. Changing the browser-facing address does not move records.
+
+## Move your existing records
+
+Follow [Move to self-hosting](/guides/move-to-self-hosting). Use **Settings → Data → Backup & Restore → Start migration** at the original address. The encrypted migration file includes stores that ordinary backups and Sync do not transfer.
+
+Keep the source browser data and downloaded file until you have checked every profile at the destination, including after a reload. The official encrypted Sync relay remains available during migration. Sync setup is separate from serving the app: each device still has its own local data.
+
+## Install from source
+
+If you prefer a source checkout, install Git and Node.js 24.20 or later within version 24, then run:
+
+```bash
+git clone https://github.com/elkimek/get-based
+cd get-based
+npm ci
+npm run production:build
+npm run self-host
+```
+
+Use the same private HTTPS setup above. `npm run self-host` recompiles the server but does not rebuild `dist/`. The source-development command `npm run dev-server -- 8000` is intended for development and can provide additional configured API behavior.
+
+## Update, stop or uninstall
+
+Before updating, create a new migration file and keep the previous installer. Stop the server with **Ctrl+C**, install the new release package with the same `npm install --global` command, then run `getbased` again. Use the app's update prompt to activate the new cached build. Keep the HTTPS address unchanged.
+
+To uninstall the package, stop it and run `npm uninstall --global getbased-self-host`. If you no longer need its Serve mapping, remove that mapping with `tailscale serve --https=443 off`. Check existing mappings before doing this. Neither command exports or clears browser records.
+
+An older app version may not understand newer data. If an update fails, keep the browser data and migration file; reinstalling old code is not a backup restore.
 
 ## Build for a static host
 
