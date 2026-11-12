@@ -43,6 +43,23 @@ Use **Restore Backup** for this file. Read the confirmation: a full restore rein
 
 **Export Client** and **Export All Clients** are portable client-data files. They exclude app settings and API keys. **Restore Backup** also accepts an **Export All Clients** file, but confirms a client merge and leaves the destination's app settings, encryption configuration, and API keys unchanged. See [Export and import](/guides/export-import).
 
+## Download a saved browser snapshot
+
+Open **Settings → Data → Backup & Restore → Recent snapshots**, then choose
+**Download** beside the snapshot you want. This downloads the saved backup
+without restoring it over your current records. You can use **Restore Backup**
+in another browser or self-hosted installation to recover the downloaded file.
+
+An encrypted snapshot keeps its original encryption and requires the passphrase
+used when it was created. Exporting a saved snapshot preserves that encryption.
+A historical snapshot contains the records saved at that time, so it
+does not replace making a fresh backup of later changes.
+
+Browser snapshots belong to the browser profile and website address where they
+were created. Open that original browser or installed app to download them;
+you do not need to find their files through your operating system's file explorer.
+Keep the original browser data until you have checked the recovered records.
+
 ## Automatic folder backup
 
 Folder backup automatically saves your data to a folder on your computer — your local drive, Proton Drive, Dropbox, a NAS, or anywhere you choose. This uses the browser's File System Access API.
