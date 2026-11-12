@@ -3,6 +3,11 @@ title: "Back up and restore your getbased data"
 description: "getbased protects your health data with three independent backup layers — automatic snapshots, daily folder backups, and manual JSON exports."
 ---
 
+<Note>
+  Moving to another address? Use [Move to self-hosting](/guides/move-to-self-hosting) for the encrypted migration file. It also carries browser-bound stores that an ordinary backup does not include. Keep the original until you have checked the destination.
+</Note>
+
+
 Because getbased stores your working data locally in your browser by default, there is no account-backed cloud backup automatically safeguarding your health records. getbased gives you three independent backup layers to keep your data safe: automatic in-browser snapshots, automatic folder backups to any location you choose, and on-demand JSON exports.
 
 Saved Biology Score summaries, full explanations and supported comparison variants are part of profile data in backups. Restoring matching evidence can reuse those interpretations; changed data or scoring rules may still require reassessment. Transient feedback forms are not backed up.
@@ -42,6 +47,23 @@ Open **Settings → Data → Backup & Restore → Download Backup** for the full
 Use **Restore Backup** for this file. Read the confirmation: a full restore reinstates backed-up profiles and settings, rather than performing the same merge as a client export. An encrypted backup requires the original passphrase and its included salt.
 
 **Export Client** and **Export All Clients** are portable client-data files. They exclude app settings and API keys. **Restore Backup** also accepts an **Export All Clients** file, but confirms a client merge and leaves the destination's app settings, encryption configuration, and API keys unchanged. See [Export and import](/guides/export-import).
+
+## Download a saved browser snapshot
+
+Open **Settings → Data → Backup & Restore → Recent snapshots**, then choose
+**Download** beside the snapshot you want. This downloads the saved backup
+without restoring it over your current records. You can use **Restore Backup**
+in another browser or self-hosted installation to recover the downloaded file.
+
+An encrypted snapshot keeps its original encryption and requires the passphrase
+used when it was created. Exporting a saved snapshot preserves that encryption.
+A historical snapshot contains the records saved at that time, so it
+does not replace making a fresh backup of later changes.
+
+Browser snapshots belong to the browser profile and website address where they
+were created. Open that original browser or installed app to download them;
+you do not need to find their files through your operating system's file explorer.
+Keep the original browser data until you have checked the recovered records.
 
 ## Automatic folder backup
 

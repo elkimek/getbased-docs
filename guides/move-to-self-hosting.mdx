@@ -1,0 +1,79 @@
+---
+title: "Move to self-hosting"
+description: "Download a complete encrypted migration file, restore at your own address, and keep the original until recovery is checked."
+---
+
+Your records belong to the browser profile or installed app where you saved them. A new address cannot read the old address's storage. Keep the original browser data throughout the move.
+
+The hosted transition provides **30 days from the published announcement** before personal-data use is disabled. The original address remains available for recovery afterward. The public demo uses a separate address. The [transition announcement](https://getbased.health/self-hosting) states the actual cutoff date; installing a local copy does not start the notice period.
+
+If an updated tab stays open until the cutoff, it switches to a recovery-only dialog. It saves text drafts and keeps the page open until you choose to leave. If unsent images or a storage error prevent a normal handoff, download every offered work copy before confirming. Those text and image copies are **unencrypted**; keep them private and paste or reattach them in your own installation. New or still-preparing work requires fresh copies. The password-protected migration file remains the route for your saved records.
+
+Use the exact original address, including the official Tor address if that is where you saved records. Browser data at an onion origin is separate from the HTTPS site.
+
+## Before you start
+
+- [Install your own getbased app](/guides/self-hosting) and choose its final private HTTPS address.
+- On a phone or tablet, install and open the PWA first if that is how you intend to use it. Some browsers give installed apps separate storage.
+- Keep the original app, browser profile and application passphrase available. Do not clear site data or uninstall the original PWA before checking recovery.
+- Save or remove unsent image attachments. The migration action saves pending text drafts, but original unsent images can exist only in memory.
+- Close other getbased tabs and installed windows at the source address.
+
+## Download from the original browser
+
+1. Open the original address in the browser profile or installed PWA that contains your records.
+2. Choose **Settings → Data → Backup & Restore → Start migration**. If the normal app cannot start, open `/app/migration.html` at that same address.
+3. Enter the original application passphrase if your records use passphrase protection.
+4. Choose a separate migration password of at least 12 characters. Keep it separately from the file.
+5. Choose **Prepare migration file**, then **Download migration file** when preparation finishes.
+
+The migration screen reads the browser's saved stores without starting normal app features or Sync. It finishes recoverable interrupted persona saves, checks the source twice, and refuses export if saved data changes or a required browser-bound key cannot be read. A failed export leaves the source available.
+
+## Restore at your own address
+
+1. Open `/app/migration.html` at your chosen self-hosted HTTPS address. Use a fresh installation with no personal records or connected account.
+2. Choose the downloaded file, enter its migration password, and choose **Check file**. Review the source address and record counts. This step does not restore records.
+3. Enter the original application passphrase if requested. Confirm that this is the intended installation, then choose **Restore migration file**.
+4. Wait for **Recovery verified**. This confirms that archived records and Knowledge Base files passed a read-back check. Open getbased, accept its self-hosted notice, and unlock if needed.
+5. Check your profiles, important dates, notes, sent chats, meals, wearable history, Knowledge Base libraries and any wallet. Reload and check again before clearing anything at the source.
+
+If recovery is interrupted, reopen the same destination. It opens **Resume recovery** instead of starting the app over partially restored data. Enter the migration password again; reselect the original file if its retained copy is unavailable. Resume with the same file. Free space or fix the reported browser problem before retrying.
+
+## What the file carries
+
+| Included inside the encrypted file | Set up again at the destination |
+| --- | --- |
+| Profiles, notes, saved chats and stored text drafts | Wearable provider logins |
+| Saved meals, device-protected wearable history and cycle stores | Companion pairing |
+| Local Knowledge Base files | Automatic backup folder permission |
+| Saved ordinary backup snapshots and portable settings | Downloaded AI models and regeneratable caches |
+| Supported saved API credentials | Unsent image originals and pending edit approvals |
+| Wallet proofs, counters and recovery journals | Explicitly resume Sync after checking records |
+| Saved Sync identity, recovery words and relay address | Device-local permissions |
+
+The file contains sensitive credentials and wallet recovery material as well as health records. Keep its password separately. If you recover a wallet, use only one active installation for spending; copying its records does not transfer or spend funds.
+
+Sync starts **off** at the destination. The saved identity and relay are retained. Check local recovery before enabling it. The official encrypted relay remains available during migration; operating your own relay is optional. Other devices can join the same identity for the [records Sync supports](/guides/cross-device-sync). Sync does not replace the complete migration file.
+
+## Recover an older snapshot
+
+The migration screen lists saved ordinary backups. Choose **Prepare saved backup**, then **Download saved backup**. This downloads that snapshot without replacing current records and does not require unlocking the application first. An encrypted snapshot still needs its original passphrase when restored.
+
+Ordinary snapshots contain only their supported stores at the displayed time. They are useful recovery copies, but they do not contain everything in a migration file. See [Backup and restore](/guides/backup).
+
+## If something goes wrong
+
+| What you see | What to do |
+| --- | --- |
+| No records at the source | Check the exact address, browser profile and original installed PWA. Do not start a new profile over the old one. |
+| Another window is open | Close every other getbased tab and installed window at that address, then retry. |
+| A missing browser-only key or damaged record | Keep the source and saved snapshots. Do not erase or overwrite records to bypass the error. |
+| Wrong password | The migration password and original application passphrase are separate. Check which one is requested. |
+| Destination already has records | Keep them in their current browser profile. Use a separate fresh profile for the migration. |
+| Quota or storage failure | Keep the original file, make storage available, reopen the same destination and resume. Avoid private browsing or automatically cleared site storage. |
+| Archive too large for this browser | Keep the source. Try a supported browser on the same device only if it can access that original profile; another browser cannot read its keys. Seek recovery help before clearing data. |
+| App or private HTTPS unavailable | Check the running host, its sleep state, Tailscale connection and Serve mapping. Offline cached recovery can resume after the tools have installed. |
+
+The current archive format has a 512 MiB decoded-content limit and needs working IndexedDB, OPFS, service workers and browser-wide locks. Very large installations or browsers missing those capabilities need additional recovery support before the hosted cutoff. A successful download alone is not proof of a checked destination.
+
+An already-cached older app may still run offline. The transition does not remotely erase those browser records. Use your own maintained installation for continued personal use and updates.
