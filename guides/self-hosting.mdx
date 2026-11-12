@@ -42,6 +42,8 @@ The package includes the built app and its server. It needs no source checkout o
 
 The server listens only on loopback. You do not need to forward a router port or expose it to your local network. The installer does not configure `getbased.local`; the private HTTPS address provides a trusted connection for phones and tablets without installing local certificates.
 
+The official getbased analytics script does not load on independent self-hosted addresses, including your Tailscale HTTPS address.
+
 ## Keep the same address
 
 Browser storage belongs to the full origin: protocol, hostname and port. These addresses have separate storage:

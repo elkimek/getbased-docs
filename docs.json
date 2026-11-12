@@ -37,8 +37,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Open App",
-      "href": "https://app.getbased.health"
+      "label": "Install getbased",
+      "href": "/guides/self-hosting"
     }
   },
   "navigation": {
