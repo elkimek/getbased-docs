@@ -20,15 +20,14 @@ Charts, manual meal and lab entry, correlations, comparisons, JSON import, and d
 Already have Codex, OpenCode, Hermes, Grok Build, or OpenClaw installed? You can use it as your AI provider through [CLI agents and Companion](/guides/cli-agents). This is optional; non-AI features need only the browser app.
 
 <Steps>
-  <Step title="Install and open the app">
-    Follow [Self-hosting](/guides/self-hosting) to install the prebuilt release package with Node.js 24.20 or later within version 24. In the folder containing your downloaded `getbased-self-host.tgz`, run:
+  <Step title="Deploy or install the app">
+    The fastest way requires **no terminal** — deploy your own personal HTTPS copy on Vercel in three clicks:
 
-    ```bash
-    npm install --global ./getbased-self-host.tgz
-    getbased
-    ```
+    1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
+    2. Open [Vercel New Project](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy** (no environment variables required).
+    3. Open your permanent HTTPS address (for example `https://my-getbased.vercel.app/app`) and bookmark it before adding records.
 
-    Keep that terminal open. Install Tailscale on the host and each device, then run `tailscale serve --bg http://127.0.0.1:8000` in another terminal on the host. Open the full private HTTPS address it prints, including on the host itself. Bookmark this address before adding records.
+    You can also deploy to **Cloudflare Pages / Netlify** (no terminal) or run strictly on your own computer with the prebuilt **Node.js 24** package and private **Tailscale Serve** HTTPS. See [Self-hosting](/guides/self-hosting) for all three options and zero-terminal update instructions.
 
     **Install as a PWA (optional)**
 

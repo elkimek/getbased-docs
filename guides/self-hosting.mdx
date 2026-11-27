@@ -4,11 +4,44 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased runs on your own computer or server. Each browser keeps its own health records. The host serves the application; it does not become a shared database for your devices.
+getbased is a local-first PWA: each browser keeps its own health records in browser storage, not on a central server. The easiest way to run your own copy requires **no terminal** — fork the repository on GitHub and deploy a personal HTTPS copy on Vercel or Cloudflare Pages. If you prefer strictly local hosting on your own computer, you can also run the prebuilt Node.js package or build from source.
 
-## Install the prebuilt app
+## Option 1: Personal deploy on Vercel (recommended, no terminal)
 
-Install [Node.js](https://nodejs.org/en/download) **24.20 or later within version 24**. Use Terminal on Linux or macOS, or PowerShell on Windows.
+<Steps>
+  <Step title="Fork getbased on GitHub">
+    Open [github.com/elkimek/get-based/fork](https://github.com/elkimek/get-based/fork) and click **Create fork**. Forking (rather than making a detached clone) keeps one-click updates working.
+  </Step>
+
+  <Step title="Import and deploy on Vercel">
+    Open [vercel.com/new](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy**. A `vercel.json` is already in the repo root — no environment variables or build settings are required for a standard install.
+  </Step>
+
+  <Step title="Open your permanent HTTPS address">
+    Wait a few minutes for the first build to complete, then open your Vercel URL (for example `https://my-getbased.vercel.app/app`) on your computer, phone, and tablet. Bookmark it or install it as a PWA before importing or restoring records.
+  </Step>
+</Steps>
+
+Why this is the smoothest PWA path:
+
+- **Zero terminal, zero Node.js, always online** across desktop, iOS, and Android.
+- **Independent deployment:** official getbased analytics are automatically disabled on non-official hosts, and your deployment is never treated as the operated hosted origin.
+- **Built-in `/api/proxy`:** your own Vercel project runs its own same-origin compatibility proxy (for postal geocoding, NVIDIA attestation, and compatible provider requests) without extra server configuration.
+- **Easy updates (no terminal):** open your fork on GitHub and click **Sync fork → Update branch** whenever you want a new release — or open your fork's **Actions** tab once and enable the included **Sync upstream updates** workflow for automatic daily checks (it stops instead of overwriting if you have custom edits or workflow changes). Vercel rebuilds to the exact same URL and your browser shows the normal in-app update banner.
+
+## Option 2: Cloudflare Pages or Netlify (no terminal, static PWA)
+
+1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
+2. Connect your fork in **Cloudflare Pages** or **Netlify** with:
+   - **Build command:** `node scripts/fetch-catalog.mjs && npm run production:build`
+   - **Build output directory:** `dist`
+   - **Environment variable:** `NODE_VERSION=24` (Node.js 24.20 or later within version 24)
+
+The production build writes `dist/_headers` (CSP, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: credentialless` for OPFS/Sync, and cache headers) and `dist/_redirects` (`/app` → `/index.html`) automatically. Static-only hosting runs all local tracking, Knowledge Base, encrypted Sync, and direct-CORS AI providers without `/api/proxy`. Updating works the same way via GitHub **Sync fork** or the opt-in **Sync upstream updates** workflow.
+
+## Option 3: Local computer (prebuilt Node.js package)
+
+If you prefer serving getbased strictly from your own computer, install [Node.js](https://nodejs.org/en/download) **24.20 or later within version 24**. Use Terminal on Linux or macOS, or PowerShell on Windows.
 
 1. Open [getbased releases](https://github.com/elkimek/get-based/releases) and download the self-host package for the release you want. Save the `.tgz` file as `getbased-self-host.tgz`.
 2. In the folder containing that file, run:
@@ -226,26 +259,8 @@ For a multi-instance Vercel deployment, also configure a suitable proxy limiter 
 
 Deploy the complete production artifact so its embedded build identity and service-worker assets stay aligned. Updates download quietly and offer **Reload / Later** when ready. Applying shows progress; a failed or paused activation offers recovery rather than silently discarding the offer. Follow [App updates and offline use](/guides/app-updates) for **Retry update** and close-all-windows recovery. Updating does not require clearing browser storage. Build identity, not a semver bump for every fix, distinguishes cache generations. See [Deployment](/developers/deployment#service-worker).
 
-## Deploying to Vercel
-
-A `vercel.json` is already present in the repo root — no extra configuration is needed.
-
-<Steps>
-  <Step title="Import the repository on Vercel">
-    In the Vercel dashboard, click **Add New → Project** and import your fork of `get-based`. Vercel detects `vercel.json` automatically.
-  </Step>
-
-  <Step title="Set environment variables">
-    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. Google Health, WHOOP, and Ultrahuman each require their enable flag, client ID, and secret. For WHOOP, finish the developer-program, redirect, disclosure, and terms review above before enabling production access.
-  </Step>
-
-  <Step title="Deploy">
-    Vercel builds and deploys on every push to your default branch. The app runs at your Vercel project URL immediately after the first deploy.
-  </Step>
-</Steps>
-
 <Tip>
-  For a basic self-hosted install, no additional build configuration is needed — the app runs out of the box with the example supplement catalog included in the repo.
+  On Vercel, add optional wearable credentials under **Project → Settings → Environment Variables** and mark each `*_CLIENT_SECRET` value as **Sensitive**. For a standard install without custom wearable OAuth apps, no environment variables are needed.
 </Tip>
 
 ## Self-hosted profile sharing
