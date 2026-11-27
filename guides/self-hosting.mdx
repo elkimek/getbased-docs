@@ -4,33 +4,118 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased uses Svelte 5, Tailwind CSS 4 and a static SvelteKit 3 build. A source checkout requires Node.js 24 and npm dependencies; TypeScript 7 compiles the application. The built core is static HTML, CSS and JavaScript and needs no Node rendering server. Wearable OAuth, optional integration endpoints, profile sharing, Sync and Companion retain their own service requirements.
+getbased is a local-first PWA: each browser keeps its own health records in browser storage, not on a central server. The easiest way to run your own copy requires **no terminal** — fork the repository on GitHub and deploy a personal HTTPS copy on Vercel or Cloudflare Pages. If you prefer strictly local hosting on your own computer, you can also run the prebuilt Node.js package or build from source.
 
-## Quick start
+## Option 1: Personal deploy on Vercel (recommended, no terminal)
 
 <Steps>
-  <Step title="Clone the repository">
-    ```bash
-    git clone https://github.com/elkimek/get-based
-    cd get-based
-    npm ci
-    ```
+  <Step title="Fork getbased on GitHub">
+    Open [github.com/elkimek/get-based/fork](https://github.com/elkimek/get-based/fork) and click **Create fork**. Forking (rather than making a detached clone) keeps one-click updates working.
   </Step>
 
-  <Step title="Start a local server">
-    ```bash
-    npm run dev-server -- 8000
-    ```
+  <Step title="Import and deploy on Vercel">
+    Open [vercel.com/new](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy**. A `vercel.json` is already in the repo root — no environment variables or build settings are required for a standard install.
+  </Step>
 
-    Open `http://localhost:8000/app` in your browser. The dashboard runs immediately.
-
-    <Note>
-      This is the source-development server, not the assembled production build. It provides local `/api/proxy` behavior where configured. A static file server cannot exchange confidential OAuth tokens or supply those API routes; build and configure the production artifact and optional services separately for a public host.
-    </Note>
+  <Step title="Open your permanent HTTPS address">
+    Wait a few minutes for the first build to complete, then open your Vercel URL (for example `https://my-getbased.vercel.app/app`) on your computer, phone, and tablet. Bookmark it or install it as a PWA before importing or restoring records.
   </Step>
 </Steps>
 
-`npm ci` compiles the sources through its `prepare` step; `npm run dev-server` recompiles and builds the Companion download before serving. If you edit sources while the server is running, run `npm run typescript:build` before reloading. Production builds also require compiled runtime modules: use `npm run production:build` locally; Vercel compiles during dependency installation before its configured build command. The app is installable as a **PWA** and works fully offline for browser-local features — labs, charts, custom markers, already-imported wearable data, and local encryption are available without a network connection after the first load. OAuth connection, token refresh, and live wearable sync still require the provider network and the deployment's server routes.
+Why this is the smoothest PWA path:
+
+- **Zero terminal, zero Node.js, always online** across desktop, iOS, and Android.
+- **Independent deployment:** official getbased analytics are automatically disabled on non-official hosts, and your deployment is never treated as the operated hosted origin.
+- **Built-in `/api/proxy`:** your own Vercel project runs its own same-origin compatibility proxy (for postal geocoding, NVIDIA attestation, and compatible provider requests) without extra server configuration.
+- **Easy updates (no terminal):** open your fork on GitHub and click **Sync fork → Update branch** whenever you want a new release — or open your fork's **Actions** tab once and enable the included **Sync upstream updates** workflow for automatic daily checks (it stops instead of overwriting if you have custom edits or workflow changes). Vercel rebuilds to the exact same URL and your browser shows the normal in-app update banner.
+
+## Option 2: Cloudflare Pages or Netlify (no terminal, static PWA)
+
+1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
+2. Connect your fork in **Cloudflare Pages** or **Netlify** with:
+   - **Build command:** `node scripts/fetch-catalog.mjs && npm run production:build`
+   - **Build output directory:** `dist`
+   - **Environment variable:** `NODE_VERSION=24` (Node.js 24.20 or later within version 24)
+
+The production build writes `dist/_headers` (CSP, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: credentialless` for OPFS/Sync, and cache headers) and `dist/_redirects` (`/app` → `/index.html`) automatically. Static-only hosting runs all local tracking, Knowledge Base, encrypted Sync, and direct-CORS AI providers without `/api/proxy`. Updating works the same way via GitHub **Sync fork** or the opt-in **Sync upstream updates** workflow.
+
+## Option 3: Local computer (prebuilt Node.js package)
+
+If you prefer serving getbased strictly from your own computer, install [Node.js](https://nodejs.org/en/download) **24.20 or later within version 24**. Use Terminal on Linux or macOS, or PowerShell on Windows.
+
+1. Open [getbased releases](https://github.com/elkimek/get-based/releases) and download the self-host package for the release you want. Save the `.tgz` file as `getbased-self-host.tgz`.
+2. In the folder containing that file, run:
+
+   ```bash
+   npm install --global ./getbased-self-host.tgz
+   getbased
+   ```
+
+3. Keep the terminal open. On that computer, the app is available at `http://127.0.0.1:8000/app`. Press **Ctrl+C** to stop it. Run `getbased` to start it again.
+
+The package includes the built app and its server. It needs no source checkout or build tools. `getbased --help` shows the commands; `getbased --version` shows the installed version. If npm reports a permission error on Linux or macOS, use a user-owned Node installation, such as a Node version manager, before retrying.
+
+<Note>
+  Release packages must include the migration screen before you move records. If the selected release has no self-host package, use the source installation below and keep the original browser data.
+</Note>
+
+## Use private HTTPS on all your devices
+
+1. [Install Tailscale](https://tailscale.com/docs/install) on the host and each computer, phone or tablet you want to use. Sign them into your private tailnet.
+2. Leave `getbased` running. In another terminal on the host, run:
+
+   ```bash
+   tailscale serve --bg http://127.0.0.1:8000
+   ```
+
+3. Follow the prompt to enable HTTPS if needed. Open the full HTTPS address printed by Tailscale, ending in `.ts.net`, and use that same address on every device. Add `/app` if needed.
+4. Bookmark that address before restoring records. If you plan to install the PWA, install and open it before restoring; some browsers keep installed-app storage separate.
+
+[Tailscale Serve](https://tailscale.com/docs/reference/tailscale-cli/serve) keeps this HTTPS mapping in the background. The getbased process must still be running, and the host must be awake and connected. Devices need Tailscale access to the host. Check `tailscale serve status` first if you already use Serve for another service. This setup uses private Serve rather than public Funnel.
+
+The server listens only on loopback. You do not need to forward a router port or expose it to your local network. The installer does not configure `getbased.local`; the private HTTPS address provides a trusted connection for phones and tablets without installing local certificates.
+
+The official getbased analytics script does not load on independent self-hosted addresses, including your Tailscale HTTPS address.
+
+## Keep the same address
+
+Browser storage belongs to the full origin: protocol, hostname and port. These addresses have separate storage:
+
+| Address | Storage |
+| --- | --- |
+| `http://127.0.0.1:8000` | This loopback origin in this browser |
+| `http://localhost:8000` | A different loopback origin |
+| Your Tailscale HTTPS address | A different HTTPS origin on each browser/device |
+
+Use the HTTPS address from the start, including on the host computer. Keep the host's Tailscale name stable. If port 8000 is occupied, stop the previous getbased process. You can set `GETBASED_SELF_HOST_PORT` to another fixed port before starting and point Serve at that port. Changing the browser-facing address does not move records.
+
+## Move your existing records
+
+Follow [Move to self-hosting](/guides/move-to-self-hosting). Use **Settings → Data → Backup & Restore → Start migration** at the original address. The encrypted migration file includes stores that ordinary backups and Sync do not transfer.
+
+Keep the source browser data and downloaded file until you have checked every profile at the destination, including after a reload. The official encrypted Sync relay remains available during migration. Sync setup is separate from serving the app: each device still has its own local data.
+
+## Install from source
+
+If you prefer a source checkout, install Git and Node.js 24.20 or later within version 24, then run:
+
+```bash
+git clone https://github.com/elkimek/get-based
+cd get-based
+npm ci
+npm run production:build
+npm run self-host
+```
+
+Use the same private HTTPS setup above. `npm run self-host` recompiles the server but does not rebuild `dist/`. The source-development command `npm run dev-server -- 8000` is intended for development and can provide additional configured API behavior.
+
+## Update, stop or uninstall
+
+Before updating, create a new migration file and keep the previous installer. Stop the server with **Ctrl+C**, install the new release package with the same `npm install --global` command, then run `getbased` again. Use the app's update prompt to activate the new cached build. Keep the HTTPS address unchanged.
+
+To uninstall the package, stop it and run `npm uninstall --global getbased-self-host`. If you no longer need its Serve mapping, remove that mapping with `tailscale serve --https=443 off`. Check existing mappings before doing this. Neither command exports or clears browser records.
+
+An older app version may not understand newer data. If an update fails, keep the browser data and migration file; reinstalling old code is not a backup restore.
 
 ## Build for a static host
 
@@ -174,26 +259,8 @@ For a multi-instance Vercel deployment, also configure a suitable proxy limiter 
 
 Deploy the complete production artifact so its embedded build identity and service-worker assets stay aligned. Updates download quietly and offer **Reload / Later** when ready. Applying shows progress; a failed or paused activation offers recovery rather than silently discarding the offer. Follow [App updates and offline use](/guides/app-updates) for **Retry update** and close-all-windows recovery. Updating does not require clearing browser storage. Build identity, not a semver bump for every fix, distinguishes cache generations. See [Deployment](/developers/deployment#service-worker).
 
-## Deploying to Vercel
-
-A `vercel.json` is already present in the repo root — no extra configuration is needed.
-
-<Steps>
-  <Step title="Import the repository on Vercel">
-    In the Vercel dashboard, click **Add New → Project** and import your fork of `get-based`. Vercel detects `vercel.json` automatically.
-  </Step>
-
-  <Step title="Set environment variables">
-    Go to **Project → Settings → Environment Variables** and add your wearable credentials. Mark each `*_CLIENT_SECRET` value as **Sensitive**. Google Health, WHOOP, and Ultrahuman each require their enable flag, client ID, and secret. For WHOOP, finish the developer-program, redirect, disclosure, and terms review above before enabling production access.
-  </Step>
-
-  <Step title="Deploy">
-    Vercel builds and deploys on every push to your default branch. The app runs at your Vercel project URL immediately after the first deploy.
-  </Step>
-</Steps>
-
 <Tip>
-  For a basic self-hosted install, no additional build configuration is needed — the app runs out of the box with the example supplement catalog included in the repo.
+  On Vercel, add optional wearable credentials under **Project → Settings → Environment Variables** and mark each `*_CLIENT_SECRET` value as **Sensitive**. For a standard install without custom wearable OAuth apps, no environment variables are needed.
 </Tip>
 
 ## Self-hosted profile sharing

@@ -1,13 +1,15 @@
 ---
-title: "Get started with getbased in under ten minutes"
+title: "Get started with getbased"
 sidebarTitle: "Quickstart"
-description: "Launch getbased in your browser, take the first-visit tour, connect an AI provider when you need it, and add labs, DNA, meals, wearables, or demo data."
+description: "Install getbased, open your private HTTPS address, and add your records or explore fictional sample data."
 ---
 
 {/* Synced during developer-docs migration. */}
 
 
-getbased runs entirely in your browser with no installation and no account. A fresh profile starts with a short guided tour, then sends you to guided chat so you can decide what to add first.
+Run getbased on a computer or server you control, then open its private HTTPS address in your browser. No getbased account is required. A fresh profile starts with a short guided tour, then opens guided chat so you can decide what to add first.
+
+To explore before installing, try the [public sample demo](https://getbased-demo.vercel.app). It uses fictional records and cannot import or save personal data. Existing hosted users should follow [Move to self-hosting](/guides/move-to-self-hosting).
 
 <Note>
 Charts, manual meal and lab entry, correlations, comparisons, JSON import, and data export work without an AI provider. PDF/image import, meal-photo or nutrition-label analysis, chat, Current Focus generation, and AI interpretation need a provider.
@@ -18,8 +20,14 @@ Charts, manual meal and lab entry, correlations, comparisons, JSON import, and d
 Already have Codex, OpenCode, Hermes, Grok Build, or OpenClaw installed? You can use it as your AI provider through [CLI agents and Companion](/guides/cli-agents). This is optional; non-AI features need only the browser app.
 
 <Steps>
-  <Step title="Open the app">
-    Go to [app.getbased.health](https://app.getbased.health) in any modern browser. No sign-up or download required.
+  <Step title="Deploy or install the app">
+    The fastest way requires **no terminal** — deploy your own personal HTTPS copy on Vercel in three clicks:
+
+    1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
+    2. Open [Vercel New Project](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy** (no environment variables required).
+    3. Open your permanent HTTPS address (for example `https://my-getbased.vercel.app/app`) and bookmark it before adding records.
+
+    You can also deploy to **Cloudflare Pages / Netlify** (no terminal) or run strictly on your own computer with the prebuilt **Node.js 24** package and private **Tailscale Serve** HTTPS. See [Self-hosting](/guides/self-hosting) for all three options and zero-terminal update instructions.
 
     **Install as a PWA (optional)**
 
@@ -31,18 +39,7 @@ Already have Codex, OpenCode, Hermes, Grok Build, or OpenClaw installed? You can
     | Safari (iOS) | Tap Share, then "Add to Home Screen" |
     | Firefox | Open the browser menu and select "Install" |
 
-    **Self-hosting**
-
-    If you prefer to run getbased yourself, use Node.js 24, clone the repository, install dependencies, and start a local server:
-
-    ```bash
-    git clone https://github.com/elkimek/get-based
-    cd get-based
-    npm ci
-    npm run dev-server -- 8000
-    ```
-
-    Then open `http://localhost:8000/app`. These commands build the TypeScript, Svelte and style sources for local development. For a public static host, build and publish the complete `dist/` artifact instead. See [Self-hosting](/guides/self-hosting) for configuration and updates.
+    Choose whether to use an installed PWA before restoring records; some browsers keep its storage separate. The [installation guide](/guides/self-hosting) also covers building from source, updates, startup, and optional services.
   </Step>
 
   <Step title="Take the first-visit tour">
