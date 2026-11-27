@@ -16,11 +16,28 @@ Running an agent locally does not mean its model runs locally. The agent may sen
 
 Open your [self-hosted getbased app](/guides/self-hosting) at its usual address. The Companion runs on the computer with your browser, even when another computer serves the app. You do not need to move your browser records to a loopback address. Existing hosted users should [migrate their records](/guides/move-to-self-hosting) before the announced cutoff.
 
+<Note>
+  **Using a self-hosted HTTPS address (Vercel, Cloudflare Pages, Tailscale `.ts.net`, or a custom domain):** Companion allows loopback origins (`http://127.0.0.1` / `http://localhost`) and official `getbased.health` origins by default. For any other HTTPS address, set `GETBASED_AGENT_HOST_ALLOWED_ORIGINS` to your exact origin (scheme + host, no trailing slash — e.g. `https://my-getbased.vercel.app` or `https://host.tailnet.ts.net`) before starting or installing Companion, otherwise Companion rejects requests with `origin_not_allowed`.
+
+  **Linux / macOS (temporary run or startup install):**
+  ```sh
+  export GETBASED_AGENT_HOST_ALLOWED_ORIGINS="https://your-getbased-address"
+  ```
+
+  **Windows PowerShell (temporary run or startup install):**
+  ```powershell
+  $env:GETBASED_AGENT_HOST_ALLOWED_ORIGINS = "https://your-getbased-address"
+  ```
+
+  Run that in the same terminal before running the copied connection command or `node getbased-companion.mjs install` (so the installed login service persists your allowed origin).
+</Note>
+
 1. Install **Node.js 20 or later** and a supported agent on the same computer as your browser. Complete the agent's own sign-in and confirm it works outside getbased.
-2. Open **Settings → AI → CLI agents**. With no Companion running, choose **Copy connection command**.
-3. Review and run the command in Terminal on Linux/macOS or PowerShell on Windows. It downloads the Companion from the getbased site and runs it for that terminal session. It does not require a repository checkout or npm installation.
-4. Return to getbased and choose **Check connection**. Allow local-network access if your browser asks.
-5. Enable an available agent, then choose its execution target, model, and supported reasoning setting. Click the active agent's heading to collapse or reopen its options without deselecting it.
+2. If you use a self-hosted HTTPS address, set `GETBASED_AGENT_HOST_ALLOWED_ORIGINS` in your terminal as shown above.
+3. Open **Settings → AI → CLI agents**. With no Companion running, choose **Copy connection command**.
+4. Review and run the command in Terminal on Linux/macOS or PowerShell on Windows. It downloads the Companion from the getbased site and runs it for that terminal session. It does not require a repository checkout or npm installation.
+5. Return to getbased and choose **Check connection**. Allow local-network access if your browser asks.
+6. Enable an available agent, then choose its execution target, model, and supported reasoning setting. Click the active agent's heading to collapse or reopen its options without deselecting it.
 
 A website cannot scan your installed programs or launch a stopped program by itself. Agent detection comes from the running Companion. **Installed**, **sign-in required**, **unavailable**, and **ready** are different states; a missing model catalog is not proof that an agent is usable.
 
