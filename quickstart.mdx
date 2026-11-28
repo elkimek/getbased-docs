@@ -9,7 +9,7 @@ description: "Install getbased, open your private HTTPS address, and add your re
 
 Run getbased on a computer or server you control, then open its private HTTPS address in your browser. No getbased account is required. A fresh profile starts with a short guided tour, then opens guided chat so you can decide what to add first.
 
-To explore before installing, try the [public sample demo](https://getbased-demo.vercel.app). It uses fictional records and cannot import or save personal data. Existing hosted users should follow [Move to self-hosting](/guides/move-to-self-hosting).
+To explore before installing, open [app.getbased.health](https://app.getbased.health) — new visitors with no saved records get an interactive sample demo with fictional profiles (Demo Sarah & Demo Alex) and cannot import or save personal data. Existing hosted users with saved browser records keep access through the transition and should follow [Move to self-hosting](/guides/move-to-self-hosting).
 
 <Note>
 Charts, manual meal and lab entry, correlations, comparisons, JSON import, and data export work without an AI provider. PDF/image import, meal-photo or nutrition-label analysis, chat, Current Focus generation, and AI interpretation need a provider.
@@ -21,13 +21,14 @@ Already have Codex, OpenCode, Hermes, Grok Build, or OpenClaw installed? You can
 
 <Steps>
   <Step title="Deploy or install the app">
-    The fastest way requires **no terminal** — deploy your own personal HTTPS copy on Vercel in three clicks:
+    The fastest way requires **no terminal** — deploy your own personal HTTPS copy in one click:
 
-    1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
-    2. Open [Vercel New Project](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy** (no environment variables required).
-    3. Open your permanent HTTPS address (for example `https://my-getbased.vercel.app/app`) and bookmark it before adding records.
+    - **[Deploy with Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Felkimek%2Fget-based&project-name=getbased&repository-name=getbased)** *(recommended)* — signs in with GitHub, creates your own repository, and deploys the full app with `/api/proxy` for wearables OAuth and postal/UV lookups.
+    - **[Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/elkimek/get-based)** — signs in with GitHub, creates your own repository, and deploys the static PWA on Cloudflare's global edge.
 
-    You can also deploy to **Cloudflare Pages / Netlify** (no terminal) or run strictly on your own computer with the prebuilt **Node.js 24** package and private **Tailscale Serve** HTTPS. See [Self-hosting](/guides/self-hosting) for all three options and zero-terminal update instructions.
+    Wait for the first build to complete, then open your permanent HTTPS address (for example `https://my-getbased.vercel.app/app` or `https://get-based.<you>.workers.dev/app`) and bookmark it before adding records.
+
+    You can also run strictly on your own computer with the prebuilt **Node.js 24** package and private **Tailscale Serve** HTTPS. See [Self-hosting](/guides/self-hosting) for all options and zero-terminal update instructions.
 
     **Install as a PWA (optional)**
 
