@@ -4,17 +4,15 @@ sidebarTitle: "Self-hosting"
 description: "Technical guide for running your own getbased instance, wearable OAuth apps, sync relay, and local AI."
 ---
 
-getbased is a local-first PWA: each browser keeps its own health records in browser storage, not on a central server. The easiest way to run your own copy requires **no terminal** — fork the repository on GitHub and deploy a personal HTTPS copy on Vercel or Cloudflare Pages. If you prefer strictly local hosting on your own computer, you can also run the prebuilt Node.js package or build from source.
+getbased is a local-first PWA: each browser keeps its own health records in browser storage, not on a central server. The easiest way to run your own copy requires **no terminal** — use a one-click deploy to **Vercel** (recommended, includes `/api/proxy` for wearables OAuth and postal/UV lookups) or **Cloudflare Workers** (static PWA on Cloudflare's global edge). Both sign in with GitHub and automatically create your own repository. If you prefer strictly local hosting on your own computer, you can also run the prebuilt Node.js package or build from source.
 
-## Option 1: Personal deploy on Vercel (recommended, no terminal)
+## Option 1: One-click deploy on Vercel (recommended, no terminal)
 
 <Steps>
-  <Step title="Fork getbased on GitHub">
-    Open [github.com/elkimek/get-based/fork](https://github.com/elkimek/get-based/fork) and click **Create fork**. Forking (rather than making a detached clone) keeps one-click updates working.
-  </Step>
+  <Step title="Click Deploy with Vercel">
+    Open **[Deploy with Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Felkimek%2Fget-based&project-name=getbased&repository-name=getbased)**, sign in with GitHub, and click **Create**. Vercel automatically creates your own `getbased` repository in GitHub and deploys it using the included `vercel.json` — no environment variables or build settings are required for a standard install.
 
-  <Step title="Import and deploy on Vercel">
-    Open [vercel.com/new](https://vercel.com/new), sign in with GitHub, select your `get-based` fork, and click **Deploy**. A `vercel.json` is already in the repo root — no environment variables or build settings are required for a standard install.
+    *(Prefer a linked GitHub fork for one-click **Sync fork** updates? [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) first, then import your fork at [vercel.com/new](https://vercel.com/new).)*
   </Step>
 
   <Step title="Open your permanent HTTPS address">
@@ -26,18 +24,19 @@ Why this is the smoothest PWA path:
 
 - **Zero terminal, zero Node.js, always online** across desktop, iOS, and Android.
 - **Independent deployment:** official getbased analytics are automatically disabled on non-official hosts, and your deployment is never treated as the operated hosted origin.
-- **Built-in `/api/proxy`:** your own Vercel project runs its own same-origin compatibility proxy (for postal geocoding, NVIDIA attestation, and compatible provider requests) without extra server configuration.
-- **Easy updates (no terminal):** open your fork on GitHub and click **Sync fork → Update branch** whenever you want a new release — or open your fork's **Actions** tab once and enable the included **Sync upstream updates** workflow for automatic daily checks (it stops instead of overwriting if you have custom edits or workflow changes). Vercel rebuilds to the exact same URL and your browser shows the normal in-app update banner.
+- **Built-in `/api/proxy`:** your own Vercel project runs its own same-origin compatibility proxy (for wearable OAuth token exchange, postal geocoding, NVIDIA attestation, and compatible provider requests) without extra server configuration.
+- **Easy updates (no terminal):** if you deployed from a fork, open your fork on GitHub and click **Sync fork → Update branch** whenever you want a new release — or open your fork's **Actions** tab once and enable the included **Sync upstream updates** workflow for automatic daily checks (it stops instead of overwriting if you have custom edits or workflow changes). Vercel rebuilds to the exact same URL and your browser shows the normal in-app update banner.
 
-## Option 2: Cloudflare Pages or Netlify (no terminal, static PWA)
+## Option 2: One-click deploy on Cloudflare Workers (no terminal, static PWA)
 
-1. [Fork getbased on GitHub](https://github.com/elkimek/get-based/fork) and click **Create fork**.
-2. Connect your fork in **Cloudflare Pages** or **Netlify** with:
-   - **Build command:** `node scripts/fetch-catalog.mjs && npm run production:build`
-   - **Build output directory:** `dist`
-   - **Environment variable:** `NODE_VERSION=24` (Node.js 24.20 or later within version 24)
+Open **[Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/elkimek/get-based)**, sign in with GitHub, and click **Deploy**. Cloudflare automatically creates a repository in your GitHub account and builds the static PWA using the included `wrangler.jsonc` (`node scripts/fetch-catalog.mjs && npm run production:build`, serving `dist`).
 
-The production build writes `dist/_headers` (CSP, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: credentialless` for OPFS/Sync, and cache headers) and `dist/_redirects` (`/app` → `/index.html`) automatically. Static-only hosting runs all local tracking, Knowledge Base, encrypted Sync, and direct-CORS AI providers without `/api/proxy`. Updating works the same way via GitHub **Sync fork** or the opt-in **Sync upstream updates** workflow.
+To deploy on **Cloudflare Pages** or **Netlify** from a manual fork instead, connect your fork with:
+- **Build command:** `node scripts/fetch-catalog.mjs && npm run production:build`
+- **Build output directory:** `dist`
+- **Environment variable:** `NODE_VERSION=24` (Node.js 24.20 or later within version 24)
+
+The production build writes `dist/_headers` (CSP, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: credentialless` for OPFS/Sync, and cache headers) and `dist/_redirects` (`/app` → `/index.html`) automatically. Static-only hosting runs all local tracking, Knowledge Base, encrypted Sync, and direct-CORS AI providers without `/api/proxy` (wearables OAuth and postal/UV lookups require Vercel or the local Node.js server).
 
 ## Option 3: Local computer (prebuilt Node.js package)
 
